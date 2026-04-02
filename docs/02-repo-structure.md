@@ -13,7 +13,7 @@ This document defines the target repository structure for `trading-data`.
 ## Data layout
 
 The intended data layout should use:
-- `data/raw/` — raw factual source datasets
+- `data/<symbol>/<YYMM>/<dataset>.jsonl` for tracked symbol/month datasets
 - `data/intermediate/` — larger normalized working datasets
 - `data/derived/` — compact durable derived outputs
 - `data/reports/` — human-facing data-quality or coverage outputs

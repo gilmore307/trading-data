@@ -32,8 +32,13 @@ def ts_to_month_key(ts_ms: int) -> str:
     return dt.strftime("%Y-%m")
 
 
-def month_file_path(base_dir: Path, ts_ms: int) -> Path:
-    return base_dir / f"{ts_to_month_key(ts_ms)}.jsonl"
+def yy_mm_dir_key(ts_ms: int) -> str:
+    dt = datetime.fromtimestamp(ts_ms / 1000, tz=UTC).astimezone(BUSINESS_TZ)
+    return dt.strftime("%y%m")
+
+
+def month_file_path(base_dir: Path, ts_ms: int, dataset_name: str) -> Path:
+    return base_dir / yy_mm_dir_key(ts_ms) / f"{dataset_name}.jsonl"
 
 
 def load_existing_rows(path: Path) -> dict[int, dict[str, Any]]:
@@ -52,21 +57,23 @@ def load_existing_rows(path: Path) -> dict[int, dict[str, Any]]:
     return out
 
 
-def load_month_store(base_dir: Path, *, resume: bool) -> dict[str, dict[int, dict[str, Any]]]:
+def load_month_store(base_dir: Path, *, dataset_name: str, resume: bool) -> dict[str, dict[int, dict[str, Any]]]:
     store: dict[str, dict[int, dict[str, Any]]] = {}
     if not resume or not base_dir.exists():
         return store
-    for path in sorted(base_dir.glob("*.jsonl")):
+    for path in sorted(base_dir.glob(f"*/{dataset_name}.jsonl")):
         rows = load_existing_rows(path)
         if rows:
-            store[path.stem] = rows
+            store[path.parent.name] = rows
     return store
 
 
-def flush_month_store(base_dir: Path, store: dict[str, dict[int, dict[str, Any]]]) -> None:
+def flush_month_store(base_dir: Path, store: dict[str, dict[int, dict[str, Any]]], *, dataset_name: str) -> None:
     base_dir.mkdir(parents=True, exist_ok=True)
     for month, rows in store.items():
-        out = base_dir / f"{month}.jsonl"
+        out_dir = base_dir / month
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out = out_dir / f"{dataset_name}.jsonl"
         with out.open("w", encoding="utf-8") as f:
             for ts in sorted(rows.keys()):
                 f.write(json.dumps(rows[ts], ensure_ascii=False) + "\n")
@@ -112,7 +119,7 @@ def normalize_bar(*, asset_class: str, feed_scope: str, symbol: str, timeframe: 
 
 def default_output_dir(*, asset_class: str, symbol: str) -> Path:
     safe_symbol = symbol.replace("/", "-")
-    return ROOT / "data" / "raw" / safe_symbol / "bars"
+    return ROOT / "data" / safe_symbol
 
 
 def fetch_historical_bars(*, asset_class: str, symbol: str, timeframe: str, start: str, end: str, limit: int, resume: bool, output_dir: Path | None) -> dict[str, Any]:
@@ -142,21 +149,22 @@ def fetch_historical_bars(*, asset_class: str, symbol: str, timeframe: str, star
     obj = request_json(path, params)
     rows = obj.get("bars", {}).get(symbol, [])
     out_dir = output_dir or default_output_dir(asset_class=asset_class, symbol=symbol)
-    store = load_month_store(out_dir, resume=resume)
+    dataset_name = f"bars_{timeframe}"
+    store = load_month_store(out_dir, dataset_name=dataset_name, resume=resume)
     kept = 0
     for raw in rows:
         row = normalize_bar(asset_class=asset_class, feed_scope=feed_scope, symbol=symbol, timeframe=timeframe, row=raw)
-        month = ts_to_month_key(int(row["ts"]))
+        month = yy_mm_dir_key(int(row["ts"]))
         store.setdefault(month, {})[int(row["ts"])] = row
         kept += 1
-    flush_month_store(out_dir, store)
+    flush_month_store(out_dir, store, dataset_name=dataset_name)
     return {
         "asset_class": asset_class,
         "symbol": symbol,
         "timeframe": timeframe,
         "output_dir": str(out_dir),
         "row_count": kept,
-        "months": sorted(store.keys()),
+        "month_dirs": sorted(store.keys()),
         "next_page_token": obj.get("next_page_token"),
     }
 

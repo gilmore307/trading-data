@@ -5,7 +5,7 @@
 Its job is to:
 - acquire and normalize market data from supported sources
 - keep market data stored inside this repository using manageable monthly partitions
-- define sustainable data-boundary rules for future modeling
+- define minute-level canonical raw data rules for future modeling
 - publish canonical cross-market data contracts used downstream by `trading-model`
 - preserve optional enrichment branches without letting them redefine the canonical main line
 

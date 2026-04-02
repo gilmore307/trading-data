@@ -15,6 +15,14 @@ Directly verified common categories include:
 - latest trades
 - snapshots
 
+## Canonical raw bar rule
+
+Canonical raw bars should be minute-level.
+
+That means:
+- `bars_1min.jsonl` should be treated as the main raw bar object
+- 5m / 15m / 1h / daily bars should be derived layers rather than the primary raw truth layer
+
 ## Canonical derived features
 
 The canonical mainline feature families should primarily derive from the overlap surface, such as:

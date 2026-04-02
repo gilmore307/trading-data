@@ -3,7 +3,7 @@
 This docs tree is the canonical home for the `trading-data` repository documentation.
 
 `trading-data` is the upstream market-data repository for the trading system.
-It owns source adapters, acquisition/update workflows, monthly-partitioned data storage, sustainable data-boundary design, and canonical data contracts consumed downstream.
+It owns source adapters, acquisition/update workflows, monthly-partitioned data storage, minute-level canonical raw data rules, sustainable data-boundary design, and canonical data contracts consumed downstream.
 
 ## Read in order
 

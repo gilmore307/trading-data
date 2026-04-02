@@ -149,7 +149,8 @@ def fetch_historical_bars(*, asset_class: str, symbol: str, timeframe: str, star
     obj = request_json(path, params)
     rows = obj.get("bars", {}).get(symbol, [])
     out_dir = output_dir or default_output_dir(asset_class=asset_class, symbol=symbol)
-    dataset_name = f"bars_{timeframe}"
+    normalized_tf = timeframe.replace("Min", "min").replace("Hour", "hour").replace("Day", "day")
+    dataset_name = f"bars_{normalized_tf}"
     store = load_month_store(out_dir, dataset_name=dataset_name, resume=resume)
     kept = 0
     for raw in rows:
@@ -173,7 +174,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fetch Alpaca historical bars into monthly JSONL partitions.")
     parser.add_argument("--asset-class", choices=["stocks", "crypto"], required=True)
     parser.add_argument("--symbol", required=True)
-    parser.add_argument("--timeframe", required=True)
+    parser.add_argument("--timeframe", default="1Min")
     parser.add_argument("--start", required=True)
     parser.add_argument("--end", required=True)
     parser.add_argument("--limit", type=int, default=1000)

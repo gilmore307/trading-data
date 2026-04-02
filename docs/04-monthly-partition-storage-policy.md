@@ -14,6 +14,15 @@ That means:
 - closed historical months are treated as stable partitions
 - partition sizing should remain small enough to keep repository storage and GitHub operations manageable
 
+## Canonical raw granularity rule
+
+The canonical raw market-data layer should be minute-level across all supported asset classes.
+
+That means:
+- minute-level bars are the canonical raw bar layer
+- higher timeframes should be treated as derived/aggregated layers
+- downstream modeling should assume minute-level canonical raw inputs by default
+
 ## Why monthly partitioning is required
 
 Monthly partitioning gives the project:

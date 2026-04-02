@@ -10,6 +10,6 @@ Expected responsibilities here:
 - crypto overlap data acquisition
 - options-context acquisition
 - news acquisition
-- normalization into canonical monthly partitions
+- normalization into canonical minute-level monthly partitions
 
 This adapter family should define the mainline upstream contract surface wherever possible.

@@ -19,8 +19,9 @@ Start with:
 - `docs/README.md`
 - `docs/01-overview.md`
 - `docs/02-repo-structure.md`
-- `docs/13-current-input-coverage.md`
-- `docs/14-data-source-boundary-and-model-scope.md`
+- `docs/03-source-priority-and-scope.md`
+- `docs/04-monthly-partition-storage-policy.md`
+- `docs/05-canonical-data-contract.md`
 
 ## Current direction
 

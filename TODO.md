@@ -4,10 +4,11 @@
 
 - [x] create local clone of `trading-data`
 - [x] seed initial documentation from `trading-model`
-- [ ] rewrite seeded docs so they speak purely from the upstream data-repository perspective
+- [x] replace seeded docs with a fresh numbered `trading-data` doc set
 - [x] move first-wave market-data acquisition code into this repo under `src/`
 - [x] move first-wave canonical data-policy docs into this repo
 - [ ] define Alpaca adapter layout as the primary source structure
+- [ ] add tracked `data/` tree bootstrap for monthly-partitioned in-repo storage
 - [ ] define OKX/Bitget supplemental adapter layout as backup/enrichment source structure
 - [ ] define canonical raw/intermediate/derived/report/manifests structure
 - [ ] add repo to autosync watcher configuration

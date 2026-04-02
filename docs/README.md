@@ -3,24 +3,23 @@
 This docs tree is the canonical home for the `trading-data` repository documentation.
 
 `trading-data` is the upstream market-data repository for the trading system.
-It owns market-data acquisition, source adapters, raw partitioning, sustainable data-boundary design, and canonical dataset contracts consumed downstream by `trading-model`.
+It owns source adapters, acquisition/update workflows, monthly-partitioned data storage, sustainable data-boundary design, and canonical data contracts consumed downstream.
 
 ## Read in order
 
 1. `01-overview.md`
 2. `02-repo-structure.md`
-3. `03-data-and-artifacts.md`
-4. `12-regime-clustering-inputs.md`
-5. `13-current-input-coverage.md`
-6. `14-data-source-boundary-and-model-scope.md`
-7. `16-cross-market-overlap-and-session-models.md`
-8. `17-future-research-universe-selection.md`
+3. `03-source-priority-and-scope.md`
+4. `04-monthly-partition-storage-policy.md`
+5. `05-canonical-data-contract.md`
+6. `06-current-source-coverage.md`
+7. `07-cross-market-overlap.md`
+8. `08-underlying-etf-options-context.md`
+9. `09-future-universe-support.md`
 
-## Core operating model
+## Supporting docs
 
-- `trading-data` is the canonical upstream data layer
-- Alpaca is the primary long-term source and current architectural main focus for the future stock-first main line
-- Alpaca cross-market overlap data should define the canonical main input layer
-- OKX and Bitget should now be treated as supplemental / backup sources rather than the primary architectural center
-- crypto-specific enrichments may remain as supplemental data branches
-- downstream repositories should consume stable data contracts rather than embed acquisition logic
+- `data-ingestion-architecture.md`
+- `data-layering-and-git-policy.md`
+- `data-sparse-checkout-policy.md`
+- `TIME_SERIES_PARTITION_POLICY.md`

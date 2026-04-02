@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "last_updated": "2026-04-03",
+  "broad_market": [
+    {
+      "symbol": "SPY",
+      "label": "SPDR S&P 500 ETF Trust",
+      "role": "broad_market_core"
+    },
+    {
+      "symbol": "IVV",
+      "label": "iShares Core S&P 500 ETF",
+      "role": "broad_market_core"
+    },
+    {
+      "symbol": "VOO",
+      "label": "Vanguard S&P 500 ETF",
+      "role": "broad_market_core"
+    },
+    {
+      "symbol": "QQQ",
+      "label": "Invesco QQQ Trust",
+      "role": "nasdaq_large_cap_growth"
+    },
+    {
+      "symbol": "DIA",
+      "label": "SPDR Dow Jones Industrial Average ETF Trust",
+      "role": "dow_proxy"
+    },
+    {
+      "symbol": "IWM",
+      "label": "iShares Russell 2000 ETF",
+      "role": "russell_2000_small_cap"
+    }
+  ],
+  "sector": [
+    {
+      "symbol": "XLK",
+      "label": "Technology Select Sector SPDR Fund",
+      "sector": "technology"
+    },
+    {
+      "symbol": "XLF",
+      "label": "Financial Select Sector SPDR Fund",
+      "sector": "financials"
+    },
+    {
+      "symbol": "XLE",
+      "label": "Energy Select Sector SPDR Fund",
+      "sector": "energy"
+    },
+    {
+      "symbol": "XLI",
+      "label": "Industrial Select Sector SPDR Fund",
+      "sector": "industrials"
+    },
+    {
+      "symbol": "XLV",
+      "label": "Health Care Select Sector SPDR Fund",
+      "sector": "healthcare"
+    },
+    {
+      "symbol": "XLY",
+      "label": "Consumer Discretionary Select Sector SPDR Fund",
+      "sector": "consumer_discretionary"
+    },
+    {
+      "symbol": "XLP",
+      "label": "Consumer Staples Select Sector SPDR Fund",
+      "sector": "consumer_staples"
+    },
+    {
+      "symbol": "XLU",
+      "label": "Utilities Select Sector SPDR Fund",
+      "sector": "utilities"
+    },
+    {
+      "symbol": "XLB",
+      "label": "Materials Select Sector SPDR Fund",
+      "sector": "materials"
+    },
+    {
+      "symbol": "XLRE",
+      "label": "Real Estate Select Sector SPDR Fund",
+      "sector": "real_estate"
+    },
+    {
+      "symbol": "XLC",
+      "label": "Communication Services Select Sector SPDR Fund",
+      "sector": "communication_services"
+    }
+  ],
+  "thematic_or_special": [
+    {
+      "symbol": "SMH",
+      "label": "VanEck Semiconductor ETF",
+      "theme": "semiconductors"
+    },
+    {
+      "symbol": "SOXX",
+      "label": "iShares Semiconductor ETF",
+      "theme": "semiconductors"
+    },
+    {
+      "symbol": "XBI",
+      "label": "SPDR S&P Biotech ETF",
+      "theme": "biotech"
+    },
+    {
+      "symbol": "IBB",
+      "label": "iShares Biotechnology ETF",
+      "theme": "biotech"
+    },
+    {
+      "symbol": "ARKK",
+      "label": "ARK Innovation ETF",
+      "theme": "innovation_growth"
+    },
+    {
+      "symbol": "IBIT",
+      "label": "iShares Bitcoin Trust ETF",
+      "theme": "bitcoin_proxy"
+    },
+    {
+      "symbol": "FBTC",
+      "label": "Fidelity Wise Origin Bitcoin Fund",
+      "theme": "bitcoin_proxy"
+    },
+    {
+      "symbol": "BITB",
+      "label": "Bitwise Bitcoin ETF",
+      "theme": "bitcoin_proxy"
+    }
+  ]
+}

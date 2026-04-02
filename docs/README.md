@@ -16,6 +16,7 @@ It owns source adapters, acquisition/update workflows, monthly-partitioned data 
 7. `07-cross-market-overlap.md`
 8. `08-underlying-etf-options-context.md`
 9. `09-future-universe-support.md`
+10. `10-etf-context-universe.md`
 
 ## Supporting docs
 

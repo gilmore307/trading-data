@@ -14,7 +14,8 @@
 - [x] add repo to autosync watcher configuration
 - [x] register project in workspace memory/handoff system
 - [x] implement first Alpaca acquisition entrypoints under `src/data/alpaca/`
-- [ ] define and prepare ETF/context data coverage for underlyings and broad-market proxies
+- [x] define first ETF/context universe for broad-market, sector, and thematic ETF candidates
+- [ ] prepare ETF/context data coverage for underlyings and broad-market proxies
 - [ ] add candidate ETF-context mapping skeleton for future relevance modeling downstream
 - [ ] decide whether ETF candidate discovery will use browser-assisted/manual etf.com exploration or a more automation-friendly source
 

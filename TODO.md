@@ -7,12 +7,13 @@
 - [x] replace seeded docs with a fresh numbered `trading-data` doc set
 - [x] move first-wave market-data acquisition code into this repo under `src/`
 - [x] move first-wave canonical data-policy docs into this repo
-- [ ] define Alpaca adapter layout as the primary source structure
-- [ ] add tracked `data/` tree bootstrap for monthly-partitioned in-repo storage
-- [ ] define OKX/Bitget supplemental adapter layout as backup/enrichment source structure
+- [x] define first-wave Alpaca adapter layout as the primary source structure
+- [x] add tracked `data/` tree bootstrap for monthly-partitioned in-repo storage
+- [x] define first-wave OKX/Bitget supplemental adapter layout as backup/enrichment source structure
 - [ ] define canonical raw/intermediate/derived/report/manifests structure
-- [ ] add repo to autosync watcher configuration
-- [ ] register project in workspace memory/handoff system
+- [x] add repo to autosync watcher configuration
+- [x] register project in workspace memory/handoff system
+- [ ] implement first Alpaca acquisition entrypoints under `src/data/alpaca/`
 
 ## Scope rule
 

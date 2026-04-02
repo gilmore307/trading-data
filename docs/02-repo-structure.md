@@ -25,10 +25,10 @@ The intended data layout should use:
 Source-specific logic should live under `src/`.
 
 Initial expected families:
-- `src/alpaca/` or `src/data/alpaca/` as the primary source family
+- `src/data/alpaca/` as the primary source family
 - `src/data/okx/` as supplemental/backup source family
 - `src/data/bitget/` as supplemental/backup source family
-- update/backfill orchestration code
+- `src/data/common/` for shared helpers and update/backfill orchestration code
 
 ## Scope rule
 

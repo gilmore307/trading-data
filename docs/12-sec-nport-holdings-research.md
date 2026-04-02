@@ -71,6 +71,17 @@ SEC/N-PORT is now treated as:
 - not yet an operationally ingested path in this repo
 - worthy of dedicated schema/ingestion research before implementation
 
+## Polling / ingestion rule
+
+Because N-PORT availability may lag and the exact monthly availability date may not be known in advance, the intended operating rule should be:
+
+- until the current month's relevant N-PORT data is obtained, check the download/source path once per day
+- once the current month is successfully obtained, stop polling for that month
+- do not keep hammering the source after the current month has already been captured
+- treat this as a system task rather than an ad hoc manual reminder
+
+This keeps the process persistent but rate-conscious.
+
 ## Next research questions
 
 1. how to map ETF ticker symbols to the relevant fund/series/entity identifiers in N-PORT
@@ -78,3 +89,4 @@ SEC/N-PORT is now treated as:
 3. which exact files/tables are required to reconstruct the compact holdings schema
 4. how much raw source material needs to be retained versus normalized-and-discarded
 5. whether the ingestion path should keep only the compact normalized output in-repo after parsing
+6. how to implement the once-per-day-until-available polling task cleanly in the system

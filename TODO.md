@@ -22,6 +22,7 @@
 - [ ] decide whether ETF candidate discovery will use browser-assisted/manual etf.com exploration or a more automation-friendly source
 - [x] record SEC Form N-PORT as a candidate authoritative ETF holdings source path
 - [ ] research SEC Form N-PORT ingestion details and schema mapping
+- [ ] design a system task that checks the N-PORT source path once per day until the current month's data becomes available, then stops for that month
 
 ## Scope rule
 

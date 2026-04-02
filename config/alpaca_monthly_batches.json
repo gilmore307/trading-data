@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "last_updated": "2026-04-03",
+  "target_month_policy": "previous_month",
+  "notes": [
+    "Monthly Alpaca market-data backfill should target the previous completed month.",
+    "Batches are intended to be run on different days so the full universe does not need to update on the same day."
+  ],
+  "batches": {
+    "day_01": [
+      {"symbol": "AAPL", "asset_class": "stocks"},
+      {"symbol": "SPY", "asset_class": "stocks"}
+    ],
+    "day_02": [
+      {"symbol": "QQQ", "asset_class": "stocks"},
+      {"symbol": "BTC/USD", "asset_class": "crypto"}
+    ]
+  }
+}

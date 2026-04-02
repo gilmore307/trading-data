@@ -1,0 +1,20 @@
+[
+  {
+    "ticker": "AAPL",
+    "name": "Apple Inc.",
+    "weight": 6.91,
+    "report_date": "2026-03-31"
+  },
+  {
+    "ticker": "MSFT",
+    "name": "Microsoft Corporation",
+    "weight": 6.12,
+    "report_date": "2026-03-31"
+  },
+  {
+    "ticker": "NVDA",
+    "name": "NVIDIA Corporation",
+    "weight": 5.44,
+    "report_date": "2026-03-31"
+  }
+]

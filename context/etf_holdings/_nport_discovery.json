@@ -1,0 +1,189 @@
+{
+  "checked_at": "2026-04-02T20:04:55.681204Z",
+  "page_url": "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets",
+  "dataset_count": 25,
+  "latest": {
+    "name": "2025q4_nport.zip",
+    "year": 2025,
+    "quarter": 4,
+    "relative_url": "/files/dera/data/form-n-port-data-sets/2025q4_nport.zip",
+    "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2025q4_nport.zip"
+  },
+  "datasets": [
+    {
+      "name": "2019q4_nport.zip",
+      "year": 2019,
+      "quarter": 4,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2019q4_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2019q4_nport.zip"
+    },
+    {
+      "name": "2020q1_nport.zip",
+      "year": 2020,
+      "quarter": 1,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2020q1_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2020q1_nport.zip"
+    },
+    {
+      "name": "2020q2_nport.zip",
+      "year": 2020,
+      "quarter": 2,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2020q2_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2020q2_nport.zip"
+    },
+    {
+      "name": "2020q3_nport.zip",
+      "year": 2020,
+      "quarter": 3,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2020q3_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2020q3_nport.zip"
+    },
+    {
+      "name": "2020q4_nport.zip",
+      "year": 2020,
+      "quarter": 4,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2020q4_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2020q4_nport.zip"
+    },
+    {
+      "name": "2021q1_nport.zip",
+      "year": 2021,
+      "quarter": 1,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2021q1_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2021q1_nport.zip"
+    },
+    {
+      "name": "2021q2_nport.zip",
+      "year": 2021,
+      "quarter": 2,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2021q2_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2021q2_nport.zip"
+    },
+    {
+      "name": "2021q3_nport.zip",
+      "year": 2021,
+      "quarter": 3,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2021q3_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2021q3_nport.zip"
+    },
+    {
+      "name": "2021q4_nport.zip",
+      "year": 2021,
+      "quarter": 4,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2021q4_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2021q4_nport.zip"
+    },
+    {
+      "name": "2022q1_nport.zip",
+      "year": 2022,
+      "quarter": 1,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2022q1_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2022q1_nport.zip"
+    },
+    {
+      "name": "2022q2_nport.zip",
+      "year": 2022,
+      "quarter": 2,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2022q2_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2022q2_nport.zip"
+    },
+    {
+      "name": "2022q3_nport.zip",
+      "year": 2022,
+      "quarter": 3,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2022q3_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2022q3_nport.zip"
+    },
+    {
+      "name": "2022q4_nport.zip",
+      "year": 2022,
+      "quarter": 4,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2022q4_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2022q4_nport.zip"
+    },
+    {
+      "name": "2023q1_nport.zip",
+      "year": 2023,
+      "quarter": 1,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2023q1_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2023q1_nport.zip"
+    },
+    {
+      "name": "2023q2_nport.zip",
+      "year": 2023,
+      "quarter": 2,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2023q2_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2023q2_nport.zip"
+    },
+    {
+      "name": "2023q3_nport.zip",
+      "year": 2023,
+      "quarter": 3,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2023q3_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2023q3_nport.zip"
+    },
+    {
+      "name": "2023q4_nport.zip",
+      "year": 2023,
+      "quarter": 4,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2023q4_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2023q4_nport.zip"
+    },
+    {
+      "name": "2024q1_nport.zip",
+      "year": 2024,
+      "quarter": 1,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2024q1_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2024q1_nport.zip"
+    },
+    {
+      "name": "2024q2_nport.zip",
+      "year": 2024,
+      "quarter": 2,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2024q2_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2024q2_nport.zip"
+    },
+    {
+      "name": "2024q3_nport.zip",
+      "year": 2024,
+      "quarter": 3,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2024q3_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2024q3_nport.zip"
+    },
+    {
+      "name": "2024q4_nport.zip",
+      "year": 2024,
+      "quarter": 4,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2024q4_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2024q4_nport.zip"
+    },
+    {
+      "name": "2025q1_nport.zip",
+      "year": 2025,
+      "quarter": 1,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2025q1_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2025q1_nport.zip"
+    },
+    {
+      "name": "2025q2_nport.zip",
+      "year": 2025,
+      "quarter": 2,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2025q2_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2025q2_nport.zip"
+    },
+    {
+      "name": "2025q3_nport.zip",
+      "year": 2025,
+      "quarter": 3,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2025q3_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2025q3_nport.zip"
+    },
+    {
+      "name": "2025q4_nport.zip",
+      "year": 2025,
+      "quarter": 4,
+      "relative_url": "/files/dera/data/form-n-port-data-sets/2025q4_nport.zip",
+      "url": "https://www.sec.gov/files/dera/data/form-n-port-data-sets/2025q4_nport.zip"
+    }
+  ]
+}

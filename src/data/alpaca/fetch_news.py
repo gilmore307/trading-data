@@ -16,6 +16,21 @@ BUSINESS_TZ = ZoneInfo("America/New_York")
 BASE_URL = "https://data.alpaca.markets"
 
 
+def load_dotenv() -> None:
+    env_path = ROOT / ".env"
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 def yy_mm_dir_key(ts_ms: int) -> str:
     dt = datetime.fromtimestamp(ts_ms / 1000, tz=UTC).astimezone(BUSINESS_TZ)
     return dt.strftime("%y%m")
@@ -76,6 +91,12 @@ def request_json(path: str, params: dict[str, Any]) -> dict[str, Any]:
     return resp.json()
 
 
+def request_json_response(path: str, params: dict[str, Any]) -> requests.Response:
+    url = f"{BASE_URL}{path}?{urlencode(params, doseq=True)}"
+    resp = requests.get(url, headers=auth_headers(), timeout=30)
+    return resp
+
+
 def normalize_news(row: dict[str, Any]) -> dict[str, Any]:
     ts = int(datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")).timestamp() * 1000)
     return {
@@ -106,13 +127,38 @@ def fetch_news(*, symbol: str, start: str, end: str, limit: int, resume: bool, o
         # Expand the end date by one calendar day to avoid avoidable 400s.
         start_dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
         end_date = start_dt.date().fromordinal(start_dt.date().toordinal() + 1).isoformat()
-    params = {
-        "symbols": symbol,
-        "start": start_date,
-        "end": end_date,
-        "limit": limit,
-    }
-    obj = request_json("/v1beta1/news", params)
+
+    candidate_params = [
+        {
+            "symbols": symbol,
+            "start": start_date,
+            "end": end_date,
+            "limit": limit,
+        },
+        {
+            "symbols": symbol,
+            "start": start,
+            "end": end,
+            "limit": limit,
+        },
+        {
+            "symbols": symbol,
+            "limit": limit,
+        },
+    ]
+
+    obj = None
+    last_error_text = None
+    for params in candidate_params:
+        resp = request_json_response("/v1beta1/news", params)
+        if resp.ok:
+            obj = resp.json()
+            break
+        last_error_text = resp.text[:500]
+
+    if obj is None:
+        raise requests.HTTPError(f"news request failed for symbol={symbol}: {last_error_text}")
+
     rows = obj.get("news", [])
     out_dir = output_dir or default_output_dir(symbol=symbol)
     dataset_name = "news"
@@ -138,13 +184,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--start", required=True)
     parser.add_argument("--end", required=True)
-    parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument("--limit", type=int, default=50)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--output-dir", type=Path, default=None)
     return parser
 
 
 def main() -> None:
+    load_dotenv()
     parser = build_parser()
     args = parser.parse_args()
     result = fetch_news(

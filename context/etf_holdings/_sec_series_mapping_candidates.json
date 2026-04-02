@@ -1,0 +1,36 @@
+{
+  "package_dir": "/root/.openclaw/workspace/projects/trading-data/context/etf_holdings/_nport_packages/2025q4_nport",
+  "matches": {
+    "SPY": [],
+    "QQQ": [
+      {
+        "SERIES_NAME": "Invesco QQQ Trust, Series 1",
+        "SERIES_ID": "",
+        "SERIES_LEI": "549300VY6FEJBCIMET58",
+        "CLASS_ID": null,
+        "REGISTRANT_NAME": null
+      }
+    ],
+    "VOO": [],
+    "IVV": [
+      {
+        "SERIES_NAME": "iShares Core S&P 500 ETF",
+        "SERIES_ID": "S000004310",
+        "SERIES_LEI": "5493007M4YMN8XL48C14",
+        "CLASS_ID": null,
+        "REGISTRANT_NAME": null
+      }
+    ],
+    "VTI": [],
+    "IWM": [
+      {
+        "SERIES_NAME": "iShares Russell 2000 ETF",
+        "SERIES_ID": "S000004344",
+        "SERIES_LEI": "549300O80OAR5VTWR172",
+        "CLASS_ID": null,
+        "REGISTRANT_NAME": null
+      }
+    ],
+    "DIA": []
+  }
+}

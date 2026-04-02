@@ -44,6 +44,10 @@ Examples:
 - `data/AAPL/2604/quotes.jsonl`
 - `data/AAPL/2604/trades.jsonl`
 
+Symbol-format note:
+- Alpaca crypto API requests use slash form such as `BTC/USD`
+- on-disk path normalization should still use a safe symbol directory such as `BTC-USD`
+
 Keep `data/` focused on actual market dataset files only.
 
 ## Canonical raw granularity rule

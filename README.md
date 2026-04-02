@@ -19,9 +19,10 @@ Start with:
 - `docs/README.md`
 - `docs/01-overview.md`
 - `docs/02-repo-structure.md`
-- `docs/03-source-priority-and-scope.md`
-- `docs/04-monthly-partition-storage-policy.md`
-- `docs/05-canonical-data-contract.md`
+- `docs/03-data-policy-and-contracts.md`
+- `docs/04-context-and-universe.md`
+- `docs/05-holdings-source-and-refresh.md`
+- `docs/06-source-coverage-and-status.md`
 
 ## Current direction
 

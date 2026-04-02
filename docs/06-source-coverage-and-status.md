@@ -35,9 +35,15 @@ Also directly verified:
 
 ### Operational now
 - Alpaca market-tape overlap path
-- Alpaca news/options-context path
+- Alpaca news path
+- Alpaca options-context path
+- current-month Alpaca batch refresh via `src/data/alpaca/update_current_month.py`
 - OKX supplemental candles path
 - Bitget supplemental enrichment path
+
+Current note:
+- Alpaca auth is now working in the current environment via repo-local `.env`
+- Alpaca crypto requests require slash-form symbols such as `BTC/USD`, while on-disk storage still normalizes to safe paths such as `BTC-USD`
 
 ### Candidate but not operational now
 - `etf.com` candidate ETF discovery path (blocked by Cloudflare for direct HTTP use)

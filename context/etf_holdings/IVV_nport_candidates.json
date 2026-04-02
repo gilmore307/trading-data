@@ -1,0 +1,5082 @@
+{
+  "etf_symbol": "IVV",
+  "series_candidate": {
+    "SERIES_NAME": "iShares Core S&P 500 ETF",
+    "SERIES_ID": "S000004310",
+    "SERIES_LEI": "5493007M4YMN8XL48C14",
+    "CLASS_ID": null,
+    "REGISTRANT_NAME": null
+  },
+  "rows": [
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "571903202",
+      "constituent_name": "Marriott International, Inc.",
+      "weight_percent": ".102682865847",
+      "holding_id": "159109275",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "88160R101",
+      "constituent_name": "Tesla, Inc.",
+      "weight_percent": "2.183763802371",
+      "holding_id": "159109377",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "776696106",
+      "constituent_name": "Roper Technologies, Inc.",
+      "weight_percent": ".09390542698",
+      "holding_id": "159109642",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "949746101",
+      "constituent_name": "Wells Fargo & Co.",
+      "weight_percent": ".469869319417",
+      "holding_id": "159109764",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "02079K107",
+      "constituent_name": "Alphabet, Inc.",
+      "weight_percent": "1.990203253442",
+      "holding_id": "159109263",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "337738108",
+      "constituent_name": "Fiserv, Inc.",
+      "weight_percent": ".122631264564",
+      "holding_id": "159109310",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "256677105",
+      "constituent_name": "Dollar General Corp.",
+      "weight_percent": ".039801200112",
+      "holding_id": "159109513",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "87256C101",
+      "constituent_name": "TKO Group Holdings, Inc.",
+      "weight_percent": ".024368918487",
+      "holding_id": "159109606",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "00971T101",
+      "constituent_name": "Akamai Technologies, Inc.",
+      "weight_percent": ".019008824849",
+      "holding_id": "159109910",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Seagate Technology Holdings plc",
+      "weight_percent": ".087868240522",
+      "holding_id": "159109877",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "808513105",
+      "constituent_name": "Charles Schwab Corp. (The)",
+      "weight_percent": ".285063708379",
+      "holding_id": "159109904",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "87612G101",
+      "constituent_name": "Targa Resources Corp.",
+      "weight_percent": ".063087037796",
+      "holding_id": "159110379",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "831865209",
+      "constituent_name": "A O Smith Corp.",
+      "weight_percent": ".014678476102",
+      "holding_id": "159110498",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "91324P102",
+      "constituent_name": "UnitedHealth Group, Inc.",
+      "weight_percent": ".547263870039",
+      "holding_id": "159110314",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "595017104",
+      "constituent_name": "Microchip Technology, Inc.",
+      "weight_percent": ".06064604389",
+      "holding_id": "159109202",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "824348106",
+      "constituent_name": "Sherwin-Williams Co. (The)",
+      "weight_percent": ".140470157728",
+      "holding_id": "159109560",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "681919106",
+      "constituent_name": "Omnicom Group, Inc.",
+      "weight_percent": ".02763127619",
+      "holding_id": "159110220",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "22160K105",
+      "constituent_name": "Costco Wholesale Corp.",
+      "weight_percent": ".718349315062",
+      "holding_id": "159109668",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "75513E101",
+      "constituent_name": "RTX Corp.",
+      "weight_percent": ".391930664493",
+      "holding_id": "159110164",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "833034101",
+      "constituent_name": "Snap-on, Inc.",
+      "weight_percent": ".031656805474",
+      "holding_id": "159109340",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "655844108",
+      "constituent_name": "Norfolk Southern Corp.",
+      "weight_percent": ".117916722058",
+      "holding_id": "159109965",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "315616102",
+      "constituent_name": "F5, Inc.",
+      "weight_percent": ".032507727478",
+      "holding_id": "159109875",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "29364G103",
+      "constituent_name": "Entergy Corp.",
+      "weight_percent": ".072804103394",
+      "holding_id": "159110404",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "115637209",
+      "constituent_name": "Brown-Forman Corp.",
+      "weight_percent": ".008343749802",
+      "holding_id": "159109865",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "17275R102",
+      "constituent_name": "Cisco Systems, Inc.",
+      "weight_percent": ".474119313171",
+      "holding_id": "159109779",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "NXP Semiconductors NV",
+      "weight_percent": ".100479621618",
+      "holding_id": "159110251",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "60770K107",
+      "constituent_name": "Moderna, Inc.",
+      "weight_percent": ".015652312697",
+      "holding_id": "159110452",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "165167735",
+      "constituent_name": "Expand Energy Corp.",
+      "weight_percent": ".044281840747",
+      "holding_id": "159109306",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "368736104",
+      "constituent_name": "Generac Holdings, Inc.",
+      "weight_percent": ".017177341736",
+      "holding_id": "159109674",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "09857L108",
+      "constituent_name": "Booking Holdings, Inc.",
+      "weight_percent": ".306224509009",
+      "holding_id": "159110264",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "053611109",
+      "constituent_name": "Avery Dennison Corp.",
+      "weight_percent": ".022138259433",
+      "holding_id": "159109912",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "372460105",
+      "constituent_name": "Genuine Parts Co.",
+      "weight_percent": ".033723087343",
+      "holding_id": "159109400",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "03769M106",
+      "constituent_name": "Apollo Global Management, Inc.",
+      "weight_percent": ".107319817359",
+      "holding_id": "159109828",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "25809K105",
+      "constituent_name": "DoorDash, Inc.",
+      "weight_percent": ".176189980637",
+      "holding_id": "159109308",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92343V104",
+      "constituent_name": "Verizon Communications, Inc.",
+      "weight_percent": ".324265588772",
+      "holding_id": "159110021",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "253868103",
+      "constituent_name": "Digital Realty Trust, Inc.",
+      "weight_percent": ".096989352889",
+      "holding_id": "159109351",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "205887102",
+      "constituent_name": "Conagra Brands, Inc.",
+      "weight_percent": ".015336182973",
+      "holding_id": "159109723",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "04621X108",
+      "constituent_name": "Assurant, Inc.",
+      "weight_percent": ".019141309967",
+      "holding_id": "159109415",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "086516101",
+      "constituent_name": "Best Buy Co., Inc.",
+      "weight_percent": ".026007150283",
+      "holding_id": "159110507",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "65249B109",
+      "constituent_name": "News Corp.",
+      "weight_percent": ".020232044843",
+      "holding_id": "159109581",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "023608102",
+      "constituent_name": "Ameren Corp.",
+      "weight_percent": ".049383750422",
+      "holding_id": "159109936",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "552953101",
+      "constituent_name": "MGM Resorts International",
+      "weight_percent": ".012383851718",
+      "holding_id": "159110034",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "369550108",
+      "constituent_name": "General Dynamics Corp.",
+      "weight_percent": ".150658771806",
+      "holding_id": "159109510",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "22160N109",
+      "constituent_name": "CoStar Group, Inc.",
+      "weight_percent": ".062543927165",
+      "holding_id": "159109218",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92556V106",
+      "constituent_name": "Viatris, Inc.",
+      "weight_percent": ".020197348689",
+      "holding_id": "159109934",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "573284106",
+      "constituent_name": "Martin Marietta Materials, Inc.",
+      "weight_percent": ".06647722742",
+      "holding_id": "159110157",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "701094104",
+      "constituent_name": "Parker-Hannifin Corp.",
+      "weight_percent": ".169537922852",
+      "holding_id": "159110340",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "718546104",
+      "constituent_name": "Phillips 66",
+      "weight_percent": ".096194896147",
+      "holding_id": "159109281",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "526057104",
+      "constituent_name": "Lennar Corp.",
+      "weight_percent": ".050191577243",
+      "holding_id": "159109906",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "81762P102",
+      "constituent_name": "ServiceNow, Inc.",
+      "weight_percent": ".334981999509",
+      "holding_id": "159109963",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "12514G108",
+      "constituent_name": "CDW Corp.",
+      "weight_percent": ".036535396822",
+      "holding_id": "159110129",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "526107107",
+      "constituent_name": "Lennox International, Inc.",
+      "weight_percent": ".029632398708",
+      "holding_id": "159109507",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "443201108",
+      "constituent_name": "Howmet Aerospace, Inc.",
+      "weight_percent": ".138419597927",
+      "holding_id": "159109261",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "78409V104",
+      "constituent_name": "S&P Global, Inc.",
+      "weight_percent": ".266145411697",
+      "holding_id": "159109585",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "03076C106",
+      "constituent_name": "Ameriprise Financial, Inc.",
+      "weight_percent": ".075634094333",
+      "holding_id": "159109967",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "89832Q109",
+      "constituent_name": "Truist Financial Corp.",
+      "weight_percent": ".103157635777",
+      "holding_id": "159109996",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "42824C109",
+      "constituent_name": "Hewlett Packard Enterprise Co.",
+      "weight_percent": ".056396294128",
+      "holding_id": "159109405",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "05464C101",
+      "constituent_name": "Axon Enterprise, Inc.",
+      "weight_percent": ".098585270152",
+      "holding_id": "159109571",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "43300A203",
+      "constituent_name": "Hilton Worldwide Holdings, Inc.",
+      "weight_percent": ".106784978756",
+      "holding_id": "159109235",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "235851102",
+      "constituent_name": "Danaher Corp.",
+      "weight_percent": ".221083103989",
+      "holding_id": "159109253",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "67066G104",
+      "constituent_name": "NVIDIA Corp.",
+      "weight_percent": "7.966414089523",
+      "holding_id": "159109220",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "896239100",
+      "constituent_name": "Trimble, Inc.",
+      "weight_percent": ".033994811689",
+      "holding_id": "159109334",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "718172109",
+      "constituent_name": "Philip Morris International, Inc.",
+      "weight_percent": ".441810464843",
+      "holding_id": "159109683",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "609839105",
+      "constituent_name": "Monolithic Power Systems, Inc.",
+      "weight_percent": ".077145627671",
+      "holding_id": "159110484",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "25278X109",
+      "constituent_name": "Diamondback Energy, Inc.",
+      "weight_percent": ".047072470769",
+      "holding_id": "159109563",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "631103108",
+      "constituent_name": "Nasdaq, Inc.",
+      "weight_percent": ".070166742259",
+      "holding_id": "159109597",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "09260D107",
+      "constituent_name": "Blackstone, Inc.",
+      "weight_percent": ".220371739226",
+      "holding_id": "159109747",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "30225T102",
+      "constituent_name": "Extra Space Storage, Inc.",
+      "weight_percent": ".05233957531",
+      "holding_id": "159110461",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "934423104",
+      "constituent_name": "Warner Bros Discovery, Inc.",
+      "weight_percent": ".084608658191",
+      "holding_id": "159109432",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "N/A",
+      "weight_percent": ".00196717886",
+      "holding_id": "159110059",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "278865100",
+      "constituent_name": "Ecolab, Inc.",
+      "weight_percent": ".122348808845",
+      "holding_id": "159110180",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "036752103",
+      "constituent_name": "Elevance Health, Inc.",
+      "weight_percent": ".12732507295",
+      "holding_id": "159110191",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "478160104",
+      "constituent_name": "Johnson & Johnson",
+      "weight_percent": ".781420368944",
+      "holding_id": "159109356",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "437076102",
+      "constituent_name": "Home Depot, Inc. (The)",
+      "weight_percent": ".705447564226",
+      "holding_id": "159109440",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92840M102",
+      "constituent_name": "Vistra Corp.",
+      "weight_percent": ".109204196332",
+      "holding_id": "159109916",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "45687V106",
+      "constituent_name": "Ingersoll Rand, Inc.",
+      "weight_percent": ".052291876073",
+      "holding_id": "159109926",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "925652109",
+      "constituent_name": "VICI Properties, Inc.",
+      "weight_percent": ".060852506319",
+      "holding_id": "159109971",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "STERIS plc",
+      "weight_percent": ".04265827708",
+      "holding_id": "159110168",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "579780206",
+      "constituent_name": "McCormick & Co., Inc.",
+      "weight_percent": ".029624471678",
+      "holding_id": "159109444",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "46120E602",
+      "constituent_name": "Intuitive Surgical, Inc.",
+      "weight_percent": ".28054324295",
+      "holding_id": "159110199",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "592688105",
+      "constituent_name": "Mettler-Toledo International, Inc.",
+      "weight_percent": ".044236148984",
+      "holding_id": "159109293",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "194162103",
+      "constituent_name": "Colgate-Palmolive Co.",
+      "weight_percent": ".113051852464",
+      "holding_id": "159109851",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "066922519",
+      "constituent_name": "BlackRock Funds III",
+      "weight_percent": ".000000000285",
+      "holding_id": "159109973",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "30231G102",
+      "constituent_name": "Exxon Mobil Corp.",
+      "weight_percent": ".841124216341",
+      "holding_id": "159109180",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "98419M100",
+      "constituent_name": "Xylem, Inc.",
+      "weight_percent": ".062835980343",
+      "holding_id": "159109231",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "313745101",
+      "constituent_name": "Federal Realty Investment Trust",
+      "weight_percent": ".013836598505",
+      "holding_id": "159109386",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "126650100",
+      "constituent_name": "CVS Health Corp.",
+      "weight_percent": ".167321704206",
+      "holding_id": "159110390",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "74762E102",
+      "constituent_name": "Quanta Services, Inc.",
+      "weight_percent": ".108025829971",
+      "holding_id": "159109823",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "03831W108",
+      "constituent_name": "AppLovin Corp.",
+      "weight_percent": ".340441083454",
+      "holding_id": "159109957",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "98138H101",
+      "constituent_name": "Workday, Inc.",
+      "weight_percent": ".091008498682",
+      "holding_id": "159110469",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "500754106",
+      "constituent_name": "Kraft Heinz Co. (The)",
+      "weight_percent": ".038830649058",
+      "holding_id": "159109160",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "902494103",
+      "constituent_name": "Tyson Foods, Inc.",
+      "weight_percent": ".027148748156",
+      "holding_id": "159109908",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "59156R108",
+      "constituent_name": "MetLife, Inc.",
+      "weight_percent": ".08051485126",
+      "holding_id": "159110011",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "876030107",
+      "constituent_name": "Tapestry, Inc.",
+      "weight_percent": ".041235270709",
+      "holding_id": "159110141",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "026874784",
+      "constituent_name": "American International Group, Inc.",
+      "weight_percent": ".076145843068",
+      "holding_id": "159110295",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "12541W209",
+      "constituent_name": "CH Robinson Worldwide, Inc.",
+      "weight_percent": ".027355745585",
+      "holding_id": "159109291",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "053015103",
+      "constituent_name": "Automatic Data Processing, Inc.",
+      "weight_percent": ".208011798182",
+      "holding_id": "159109304",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "260557103",
+      "constituent_name": "Dow, Inc.",
+      "weight_percent": ".028441177779",
+      "holding_id": "159109979",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "15135B101",
+      "constituent_name": "Centene Corp.",
+      "weight_percent": ".029129018289",
+      "holding_id": "159110417",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "191216100",
+      "constituent_name": "Coca-Cola Co. (The)",
+      "weight_percent": ".449503468492",
+      "holding_id": "159109938",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "747525103",
+      "constituent_name": "QUALCOMM, Inc.",
+      "weight_percent": ".313973990461",
+      "holding_id": "159110407",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "617446448",
+      "constituent_name": "Morgan Stanley",
+      "weight_percent": ".337476271355",
+      "holding_id": "159109811",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "682189105",
+      "constituent_name": "ON Semiconductor Corp.",
+      "weight_percent": ".035292408877",
+      "holding_id": "159110224",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "30212P303",
+      "constituent_name": "Expedia Group, Inc.",
+      "weight_percent": ".04419948346",
+      "holding_id": "159109746",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "31428X106",
+      "constituent_name": "FedEx Corp.",
+      "weight_percent": ".089548273753",
+      "holding_id": "159110324",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "539830109",
+      "constituent_name": "Lockheed Martin Corp.",
+      "weight_percent": ".179441455216",
+      "holding_id": "159110429",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "418056107",
+      "constituent_name": "Hasbro, Inc.",
+      "weight_percent": ".017681684777",
+      "holding_id": "159110153",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "65339F101",
+      "constituent_name": "NextEra Energy, Inc.",
+      "weight_percent": ".272024414162",
+      "holding_id": "159109316",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "95040Q104",
+      "constituent_name": "Welltower, Inc.",
+      "weight_percent": ".208494402133",
+      "holding_id": "159109954",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "29476L107",
+      "constituent_name": "Equity Residential",
+      "weight_percent": ".039368801505",
+      "holding_id": "159110187",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "844741108",
+      "constituent_name": "Southwest Airlines Co.",
+      "weight_percent": ".029327586557",
+      "holding_id": "159109320",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "209115104",
+      "constituent_name": "Consolidated Edison, Inc.",
+      "weight_percent": ".06343318593",
+      "holding_id": "159109545",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "192446102",
+      "constituent_name": "Cognizant Technology Solutions Corp.",
+      "weight_percent": ".057319012972",
+      "holding_id": "159109795",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "955306105",
+      "constituent_name": "West Pharmaceutical Services, Inc.",
+      "weight_percent": ".033003072827",
+      "holding_id": "159109961",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "37045V100",
+      "constituent_name": "General Motors Co.",
+      "weight_percent": ".101579930212",
+      "holding_id": "159110318",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "550021109",
+      "constituent_name": "Lululemon Athletica, Inc.",
+      "weight_percent": ".033959503645",
+      "holding_id": "159109384",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "60871R209",
+      "constituent_name": "Molson Coors Beverage Co.",
+      "weight_percent": ".013410424368",
+      "holding_id": "159110083",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "060505104",
+      "constituent_name": "Bank of America Corp.",
+      "weight_percent": ".615177615339",
+      "holding_id": "159110087",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "513272104",
+      "constituent_name": "Lamb Weston Holdings, Inc.",
+      "weight_percent": ".014166632692",
+      "holding_id": "159109427",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "244199105",
+      "constituent_name": "Deere & Co.",
+      "weight_percent": ".201567832827",
+      "holding_id": "159109524",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "668771108",
+      "constituent_name": "Gen Digital, Inc.",
+      "weight_percent": ".027840643691",
+      "holding_id": "159109247",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "83444M101",
+      "constituent_name": "Solventum Corp.",
+      "weight_percent": ".01882228145",
+      "holding_id": "159109438",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "90384S303",
+      "constituent_name": "Ulta Beauty, Inc.",
+      "weight_percent": ".042971330436",
+      "holding_id": "159109733",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "74251V102",
+      "constituent_name": "Principal Financial Group, Inc.",
+      "weight_percent": ".02941437075",
+      "holding_id": "159110051",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "22822V101",
+      "constituent_name": "Crown Castle, Inc.",
+      "weight_percent": ".073525540089",
+      "holding_id": "159109898",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "969904101",
+      "constituent_name": "Williams-Sonoma, Inc.",
+      "weight_percent": ".042065192322",
+      "holding_id": "159109584",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "149123101",
+      "constituent_name": "Caterpillar, Inc.",
+      "weight_percent": ".391122816265",
+      "holding_id": "159109942",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "302130109",
+      "constituent_name": "Expeditors International of Washington, Inc.",
+      "weight_percent": ".029124350586",
+      "holding_id": "159109186",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "46982L108",
+      "constituent_name": "Jacobs Solutions, Inc.",
+      "weight_percent": ".031346061367",
+      "holding_id": "159110310",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "941848103",
+      "constituent_name": "Waters Corp.",
+      "weight_percent": ".031234736821",
+      "holding_id": "159109249",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "751212101",
+      "constituent_name": "Ralph Lauren Corp.",
+      "weight_percent": ".021248217586",
+      "holding_id": "159109515",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "30303M102",
+      "constituent_name": "Meta Platforms, Inc.",
+      "weight_percent": "2.787328163609",
+      "holding_id": "159109652",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "11133T103",
+      "constituent_name": "Broadridge Financial Solutions, Inc.",
+      "weight_percent": ".048831161237",
+      "holding_id": "159109902",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92345Y106",
+      "constituent_name": "Verisk Analytics, Inc.",
+      "weight_percent": ".061496739833",
+      "holding_id": "159109922",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "615369105",
+      "constituent_name": "Moody's Corp.",
+      "weight_percent": ".128608348414",
+      "holding_id": "159109301",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "64110L106",
+      "constituent_name": "Netflix, Inc.",
+      "weight_percent": ".89149393683",
+      "holding_id": "159109750",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "219948106",
+      "constituent_name": "Corpay, Inc.",
+      "weight_percent": ".035576513428",
+      "holding_id": "159109820",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "98978V103",
+      "constituent_name": "Zoetis, Inc.",
+      "weight_percent": ".113482858932",
+      "holding_id": "159110487",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "666807102",
+      "constituent_name": "Northrop Grumman Corp.",
+      "weight_percent": ".143522678194",
+      "holding_id": "159109239",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "366651107",
+      "constituent_name": "Gartner, Inc.",
+      "weight_percent": ".034821490762",
+      "holding_id": "159109330",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "828806109",
+      "constituent_name": "Simon Property Group, Inc.",
+      "weight_percent": ".107209287711",
+      "holding_id": "159109402",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "29444U700",
+      "constituent_name": "Equinix, Inc.",
+      "weight_percent": ".134086074967",
+      "holding_id": "159110493",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "23918K108",
+      "constituent_name": "DaVita, Inc.",
+      "weight_percent": ".008313376665",
+      "holding_id": "159110393",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "LyondellBasell Industries NV",
+      "weight_percent": ".022083675966",
+      "holding_id": "159109575",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "74144T108",
+      "constituent_name": "T. Rowe Price Group, Inc.",
+      "weight_percent": ".039467449156",
+      "holding_id": "159109932",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "34959J108",
+      "constituent_name": "Fortive Corp.",
+      "weight_percent": ".02900269127",
+      "holding_id": "159109622",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "466313103",
+      "constituent_name": "Jabil, Inc.",
+      "weight_percent": ".040788284416",
+      "holding_id": "159109229",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "115236101",
+      "constituent_name": "Brown & Brown, Inc.",
+      "weight_percent": ".048092904774",
+      "holding_id": "159109151",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "040413205",
+      "constituent_name": "Arista Networks, Inc.",
+      "weight_percent": ".2627903943",
+      "holding_id": "159109392",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "501889208",
+      "constituent_name": "LKQ Corp.",
+      "weight_percent": ".013751482141",
+      "holding_id": "159109396",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "55354G100",
+      "constituent_name": "MSCI, Inc.",
+      "weight_percent": ".076784672655",
+      "holding_id": "159109554",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Arch Capital Group Ltd.",
+      "weight_percent": ".059016171085",
+      "holding_id": "159109709",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "30161N101",
+      "constituent_name": "Exelon Corp.",
+      "weight_percent": ".079551150829",
+      "holding_id": "159109861",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "682680103",
+      "constituent_name": "ONEOK, Inc.",
+      "weight_percent": ".08041364626",
+      "holding_id": "159110110",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "03743Q108",
+      "constituent_name": "APA Corp.",
+      "weight_percent": ".015202928521",
+      "holding_id": "159109588",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "256746108",
+      "constituent_name": "Dollar Tree, Inc.",
+      "weight_percent": ".032055596611",
+      "holding_id": "159110235",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "670346105",
+      "constituent_name": "Nucor Corp.",
+      "weight_percent": ".054385902323",
+      "holding_id": "159109390",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Royal Caribbean Cruises Ltd.",
+      "weight_percent": ".143037331951",
+      "holding_id": "159109538",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "127097103",
+      "constituent_name": "Coterra Energy, Inc.",
+      "weight_percent": ".03158201728",
+      "holding_id": "159109959",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "097023105",
+      "constituent_name": "Boeing Co. (The)",
+      "weight_percent": ".285584006705",
+      "holding_id": "159109322",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "303250104",
+      "constituent_name": "Fair Isaac Corp.",
+      "weight_percent": ".062844632118",
+      "holding_id": "159109328",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Invesco Ltd.",
+      "weight_percent": ".017900994693",
+      "holding_id": "159109616",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "172908105",
+      "constituent_name": "Cintas Corp.",
+      "weight_percent": ".123042185052",
+      "holding_id": "159110501",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "16119P108",
+      "constituent_name": "Charter Communications, Inc.",
+      "weight_percent": ".044694161244",
+      "holding_id": "159110373",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "233331107",
+      "constituent_name": "DTE Energy Co.",
+      "weight_percent": ".051384345935",
+      "holding_id": "159109363",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "697435105",
+      "constituent_name": "Palo Alto Networks, Inc.",
+      "weight_percent": ".23798249643",
+      "holding_id": "159110490",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "69932A204",
+      "constituent_name": "Paramount Skydance Corp.",
+      "weight_percent": ".010283679942",
+      "holding_id": "159109956",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "237194105",
+      "constituent_name": "Darden Restaurants, Inc.",
+      "weight_percent": ".038998989015",
+      "holding_id": "159109613",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "879360105",
+      "constituent_name": "Teledyne Technologies, Inc.",
+      "weight_percent": ".048037160094",
+      "holding_id": "159109924",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "64110D104",
+      "constituent_name": "NetApp, Inc.",
+      "weight_percent": ".041474196241",
+      "holding_id": "159110268",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "57667L107",
+      "constituent_name": "Match Group, Inc.",
+      "weight_percent": ".014872046985",
+      "holding_id": "159109164",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "70450Y103",
+      "constituent_name": "PayPal Holdings, Inc.",
+      "weight_percent": ".112114258184",
+      "holding_id": "159109196",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "574599106",
+      "constituent_name": "Masco Corp.",
+      "weight_percent": ".025792368712",
+      "holding_id": "159110195",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "038222105",
+      "constituent_name": "Applied Materials, Inc.",
+      "weight_percent": ".287506964019",
+      "holding_id": "159109852",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "015271109",
+      "constituent_name": "Alexandria Real Estate Equities, Inc.",
+      "weight_percent": ".022698428551",
+      "holding_id": "159109772",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "459200101",
+      "constituent_name": "International Business Machines Corp.",
+      "weight_percent": ".459947825381",
+      "holding_id": "159109273",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "49177J102",
+      "constituent_name": "Kenvue, Inc.",
+      "weight_percent": ".054501979722",
+      "holding_id": "159109985",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "989207105",
+      "constituent_name": "Zebra Technologies Corp.",
+      "weight_percent": ".026449879063",
+      "holding_id": "159109946",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "00130H105",
+      "constituent_name": "AES Corp. (The)",
+      "weight_percent": ".016397078617",
+      "holding_id": "159110413",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "460690100",
+      "constituent_name": "Interpublic Group of Cos., Inc. (The)",
+      "weight_percent": ".01789016092",
+      "holding_id": "159109603",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "35137L204",
+      "constituent_name": "Fox Corp.",
+      "weight_percent": ".014872689807",
+      "holding_id": "159109625",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "988498101",
+      "constituent_name": "Yum! Brands, Inc.",
+      "weight_percent": ".073830130174",
+      "holding_id": "159110371",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "11135F101",
+      "constituent_name": "Broadcom, Inc.",
+      "weight_percent": "2.715304007587",
+      "holding_id": "159109632",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "69608A108",
+      "constituent_name": "Palantir Technologies, Inc.",
+      "weight_percent": ".72596424436",
+      "holding_id": "159109699",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "518439104",
+      "constituent_name": "Estee Lauder Cos., Inc. (The)",
+      "weight_percent": ".036111958557",
+      "holding_id": "159110014",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "125269100",
+      "constituent_name": "CF Industries Holdings, Inc.",
+      "weight_percent": ".025425664621",
+      "holding_id": "159110091",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "913903100",
+      "constituent_name": "Universal Health Services, Inc.",
+      "weight_percent": ".020171391534",
+      "holding_id": "159109532",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "03027X100",
+      "constituent_name": "American Tower Corp.",
+      "weight_percent": ".157573507062",
+      "holding_id": "159110419",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "12504L109",
+      "constituent_name": "CBRE Group, Inc.",
+      "weight_percent": ".080817997734",
+      "holding_id": "159109149",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "44107P104",
+      "constituent_name": "Host Hotels & Resorts, Inc.",
+      "weight_percent": ".019044860923",
+      "holding_id": "159109153",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "037833100",
+      "constituent_name": "Apple, Inc.",
+      "weight_percent": "6.612422586428",
+      "holding_id": "159109295",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "48251W104",
+      "constituent_name": "KKR & Co., Inc.",
+      "weight_percent": ".156003568444",
+      "holding_id": "159109421",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "620076307",
+      "constituent_name": "Motorola Solutions, Inc.",
+      "weight_percent": ".13334785087",
+      "holding_id": "159109725",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "143130102",
+      "constituent_name": "CarMax, Inc.",
+      "weight_percent": ".01178385435",
+      "holding_id": "159109475",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "169656105",
+      "constituent_name": "Chipotle Mexican Grill, Inc.",
+      "weight_percent": ".091951442232",
+      "holding_id": "159109491",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "252131107",
+      "constituent_name": "Dexcom, Inc.",
+      "weight_percent": ".046179047253",
+      "holding_id": "159109761",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "406216101",
+      "constituent_name": "Halliburton Co.",
+      "weight_percent": ".036700009863",
+      "holding_id": "159109884",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "354613101",
+      "constituent_name": "Franklin Resources, Inc.",
+      "weight_percent": ".01239664561",
+      "holding_id": "159110042",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "29530P102",
+      "constituent_name": "Erie Indemnity Co.",
+      "weight_percent": ".014149802484",
+      "holding_id": "159109892",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "23331A109",
+      "constituent_name": "DR Horton, Inc.",
+      "weight_percent": ".08220850369",
+      "holding_id": "159110467",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "68902V107",
+      "constituent_name": "Otis Worldwide Corp.",
+      "weight_percent": ".062793881265",
+      "holding_id": "159109610",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "548661107",
+      "constituent_name": "Lowe's Cos., Inc.",
+      "weight_percent": ".246445918073",
+      "holding_id": "159109842",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "806857108",
+      "constituent_name": "Schlumberger NV",
+      "weight_percent": ".089731051073",
+      "holding_id": "159109849",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "609207105",
+      "constituent_name": "Mondelez International, Inc.",
+      "weight_percent": ".141447303293",
+      "holding_id": "159110209",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "69331C108",
+      "constituent_name": "PG&E Corp.",
+      "weight_percent": ".057995530395",
+      "holding_id": "159109224",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "09062X103",
+      "constituent_name": "Biogen, Inc.",
+      "weight_percent": ".035941317964",
+      "holding_id": "159109277",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "57636Q104",
+      "constituent_name": "Mastercard, Inc.",
+      "weight_percent": ".821691858171",
+      "holding_id": "159109361",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "969457100",
+      "constituent_name": "Williams Cos., Inc. (The)",
+      "weight_percent": ".135369179051",
+      "holding_id": "159109457",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "336433107",
+      "constituent_name": "First Solar, Inc.",
+      "weight_percent": ".041393504602",
+      "holding_id": "159109484",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "009066101",
+      "constituent_name": "Airbnb, Inc.",
+      "weight_percent": ".09115927959",
+      "holding_id": "159109569",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "704326107",
+      "constituent_name": "Paychex, Inc.",
+      "weight_percent": ".071918064143",
+      "holding_id": "159110067",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "512807306",
+      "constituent_name": "Lam Research Corp.",
+      "weight_percent": ".296536440914",
+      "holding_id": "159109172",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "760759100",
+      "constituent_name": "Republic Services, Inc.",
+      "weight_percent": ".081497590327",
+      "holding_id": "159109287",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "679580100",
+      "constituent_name": "Old Dominion Freight Line, Inc.",
+      "weight_percent": ".045553273107",
+      "holding_id": "159110172",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "94106L109",
+      "constituent_name": "Waste Management, Inc.",
+      "weight_percent": ".143206770029",
+      "holding_id": "159109200",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "74834L100",
+      "constituent_name": "Quest Diagnostics, Inc.",
+      "weight_percent": ".037307951178",
+      "holding_id": "159110079",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "45841N107",
+      "constituent_name": "Interactive Brokers Group, Inc.",
+      "weight_percent": ".053613741164",
+      "holding_id": "159109192",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "744320102",
+      "constituent_name": "Prudential Financial, Inc.",
+      "weight_percent": ".063895762179",
+      "holding_id": "159109394",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "066922477",
+      "constituent_name": "BlackRock Funds III",
+      "weight_percent": ".12992626226",
+      "holding_id": "159110228",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "538034109",
+      "constituent_name": "Live Nation Entertainment, Inc.",
+      "weight_percent": ".045087581307",
+      "holding_id": "159109629",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "744573106",
+      "constituent_name": "Public Service Enterprise Group, Inc.",
+      "weight_percent": ".072882840189",
+      "holding_id": "159109740",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "55261F104",
+      "constituent_name": "M&T Bank Corp.",
+      "weight_percent": ".054054757607",
+      "holding_id": "159110421",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "26884L109",
+      "constituent_name": "EQT Corp.",
+      "weight_percent": ".059442696059",
+      "holding_id": "159109858",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "693718108",
+      "constituent_name": "PACCAR, Inc.",
+      "weight_percent": ".090349362075",
+      "holding_id": "159110247",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "231021106",
+      "constituent_name": "Cummins, Inc.",
+      "weight_percent": ".101857285956",
+      "holding_id": "159109265",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "36828A101",
+      "constituent_name": "GE Vernova, Inc.",
+      "weight_percent": ".292863792786",
+      "holding_id": "159109285",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "75886F107",
+      "constituent_name": "Regeneron Pharmaceuticals, Inc.",
+      "weight_percent": ".100261035809",
+      "holding_id": "159110261",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "34959E109",
+      "constituent_name": "Fortinet, Inc.",
+      "weight_percent": ".095835753912",
+      "holding_id": "159109718",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "29084Q100",
+      "constituent_name": "EMCOR Group, Inc.",
+      "weight_percent": ".050854889325",
+      "holding_id": "159110444",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "294429105",
+      "constituent_name": "Equifax, Inc.",
+      "weight_percent": ".055592781087",
+      "holding_id": "159109222",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "883203101",
+      "constituent_name": "Textron, Inc.",
+      "weight_percent": ".026341457078",
+      "holding_id": "159110075",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "09290D101",
+      "constituent_name": "BlackRock, Inc.",
+      "weight_percent": ".293733790454",
+      "holding_id": "159109178",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "36266G107",
+      "constituent_name": "GE HealthCare Technologies, Inc.",
+      "weight_percent": ".059993613961",
+      "holding_id": "159109312",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Pentair plc",
+      "weight_percent": ".031771901604",
+      "holding_id": "159109373",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "61174X109",
+      "constituent_name": "Monster Beverage Corp.",
+      "weight_percent": ".08396071727",
+      "holding_id": "159109166",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "872540109",
+      "constituent_name": "TJX Cos., Inc. (The)",
+      "weight_percent": ".282180957525",
+      "holding_id": "159109951",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "254687106",
+      "constituent_name": "Walt Disney Co. (The)",
+      "weight_percent": ".36023091878",
+      "holding_id": "159110038",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Accenture plc",
+      "weight_percent": ".268778607207",
+      "holding_id": "159110376",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "45784P101",
+      "constituent_name": "Insulet Corp.",
+      "weight_percent": ".038016695089",
+      "holding_id": "159109888",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "35671D857",
+      "constituent_name": "Freeport-McMoRan, Inc.",
+      "weight_percent": ".09853682415",
+      "holding_id": "159109548",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Chubb Ltd.",
+      "weight_percent": ".18312020747",
+      "holding_id": "159109212",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Linde plc",
+      "weight_percent": ".389778850871",
+      "holding_id": "159110504",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "59522J103",
+      "constituent_name": "Mid-America Apartment Communities, Inc.",
+      "weight_percent": ".02863498472",
+      "holding_id": "159109243",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "695156109",
+      "constituent_name": "Packaging Corp. of America",
+      "weight_percent": ".034067546216",
+      "holding_id": "159110441",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "761152107",
+      "constituent_name": "ResMed, Inc.",
+      "weight_percent": ".070142495596",
+      "holding_id": "159109297",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "281020107",
+      "constituent_name": "Edison International",
+      "weight_percent": ".037222114551",
+      "holding_id": "159109354",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "19260Q107",
+      "constituent_name": "Coinbase Global, Inc.",
+      "weight_percent": ".13353293296",
+      "holding_id": "159110017",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "482480100",
+      "constituent_name": "KLA Corp.",
+      "weight_percent": ".249010016382",
+      "holding_id": "159109241",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "902653104",
+      "constituent_name": "UDR, Inc.",
+      "weight_percent": ".019661900115",
+      "holding_id": "159109451",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "45167R104",
+      "constituent_name": "IDEX Corp.",
+      "weight_percent": ".021439636145",
+      "holding_id": "159109690",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "025537101",
+      "constituent_name": "American Electric Power Co., Inc.",
+      "weight_percent": ".105274881067",
+      "holding_id": "159109896",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "49446R109",
+      "constituent_name": "Kimco Realty Corp.",
+      "weight_percent": ".025893687205",
+      "holding_id": "159109557",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "452308109",
+      "constituent_name": "Illinois Tool Works, Inc.",
+      "weight_percent": ".121022430062",
+      "holding_id": "159110343",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "580135101",
+      "constituent_name": "McDonald's Corp.",
+      "weight_percent": ".379471431942",
+      "holding_id": "159110346",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "03073E105",
+      "constituent_name": "Cencora, Inc.",
+      "weight_percent": ".106052249619",
+      "holding_id": "159110424",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "58155Q103",
+      "constituent_name": "McKesson Corp.",
+      "weight_percent": ".168166091153",
+      "holding_id": "159109635",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "031100100",
+      "constituent_name": "AMETEK, Inc.",
+      "weight_percent": ".075969124732",
+      "holding_id": "159109210",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "458140100",
+      "constituent_name": "Intel Corp.",
+      "weight_percent": ".256966057564",
+      "holding_id": "159109267",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "855244109",
+      "constituent_name": "Starbucks Corp.",
+      "weight_percent": ".168278191437",
+      "holding_id": "159109781",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "15189T107",
+      "constituent_name": "CenterPoint Energy, Inc.",
+      "weight_percent": ".044323430909",
+      "holding_id": "159110432",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "655663102",
+      "constituent_name": "Nordson Corp.",
+      "weight_percent": ".021302359846",
+      "holding_id": "159110008",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "016255101",
+      "constituent_name": "Align Technology, Inc.",
+      "weight_percent": ".014760876881",
+      "holding_id": "159110471",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "127387108",
+      "constituent_name": "Cadence Design Systems, Inc.",
+      "weight_percent": ".167511367696",
+      "holding_id": "159109170",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Bunge Global SA",
+      "weight_percent": ".019910491303",
+      "holding_id": "159109900",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "09073M104",
+      "constituent_name": "Bio-Techne Corp.",
+      "weight_percent": ".015262139821",
+      "holding_id": "159109371",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Aon plc",
+      "weight_percent": ".134525914434",
+      "holding_id": "159109680",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "21036P108",
+      "constituent_name": "Constellation Brands, Inc.",
+      "weight_percent": ".033654110222",
+      "holding_id": "159109279",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "172967424",
+      "constituent_name": "Citigroup, Inc.",
+      "weight_percent": ".326959395487",
+      "holding_id": "159109566",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "219350105",
+      "constituent_name": "Corning, Inc.",
+      "weight_percent": ".111899483733",
+      "holding_id": "159109786",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "742718109",
+      "constituent_name": "Procter & Gamble Co. (The)",
+      "weight_percent": ".629785254066",
+      "holding_id": "159109982",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "443510607",
+      "constituent_name": "Hubbell, Inc.",
+      "weight_percent": ".040004382308",
+      "holding_id": "159110005",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "713448108",
+      "constituent_name": "PepsiCo, Inc.",
+      "weight_percent": ".336453985121",
+      "holding_id": "159109784",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "806407102",
+      "constituent_name": "Henry Schein, Inc.",
+      "weight_percent": ".011967070085",
+      "holding_id": "159109863",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "285512109",
+      "constituent_name": "Electronic Arts, Inc.",
+      "weight_percent": ".079482419145",
+      "holding_id": "159110401",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "87165B103",
+      "constituent_name": "Synchrony Financial",
+      "weight_percent": ".046258053909",
+      "holding_id": "159109168",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "69370C100",
+      "constituent_name": "PTC, Inc.",
+      "weight_percent": ".042551627631",
+      "holding_id": "159109423",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "754730109",
+      "constituent_name": "Raymond James Financial, Inc.",
+      "weight_percent": ".053596906862",
+      "holding_id": "159109409",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Willis Towers Watson plc",
+      "weight_percent": ".058958835558",
+      "holding_id": "159109686",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "126408103",
+      "constituent_name": "CSX Corp.",
+      "weight_percent": ".115842025317",
+      "holding_id": "159110474",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "40412C101",
+      "constituent_name": "HCA Healthcare, Inc.",
+      "weight_percent": ".122161892163",
+      "holding_id": "159110176",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "12572Q105",
+      "constituent_name": "CME Group, Inc.",
+      "weight_percent": ".170380848921",
+      "holding_id": "159109190",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "125523100",
+      "constituent_name": "Cigna Group (The)",
+      "weight_percent": ".134621018409",
+      "holding_id": "159109871",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "74340W103",
+      "constituent_name": "Prologis, Inc.",
+      "weight_percent": ".185986471324",
+      "holding_id": "159110102",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92826C839",
+      "constituent_name": "Visa, Inc.",
+      "weight_percent": "1.014741361213",
+      "holding_id": "159110337",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "42250P103",
+      "constituent_name": "Healthpeak Properties, Inc.",
+      "weight_percent": ".023286669863",
+      "holding_id": "159110368",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "98389B100",
+      "constituent_name": "Xcel Energy, Inc.",
+      "weight_percent": ".083460197086",
+      "holding_id": "159109720",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "88579Y101",
+      "constituent_name": "3M Co.",
+      "weight_percent": ".144632976265",
+      "holding_id": "159110137",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "902973304",
+      "constituent_name": "US Bancorp",
+      "weight_percent": ".131612353572",
+      "holding_id": "159109756",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "816851109",
+      "constituent_name": "Sempra",
+      "weight_percent": ".102730862065",
+      "holding_id": "159110275",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "277432100",
+      "constituent_name": "Eastman Chemical Co.",
+      "weight_percent": ".012666502263",
+      "holding_id": "159110438",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "311900104",
+      "constituent_name": "Fastenal Co.",
+      "weight_percent": ".098480820026",
+      "holding_id": "159110396",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "852234103",
+      "constituent_name": "Block, Inc.",
+      "weight_percent": ".069501781475",
+      "holding_id": "159110481",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92338C103",
+      "constituent_name": "Veralto Corp.",
+      "weight_percent": ".046288744592",
+      "holding_id": "159109338",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "902252105",
+      "constituent_name": "Tyler Technologies, Inc.",
+      "weight_percent": ".039574450395",
+      "holding_id": "159110287",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "756109104",
+      "constituent_name": "Realty Income Corp.",
+      "weight_percent": ".097263346272",
+      "holding_id": "159109696",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "012653101",
+      "constituent_name": "Albemarle Corp.",
+      "weight_percent": ".016697695927",
+      "holding_id": "159110348",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "25179M103",
+      "constituent_name": "Devon Energy Corp.",
+      "weight_percent": ".03894617954",
+      "holding_id": "159109314",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "37959E102",
+      "constituent_name": "Globe Life, Inc.",
+      "weight_percent": ".020254601839",
+      "holding_id": "159109419",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "693506107",
+      "constituent_name": "PPG Industries, Inc.",
+      "weight_percent": ".041509040203",
+      "holding_id": "159109814",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "665859104",
+      "constituent_name": "Northern Trust Corp.",
+      "weight_percent": ".045041174602",
+      "holding_id": "159110213",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "438516106",
+      "constituent_name": "Honeywell International, Inc.",
+      "weight_percent": ".233866299643",
+      "holding_id": "159110145",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "243537107",
+      "constituent_name": "Deckers Outdoor Corp.",
+      "weight_percent": ".026315539206",
+      "holding_id": "159109257",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "863667101",
+      "constituent_name": "Stryker Corp.",
+      "weight_percent": ".222602405106",
+      "holding_id": "159109255",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "487836108",
+      "constituent_name": "Kellanova",
+      "weight_percent": ".038595640376",
+      "holding_id": "159110030",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "871607107",
+      "constituent_name": "Synopsys, Inc.",
+      "weight_percent": ".159728313028",
+      "holding_id": "159110326",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "058498106",
+      "constituent_name": "Ball Corp.",
+      "weight_percent": ".024007726644",
+      "holding_id": "159109834",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "49271V100",
+      "constituent_name": "Keurig Dr Pepper, Inc.",
+      "weight_percent": ".060640604599",
+      "holding_id": "159109702",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "032654105",
+      "constituent_name": "Analog Devices, Inc.",
+      "weight_percent": ".213371438091",
+      "holding_id": "159109846",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "532457108",
+      "constituent_name": "Eli Lilly & Co.",
+      "weight_percent": "1.06151559867",
+      "holding_id": "159109251",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "78410G104",
+      "constituent_name": "SBA Communications Corp.",
+      "weight_percent": ".036333635592",
+      "holding_id": "159109283",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92343E102",
+      "constituent_name": "VeriSign, Inc.",
+      "weight_percent": ".041115487475",
+      "holding_id": "159109462",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "436440101",
+      "constituent_name": "Hologic, Inc.",
+      "weight_percent": ".026264130116",
+      "holding_id": "159109464",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "075887109",
+      "constituent_name": "Becton Dickinson & Co.",
+      "weight_percent": ".093880239421",
+      "holding_id": "159109388",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "316773100",
+      "constituent_name": "Fifth Third Bancorp",
+      "weight_percent": ".0516007021",
+      "holding_id": "159109789",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "143658300",
+      "constituent_name": "Carnival Corp.",
+      "weight_percent": ".054923672638",
+      "holding_id": "159109693",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "69351T106",
+      "constituent_name": "PPL Corp.",
+      "weight_percent": ".04808592879",
+      "holding_id": "159109759",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "007903107",
+      "constituent_name": "Advanced Micro Devices, Inc.",
+      "weight_percent": ".459456444015",
+      "holding_id": "159109825",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "216648501",
+      "constituent_name": "Cooper Cos., Inc. (The)",
+      "weight_percent": ".023937322756",
+      "holding_id": "159109730",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "446413106",
+      "constituent_name": "Huntington Ingalls Industries, Inc.",
+      "weight_percent": ".019770479006",
+      "holding_id": "159109800",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "983134107",
+      "constituent_name": "Wynn Resorts Ltd.",
+      "weight_percent": ".018939946474",
+      "holding_id": "159109918",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "540424108",
+      "constituent_name": "Loews Corp.",
+      "weight_percent": ".029885737688",
+      "holding_id": "159109208",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "101137107",
+      "constituent_name": "Boston Scientific Corp.",
+      "weight_percent": ".253142842139",
+      "holding_id": "159109269",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "427866108",
+      "constituent_name": "Hershey Co. (The)",
+      "weight_percent": ".048486338242",
+      "holding_id": "159110283",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "12503M108",
+      "constituent_name": "CBOE Global Markets, Inc.",
+      "weight_percent": ".044874354814",
+      "holding_id": "159109854",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "46266C105",
+      "constituent_name": "IQVIA Holdings, Inc.",
+      "weight_percent": ".056516444749",
+      "holding_id": "159109976",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "58933Y105",
+      "constituent_name": "Merck & Co., Inc.",
+      "weight_percent": ".366839149009",
+      "holding_id": "159109359",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "872590104",
+      "constituent_name": "T-Mobile US, Inc.",
+      "weight_percent": ".202691469599",
+      "holding_id": "159109817",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "892356106",
+      "constituent_name": "Tractor Supply Co.",
+      "weight_percent": ".052734100559",
+      "holding_id": "159110279",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "693475105",
+      "constituent_name": "PNC Financial Services Group, Inc. (The)",
+      "weight_percent": ".138473980595",
+      "holding_id": "159109466",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "70432V102",
+      "constituent_name": "Paycom Software, Inc.",
+      "weight_percent": ".018224352809",
+      "holding_id": "159110357",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "002824100",
+      "constituent_name": "Abbott Laboratories",
+      "weight_percent": ".407935807135",
+      "holding_id": "159109645",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "001055102",
+      "constituent_name": "Aflac, Inc.",
+      "weight_percent": ".094085277212",
+      "holding_id": "159110359",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "101121101",
+      "constituent_name": "BXP, Inc.",
+      "weight_percent": ".019156731308",
+      "holding_id": "159110149",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "89417E109",
+      "constituent_name": "Travelers Cos., Inc. (The)",
+      "weight_percent": ".110006023821",
+      "holding_id": "159109481",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "874054109",
+      "constituent_name": "Take-Two Interactive Software, Inc.",
+      "weight_percent": ".078412998795",
+      "holding_id": "159109856",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "02079K305",
+      "constituent_name": "Alphabet, Inc.",
+      "weight_percent": "2.474537602145",
+      "holding_id": "159109184",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "133131102",
+      "constituent_name": "Camden Property Trust",
+      "weight_percent": ".019972995773",
+      "holding_id": "159109353",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "46625H100",
+      "constituent_name": "JPMorgan Chase & Co.",
+      "weight_percent": "1.517773398006",
+      "holding_id": "159109797",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "052769106",
+      "constituent_name": "Autodesk, Inc.",
+      "weight_percent": ".118939506709",
+      "holding_id": "159109518",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "893641100",
+      "constituent_name": "TransDigm Group, Inc.",
+      "weight_percent": ".129961814243",
+      "holding_id": "159109530",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "74460D109",
+      "constituent_name": "Public Storage",
+      "weight_percent": ".079839052093",
+      "holding_id": "159110094",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "958102105",
+      "constituent_name": "Western Digital Corp.",
+      "weight_percent": ".07288023922",
+      "holding_id": "159110254",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "502431109",
+      "constituent_name": "L3Harris Technologies, Inc.",
+      "weight_percent": ".100009774688",
+      "holding_id": "159109947",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "871829107",
+      "constituent_name": "Sysco Corp.",
+      "weight_percent": ".068803829983",
+      "holding_id": "159109527",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "459506101",
+      "constituent_name": "International Flavors & Fragrances, Inc.",
+      "weight_percent": ".027597474359",
+      "holding_id": "159109867",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "28176E108",
+      "constituent_name": "Edwards Lifesciences Corp.",
+      "weight_percent": ".079898163743",
+      "holding_id": "159109914",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Everest Group Ltd.",
+      "weight_percent": ".025730646406",
+      "holding_id": "159109289",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "962166104",
+      "constituent_name": "Weyerhaeuser Co.",
+      "weight_percent": ".031300146394",
+      "holding_id": "159109469",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Medtronic plc",
+      "weight_percent": ".21354025261",
+      "holding_id": "159109655",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "73278L105",
+      "constituent_name": "Pool Corp.",
+      "weight_percent": ".017805887216",
+      "holding_id": "159109176",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "384802104",
+      "constituent_name": "WW Grainger, Inc.",
+      "weight_percent": ".073351915439",
+      "holding_id": "159109478",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "020002101",
+      "constituent_name": "Allstate Corp. (The)",
+      "weight_percent": ".098962168651",
+      "holding_id": "159109349",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "608190104",
+      "constituent_name": "Mohawk Industries, Inc.",
+      "weight_percent": ".011727582422",
+      "holding_id": "159109873",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "745867101",
+      "constituent_name": "PulteGroup, Inc.",
+      "weight_percent": ".045626931879",
+      "holding_id": "159110385",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "49456B101",
+      "constituent_name": "Kinder Morgan, Inc.",
+      "weight_percent": ".09686757755",
+      "holding_id": "159110354",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Eaton Corp. plc",
+      "weight_percent": ".254945719967",
+      "holding_id": "159109162",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "929160109",
+      "constituent_name": "Vulcan Materials Co.",
+      "weight_percent": ".071101177567",
+      "holding_id": "159109182",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "084670702",
+      "constituent_name": "Berkshire Hathaway, Inc.",
+      "weight_percent": "1.613178611076",
+      "holding_id": "159109809",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "651639106",
+      "constituent_name": "Newmont Corp.",
+      "weight_percent": ".162049785956",
+      "holding_id": "159109446",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "171340102",
+      "constituent_name": "Church & Dwight Co., Inc.",
+      "weight_percent": ".0373597489",
+      "holding_id": "159109487",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "674599105",
+      "constituent_name": "Occidental Petroleum Corp.",
+      "weight_percent": ".059418576463",
+      "holding_id": "159110205",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "071813109",
+      "constituent_name": "Baxter International, Inc.",
+      "weight_percent": ".020465521404",
+      "holding_id": "159109214",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "525327102",
+      "constituent_name": "Leidos Holdings, Inc.",
+      "weight_percent": ".042417231813",
+      "holding_id": "159110362",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "217204106",
+      "constituent_name": "Copart, Inc.",
+      "weight_percent": ".070001936153",
+      "holding_id": "159110291",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "461202103",
+      "constituent_name": "Intuit, Inc.",
+      "weight_percent": ".333296653948",
+      "holding_id": "159109271",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "159864107",
+      "constituent_name": "Charles River Laboratories International, Inc.",
+      "weight_percent": ".013478009855",
+      "holding_id": "159109299",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Amcor plc",
+      "weight_percent": ".032977797239",
+      "holding_id": "159109993",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92939U106",
+      "constituent_name": "WEC Energy Group, Inc.",
+      "weight_percent": ".064548751442",
+      "holding_id": "159110239",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "832696405",
+      "constituent_name": "J M Smucker Co. (The)",
+      "weight_percent": ".020255668004",
+      "holding_id": "159109259",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "911312106",
+      "constituent_name": "United Parcel Service, Inc.",
+      "weight_percent": ".10758280409",
+      "holding_id": "159109398",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "654106103",
+      "constituent_name": "NIKE, Inc.",
+      "weight_percent": ".144961019067",
+      "holding_id": "159110118",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "723484101",
+      "constituent_name": "Pinnacle West Capital Corp.",
+      "weight_percent": ".018737956706",
+      "holding_id": "159110160",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "907818108",
+      "constituent_name": "Union Pacific Corp.",
+      "weight_percent": ".245275937746",
+      "holding_id": "159110232",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "7591EP100",
+      "constituent_name": "Regions Financial Corp.",
+      "weight_percent": ".041176130014",
+      "holding_id": "159109381",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "416515104",
+      "constituent_name": "Hartford Insurance Group, Inc. (The)",
+      "weight_percent": ".065636568644",
+      "holding_id": "159109425",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "88262P102",
+      "constituent_name": "Texas Pacific Land Corp.",
+      "weight_percent": ".031497018102",
+      "holding_id": "159109318",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "440452100",
+      "constituent_name": "Hormel Foods Corp.",
+      "weight_percent": ".012618325483",
+      "holding_id": "159109367",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "493267108",
+      "constituent_name": "KeyCorp",
+      "weight_percent": ".030482518829",
+      "holding_id": "159109770",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "166764100",
+      "constituent_name": "Chevron Corp.",
+      "weight_percent": ".522963962195",
+      "holding_id": "159109869",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "629377508",
+      "constituent_name": "NRG Energy, Inc.",
+      "weight_percent": ".054808317004",
+      "holding_id": "159110415",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "031162100",
+      "constituent_name": "Amgen, Inc.",
+      "weight_percent": ".265833358669",
+      "holding_id": "159110056",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "380237107",
+      "constituent_name": "GoDaddy, Inc.",
+      "weight_percent": ".033147199697",
+      "holding_id": "159109715",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Garmin Ltd.",
+      "weight_percent": ".070502671121",
+      "holding_id": "159110464",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Smurfit WestRock plc",
+      "weight_percent": ".038895239991",
+      "holding_id": "159110477",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "12008R107",
+      "constituent_name": "Builders FirstSource, Inc.",
+      "weight_percent": ".02345997905",
+      "holding_id": "159109535",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "68389X105",
+      "constituent_name": "Oracle Corp.",
+      "weight_percent": ".815581491021",
+      "holding_id": "159109158",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92276F100",
+      "constituent_name": "Ventas, Inc.",
+      "weight_percent": ".0555753376",
+      "holding_id": "159109542",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "86800U302",
+      "constituent_name": "Super Micro Computer, Inc.",
+      "weight_percent": ".042058464581",
+      "holding_id": "159110365",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "030420103",
+      "constituent_name": "American Water Works Co., Inc.",
+      "weight_percent": ".047512501761",
+      "holding_id": "159109460",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "30034W106",
+      "constituent_name": "Evergy, Inc.",
+      "weight_percent": ".030618745712",
+      "holding_id": "159110098",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "773903109",
+      "constituent_name": "Rockwell Automation, Inc.",
+      "weight_percent": ".0687764974",
+      "holding_id": "159109767",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "38141G104",
+      "constituent_name": "Goldman Sachs Group, Inc. (The)",
+      "weight_percent": ".421800663239",
+      "holding_id": "159110024",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "717081103",
+      "constituent_name": "Pfizer, Inc.",
+      "weight_percent": ".253502418044",
+      "holding_id": "159109369",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "25754A201",
+      "constituent_name": "Domino's Pizza, Inc.",
+      "weight_percent": ".023572987346",
+      "holding_id": "159109999",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Allegion plc",
+      "weight_percent": ".026633096145",
+      "holding_id": "159109928",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "90353T100",
+      "constituent_name": "Uber Technologies, Inc.",
+      "weight_percent": ".357520422346",
+      "holding_id": "159109344",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "00287Y109",
+      "constituent_name": "AbbVie, Inc.",
+      "weight_percent": ".715755429965",
+      "holding_id": "159110216",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "911363109",
+      "constituent_name": "United Rentals, Inc.",
+      "weight_percent": ".107533933669",
+      "holding_id": "159110271",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "22788C105",
+      "constituent_name": "Crowdstrike Holdings, Inc.",
+      "weight_percent": ".213879910155",
+      "holding_id": "159109198",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "053484101",
+      "constituent_name": "AvalonBay Communities, Inc.",
+      "weight_percent": ".048059954698",
+      "holding_id": "159109969",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "25746U109",
+      "constituent_name": "Dominion Energy, Inc.",
+      "weight_percent": ".091352074195",
+      "holding_id": "159110387",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "00206R102",
+      "constituent_name": "AT&T, Inc.",
+      "weight_percent": ".353348331197",
+      "holding_id": "159109365",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "189054109",
+      "constituent_name": "Clorox Co. (The)",
+      "weight_percent": ".02639668842",
+      "holding_id": "159109592",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "775711104",
+      "constituent_name": "Rollins, Inc.",
+      "weight_percent": ".028896067113",
+      "holding_id": "159109619",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "854502101",
+      "constituent_name": "Stanley Black & Decker, Inc.",
+      "weight_percent": ".020137591557",
+      "holding_id": "159109880",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "45337C102",
+      "constituent_name": "Incyte Corp.",
+      "weight_percent": ".024342174944",
+      "holding_id": "159110334",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "369604301",
+      "constituent_name": "GE Aerospace",
+      "weight_percent": ".558202001393",
+      "holding_id": "159110351",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "501044101",
+      "constituent_name": "Kroger Co. (The)",
+      "weight_percent": ".07174655944",
+      "holding_id": "159109346",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "594918104",
+      "constituent_name": "Microsoft Corp.",
+      "weight_percent": "6.737004382454",
+      "holding_id": "159110071",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "110122108",
+      "constituent_name": "Bristol-Myers Squibb Co.",
+      "weight_percent": ".160632613748",
+      "holding_id": "159109245",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "15677J108",
+      "constituent_name": "Dayforce, Inc.",
+      "weight_percent": ".019256087849",
+      "holding_id": "159109728",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "65473P105",
+      "constituent_name": "NiSource, Inc.",
+      "weight_percent": ".035677765533",
+      "holding_id": "159109803",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "084423102",
+      "constituent_name": "WR Berkley Corp.",
+      "weight_percent": ".040180666165",
+      "holding_id": "159109775",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "125896100",
+      "constituent_name": "CMS Energy Corp.",
+      "weight_percent": ".038369163401",
+      "holding_id": "159109944",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "260003108",
+      "constituent_name": "Dover Corp.",
+      "weight_percent": ".040024347493",
+      "holding_id": "159110332",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "363576109",
+      "constituent_name": "Arthur J Gallagher & Co.",
+      "weight_percent": ".13894106792",
+      "holding_id": "159109753",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "770700102",
+      "constituent_name": "Robinhood Markets, Inc.",
+      "weight_percent": ".193905081924",
+      "holding_id": "159109206",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "446150104",
+      "constituent_name": "Huntington Bancshares, Inc.",
+      "weight_percent": ".044263718758",
+      "holding_id": "159109216",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "929740108",
+      "constituent_name": "Westinghouse Air Brake Technologies Corp.",
+      "weight_percent": ".059964987503",
+      "holding_id": "159109434",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Norwegian Cruise Line Holdings Ltd.",
+      "weight_percent": ".019479294233",
+      "holding_id": "159110409",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "858119100",
+      "constituent_name": "Steel Dynamics, Inc.",
+      "weight_percent": ".033759498449",
+      "holding_id": "159109407",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "880770102",
+      "constituent_name": "Teradyne, Inc.",
+      "weight_percent": ".038309100186",
+      "holding_id": "159109413",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "066922519",
+      "constituent_name": "BlackRock Funds III",
+      "weight_percent": ".366491310372",
+      "holding_id": "159109332",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "20030N101",
+      "constituent_name": "Comcast Corp.",
+      "weight_percent": ".202480330172",
+      "holding_id": "159109712",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "444859102",
+      "constituent_name": "Humana, Inc.",
+      "weight_percent": ".054735573",
+      "holding_id": "159110047",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "134429109",
+      "constituent_name": "Campbell's Co. (The)",
+      "weight_percent": ".010872068106",
+      "holding_id": "159109886",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "30040W108",
+      "constituent_name": "Eversource Energy",
+      "weight_percent": ".046193868413",
+      "holding_id": "159109595",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "375558103",
+      "constituent_name": "Gilead Sciences, Inc.",
+      "weight_percent": ".241012140387",
+      "holding_id": "159110302",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "882508104",
+      "constituent_name": "Texas Instruments, Inc.",
+      "weight_percent": ".292305047052",
+      "holding_id": "159110447",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "049560105",
+      "constituent_name": "Atmos Energy Corp.",
+      "weight_percent": ".047962154072",
+      "holding_id": "159109379",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "40434L105",
+      "constituent_name": "HP, Inc.",
+      "weight_percent": ".044754476924",
+      "holding_id": "159109837",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "494368103",
+      "constituent_name": "Kimberly-Clark Corp.",
+      "weight_percent": ".072181018489",
+      "holding_id": "159110114",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "26875P101",
+      "constituent_name": "EOG Resources, Inc.",
+      "weight_percent": ".107124648763",
+      "holding_id": "159110299",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "67103H107",
+      "constituent_name": "O'Reilly Automotive, Inc.",
+      "weight_percent": ".16007150834",
+      "holding_id": "159110329",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "31620M106",
+      "constituent_name": "Fidelity National Information Services, Inc.",
+      "weight_percent": ".060275527158",
+      "holding_id": "159110458",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "91913Y100",
+      "constituent_name": "Valero Energy Corp.",
+      "weight_percent": ".092554313643",
+      "holding_id": "159109194",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "291011104",
+      "constituent_name": "Emerson Electric Co.",
+      "weight_percent": ".12919690729",
+      "holding_id": "159110133",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "842587107",
+      "constituent_name": "Southern Co. (The)",
+      "weight_percent": ".182420510975",
+      "holding_id": "159109551",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "743315103",
+      "constituent_name": "Progressive Corp. (The)",
+      "weight_percent": ".253302308043",
+      "holding_id": "159109429",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "337932107",
+      "constituent_name": "FirstEnergy Corp.",
+      "weight_percent": ".041663006256",
+      "holding_id": "159109792",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "92532F100",
+      "constituent_name": "Vertex Pharmaceuticals, Inc.",
+      "weight_percent": ".175697306255",
+      "holding_id": "159109839",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "778296103",
+      "constituent_name": "Ross Stores, Inc.",
+      "weight_percent": ".087228272904",
+      "holding_id": "159109336",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "87612E106",
+      "constituent_name": "Target Corp.",
+      "weight_percent": ".071316484678",
+      "holding_id": "159109879",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "931142103",
+      "constituent_name": "Walmart, Inc.",
+      "weight_percent": ".791559528887",
+      "holding_id": "159109188",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "88339J105",
+      "constituent_name": "Trade Desk, Inc. (The)",
+      "weight_percent": ".038220429001",
+      "holding_id": "159109436",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "039483102",
+      "constituent_name": "Archer-Daniels-Midland Co.",
+      "weight_percent": ".050221918615",
+      "holding_id": "159109174",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "22052L104",
+      "constituent_name": "Corteva, Inc.",
+      "weight_percent": ".080369561317",
+      "holding_id": "159109578",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "23804L103",
+      "constituent_name": "Datadog, Inc.",
+      "weight_percent": ".080544424937",
+      "holding_id": "159109638",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "445658107",
+      "constituent_name": "JB Hunt Transport Services, Inc.",
+      "weight_percent": ".017958580653",
+      "holding_id": "159109806",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "460146103",
+      "constituent_name": "International Paper Co.",
+      "weight_percent": ".04286679455",
+      "holding_id": "159109648",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "65249B208",
+      "constituent_name": "News Corp.",
+      "weight_percent": ".007519943625",
+      "holding_id": "159109743",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "20825C104",
+      "constituent_name": "ConocoPhillips",
+      "weight_percent": ".206731706015",
+      "holding_id": "159109894",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "009158106",
+      "constituent_name": "Air Products & Chemicals, Inc.",
+      "weight_percent": ".106191366277",
+      "holding_id": "159109661",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "247361702",
+      "constituent_name": "Delta Air Lines, Inc.",
+      "weight_percent": ".064412140061",
+      "holding_id": "159109890",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "05722G100",
+      "constituent_name": "Baker Hughes Co.",
+      "weight_percent": ".084053954092",
+      "holding_id": "159110258",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "45866F104",
+      "constituent_name": "Intercontinental Exchange, Inc.",
+      "weight_percent": ".168751890895",
+      "holding_id": "159109156",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "370334104",
+      "constituent_name": "General Mills, Inc.",
+      "weight_percent": ".047172789994",
+      "holding_id": "159109442",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "83088M102",
+      "constituent_name": "Skyworks Solutions, Inc.",
+      "weight_percent": ".019994722406",
+      "holding_id": "159109453",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "24703L202",
+      "constituent_name": "Dell Technologies, Inc.",
+      "weight_percent": ".075226826414",
+      "holding_id": "159110398",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "053332102",
+      "constituent_name": "AutoZone, Inc.",
+      "weight_percent": ".125736319496",
+      "holding_id": "159109600",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "278642103",
+      "constituent_name": "eBay, Inc.",
+      "weight_percent": ".072736545542",
+      "holding_id": "159110495",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "303075105",
+      "constituent_name": "FactSet Research Systems, Inc.",
+      "weight_percent": ".01894633758",
+      "holding_id": "159110106",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "62944T105",
+      "constituent_name": "NVR, Inc.",
+      "weight_percent": ".040784498181",
+      "holding_id": "159109237",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "35137L105",
+      "constituent_name": "Fox Corp.",
+      "weight_percent": ".02316801966",
+      "holding_id": "159109324",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "172062101",
+      "constituent_name": "Cincinnati Financial Corp.",
+      "weight_percent": ".043272829266",
+      "holding_id": "159109472",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "174610105",
+      "constituent_name": "Citizens Financial Group, Inc.",
+      "weight_percent": ".040128383426",
+      "holding_id": "159110435",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "297178105",
+      "constituent_name": "Essex Property Trust, Inc.",
+      "weight_percent": ".030177331993",
+      "holding_id": "159109233",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "714046109",
+      "constituent_name": "Revvity, Inc.",
+      "weight_percent": ".017802950607",
+      "holding_id": "159109504",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "910047109",
+      "constituent_name": "United Airlines Holdings, Inc.",
+      "weight_percent": ".054672198963",
+      "holding_id": "159109658",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "345370860",
+      "constituent_name": "Ford Motor Co.",
+      "weight_percent": ".081809923376",
+      "holding_id": "159110427",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "504922105",
+      "constituent_name": "Labcorp Holdings, Inc.",
+      "weight_percent": ".041758291693",
+      "holding_id": "159110122",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "45168D104",
+      "constituent_name": "IDEXX Laboratories, Inc.",
+      "weight_percent": ".089458256972",
+      "holding_id": "159109930",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "46187W107",
+      "constituent_name": "Invitation Homes, Inc.",
+      "weight_percent": ".028943125697",
+      "holding_id": "159109705",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "14149Y108",
+      "constituent_name": "Cardinal Health, Inc.",
+      "weight_percent": ".065590306186",
+      "holding_id": "159109737",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "00846U101",
+      "constituent_name": "Agilent Technologies, Inc.",
+      "weight_percent": ".06379120144",
+      "holding_id": "159109990",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "426281101",
+      "constituent_name": "Jack Henry & Associates, Inc.",
+      "weight_percent": ".018985179501",
+      "holding_id": "159109326",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "TE Connectivity plc",
+      "weight_percent": ".113505633745",
+      "holding_id": "159109521",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "025816109",
+      "constituent_name": "American Express Co.",
+      "weight_percent": ".315491299264",
+      "holding_id": "159109342",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "00724F101",
+      "constituent_name": "Adobe, Inc.",
+      "weight_percent": ".261815665311",
+      "holding_id": "159109494",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "595112103",
+      "constituent_name": "Micron Technology, Inc.",
+      "weight_percent": ".327679460913",
+      "holding_id": "159109920",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "26441C204",
+      "constituent_name": "Duke Energy Corp.",
+      "weight_percent": ".168402017744",
+      "holding_id": "159110306",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "46284V101",
+      "constituent_name": "Iron Mountain, Inc.",
+      "weight_percent": ".05268460147",
+      "holding_id": "159110449",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "032095101",
+      "constituent_name": "Amphenol Corp.",
+      "weight_percent": ".26438236612",
+      "holding_id": "159109204",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "14040H105",
+      "constituent_name": "Capital One Financial Corp.",
+      "weight_percent": ".237900361066",
+      "holding_id": "159109665",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "79466L302",
+      "constituent_name": "Salesforce, Inc.",
+      "weight_percent": ".396471769336",
+      "holding_id": "159110455",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "21037T109",
+      "constituent_name": "Constellation Energy Corp.",
+      "weight_percent": ".179892801732",
+      "holding_id": "159109831",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "517834107",
+      "constituent_name": "Las Vegas Sands Corp.",
+      "weight_percent": ".029075387185",
+      "holding_id": "159109375",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Johnson Controls International plc",
+      "weight_percent": ".125896576129",
+      "holding_id": "159109411",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "49338L103",
+      "constituent_name": "Keysight Technologies, Inc.",
+      "weight_percent": ".052685817979",
+      "holding_id": "159109677",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "37940X102",
+      "constituent_name": "Global Payments, Inc.",
+      "weight_percent": ".035268445014",
+      "holding_id": "159110002",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "56585A102",
+      "constituent_name": "Marathon Petroleum Corp.",
+      "weight_percent": ".102534028288",
+      "holding_id": "159110243",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "023135106",
+      "constituent_name": "Amazon.com, Inc.",
+      "weight_percent": "3.728874855075",
+      "holding_id": "159109227",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Aptiv plc",
+      "weight_percent": ".032860746328",
+      "holding_id": "159110382",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "758849103",
+      "constituent_name": "Regency Centers Corp.",
+      "weight_percent": ".020847453112",
+      "holding_id": "159109497",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "26614N102",
+      "constituent_name": "DuPont de Nemours, Inc.",
+      "weight_percent": ".057073774177",
+      "holding_id": "159109940",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "018802108",
+      "constituent_name": "Alliant Energy Corp.",
+      "weight_percent": ".030317170762",
+      "holding_id": "159110184",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "064058100",
+      "constituent_name": "Bank of New York Mellon Corp. (The)",
+      "weight_percent": ".134463387868",
+      "holding_id": "159110126",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "60855R100",
+      "constituent_name": "Molina Healthcare, Inc.",
+      "weight_percent": ".018157294622",
+      "holding_id": "159109417",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "571748102",
+      "constituent_name": "Marsh & McLennan Cos., Inc.",
+      "weight_percent": ".173372597636",
+      "holding_id": "159109949",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "857477103",
+      "constituent_name": "State Street Corp.",
+      "weight_percent": ".057587241618",
+      "holding_id": "159110201",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "14448C104",
+      "constituent_name": "Carrier Global Corp.",
+      "weight_percent": ".083573907624",
+      "holding_id": "159109671",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "61945C103",
+      "constituent_name": "Mosaic Co. (The)",
+      "weight_percent": ".019260771066",
+      "holding_id": "159110416",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "29414B104",
+      "constituent_name": "EPAM Systems, Inc.",
+      "weight_percent": ".014705935616",
+      "holding_id": "159109448",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "02209S103",
+      "constituent_name": "Altria Group, Inc.",
+      "weight_percent": ".194189080375",
+      "holding_id": "159109501",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "883556102",
+      "constituent_name": "Thermo Fisher Scientific, Inc.",
+      "weight_percent": ".32047171574",
+      "holding_id": "159110321",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "N/A",
+      "constituent_name": "Trane Technologies plc",
+      "weight_percent": ".164275114211",
+      "holding_id": "159109455",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    },
+    {
+      "etf_symbol": "IVV",
+      "as_of_date": null,
+      "constituent_symbol": "98956P102",
+      "constituent_name": "Zimmer Biomet Holdings, Inc.",
+      "weight_percent": ".03414362322",
+      "holding_id": "159109882",
+      "accession_number": "0002071691-25-007634",
+      "series_id": "S000004310"
+    }
+  ]
+}

@@ -86,6 +86,17 @@ Current category structure:
 
 Machine-readable config:
 - `config/etf_context_universe.json`
+- `config/underlying_etf_context_candidates.json`
+- `config/etf_holdings_target_universe.json`
+
+Target-universe note:
+- `etf_context_universe.json` is the broad candidate context universe
+- `etf_holdings_target_universe.json` is the narrower actionable holdings-extraction target list derived from it
+
+Candidate mapping skeleton note:
+- `trading-data` may maintain a permissive candidate ETF/context mapping skeleton for underlyings and broad-market proxies
+- this skeleton is only an upstream preparation artifact
+- `trading-model` should later own scoring, pruning, and final context relevance decisions
 
 ## Universe support rule
 

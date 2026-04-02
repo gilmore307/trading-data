@@ -6,6 +6,7 @@ Use this directory for things like:
 - ETF holdings snapshots / normalized holdings exports
 - ETF candidate universes
 - symbol-to-context mapping skeletons
+- local source-state tracking such as N-PORT availability/capture state
 - other context metadata that supports downstream modeling but is not itself minute-level market tape data
 
 ## Rule

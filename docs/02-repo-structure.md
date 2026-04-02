@@ -19,6 +19,18 @@ The tracked `data/` tree should stay simple and contain only real symbol/month m
 Do not keep empty placeholder subtrees under `data/` just to reserve future concepts.
 If future non-tape metadata is needed, place it under `context/` or another deliberate location instead of leaving unused empty directories inside the main data tree.
 
+## Canonical data layers
+
+The repository-level data layer meanings are:
+- `raw` — source-native or near-source-native captured datasets
+- `intermediate` — reusable transformed datasets that are still part of the upstream data layer
+- `derived` — durable derived outputs generated from upstream datasets
+- `reports` — human-readable diagnostics, audits, or review artifacts
+- `manifests` — machine-readable coverage / freshness / inventory metadata
+
+Current first-wave tracked mainline storage remains the direct symbol/month raw path:
+- `data/<symbol>/<YYMM>/<dataset>.jsonl`
+
 ## Code grouping rule
 
 Source-specific logic should live under `src/`.

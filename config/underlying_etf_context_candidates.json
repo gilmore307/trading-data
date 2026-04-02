@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "last_updated": "2026-04-03",
+  "notes": [
+    "This file is a candidate mapping skeleton prepared by trading-data.",
+    "It is intentionally permissive and should not be treated as final relevance scoring.",
+    "trading-model should later own scoring, pruning, and final context selection."
+  ],
+  "underlyings": {
+    "AAPL": {
+      "broad_market": ["SPY", "QQQ", "VTI"],
+      "sector": ["XLK"],
+      "industry": ["IGV", "SMH", "SOXX"],
+      "thematic": ["AIQ", "BOTZ"],
+      "cross_asset_proxy": ["GLD", "DBC", "IBIT"]
+    },
+    "MSFT": {
+      "broad_market": ["SPY", "QQQ", "VTI"],
+      "sector": ["XLK"],
+      "industry": ["IGV", "SMH", "SOXX"],
+      "thematic": ["AIQ", "BOTZ", "DTCR"],
+      "cross_asset_proxy": ["GLD", "DBC", "IBIT"]
+    },
+    "NVDA": {
+      "broad_market": ["SPY", "QQQ", "VTI"],
+      "sector": ["XLK"],
+      "industry": ["SMH", "SOXX"],
+      "thematic": ["AIQ", "BOTZ", "DTCR"],
+      "cross_asset_proxy": ["GLD", "DBC", "IBIT"]
+    },
+    "TSLA": {
+      "broad_market": ["SPY", "QQQ", "IWM"],
+      "sector": ["XLY", "XLI"],
+      "industry": ["DRIV", "LIT"],
+      "thematic": ["DRIV", "BOTZ"],
+      "cross_asset_proxy": ["USO", "DBC", "IBIT"]
+    },
+    "BTC/USD": {
+      "broad_market": ["SPY", "QQQ"],
+      "sector": [],
+      "industry": [],
+      "thematic": ["BKCH"],
+      "cross_asset_proxy": ["IBIT", "BITW", "GLD"]
+    }
+  }
+}

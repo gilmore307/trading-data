@@ -17,6 +17,21 @@ BUSINESS_TZ = ZoneInfo("America/New_York")
 BASE_URL = "https://data.alpaca.markets"
 
 
+def load_dotenv() -> None:
+    env_path = ROOT / ".env"
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 def parse_time_to_ms(value: str) -> int:
     value = value.strip()
     if value.isdigit():
@@ -184,6 +199,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    load_dotenv()
     parser = build_parser()
     args = parser.parse_args()
     result = fetch_historical_bars(

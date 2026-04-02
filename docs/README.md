@@ -13,6 +13,7 @@ It owns source adapters, acquisition/update workflows, monthly-partitioned data 
 4. `04-context-and-universe.md`
 5. `05-holdings-source-and-refresh.md`
 6. `06-source-coverage-and-status.md`
+7. `07-automation-and-refresh-strategy.md`
 
 ## Supporting docs
 

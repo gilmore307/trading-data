@@ -1,0 +1,1 @@
+{"source": "alpaca", "asset_class": "stocks", "feed_scope": "stocks", "dataset": "quotes", "symbol": "SPY", "ts": 1775001600014, "timestamp": "2026-04-01T00:00:00.014232916Z", "bid_price": 652.22, "bid_size": 320, "bid_exchange": "P", "ask_price": 652.27, "ask_size": 200, "ask_exchange": "C", "conditions": ["R"]}

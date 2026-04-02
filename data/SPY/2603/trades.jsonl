@@ -1,0 +1,1 @@
+{"source": "alpaca", "asset_class": "stocks", "feed_scope": "stocks", "dataset": "trades", "symbol": "SPY", "ts": 1775001600098, "timestamp": "2026-04-01T00:00:00.098393351Z", "price": 650.34, "size": 3780463, "exchange": "P", "conditions": [" ", "M"], "trade_id": 52983860909113, "tape": "B"}

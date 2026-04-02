@@ -1,0 +1,29 @@
+{
+  "description": "Local N-PORT monthly availability/capture tracking state for ETF holdings ingestion.",
+  "target_month": "2026-04",
+  "last_checked_at": "2026-04-02T20:02:00.705834Z",
+  "current_month_available": false,
+  "current_month_captured": false,
+  "source_reference": {
+    "provider": "sec_nport",
+    "dataset_candidates": [
+      "FUND_REPORTED_HOLDING",
+      "IDENTIFIERS",
+      "FUND_VAR_INFO"
+    ],
+    "dataset_page": "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets",
+    "last_check_outcome": {
+      "checked_at": "2026-04-02T20:02:00.705834Z",
+      "target_month": "2026-04",
+      "dataset_page": "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets",
+      "status_code": 200,
+      "availability_signal": "token 202604 not found in dataset page body"
+    }
+  },
+  "notes": [
+    "Check once per day until current target month becomes available.",
+    "Stop polling for the month after availability is confirmed and capture succeeds.",
+    "Ticker-to-fund/entity identifier mapping is still unresolved.",
+    "Availability currently uses a coarse page-token check and still needs a stronger filing/package-level detector."
+  ]
+}

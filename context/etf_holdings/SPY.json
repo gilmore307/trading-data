@@ -1,0 +1,26 @@
+{
+  "etf_symbol": "SPY",
+  "holdings": [
+    {
+      "etf_symbol": "SPY",
+      "as_of_date": "2026-03-31",
+      "constituent_symbol": "AAPL",
+      "constituent_name": "Apple Inc.",
+      "weight_percent": 6.91
+    },
+    {
+      "etf_symbol": "SPY",
+      "as_of_date": "2026-03-31",
+      "constituent_symbol": "MSFT",
+      "constituent_name": "Microsoft Corporation",
+      "weight_percent": 6.12
+    },
+    {
+      "etf_symbol": "SPY",
+      "as_of_date": "2026-03-31",
+      "constituent_symbol": "NVDA",
+      "constituent_name": "NVIDIA Corporation",
+      "weight_percent": 5.44
+    }
+  ]
+}

@@ -13,7 +13,9 @@
 - [ ] define canonical raw/intermediate/derived/report/manifests structure
 - [x] add repo to autosync watcher configuration
 - [x] register project in workspace memory/handoff system
-- [ ] implement first Alpaca acquisition entrypoints under `src/data/alpaca/`
+- [x] implement first Alpaca acquisition entrypoints under `src/data/alpaca/`
+- [ ] define and prepare ETF/context data coverage for underlyings and broad-market proxies
+- [ ] add candidate ETF-context mapping skeleton for future relevance modeling downstream
 
 ## Scope rule
 

@@ -5,7 +5,7 @@ This document defines the target repository structure for `trading-data`.
 ## Target layout
 
 - `docs/` — ordered Markdown documentation and data-boundary references
-- `scripts/` — fetch/update/build entrypoints for source adapters and data maintenance
+- `src/` — fetch/update/build entrypoints for source adapters and data maintenance
 - `config/` — source and pipeline configuration
 - `data/` — canonical market-data repository tree
 - `tests/` — adapter/data-contract tests as the repo matures
@@ -22,13 +22,13 @@ The intended data layout should follow these top-level layers:
 
 ## Source-adapter grouping rule
 
-Source-specific acquisition logic should live under `scripts/` in a way that keeps adapter ownership clear.
+Source-specific acquisition logic should live under `src/` in a way that keeps adapter ownership clear.
 
 Initial expected families include:
-- Alpaca adapters
-- OKX adapters
-- Bitget adapters
-- update/backfill orchestration scripts
+- Alpaca adapters as the primary source family
+- OKX adapters as supplemental/backup source family
+- Bitget adapters as supplemental/backup source family
+- update/backfill orchestration code
 
 ## Scope rule
 

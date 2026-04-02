@@ -6,7 +6,7 @@ Its job is to:
 - acquire and normalize market data from supported sources
 - define and enforce raw/intermediate/derived data contracts
 - maintain sustainable data-boundary rules for future modeling
-- build canonical cross-market input layers used downstream by modeling repos
+- build canonical Alpaca-centered cross-market input layers used downstream by modeling repos
 - preserve optional enrichment-data branches without letting them redefine the canonical main line
 
 It should **not** be the primary home for strategy-family research, composite construction, ranking/selection logic, or live execution.
@@ -16,9 +16,9 @@ Those responsibilities belong downstream.
 
 ### Upstream: `trading-data`
 Owns:
-- source adapters and fetch/build scripts
+- source adapters and data-maintenance code under `src/`
 - raw data acquisition and partitioning
-- cross-market overlap data contracts
+- Alpaca-centered cross-market overlap data contracts
 - canonical sustainable input design
 - optional enrichment data boundaries
 - dataset foundation work for downstream modeling
@@ -44,15 +44,16 @@ This repo was split out as the new upstream data layer so the system can stop mi
 
 The current direction is:
 - make `trading-data` the canonical home for market-data acquisition and contracts
-- treat Alpaca as the primary long-term paid source for the future stock-first main line
-- define one canonical cross-market overlap layer shared by crypto and stocks
+- treat Alpaca as the primary long-term source and current main development focus for the future stock-first main line
+- define one canonical Alpaca-centered cross-market overlap layer shared by crypto and stocks
+- downgrade OKX/Bitget to supplemental or backup source roles unless a specific enrichment use justifies them
 - keep crypto-only enrichments available as supplemental branches rather than canonical dependencies
 - keep project docs current as the split hardens
 
 ## Main working areas
 
 - `docs/` — project documentation and data-boundary definitions
-- `scripts/` — source adapters, fetch/update jobs, and data-maintenance entrypoints
+- `src/` — source adapters, fetch/update jobs, and data-maintenance entrypoints
 - `config/` — source/data pipeline configuration
 - `data/` — canonical raw/intermediate/derived/report/manifests structure as this repo matures
 

@@ -1,17 +1,10 @@
 # scripts
 
-This directory holds market-data acquisition and maintenance entrypoints for `trading-data`.
+Legacy shell/script wrapper location for `trading-data`.
 
-## Current seeded scripts
+The canonical home for repository code is now `src/`.
 
-Under `scripts/data/`:
-- `fetch_okx_history_candles.py`
-- `fetch_bitget_derivatives_context.py`
-- `update_raw_monthly_data.py`
-- `run_btc_only_backfill.sh`
-- `run_initial_history_backfill.sh`
+## Current note
 
-## Direction
-
-These scripts were initially seeded from `trading-model` during the repo split.
-They should be normalized here over time so `trading-data` becomes the canonical home for source adapters and data-maintenance workflows.
+The first-wave seeded shell wrappers were moved into `src/data/` during the repo split bootstrap.
+Going forward, prefer `src/` as the main code location and keep `scripts/` only if a clear wrapper-only use remains.

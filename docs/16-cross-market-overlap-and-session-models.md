@@ -38,7 +38,7 @@ This repo may also expose richer branches such as:
 - stock-session context layers
 - ETF/context layers
 - options-context layers
-- crypto supplemental enrichment layers
+- OKX/Bitget-backed supplemental crypto enrichment layers
 
 ## Session-aware interpretation
 

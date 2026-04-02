@@ -19,7 +19,8 @@ It owns market-data acquisition, source adapters, raw partitioning, sustainable 
 ## Core operating model
 
 - `trading-data` is the canonical upstream data layer
-- Alpaca is the primary long-term paid source for the future stock-first main line
-- cross-market overlap data should define the canonical main input layer
+- Alpaca is the primary long-term source and current architectural main focus for the future stock-first main line
+- Alpaca cross-market overlap data should define the canonical main input layer
+- OKX and Bitget should now be treated as supplemental / backup sources rather than the primary architectural center
 - crypto-specific enrichments may remain as supplemental data branches
 - downstream repositories should consume stable data contracts rather than embed acquisition logic

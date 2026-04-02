@@ -18,6 +18,7 @@ It owns source adapters, acquisition/update workflows, monthly-partitioned data 
 9. `09-future-universe-support.md`
 10. `10-etf-context-universe.md`
 11. `11-etf-holdings-context-rule.md`
+12. `12-sec-nport-holdings-research.md`
 
 ## Supporting docs
 

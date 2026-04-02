@@ -11,8 +11,8 @@ from typing import Any
 import requests
 
 ROOT = Path(__file__).resolve().parents[3]
-DISCOVERY_PATH = ROOT / 'context' / 'etf_holdings' / '_nport_discovery.json'
-OUT_DIR = ROOT / 'context' / 'etf_holdings' / '_nport_packages'
+DISCOVERY_PATH = ROOT / 'context' / 'etf_holdings' / '_aux' / 'discovery' / 'nport_discovery.json'
+OUT_DIR = ROOT / 'context' / 'etf_holdings' / '_aux' / 'nport_data' / 'packages'
 
 
 def now_iso() -> str:

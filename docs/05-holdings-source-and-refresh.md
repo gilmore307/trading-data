@@ -8,6 +8,9 @@ ETF holdings are context metadata, not minute-level market tape.
 They should live under:
 - `context/etf_holdings/`
 
+Primary downstream-facing holdings outputs should live in month directories as ETF -> constituent mapping results.
+Operational/download/discovery helper artifacts should live under `context/etf_holdings/_aux/` rather than mixed into the main output layer.
+
 ## Priority target-universe rule
 
 The holdings pipeline should not try to solve the full ETF universe at once.
@@ -115,6 +118,7 @@ Current extraction progress:
 - `IWM` also has a clean candidate `SERIES_ID` match in the latest quarterly package
 - `QQQ` is now extractable via a `SERIES_LEI` fallback path
 - `SPY`, `VOO`, `VTI`, and `DIA` are not yet resolved in the current quarterly package using the present name-pattern mapping approach
+- intermediate mapping/discovery/download artifacts have now been separated under `context/etf_holdings/_aux/`
 
 Current limitations of this scaffold:
 - availability detection is still coarse and page-based rather than a filing/package-level detector

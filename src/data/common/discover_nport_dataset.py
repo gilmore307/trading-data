@@ -11,7 +11,7 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[3]
 SEC_PAGE = "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets"
-OUT_PATH = ROOT / "context" / "etf_holdings" / "_nport_discovery.json"
+OUT_PATH = ROOT / "context" / "etf_holdings" / "_aux" / "discovery" / "nport_discovery.json"
 ZIP_RE = re.compile(r'/files/dera/data/form-n-port-data-sets/(?P<name>(?P<year>\d{4})q(?P<quarter>[1-4])_nport\.zip)')
 
 

@@ -9,7 +9,7 @@ from typing import Any
 import requests
 
 ROOT = Path(__file__).resolve().parents[3]
-STATE_PATH = ROOT / "context" / "etf_holdings" / "_nport_state.json"
+STATE_PATH = ROOT / "context" / "etf_holdings" / "_aux" / "state" / "nport_state.json"
 SEC_DATASET_PAGE = "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets"
 
 

@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
-DISCOVERY_PATH = ROOT / 'context' / 'etf_holdings' / '_nport_discovery.json'
+DISCOVERY_PATH = ROOT / 'context' / 'etf_holdings' / '_aux' / 'discovery' / 'nport_discovery.json'
 CANDIDATES_PATH = ROOT / 'config' / 'etf_sec_series_candidates.json'
-OUT_PATH = ROOT / 'context' / 'etf_holdings' / '_sec_series_mapping_candidates.json'
+OUT_PATH = ROOT / 'context' / 'etf_holdings' / '_aux' / 'mapping' / 'sec_series_mapping_candidates_2603.json'
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -23,7 +23,7 @@ def latest_package_dir() -> Path:
     latest = discovery.get('latest')
     if not latest:
         raise ValueError('no latest discovered package available')
-    return ROOT / 'context' / 'etf_holdings' / '_nport_packages' / latest['name'].removesuffix('.zip')
+    return ROOT / 'context' / 'etf_holdings' / '_aux' / 'nport_data' / 'packages' / latest['name'].removesuffix('.zip')
 
 
 def read_fund_rows(package_dir: Path) -> list[dict[str, str]]:

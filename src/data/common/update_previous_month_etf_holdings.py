@@ -9,7 +9,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 PYTHON = 'python3'
-STATE_PATH = ROOT / 'context' / 'etf_holdings' / '_nport_state.json'
+STATE_PATH = ROOT / 'context' / 'etf_holdings' / '_aux' / 'state' / 'nport_state.json'
 SIGNALS_DIR = ROOT / 'context' / 'signals'
 
 

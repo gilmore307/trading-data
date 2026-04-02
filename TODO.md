@@ -17,8 +17,10 @@
 - [x] define first ETF/context universe for broad-market, sector, and thematic ETF candidates
 - [ ] prepare ETF/context data coverage for underlyings and broad-market proxies
 - [ ] add candidate ETF-context mapping skeleton for future relevance modeling downstream
-- [ ] add ETF holdings context layer under `context/etf_holdings/`
+- [x] add ETF holdings context layer under `context/etf_holdings/`
+- [ ] define normalized ETF holdings file schema and monthly accumulation behavior inside `context/etf_holdings/<ETF>.json`
 - [ ] decide whether ETF candidate discovery will use browser-assisted/manual etf.com exploration or a more automation-friendly source
+- [ ] research SEC Form N-PORT as a potential authoritative ETF holdings source path
 
 ## Scope rule
 

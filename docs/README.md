@@ -9,17 +9,10 @@ It owns source adapters, acquisition/update workflows, monthly-partitioned data 
 
 1. `01-overview.md`
 2. `02-repo-structure.md`
-3. `03-source-priority-and-scope.md`
-4. `04-monthly-partition-storage-policy.md`
-5. `05-canonical-data-contract.md`
-6. `06-current-source-coverage.md`
-7. `07-cross-market-overlap.md`
-8. `08-underlying-etf-options-context.md`
-9. `09-future-universe-support.md`
-10. `10-etf-context-universe.md`
-11. `11-etf-holdings-context-rule.md`
-12. `12-sec-nport-holdings-research.md`
-13. `13-nport-availability-and-state-tracking.md`
+3. `03-data-policy-and-contracts.md`
+4. `04-context-and-universe.md`
+5. `05-holdings-source-and-refresh.md`
+6. `06-source-coverage-and-status.md`
 
 ## Supporting docs
 

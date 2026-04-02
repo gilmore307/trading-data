@@ -17,8 +17,13 @@ Use the actionable priority target list at:
 This target list is derived from the broader ETF context universe and defines the first ETF set that `trading-data` should try to cover durably.
 
 ### File rule
-Use one file per ETF:
-- `context/etf_holdings/<ETF>.json`
+Group ETF holdings by month directory and use one file per ETF/month snapshot:
+- `context/etf_holdings/<YYMM>/<ETF>_<YYMM>.md`
+
+Examples:
+- `context/etf_holdings/2603/QQQ_2603.md`
+- `context/etf_holdings/2603/IVV_2603.md`
+- `context/etf_holdings/2603/SPY_2603.md`
 
 ### Current normalized schema
 Keep only:
@@ -30,7 +35,7 @@ Keep only:
 
 ### History rule
 Do not create a separate `etf_holdings_changes` storage layer.
-Keep monthly holdings history inside the ETF's single JSON file and compute changes later when needed.
+Monthly history should come from the month-partitioned ETF snapshot files themselves. Compute changes later when needed.
 
 ### Update cadence
 ETF holdings are a low-frequency context layer.
@@ -105,9 +110,10 @@ Current known discovered package state:
 Current extraction progress:
 - low-memory streaming extraction is now implemented in `extract_series_holdings_from_nport.py`
 - candidate SEC series mapping is now implemented in `map_etf_to_sec_series.py` using name-pattern candidates from `config/etf_sec_series_candidates.json`
-- `IVV` is currently the cleanest verified extraction path and now produces `context/etf_holdings/IVV_nport_candidates.json`
+- current month-partitioned sample outputs have been reorganized under `context/etf_holdings/2603/`
+- `IVV` is currently the cleanest verified extraction path
 - `IWM` also has a clean candidate `SERIES_ID` match in the latest quarterly package
-- `QQQ` is visible in the quarterly package, but the matched row currently exposes a LEI while the `SERIES_ID` field is blank, so it needs a separate identifier-handling branch
+- `QQQ` is now extractable via a `SERIES_LEI` fallback path
 - `SPY`, `VOO`, `VTI`, and `DIA` are not yet resolved in the current quarterly package using the present name-pattern mapping approach
 
 Current limitations of this scaffold:

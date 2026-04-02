@@ -82,7 +82,7 @@ def main() -> None:
         }, ensure_ascii=False, indent=2))
         return
 
-    cmd = [PYTHON, 'src/data/common/update_etf_holdings_from_nport.py']
+    cmd = [PYTHON, 'src/data/common/update_etf_holdings_from_nport.py', '--target-month', target_month]
     for tier in args.tier or []:
         cmd += ['--tier', tier]
     for symbol in args.symbol or []:
@@ -101,7 +101,8 @@ def main() -> None:
 
     results = []
     for symbol in selected_symbols:
-        candidate_path = ROOT / 'context' / 'etf_holdings' / f'{symbol}_nport_candidates.json'
+        yy_mm = target_month[2:4] + target_month[5:7]
+        candidate_path = ROOT / 'context' / 'etf_holdings' / yy_mm / f'{symbol}_{yy_mm}.md'
         results.append({'symbol': symbol, 'exists': candidate_path.exists(), 'path': str(candidate_path)})
 
     state = load_json(args.state)

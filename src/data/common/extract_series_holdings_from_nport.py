@@ -18,6 +18,13 @@ OUT_DIR = ROOT / 'context' / 'etf_holdings'
 USER_AGENT = 'Mozilla/5.0 trading-data-research local'
 
 
+def yy_mm_from_target_month(target_month: str | None) -> str:
+    if not target_month:
+        return 'unknown'
+    year, month = target_month.split('-', 1)
+    return f"{year[2:]}{month}"
+
+
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8'))
 
@@ -60,6 +67,7 @@ def main() -> None:
     parser.add_argument('--etf-symbol', required=True)
     parser.add_argument('--mapping', type=Path, default=MAPPING_PATH)
     parser.add_argument('--out', type=Path, default=None)
+    parser.add_argument('--target-month', default='2026-03')
     parser.add_argument('--keep-zip', action='store_true')
     args = parser.parse_args()
 
@@ -120,9 +128,13 @@ def main() -> None:
 
         normalized = list(holdings_by_id.values())
 
-        out_path = args.out or (OUT_DIR / f'{args.etf_symbol}_nport_candidates.json')
+        yymm = yy_mm_from_target_month(args.target_month)
+        default_dir = OUT_DIR / yymm
+        default_dir.mkdir(parents=True, exist_ok=True)
+        out_path = args.out or (default_dir / f'{args.etf_symbol}_{yymm}.md')
         out_path.write_text(json.dumps({
             'etf_symbol': args.etf_symbol,
+            'target_month': args.target_month,
             'series_candidate': series,
             'rows': normalized,
         }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

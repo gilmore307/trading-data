@@ -44,6 +44,7 @@ def main() -> None:
     parser.add_argument('--targets', type=Path, default=TARGETS_PATH)
     parser.add_argument('--tier', action='append', default=None, help='Limit to one or more tier names from etf_holdings_target_universe.json')
     parser.add_argument('--symbol', action='append', default=None, help='Limit further to one or more ETF symbols')
+    parser.add_argument('--target-month', default='2026-03')
     args = parser.parse_args()
 
     target_payload = load_json(args.targets)
@@ -58,7 +59,12 @@ def main() -> None:
 
     results = []
     for symbol in symbols:
-        ok = run([PYTHON, 'src/data/common/extract_series_holdings_from_nport.py', '--etf-symbol', symbol], required=False)
+        ok = run([
+            PYTHON,
+            'src/data/common/extract_series_holdings_from_nport.py',
+            '--etf-symbol', symbol,
+            '--target-month', args.target_month,
+        ], required=False)
         results.append({'symbol': symbol, 'ok': ok})
 
     print(json.dumps({'symbols': symbols, 'results': results}, ensure_ascii=False, indent=2))

@@ -99,15 +99,20 @@ def default_output_dir(*, symbol: str) -> Path:
 
 
 def fetch_news(*, symbol: str, start: str, end: str, limit: int, resume: bool, output_dir: Path | None) -> dict[str, Any]:
-    obj = request_json(
-        "/v1beta1/news",
-        {
-            "symbols": symbol,
-            "start": start.split("T")[0],
-            "end": end.split("T")[0],
-            "limit": limit,
-        },
-    )
+    start_date = start.split("T")[0]
+    end_date = end.split("T")[0]
+    if start_date == end_date:
+        # Alpaca news endpoint is less reliable for same-day narrow windows.
+        # Expand the end date by one calendar day to avoid avoidable 400s.
+        start_dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
+        end_date = start_dt.date().fromordinal(start_dt.date().toordinal() + 1).isoformat()
+    params = {
+        "symbols": symbol,
+        "start": start_date,
+        "end": end_date,
+        "limit": limit,
+    }
+    obj = request_json("/v1beta1/news", params)
     rows = obj.get("news", [])
     out_dir = output_dir or default_output_dir(symbol=symbol)
     dataset_name = "news"

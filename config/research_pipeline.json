@@ -1,0 +1,57 @@
+{
+  "name": "research",
+  "artifacts": {
+    "okx_candles": "data/raw/BTC-USDT-SWAP/candles/",
+    "bitget_funding": "data/raw/BTCUSDT/funding/",
+    "bitget_basis": "data/raw/BTCUSDT/basis_proxy/",
+    "market_state_dataset": "data/intermediate/market_state/crypto_market_state_dataset_v1.jsonl",
+    "ma_utility_dataset": "data/intermediate/parameter_utility/ma_parameter_utility_dataset_v1.jsonl",
+    "donchian_utility_dataset": "data/intermediate/parameter_utility/donchian_parameter_utility_dataset_v1.jsonl",
+    "bollinger_utility_dataset": "data/intermediate/parameter_utility/bollinger_parameter_utility_dataset_v1.jsonl",
+    "strategy_utility_dataset": "data/intermediate/parameter_utility/strategy_parameter_utility_dataset_v1.jsonl",
+    "family_market_state_report_json": "reports/research/family_market_state_report.json",
+    "family_market_state_report_md": "reports/research/family_market_state_report.md",
+    "unsupervised_baseline": "data/derived/unsupervised_market_state_baseline_v1.json",
+    "labels_jsonl": "data/intermediate/market_state/unsupervised_market_state_labels_v1.jsonl",
+    "labels_summary": "data/derived/unsupervised_market_state_labels_summary_v1.json",
+    "unsupervised_evaluation": "data/derived/unsupervised_market_state_evaluation_v1.json",
+    "market_discovery_payload": "data/derived/market_discovery_btc_v1.json"
+  },
+  "steps": [
+    {
+      "name": "fetch_okx_candles",
+      "command": [
+        "./.venv/bin/python",
+        "scripts/data/fetch_okx_history_candles.py",
+        "--inst-id",
+        "BTC-USDT-SWAP",
+        "--bar",
+        "1m",
+        "--resume"
+      ],
+      "outputs": [
+        "{okx_candles}"
+      ]
+    },
+    {
+      "name": "fetch_bitget_context",
+      "command": [
+        "./.venv/bin/python",
+        "scripts/data/fetch_bitget_derivatives_context.py",
+        "--symbol",
+        "BTCUSDT",
+        "--product-type",
+        "USDT-FUTURES",
+        "--kind",
+        "all",
+        "--timeframe",
+        "5m",
+        "--resume"
+      ],
+      "outputs": [
+        "{bitget_funding}",
+        "{bitget_basis}"
+      ]
+    }
+  ]
+}

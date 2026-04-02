@@ -21,15 +21,11 @@ Even before downstream model construction is finalized, the data layer should be
 Exactly how these context layers participate in modeling can remain a downstream research question.
 Preparing the data coverage for them is already an upstream data task.
 
-## Support rule
+## Current etf.com discovery note
 
-The most important symbols are those that have:
-- stable Alpaca bars/quotes/trades/snapshots coverage
-- useful ETF/context relationships
-- useful options-context availability
-- sufficient liquidity and continuity
+`etf.com` is a potentially useful source for discovering ETF candidates, but direct HTTP requests from this environment are currently blocked by Cloudflare.
 
-## Non-goal
-
-The upstream data repo should not chase maximum symbol count.
-The goal is to support the symbols that best fit the future sustainable stock-first architecture.
+That means:
+- do not treat `etf.com` as a simple automation-ready canonical source yet
+- keep it in mind as a possible manual or browser-assisted discovery source
+- prefer storing final approved candidate mappings inside the repo rather than depending on the live website at runtime

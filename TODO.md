@@ -16,6 +16,7 @@
 - [x] implement first Alpaca acquisition entrypoints under `src/data/alpaca/`
 - [ ] define and prepare ETF/context data coverage for underlyings and broad-market proxies
 - [ ] add candidate ETF-context mapping skeleton for future relevance modeling downstream
+- [ ] decide whether ETF candidate discovery will use browser-assisted/manual etf.com exploration or a more automation-friendly source
 
 ## Scope rule
 

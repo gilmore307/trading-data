@@ -17,6 +17,7 @@
 - [x] define first ETF/context universe for broad-market, sector, and thematic ETF candidates
 - [ ] prepare ETF/context data coverage for underlyings and broad-market proxies
 - [ ] add candidate ETF-context mapping skeleton for future relevance modeling downstream
+- [ ] add ETF holdings context layer under `context/etf_holdings/`
 - [ ] decide whether ETF candidate discovery will use browser-assisted/manual etf.com exploration or a more automation-friendly source
 
 ## Scope rule

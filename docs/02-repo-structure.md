@@ -7,16 +7,17 @@ This document defines the target repository structure for `trading-data`.
 - `docs/` — ordered project/data-contract documentation
 - `src/` — source adapters, fetch/update/build code, and data-maintenance logic
 - `config/` — source and pipeline configuration
-- `data/` — tracked monthly-partitioned market-data storage
+- `data/` — tracked monthly-partitioned market-tape storage
+- `context/` — non-market-tape context metadata such as ETF holdings and mapping artifacts
 - `tests/` — adapter/data-contract tests as the repo matures
 
 ## Data layout
 
-The tracked `data/` tree should stay simple and contain only real symbol/month dataset files:
+The tracked `data/` tree should stay simple and contain only real symbol/month market dataset files:
 - `data/<symbol>/<YYMM>/<dataset>.jsonl`
 
 Do not keep empty placeholder subtrees under `data/` just to reserve future concepts.
-If future manifests/reports/derived outputs are needed, place them deliberately where they belong instead of leaving unused empty directories inside the main data tree.
+If future non-tape metadata is needed, place it under `context/` or another deliberate location instead of leaving unused empty directories inside the main data tree.
 
 ## Code grouping rule
 

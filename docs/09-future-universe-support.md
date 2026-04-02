@@ -21,6 +21,11 @@ Even before downstream model construction is finalized, the data layer should be
 Exactly how these context layers participate in modeling can remain a downstream research question.
 Preparing the data coverage for them is already an upstream data task.
 
+## ETF holdings/context metadata note
+
+ETF holdings and related mapping artifacts are context metadata rather than minute-level market tape.
+They should be stored under `context/`, not under `data/`.
+
 ## Current etf.com discovery note
 
 `etf.com` is a potentially useful source for discovering ETF candidates, but direct HTTP requests from this environment are currently blocked by Cloudflare.

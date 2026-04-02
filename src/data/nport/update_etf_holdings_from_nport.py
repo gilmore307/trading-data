@@ -67,12 +67,23 @@ def main() -> None:
         ], required=False)
         results.append({'symbol': symbol, 'ok': ok})
 
+    extra_args = [
+        *sum([['--tier', t] for t in (args.tier or [])], []),
+        *sum([['--symbol', s] for s in (args.symbol or [])], []),
+    ]
+
     run([
         PYTHON,
         'src/data/nport/build_monthly_etf_outputs.py',
         '--target-month', args.target_month,
-        *sum([['--tier', t] for t in (args.tier or [])], []),
-        *sum([['--symbol', s] for s in (args.symbol or [])], []),
+        *extra_args,
+    ], required=False)
+
+    run([
+        PYTHON,
+        'src/data/nport/build_monthly_output_manifest.py',
+        '--target-month', args.target_month,
+        *extra_args,
     ], required=False)
 
     print(json.dumps({'symbols': symbols, 'results': results}, ensure_ascii=False, indent=2))

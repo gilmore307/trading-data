@@ -38,6 +38,7 @@
 - [x] emit downstream-ready signal files after successful refresh work
 - [x] move N-PORT workflows into `src/data/nport/` as a dedicated source family
 - [x] automatically continue from N-PORT acquisition into month-directory ETF mapping output build for the configured ETF target list
+- [x] generate a month-level ETF holdings coverage manifest for downstream handoff
 
 ## Scope rule
 

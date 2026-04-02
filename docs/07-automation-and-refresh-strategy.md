@@ -91,6 +91,11 @@ Current downstream signal meaning:
 - `etf_holdings_ready`
 - tells downstream model-building layers that context/holdings validation and testing can begin
 
+Current post-capture build behavior:
+- once N-PORT data becomes available, the pipeline should continue automatically into ETF data decomposition
+- it should build the month directory outputs for the configured ETF target list
+- it should also build a month-level manifest so downstream consumers can inspect coverage in one place
+
 ## 3. Downstream signal rule
 
 `trading-data` should emit durable machine-readable signals when refresh work completes.

@@ -31,3 +31,49 @@ Start with:
 - OKX and Bitget should now be treated as supplemental / backup data sources rather than the primary architectural center
 - crypto-specific enrichments may remain as optional supplemental inputs
 - this repo should become the canonical home for market-data adapters and data contracts
+
+## Downstream-facing outputs
+
+The next stage (`trading-model`) should primarily inherit these outputs from `trading-data`:
+
+### 1. Monthly market-tape partitions
+Path rule:
+- `data/<symbol>/<YYMM>/<dataset>.jsonl`
+
+Current canonical datasets include:
+- `bars_1min.jsonl`
+- `quotes.jsonl`
+- `trades.jsonl`
+- optional stock context datasets such as `news.jsonl` and `options_snapshots.jsonl`
+
+These files are the primary upstream market-data inputs for downstream validation, feature construction, and model testing.
+
+### 2. Monthly ETF holdings mapping outputs
+Path rule:
+- `context/etf_holdings/<YYMM>/<ETF>_<YYMM>.md`
+
+These files are the downstream-facing ETF -> constituent mapping outputs for the month.
+They should be used as context-layer inputs rather than market-tape inputs.
+
+### 3. Month-level ETF holdings manifest
+Path rule:
+- `context/etf_holdings/<YYMM>/_manifest_<YYMM>.json`
+
+This file summarizes which ETF outputs exist for the configured ETF holdings target list and helps downstream consumers understand monthly coverage.
+
+### 4. Refresh-completion signals
+Path rule:
+- `context/signals/*.json`
+
+Current signal families:
+- `market_data_ready` — previous-month Alpaca market-data batch finished
+- `etf_holdings_ready` — previous-month ETF holdings capture/build finished
+
+These machine-readable signals tell downstream systems when validation and test workflows may begin.
+
+## Auxiliary / non-primary artifacts
+
+The following are helper artifacts and should not be treated as primary downstream data products:
+- `context/etf_holdings/_aux/`
+- N-PORT discovery/state/package helper files
+- intermediate ETF -> SEC series mapping candidates

@@ -12,13 +12,11 @@ This document defines the target repository structure for `trading-data`.
 
 ## Data layout
 
-The intended data layout should use:
-- `data/<symbol>/<YYMM>/<dataset>.jsonl` for tracked symbol/month datasets
-- `data/intermediate/` — larger normalized working datasets
-- `data/derived/` — compact durable derived outputs
-- `data/reports/` — human-facing data-quality or coverage outputs
-- `data/manifests/` — inventories, schema notes, retention/control metadata
-- `data/docs/` — data-structure notes that belong with the data tree
+The tracked `data/` tree should stay simple and contain only real symbol/month dataset files:
+- `data/<symbol>/<YYMM>/<dataset>.jsonl`
+
+Do not keep empty placeholder subtrees under `data/` just to reserve future concepts.
+If future manifests/reports/derived outputs are needed, place them deliberately where they belong instead of leaving unused empty directories inside the main data tree.
 
 ## Code grouping rule
 

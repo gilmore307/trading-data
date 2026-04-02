@@ -53,4 +53,9 @@ Examples:
 ## Repository rule
 
 For now, the data should live directly in `trading-data`.
-This repo is intended to be the canonical tracked home for monthly-partitioned upstream market data and related manifests/contracts.
+This repo is intended to be the canonical tracked home for monthly-partitioned upstream market data.
+
+Practical rule:
+- keep `data/` focused on actual dataset files
+- do not leave unused placeholder folders under `data/`
+- if non-dataset artifacts are needed later, place them intentionally rather than pre-creating empty structure

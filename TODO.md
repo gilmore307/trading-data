@@ -23,6 +23,7 @@
 - [x] record SEC Form N-PORT as a candidate authoritative ETF holdings source path
 - [ ] research SEC Form N-PORT ingestion details and schema mapping
 - [ ] design a system task that checks the N-PORT source path once per day until the current month's data becomes available, then stops for that month
+- [ ] define the N-PORT monthly availability signal and local state-tracking file behavior
 
 ## Scope rule
 

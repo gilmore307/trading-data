@@ -60,15 +60,16 @@ Example:
 - once captured, stop retrying for that target month
 
 Current runner:
-- `src/data/common/update_previous_month_etf_holdings.py`
+- `src/data/nport/update_previous_month_etf_holdings.py`
 
 Supporting helpers:
-- `check_nport_availability.py`
-- `discover_nport_dataset.py`
-- `download_nport_metadata.py`
-- `map_etf_to_sec_series.py`
-- `extract_series_holdings_from_nport.py`
-- `update_etf_holdings_from_nport.py`
+- `src/data/nport/check_nport_availability.py`
+- `src/data/nport/discover_nport_dataset.py`
+- `src/data/nport/download_nport_metadata.py`
+- `src/data/nport/map_etf_to_sec_series.py`
+- `src/data/nport/extract_series_holdings_from_nport.py`
+- `src/data/nport/build_monthly_etf_outputs.py`
+- `src/data/nport/update_etf_holdings_from_nport.py`
 
 ### Target-universe rule
 
@@ -81,7 +82,9 @@ Use the actionable ETF holdings target universe at:
 This runner should:
 - attempt discovery/availability for the previous month
 - run extraction only when the target month appears available
-- update `context/etf_holdings/_nport_state.json`
+- automatically continue into the ETF data-decomposition/output-build path for the configured ETF target list
+- generate the month directory outputs under `context/etf_holdings/<YYMM>/`
+- update `context/etf_holdings/_aux/state/nport_state.json`
 - emit a downstream-ready signal file under `context/signals/` after successful capture
 
 Current downstream signal meaning:

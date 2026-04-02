@@ -53,19 +53,27 @@ def main() -> None:
         allowed = set(args.symbol)
         symbols = [s for s in symbols if s in allowed]
 
-    run([PYTHON, 'src/data/common/discover_nport_dataset.py'])
-    run([PYTHON, 'src/data/common/download_nport_metadata.py', '--max-bytes', '500000000'])
-    run([PYTHON, 'src/data/common/map_etf_to_sec_series.py'])
+    run([PYTHON, 'src/data/nport/discover_nport_dataset.py'])
+    run([PYTHON, 'src/data/nport/download_nport_metadata.py', '--max-bytes', '500000000'])
+    run([PYTHON, 'src/data/nport/map_etf_to_sec_series.py'])
 
     results = []
     for symbol in symbols:
         ok = run([
             PYTHON,
-            'src/data/common/extract_series_holdings_from_nport.py',
+            'src/data/nport/extract_series_holdings_from_nport.py',
             '--etf-symbol', symbol,
             '--target-month', args.target_month,
         ], required=False)
         results.append({'symbol': symbol, 'ok': ok})
+
+    run([
+        PYTHON,
+        'src/data/nport/build_monthly_etf_outputs.py',
+        '--target-month', args.target_month,
+        *sum([['--tier', t] for t in (args.tier or [])], []),
+        *sum([['--symbol', s] for s in (args.symbol or [])], []),
+    ], required=False)
 
     print(json.dumps({'symbols': symbols, 'results': results}, ensure_ascii=False, indent=2))
 

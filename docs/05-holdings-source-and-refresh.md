@@ -95,15 +95,15 @@ Current intended monthly availability signal:
 
 ## Current implementation scaffold
 
-First runnable N-PORT-related utilities now exist under `src/data/common/`:
-- `check_nport_availability.py` — updates `_nport_state.json` using a coarse SEC dataset-page token check for the target month
-- `discover_nport_dataset.py` — discovers available quarterly N-PORT zip packages from the SEC dataset page and records them in `_nport_discovery.json`
-- `download_nport_metadata.py` — downloads metadata/readme files from the latest discovered quarterly package into `_nport_packages/`
+First runnable N-PORT-related utilities now exist under `src/data/nport/`:
+- `check_nport_availability.py` — updates N-PORT availability state for the target month
+- `discover_nport_dataset.py` — discovers available quarterly N-PORT zip packages from the SEC dataset page and records them in discovery artifacts
+- `download_nport_metadata.py` — downloads metadata/readme files from the latest discovered quarterly package into N-PORT auxiliary data
 - `map_etf_to_sec_series.py` — builds candidate ETF -> SEC series matches
 - `extract_series_holdings_from_nport.py` — low-memory streaming extraction of ETF-specific candidate holdings from the quarterly package
 - `normalize_nport_holdings.py` — normalizes holdings-like raw/candidate records into the compact ETF holdings schema
-- `build_etf_holdings_targets.py` — derives the actionable priority ETF holdings target list from the broader ETF context universe
-- `update_etf_holdings_from_nport.py` — pipeline runner that executes discovery + mapping + extraction for the configured ETF target list
+- `build_monthly_etf_outputs.py` — converts extracted ETF holdings data into month-partitioned downstream-facing ETF mapping markdown outputs
+- `update_etf_holdings_from_nport.py` — pipeline runner that executes discovery + mapping + extraction + monthly-output build for the configured ETF target list
 
 Current known discovered package state:
 - latest discovered quarterly package: `2025q4_nport.zip`

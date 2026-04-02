@@ -36,6 +36,8 @@
 - [x] define monthly previous-month Alpaca batch-backfill automation strategy
 - [x] define daily previous-month N-PORT retry automation strategy
 - [x] emit downstream-ready signal files after successful refresh work
+- [x] move N-PORT workflows into `src/data/nport/` as a dedicated source family
+- [x] automatically continue from N-PORT acquisition into month-directory ETF mapping output build for the configured ETF target list
 
 ## Scope rule
 

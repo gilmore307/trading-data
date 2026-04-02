@@ -72,7 +72,7 @@ def main() -> None:
     state['target_month'] = target_month
     save_json(args.state, state)
 
-    run([PYTHON, 'src/data/common/check_nport_availability.py', '--target-month', target_month])
+    run([PYTHON, 'src/data/nport/check_nport_availability.py', '--target-month', target_month])
     state = load_json(args.state)
     if not state.get('current_month_available'):
         print(json.dumps({
@@ -82,7 +82,7 @@ def main() -> None:
         }, ensure_ascii=False, indent=2))
         return
 
-    cmd = [PYTHON, 'src/data/common/update_etf_holdings_from_nport.py', '--target-month', target_month]
+    cmd = [PYTHON, 'src/data/nport/update_etf_holdings_from_nport.py', '--target-month', target_month]
     for tier in args.tier or []:
         cmd += ['--tier', tier]
     for symbol in args.symbol or []:

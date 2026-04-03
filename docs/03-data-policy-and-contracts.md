@@ -123,6 +123,8 @@ This keeps the file convenient to consume while preventing repeated refresh runs
 
 Some month files now use a compact row/meta split when repeated month-level constants would otherwise be written on every row.
 
+Practical rule: prefer storage reduction only when it does not noticeably hurt direct usability. Important logical fields such as dataset identity, symbol identity, and options-underlying identity should still be recoverable cleanly through the supported reader path rather than becoming ambiguous hidden state.
+
 Current adopted files:
 - `data/<symbol>/<YYMM>/options_snapshots.jsonl` + `options_snapshots.meta.json`
 - `data/<symbol>/<YYMM>/bars_1min.jsonl` + `bars_1min.meta.json`

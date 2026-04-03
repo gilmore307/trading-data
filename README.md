@@ -55,12 +55,12 @@ Path rule:
 These are the maintained ETF holdings base snapshots for the target ETF list.
 They are upstream context-layer base data, not the main ready-to-use constituent output.
 
-### 3. Ready-to-use constituent ETF delta files
+### 3. Ready-to-use per-symbol ETF context files
 Path rule:
 - `context/constituent_etf_deltas/<SYMBOL>.md`
 
-These are the downstream-facing per-symbol files that accumulate monthly ETF membership/weight context for the researched symbol.
-When a symbol becomes an active research target, this is the ETF-context artifact that should be built and handed downstream.
+These are the downstream-facing per-symbol files that accumulate monthly ETF membership/weight context records for the researched symbol.
+`trading-data` should append the monthly ETF context data here and leave month-over-month comparison/delta calculation to downstream modeling layers.
 
 ### 4. Refresh-completion signals
 Path rule:

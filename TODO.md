@@ -40,7 +40,8 @@
 - [x] automatically continue from N-PORT acquisition into month-directory ETF mapping output build for the configured ETF target list
 - [x] generate a month-level ETF holdings coverage manifest for auxiliary inspection
 - [x] define `context/constituent_etf_deltas/<SYMBOL>.md` as the ready-to-use downstream ETF context artifact
-- [x] add first per-symbol ETF delta/context builder from monthly ETF holdings base snapshots
+- [x] add first per-symbol ETF monthly-context builder from monthly ETF holdings base snapshots
+- [x] explicitly leave month-over-month delta calculation to downstream layers rather than precomputing it here
 
 ## Scope rule
 

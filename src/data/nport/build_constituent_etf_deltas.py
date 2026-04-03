@@ -26,7 +26,7 @@ def append_section(existing: str, section: str) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Build or append a constituent -> ETF monthly delta/context file from month ETF holdings outputs.')
+    parser = argparse.ArgumentParser(description='Build or append a constituent -> ETF monthly context record from month ETF holdings outputs.')
     parser.add_argument('--symbol', required=True)
     parser.add_argument('--target-month', required=True)
     args = parser.parse_args()
@@ -55,7 +55,7 @@ def main() -> None:
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUT_DIR / f'{target_symbol}.md'
-    header = f'# {target_symbol} ETF context deltas\n\n'
+    header = f'# {target_symbol} ETF context\n\n'
     existing = out_path.read_text(encoding='utf-8') if out_path.exists() else header
     if not existing.startswith('# '):
         existing = header + existing

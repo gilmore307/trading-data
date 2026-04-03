@@ -14,6 +14,9 @@ Operational/download/discovery helper artifacts should live under `context/etf_h
 The final ready-to-use downstream constituent artifact should be built separately per researched symbol under:
 - `context/constituent_etf_deltas/<SYMBOL>.md`
 
+This file should store appended monthly ETF context records for the symbol.
+Do not precompute month-over-month comparison logic here; downstream layers should calculate deltas themselves.
+
 ## Priority target-universe rule
 
 The holdings pipeline should not try to solve the full ETF universe at once.

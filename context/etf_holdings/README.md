@@ -21,6 +21,9 @@ These month-partitioned ETF files are the ETF holdings base layer used to derive
 The ready-to-use downstream per-symbol artifact should instead live under:
 - `context/constituent_etf_deltas/<SYMBOL>.md`
 
+That per-symbol file should append monthly ETF membership/weight records only.
+It should not precompute month-over-month delta logic in this repo.
+
 ## Auxiliary files
 
 All non-primary helper artifacts should stay under:

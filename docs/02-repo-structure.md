@@ -31,12 +31,15 @@ The repository-level data layer meanings are:
 Current first-wave tracked mainline storage remains the direct symbol/month raw path:
 - `data/<symbol>/<YYMM>/<dataset>.jsonl`
 
-For datasets that carry heavy month-level repeated constants, a sidecar month-meta file is allowed when it materially reduces duplicated row payload without hurting usability.
-Current adopted cases:
-- `data/<symbol>/<YYMM>/options_snapshots.jsonl` + `options_snapshots.meta.json`
-- `data/<symbol>/<YYMM>/bars_1min.jsonl` + `bars_1min.meta.json`
-- `data/<symbol>/<YYMM>/quotes.jsonl` + `quotes.meta.json`
-- `data/<symbol>/<YYMM>/trades.jsonl` + `trades.meta.json`
+For datasets that carry heavy month-level repeated constants, a month-directory shared meta file is allowed when it materially reduces duplicated row payload without hurting usability.
+Current adopted pattern:
+- `data/<symbol>/<YYMM>/_meta.json`
+- `data/<symbol>/<YYMM>/bars_1min.jsonl`
+- `data/<symbol>/<YYMM>/quotes.jsonl`
+- `data/<symbol>/<YYMM>/trades.jsonl`
+- `data/<symbol>/<YYMM>/options_snapshots.jsonl`
+
+The directory `_meta.json` is the canonical metadata companion for compact month files in that directory.
 
 ## Code grouping rule
 

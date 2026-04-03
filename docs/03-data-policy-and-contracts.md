@@ -125,22 +125,23 @@ Some month files now use a compact row/meta split when repeated month-level cons
 
 Practical rule: prefer storage reduction only when it does not noticeably hurt direct usability. Important logical fields such as dataset identity, symbol identity, and options-underlying identity should still be recoverable cleanly through the supported reader path rather than becoming ambiguous hidden state.
 
-Current adopted files:
-- `data/<symbol>/<YYMM>/options_snapshots.jsonl` + `options_snapshots.meta.json`
-- `data/<symbol>/<YYMM>/bars_1min.jsonl` + `bars_1min.meta.json`
-- `data/<symbol>/<YYMM>/quotes.jsonl` + `quotes.meta.json`
-- `data/<symbol>/<YYMM>/trades.jsonl` + `trades.meta.json`
+Current adopted files/pattern:
+- `data/<symbol>/<YYMM>/_meta.json`
+- `data/<symbol>/<YYMM>/options_snapshots.jsonl`
+- `data/<symbol>/<YYMM>/bars_1min.jsonl`
+- `data/<symbol>/<YYMM>/quotes.jsonl`
+- `data/<symbol>/<YYMM>/trades.jsonl`
 
-The month meta sidecar carries repeated constants such as:
+The shared month-directory `_meta.json` carries repeated metadata needed for compact storage and clean reconstruction, such as:
 - `source`
-- `dataset`
-- `symbol` / `underlying_symbol`
+- dataset-level metadata under `datasets`
 - `asset_class`
 - `feed_scope`
+- `dataset`
 - `timeframe` where applicable
-- storage-format metadata
+- options underlying identity when needed
 
-Each JSONL row keeps only the changing fields for that dataset.
+Each compact JSONL row keeps only the changing fields for that dataset.
 
-Logical consumers should treat the row file plus sidecar meta file as one dataset.
-Compatibility readers may reconstruct full logical rows by merging month meta into each row at read time.
+Logical consumers should treat the row file plus the directory `_meta.json` as one dataset surface.
+The supported compatibility reader is `src/data/common/read_market_tape_rows.py`, which reconstructs full logical rows for downstream use.

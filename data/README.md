@@ -52,12 +52,16 @@ Context datasets currently still stored under symbol/month market-tape path when
 - `options_snapshots.jsonl`
 
 Row/meta storage note:
-- `options_snapshots.jsonl` is paired with `options_snapshots.meta.json`
-- `bars_1min.jsonl` is paired with `bars_1min.meta.json`
-- `quotes.jsonl` is paired with `quotes.meta.json`
-- `trades.jsonl` is paired with `trades.meta.json`
-- JSONL files store changing row fields
-- meta files store repeated month-level constants such as source / dataset / symbol / asset class / feed scope when applicable
+- each `data/<symbol>/<YYMM>/` directory now uses a shared `_meta.json`
+- row JSONL files keep only changing row fields
+- `_meta.json` stores shared month-level dataset metadata needed for clean logical reconstruction
+- supported compact datasets now include:
+  - `bars_1min.jsonl`
+  - `quotes.jsonl`
+  - `trades.jsonl`
+  - `options_snapshots.jsonl`
+- the supported reader path is `src/data/common/read_market_tape_rows.py`
+- important logical fields such as dataset identity, symbol identity, options underlying identity, and feed context remain recoverable through the reader path
 
 ## Resume / append expectation
 

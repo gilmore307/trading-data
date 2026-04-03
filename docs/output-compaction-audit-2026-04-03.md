@@ -4,9 +4,30 @@
 
 Reduce tracked output size without harming data completeness or making downstream consumption more awkward.
 
+## Final storage direction adopted
+
+The repo now uses a compact month-directory metadata model for the main redundant market-tape outputs.
+
+Current compact pattern:
+- `data/<symbol>/<YYMM>/_meta.json`
+- `data/<symbol>/<YYMM>/bars_1min.jsonl`
+- `data/<symbol>/<YYMM>/quotes.jsonl`
+- `data/<symbol>/<YYMM>/trades.jsonl`
+- `data/<symbol>/<YYMM>/options_snapshots.jsonl`
+
+Important constraint:
+- storage reduction should not noticeably harm direct usability
+- important logical fields such as dataset identity, symbol identity, options-underlying identity, asset class, feed scope, and timeframe must remain cleanly recoverable through the supported reader path
+
+Supported reader path:
+- `src/data/common/read_market_tape_rows.py`
+
+Shared metadata helpers:
+- `src/data/common/month_meta_utils.py`
+
 ## Phase 1 — duplicate-write cleanup
 
-All tracked `data/**/*.jsonl` files in the current `trading-data` repo snapshot were audited for duplicate-write inflation.
+All tracked `data/**/*.jsonl` files in the initial repo snapshot were audited for duplicate-write inflation.
 
 Result before rewrite:
 - files scanned: 26
@@ -36,95 +57,119 @@ Root cause from phase 1:
 - `src/data/alpaca/fetch_option_snapshots.py` had been append-only
 - other main Alpaca fetchers already used read-existing -> key-overwrite -> rewrite-month behavior
 
-## Phase 2 — row/meta split for repeated row constants
+## Phase 2 — row/meta split and metadata centralization
 
-The user’s primary storage concern was not only duplicate rows, but also repeated month-level constants inside every options snapshot row, such as:
+The user's primary storage concern was not only duplicate rows, but also repeated month-level constants inside every row such as:
 - `source: alpaca`
-- `dataset: options_snapshot`
-- `underlying_symbol: <symbol>`
+- `dataset: ...`
+- `symbol` / `underlying_symbol`
+- `asset_class`
+- `feed_scope`
+- `timeframe`
 
-Adopted storage change:
-- row data stays in `data/<symbol>/<YYMM>/options_snapshots.jsonl`
-- repeated month-level constants move to `data/<symbol>/<YYMM>/options_snapshots.meta.json`
+Applied storage changes in this pass:
+1. `options_snapshots.jsonl` moved to compact row storage
+2. `bars_1min.jsonl`, `quotes.jsonl`, and `trades.jsonl` also moved to compact row storage where profitable
+3. per-dataset sidecar meta files were then consolidated into one month-directory `_meta.json`
+4. `_meta.json` was then further minified so path-derivable or over-verbose metadata does not dominate the savings
+5. fetchers were updated so future writes follow the same compact contract rather than recreating old per-dataset sidecar meta files
 
-Current row payload fields:
-- `option_symbol`
-- `ts`
-- `timestamp`
-- `snapshot`
+## Realized savings in this pass
 
-Current month-meta fields:
-- `source`
-- `dataset`
-- `underlying_symbol`
-- storage format metadata
+### Duplicate cleanup
+- 38941 bytes saved
 
-Compatibility rule:
-- logical readers should treat the row file plus sidecar meta file as one dataset
-- `src/data/common/read_options_snapshot_rows.py` can reconstruct full logical rows at read time
+### Options row/meta split
+- 26326 bytes saved
 
-## Phase 2 result summary
+### Bars / quotes / trades row/meta split
+- 212473 bytes saved
 
-Options snapshot month files normalized: 7
+### Directory `_meta.json` minification
+- 6756 bytes saved
 
-Total options storage before row/meta split:
-- 256778 bytes
+## Combined gross savings
 
-Total options storage after row/meta split:
-- 230605 bytes
+Total gross savings realized across the completed pass:
+- **284496 bytes**
+- approximately **277.8 KB**
 
-Additional bytes saved from row/meta split:
-- 26326 bytes
+## Current dataset status
 
-Per-file result:
-- `data/AAPL/2602/options_snapshots.jsonl` + meta: 648 -> 801 bytes (tiny-file overhead; no savings)
-- `data/AAPL/2603/options_snapshots.*`: 23869 -> 21542 bytes, saved 2327 bytes
-- `data/AAPL/2604/options_snapshots.*`: 82529 -> 73402 bytes, saved 9127 bytes
-- `data/QQQ/2603/options_snapshots.*`: 8339 -> 7702 bytes, saved 637 bytes
-- `data/QQQ/2604/options_snapshots.*`: 67955 -> 61156 bytes, saved 6799 bytes
-- `data/SPY/2603/options_snapshots.*`: 10744 -> 9870 bytes, saved 874 bytes
-- `data/SPY/2604/options_snapshots.*`: 62694 -> 56132 bytes, saved 6562 bytes
-
-## Combined result from both phases
-
-Combined savings now realized in this pass:
-- duplicate cleanup savings: 38941 bytes
-- row/meta split savings: 26326 bytes
-- combined gross savings: 65267 bytes
-
-## Current recommendation for other output files
-
-Do **not** aggressively field-trim or restructure the other mainline files yet.
-
-Current view:
-- `bars_1min.jsonl`: already canonical and reasonably compact for current readability needs
-- `quotes.jsonl`: no duplicate-write inflation detected in the current tracked sample
-- `trades.jsonl`: no duplicate-write inflation detected in the current tracked sample
-- `news.jsonl`: deduped by article id already; no meaningful bloat pattern found
-
-However, some datasets do have obvious repeated month-level constants and may deserve a similar row/meta split later, especially:
+### Fully handled in this pass
+- `options_snapshots.jsonl`
 - `bars_1min.jsonl`
 - `quotes.jsonl`
 - `trades.jsonl`
 
-That should be a deliberate second pass after validating the options path first.
+These now participate in the compact row + month-directory `_meta.json` contract.
 
-## Tooling added
+### Evaluated but not yet converted
+- `news.jsonl`
+
+Current `news.jsonl` estimate from the tracked sample:
+- `AAPL/2603/news.jsonl`: save ~82 bytes
+- `AAPL/2604/news.jsonl`: save ~681 bytes
+- `QQQ/2604/news.jsonl`: save ~490 bytes
+- `SPY/2604/news.jsonl`: save ~1929 bytes
+
+Interpretation:
+- `news.jsonl` does have some repeated constants (`source`, `dataset`, `source_name`)
+- but the current savings are relatively small compared with the mainline market-tape datasets
+- the conversion is not yet blocked, just lower priority
+
+## Current reader / writer contract
+
+### Writers
+Current Alpaca writers now write toward the compact month-directory meta contract:
+- `src/data/alpaca/fetch_option_snapshots.py`
+- `src/data/alpaca/fetch_historical_bars.py`
+- `src/data/alpaca/fetch_historical_quotes.py`
+- `src/data/alpaca/fetch_historical_trades.py`
+
+### Readers
+Use:
+- `src/data/common/read_market_tape_rows.py`
+
+This reader reconstructs important logical fields such as:
+- `source`
+- `dataset`
+- `symbol`
+- `underlying_symbol`
+- `asset_class`
+- `feed_scope`
+- `timeframe`
+- `month`
+
+## Tooling added/kept
 
 - `src/data/common/audit_output_compaction.py`
+- `src/data/common/month_meta_utils.py`
+- `src/data/common/read_market_tape_rows.py`
 - `src/data/common/normalize_options_snapshot_storage.py`
-- `src/data/common/read_options_snapshot_rows.py`
+- `src/data/common/normalize_market_tape_row_meta.py`
+- `src/data/common/normalize_directory_meta.py`
+- `src/data/common/minify_directory_meta.py`
 
-Example usage:
-- duplicate audit only: `python3 src/data/common/audit_output_compaction.py`
-- apply duplicate cleanup: `python3 src/data/common/audit_output_compaction.py --apply`
-- preview options row/meta normalization: `python3 src/data/common/normalize_options_snapshot_storage.py`
-- apply options row/meta normalization: `python3 src/data/common/normalize_options_snapshot_storage.py --apply`
+Some of these are migration utilities from this compaction pass rather than long-term runtime-critical entrypoints.
 
-## Follow-up items
+## Remaining follow-up items
 
-Open contract/design questions left from this pass:
-- should options snapshots remain a single canonical row per `(option_symbol, ts)`
-- or should they later split into a compact canonical snapshot file plus an explicit optional revision/event-log file for quote refresh history
-- should tiny options month files skip sidecar meta to avoid negative savings
-- should bars / quotes / trades later adopt the same row/meta split pattern
+Open design questions left after the completed pass:
+- should options snapshots remain a single canonical row per `(option_symbol, ts)` or evolve into a more explicitly versioned/event-log contract later
+- should `news.jsonl` also adopt the compact row + `_meta.json` pattern when month files grow larger
+- if `news.jsonl` is compacted later, should `source_name` remain row-level or move into metadata when constant inside a month file
+
+## Bottom line
+
+The output-compaction pass is now complete for the main redundant market-tape files.
+
+The repo has moved from:
+- repeated full logical metadata on every row
+- plus duplicated options snapshot writes
+
+to:
+- canonical deduped options snapshots
+- compact row storage for the mainline market-tape files
+- one shared `_meta.json` per symbol/month directory
+- one supported logical-reader path for downstream reconstruction

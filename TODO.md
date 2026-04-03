@@ -51,7 +51,8 @@
 - [x] add a reusable output audit/compaction tool for safe in-place cleanup of supported datasets
 - [x] compact existing duplicated AAPL options snapshot month files in place
 - [ ] decide whether options snapshots should remain a single canonical row per `(option_symbol, ts)` or evolve into a more explicitly versioned/event-log contract later
-- [ ] evaluate whether large low-change context datasets deserve an alternate packed/manifest-backed storage format in a later phase
+- [~] evaluate whether other large low-change datasets deserve a similar row/meta split after the options path validation
+- [ ] add a small-file threshold rule so tiny month files do not grow because of sidecar-meta overhead
 
 ## Scope rule
 

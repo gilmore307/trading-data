@@ -20,6 +20,8 @@ Key entrypoints:
 - `fetch_news.py`
 - `fetch_option_snapshots.py`
 - `src/data/common/audit_output_compaction.py` can audit current output files and compact supported datasets such as `options_snapshots.jsonl`
+- `src/data/common/normalize_options_snapshot_storage.py` converts options snapshot month files into compact row-data + month-meta storage
+- `src/data/common/read_options_snapshot_rows.py` is a compatibility reader that reconstructs full logical rows from the compact storage format
 - `update_current_month.py`
 - `update_previous_month_batch.py`
 

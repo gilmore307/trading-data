@@ -87,12 +87,22 @@ def load_existing_rows(path: Path) -> dict[tuple[str, int], dict[str, Any]]:
     out: dict[tuple[str, int], dict[str, Any]] = {}
     if not path.exists():
         return out
+    meta_path = path.with_name("options_snapshots.meta.json")
+    meta: dict[str, Any] = {}
+    if meta_path.exists():
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
     with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
             row = json.loads(line)
+            if meta:
+                merged = dict(meta)
+                merged.pop("storage_format", None)
+                merged.pop("row_fields", None)
+                merged.update(row)
+                row = merged
             option_symbol = row.get("option_symbol")
             ts = row.get("ts")
             if option_symbol and ts is not None:
@@ -117,9 +127,29 @@ def flush_month_store(base_dir: Path, store: dict[str, dict[tuple[str, int], dic
         out_dir = base_dir / month
         out_dir.mkdir(parents=True, exist_ok=True)
         out = out_dir / f"{dataset_name}.jsonl"
+        meta_path = out_dir / "options_snapshots.meta.json"
+        ordered_rows = sorted(rows.values(), key=lambda item: (int(item.get("ts", 0)), str(item.get("option_symbol", ""))))
+        meta = None
+        if ordered_rows:
+            sample = ordered_rows[0]
+            meta = {
+                "source": sample.get("source"),
+                "dataset": sample.get("dataset"),
+                "underlying_symbol": sample.get("underlying_symbol"),
+                "storage_format": "options_snapshot_v2_row_meta_split",
+                "row_fields": ["option_symbol", "ts", "timestamp", "snapshot"],
+            }
         with out.open("w", encoding="utf-8") as f:
-            for row in sorted(rows.values(), key=lambda item: (int(item.get("ts", 0)), str(item.get("option_symbol", "")))):
-                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+            for row in ordered_rows:
+                compact = {
+                    "option_symbol": row.get("option_symbol"),
+                    "ts": row.get("ts"),
+                    "timestamp": row.get("timestamp"),
+                    "snapshot": row.get("snapshot"),
+                }
+                f.write(json.dumps(compact, ensure_ascii=False) + "\n")
+        if meta is not None:
+            meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def fetch_option_snapshots(*, underlying_symbol: str, limit: int, output_dir: Path | None, resume: bool) -> dict[str, Any]:

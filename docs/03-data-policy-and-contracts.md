@@ -118,3 +118,26 @@ Current preference rule:
 3. then prefer the row with the later `latestQuote.t`
 
 This keeps the file convenient to consume while preventing repeated refresh runs from inflating storage with near-duplicate option snapshots.
+
+## Options snapshot row/meta split rule
+
+`options_snapshots` now uses a compact month-level row/meta split.
+
+Files:
+- row data: `data/<symbol>/<YYMM>/options_snapshots.jsonl`
+- month meta: `data/<symbol>/<YYMM>/options_snapshots.meta.json`
+
+The month meta file carries the repeated constants:
+- `source`
+- `dataset`
+- `underlying_symbol`
+- storage-format metadata
+
+Each JSONL row now keeps only the changing fields:
+- `option_symbol`
+- `ts`
+- `timestamp`
+- `snapshot`
+
+Logical consumers should treat the row file plus sidecar meta file as one dataset.
+Compatibility readers may reconstruct full logical rows by merging month meta into each row at read time.

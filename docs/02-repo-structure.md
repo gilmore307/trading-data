@@ -31,6 +31,11 @@ The repository-level data layer meanings are:
 Current first-wave tracked mainline storage remains the direct symbol/month raw path:
 - `data/<symbol>/<YYMM>/<dataset>.jsonl`
 
+For datasets that carry heavy month-level repeated constants, a sidecar month-meta file is allowed when it materially reduces duplicated row payload without hurting usability.
+Current adopted case:
+- `data/<symbol>/<YYMM>/options_snapshots.jsonl`
+- `data/<symbol>/<YYMM>/options_snapshots.meta.json`
+
 ## Code grouping rule
 
 Source-specific logic should live under `src/`.

@@ -51,6 +51,11 @@ Context datasets currently still stored under symbol/month market-tape path when
 - `news.jsonl`
 - `options_snapshots.jsonl`
 
+Options snapshot storage note:
+- `options_snapshots.jsonl` is now paired with `options_snapshots.meta.json` in the same month directory
+- the JSONL file stores only changing row fields
+- the meta file stores repeated month-level constants such as source / dataset / underlying_symbol
+
 ## Resume / append expectation
 
 Fetchers should be written so repeated runs can safely resume without corrupting monthly partitions or creating uncontrolled duplication.

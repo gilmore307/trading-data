@@ -8,8 +8,11 @@ ETF holdings are context metadata, not minute-level market tape.
 They should live under:
 - `context/etf_holdings/`
 
-Primary downstream-facing holdings outputs should live in month directories as ETF -> constituent mapping results.
+The month-directory ETF files are the maintained ETF holdings base layer for the tracked ETF list.
 Operational/download/discovery helper artifacts should live under `context/etf_holdings/_aux/` rather than mixed into the main output layer.
+
+The final ready-to-use downstream constituent artifact should be built separately per researched symbol under:
+- `context/constituent_etf_deltas/<SYMBOL>.md`
 
 ## Priority target-universe rule
 

@@ -48,18 +48,19 @@ Current canonical datasets include:
 
 These files are the primary upstream market-data inputs for downstream validation, feature construction, and model testing.
 
-### 2. Monthly ETF holdings mapping outputs
+### 2. ETF monthly holdings base snapshots
 Path rule:
 - `context/etf_holdings/<YYMM>/<ETF>_<YYMM>.md`
 
-These files are the downstream-facing ETF -> constituent mapping outputs for the month.
-They should be used as context-layer inputs rather than market-tape inputs.
+These are the maintained ETF holdings base snapshots for the target ETF list.
+They are upstream context-layer base data, not the main ready-to-use constituent output.
 
-### 3. Month-level ETF holdings manifest
+### 3. Ready-to-use constituent ETF delta files
 Path rule:
-- `context/etf_holdings/<YYMM>/_manifest_<YYMM>.json`
+- `context/constituent_etf_deltas/<SYMBOL>.md`
 
-This file summarizes which ETF outputs exist for the configured ETF holdings target list and helps downstream consumers understand monthly coverage.
+These are the downstream-facing per-symbol files that accumulate monthly ETF membership/weight context for the researched symbol.
+When a symbol becomes an active research target, this is the ETF-context artifact that should be built and handed downstream.
 
 ### 4. Refresh-completion signals
 Path rule:
@@ -77,3 +78,4 @@ The following are helper artifacts and should not be treated as primary downstre
 - `context/etf_holdings/_aux/`
 - N-PORT discovery/state/package helper files
 - intermediate ETF -> SEC series mapping candidates
+- month-level coverage manifests

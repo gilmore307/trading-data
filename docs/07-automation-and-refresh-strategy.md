@@ -93,8 +93,9 @@ Current downstream signal meaning:
 
 Current post-capture build behavior:
 - once N-PORT data becomes available, the pipeline should continue automatically into ETF data decomposition
-- it should build the month directory outputs for the configured ETF target list
-- it should also build a month-level manifest so downstream consumers can inspect coverage in one place
+- it should build the month directory ETF holdings base snapshots for the configured ETF target list
+- these month snapshots are the maintained ETF base layer, not the final per-symbol downstream artifact
+- per-symbol downstream ETF context files should instead be built on demand when a research symbol is requested
 
 ## 3. Downstream signal rule
 

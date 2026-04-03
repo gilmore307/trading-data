@@ -2,9 +2,9 @@
 
 This directory stores ETF holdings outputs and related N-PORT helper artifacts.
 
-## Primary output rule
+## Base-layer output rule
 
-The primary downstream-facing output of this directory is the monthly ETF -> constituent mapping result.
+This directory stores the maintained ETF holdings base snapshots.
 
 Monthly ETF holdings outputs should be grouped by month directory:
 - `context/etf_holdings/<YYMM>/`
@@ -17,7 +17,9 @@ Examples:
 - `context/etf_holdings/2603/IVV_2603.md`
 - `context/etf_holdings/2603/SPY_2603.md`
 
-These month-partitioned ETF files are the artifacts intended to be passed downstream to `trading-model`.
+These month-partitioned ETF files are the ETF holdings base layer used to derive per-symbol downstream context later.
+The ready-to-use downstream per-symbol artifact should instead live under:
+- `context/constituent_etf_deltas/<SYMBOL>.md`
 
 ## Auxiliary files
 

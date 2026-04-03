@@ -99,3 +99,22 @@ Data families without strong stock-portable equivalents remain optional/suppleme
 - crypto-specific OI semantics
 - liquidation feeds
 - crypto-specific orderbook enrichments
+
+## Canonical dedupe / compaction rule
+
+Repeated runs must be resumable without unbounded output growth.
+
+Current canonical dedupe rules:
+- `bars_1min.jsonl`: one row per `(symbol, ts)`
+- `quotes.jsonl`: one row per `(symbol, ts)`
+- `trades.jsonl`: one row per `(symbol, ts)`
+- `news.jsonl`: one row per `id`
+- `options_snapshots.jsonl`: one row per `(option_symbol, ts)` within a month partition
+
+For `options_snapshots.jsonl`, if multiple rows collide on `(option_symbol, ts)`, keep the best available canonical row rather than appending all variants forever.
+Current preference rule:
+1. prefer the row with richer populated snapshot sub-objects
+2. then prefer the row with a non-blank / more informative `latestQuote.c`
+3. then prefer the row with the later `latestQuote.t`
+
+This keeps the file convenient to consume while preventing repeated refresh runs from inflating storage with near-duplicate option snapshots.

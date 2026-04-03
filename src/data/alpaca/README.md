@@ -19,6 +19,7 @@ Key entrypoints:
 - `fetch_historical_trades.py`
 - `fetch_news.py`
 - `fetch_option_snapshots.py`
+- `src/data/common/audit_output_compaction.py` can audit current output files and compact supported datasets such as `options_snapshots.jsonl`
 - `update_current_month.py`
 - `update_previous_month_batch.py`
 

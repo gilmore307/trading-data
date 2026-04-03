@@ -43,6 +43,16 @@
 - [x] add first per-symbol ETF monthly-context builder from monthly ETF holdings base snapshots
 - [x] explicitly leave month-over-month delta calculation to downstream layers rather than precomputing it here
 
+## Output compaction / storage efficiency
+
+- [x] audit current tracked JSONL outputs for duplicate-write inflation
+- [x] identify `options_snapshots.jsonl` append growth as the current main output-bloat path
+- [x] convert Alpaca options snapshot fetcher to resumable canonical overwrite behavior
+- [x] add a reusable output audit/compaction tool for safe in-place cleanup of supported datasets
+- [x] compact existing duplicated AAPL options snapshot month files in place
+- [ ] decide whether options snapshots should remain a single canonical row per `(option_symbol, ts)` or evolve into a more explicitly versioned/event-log contract later
+- [ ] evaluate whether large low-change context datasets deserve an alternate packed/manifest-backed storage format in a later phase
+
 ## Scope rule
 
 `trading-data` should own:

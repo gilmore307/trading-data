@@ -137,6 +137,7 @@ def update_symbol(*, symbol: str, asset_class: str, start: str, end: str, limit:
                 "src/data/alpaca/fetch_option_snapshots.py",
                 "--underlying-symbol", symbol,
                 "--limit", "100",
+                "--resume",
             ],
             False,
         ))

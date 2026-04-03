@@ -40,6 +40,7 @@ Example usage:
 This runner should:
 - backfill the previous month only
 - write into the normal symbol/month market-tape partitions under `data/`
+- preserve canonical per-dataset dedupe rules when rerun against existing month files
 - emit a downstream-ready signal file under `context/signals/` when a batch finishes
 
 Current downstream signal meaning:

@@ -83,27 +83,64 @@ def normalize_snapshot(*, underlying_symbol: str, option_symbol: str, row: dict[
     }
 
 
-def fetch_option_snapshots(*, underlying_symbol: str, limit: int, output_dir: Path | None) -> dict[str, Any]:
+def load_existing_rows(path: Path) -> dict[tuple[str, int], dict[str, Any]]:
+    out: dict[tuple[str, int], dict[str, Any]] = {}
+    if not path.exists():
+        return out
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            option_symbol = row.get("option_symbol")
+            ts = row.get("ts")
+            if option_symbol and ts is not None:
+                out[(str(option_symbol), int(ts))] = row
+    return out
+
+
+def load_month_store(base_dir: Path, *, dataset_name: str, resume: bool) -> dict[str, dict[tuple[str, int], dict[str, Any]]]:
+    store: dict[str, dict[tuple[str, int], dict[str, Any]]] = {}
+    if not resume or not base_dir.exists():
+        return store
+    for path in sorted(base_dir.glob(f"*/{dataset_name}.jsonl")):
+        rows = load_existing_rows(path)
+        if rows:
+            store[path.parent.name] = rows
+    return store
+
+
+def flush_month_store(base_dir: Path, store: dict[str, dict[tuple[str, int], dict[str, Any]]], *, dataset_name: str) -> None:
+    base_dir.mkdir(parents=True, exist_ok=True)
+    for month, rows in store.items():
+        out_dir = base_dir / month
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out = out_dir / f"{dataset_name}.jsonl"
+        with out.open("w", encoding="utf-8") as f:
+            for row in sorted(rows.values(), key=lambda item: (int(item.get("ts", 0)), str(item.get("option_symbol", "")))):
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def fetch_option_snapshots(*, underlying_symbol: str, limit: int, output_dir: Path | None, resume: bool) -> dict[str, Any]:
     obj = request_json(f"/v1beta1/options/snapshots/{underlying_symbol}", {"limit": limit})
     snapshots = obj.get("snapshots", {})
     out_dir = output_dir or (ROOT / "data" / underlying_symbol)
+    store = load_month_store(out_dir, dataset_name="options_snapshots", resume=resume)
     count = 0
     months: set[str] = set()
     for option_symbol, payload in snapshots.items():
         row = normalize_snapshot(underlying_symbol=underlying_symbol, option_symbol=option_symbol, row=payload)
         month = yy_mm_dir_key(int(row["ts"]))
         months.add(month)
-        month_dir = out_dir / month
-        month_dir.mkdir(parents=True, exist_ok=True)
-        out = month_dir / "options_snapshots.jsonl"
-        with out.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        store.setdefault(month, {})[(str(row["option_symbol"]), int(row["ts"]))] = row
         count += 1
+    flush_month_store(out_dir, store, dataset_name="options_snapshots")
     return {
         "underlying_symbol": underlying_symbol,
         "output_dir": str(out_dir),
         "row_count": count,
-        "month_dirs": sorted(months),
+        "month_dirs": sorted(set(store.keys()) | months),
         "next_page_token": obj.get("next_page_token"),
     }
 
@@ -112,6 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fetch Alpaca option snapshots into symbol/month JSONL partitions.")
     parser.add_argument("--underlying-symbol", required=True)
     parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--output-dir", type=Path, default=None)
     return parser
 
@@ -124,6 +162,7 @@ def main() -> None:
         underlying_symbol=args.underlying_symbol,
         limit=args.limit,
         output_dir=args.output_dir,
+        resume=args.resume,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

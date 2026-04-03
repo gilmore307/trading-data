@@ -1,6 +1,6 @@
-# 03 Data Policy and Contracts
+# 03 Data Contracts and Partition Policy
 
-This document consolidates the core storage, source-priority, and canonical contract rules for `trading-data`.
+This document defines the main data contract, source-priority rules, partition policy, dedupe policy, and compact-row storage rules for `trading-data`.
 
 ## Source priority
 
@@ -31,25 +31,6 @@ Use as:
 - OKX/Bitget data should not redefine the mainline architecture unless there is a specific reason and a stock-portable equivalent story
 - crypto-only enrichments remain optional/supplemental
 
-## Storage rule
-
-Market data should be stored in this repository and partitioned by symbol and month.
-
-Canonical market-tape path:
-- `data/<symbol>/<YYMM>/<dataset>.jsonl`
-
-Examples:
-- `data/AAPL/2604/bars_1min.jsonl`
-- `data/BTC-USD/2603/bars_1min.jsonl`
-- `data/AAPL/2604/quotes.jsonl`
-- `data/AAPL/2604/trades.jsonl`
-
-Symbol-format note:
-- Alpaca crypto API requests use slash form such as `BTC/USD`
-- on-disk path normalization should still use a safe symbol directory such as `BTC-USD`
-
-Keep `data/` focused on actual market dataset files only.
-
 ## Canonical raw granularity rule
 
 The canonical raw market-data layer should be minute-level across all supported asset classes.
@@ -57,6 +38,9 @@ The canonical raw market-data layer should be minute-level across all supported 
 That means:
 - minute-level bars are the canonical raw bar layer
 - higher timeframes are derived/aggregated layers
+
+Main raw bar object:
+- `bars_1min.jsonl`
 
 ## Canonical overlap surface
 
@@ -70,13 +54,6 @@ Directly verified common categories include:
 - latest quotes
 - latest trades
 - snapshots
-
-## Canonical raw bar rule
-
-Canonical raw bars should be minute-level.
-
-Main raw bar object:
-- `bars_1min.jsonl`
 
 ## Canonical derived features
 
@@ -100,7 +77,20 @@ Data families without strong stock-portable equivalents remain optional/suppleme
 - liquidation feeds
 - crypto-specific orderbook enrichments
 
-## Canonical dedupe / compaction rule
+## Time-series partition policy
+
+All time-series datasets should share the same partition boundaries where alignment matters.
+
+Core rules:
+- use business-calendar month boundaries in `America/New_York`
+- historical months should be treated as sealed/immutable partitions
+- the current month may remain open and be rewritten during ingestion
+- canonical tracked partition files should remain GitHub-friendly in size
+
+Current mainline market-tape path rule:
+- `data/<symbol>/<YYMM>/<dataset>.jsonl`
+
+## Canonical dedupe rule
 
 Repeated runs must be resumable without unbounded output growth.
 
@@ -112,18 +102,14 @@ Current canonical dedupe rules:
 - `options_snapshots.jsonl`: one row per `(option_symbol, ts)` within a month partition
 
 For `options_snapshots.jsonl`, if multiple rows collide on `(option_symbol, ts)`, keep the best available canonical row rather than appending all variants forever.
-Current preference rule:
-1. prefer the row with richer populated snapshot sub-objects
-2. then prefer the row with a non-blank / more informative `latestQuote.c`
-3. then prefer the row with the later `latestQuote.t`
-
-This keeps the file convenient to consume while preventing repeated refresh runs from inflating storage with near-duplicate option snapshots.
 
 ## Row/meta split rule for compact monthly storage
 
 Some month files now use a compact row/meta split when repeated month-level constants would otherwise be written on every row.
 
-Practical rule: prefer storage reduction only when it does not noticeably hurt direct usability. Important logical fields such as dataset identity, symbol identity, and options-underlying identity should still be recoverable cleanly through the supported reader path rather than becoming ambiguous hidden state.
+Practical rule:
+- prefer storage reduction only when it does not noticeably hurt direct usability
+- important logical fields such as dataset identity, symbol identity, options-underlying identity, asset class, feed scope, and timeframe should still be recoverable cleanly through the supported reader path
 
 Current adopted files/pattern:
 - `data/<symbol>/<YYMM>/_meta.json`
@@ -132,16 +118,28 @@ Current adopted files/pattern:
 - `data/<symbol>/<YYMM>/quotes.jsonl`
 - `data/<symbol>/<YYMM>/trades.jsonl`
 
-The shared month-directory `_meta.json` carries repeated metadata needed for compact storage and clean reconstruction, such as:
-- `source`
-- dataset-level metadata under `datasets`
-- `asset_class`
-- `feed_scope`
-- `dataset`
-- `timeframe` where applicable
-- options underlying identity when needed
-
+The shared month-directory `_meta.json` carries repeated metadata needed for compact storage and clean reconstruction.
 Each compact JSONL row keeps only the changing fields for that dataset.
 
 Logical consumers should treat the row file plus the directory `_meta.json` as one dataset surface.
-The supported compatibility reader is `src/data/common/read_market_tape_rows.py`, which reconstructs full logical rows for downstream use.
+The supported compatibility reader is:
+- `src/data/common/read_market_tape_rows.py`
+
+## Current compact writer/reader contract
+
+Current Alpaca writers that follow the compact month-directory contract:
+- `src/data/alpaca/fetch_option_snapshots.py`
+- `src/data/alpaca/fetch_historical_bars.py`
+- `src/data/alpaca/fetch_historical_quotes.py`
+- `src/data/alpaca/fetch_historical_trades.py`
+
+Shared metadata helpers:
+- `src/data/common/month_meta_utils.py`
+
+## Important note on audits and migration utilities
+
+Detailed storage-change rationale and savings analysis belong in appendices/audit notes, not in the main workflow docs.
+The operational contract for downstream readers is simply:
+- use the canonical path
+- respect business-month partitioning
+- reconstruct logical rows through the supported reader path when `_meta.json` is present

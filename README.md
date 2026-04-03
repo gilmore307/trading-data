@@ -18,11 +18,11 @@ Downstream relationship:
 Start with:
 - `docs/README.md`
 - `docs/01-overview.md`
-- `docs/02-repo-structure.md`
-- `docs/03-data-policy-and-contracts.md`
-- `docs/04-context-and-universe.md`
-- `docs/05-holdings-source-and-refresh.md`
-- `docs/06-source-coverage-and-status.md`
+- `docs/02-repo-structure-and-storage.md`
+- `docs/03-data-contracts-and-partition-policy.md`
+- `docs/04-context-and-holdings-layer.md`
+- `docs/05-source-coverage-and-operational-status.md`
+- `docs/06-refresh-and-automation.md`
 
 ## Current direction
 

@@ -19,6 +19,25 @@ LEGACY_META_BY_FILENAME = {
 }
 
 
+def infer_fallback_meta(jsonl_path: Path) -> dict[str, Any]:
+    month_dir = jsonl_path.parent
+    symbol_dir = month_dir.parent
+    symbol = symbol_dir.name
+    dataset_name = jsonl_path.name
+    inferred: dict[str, Any] = {}
+
+    if dataset_name == 'bars_1min.jsonl':
+        inferred = {'dataset': 'bars', 'timeframe': '1Min'}
+    elif dataset_name == 'quotes.jsonl':
+        inferred = {'dataset': 'quotes'}
+    elif dataset_name == 'trades.jsonl':
+        inferred = {'dataset': 'trades'}
+    elif dataset_name == 'options_snapshots.jsonl':
+        inferred = {'dataset': 'options_snapshot', 'underlying_symbol': symbol}
+
+    return inferred
+
+
 def load_effective_meta(jsonl_path: Path) -> dict[str, Any]:
     meta: dict[str, Any] = {}
 
@@ -26,10 +45,10 @@ def load_effective_meta(jsonl_path: Path) -> dict[str, Any]:
     dataset_key = DATASET_KEY_BY_FILENAME.get(jsonl_path.name)
     if dir_meta_path.exists() and dataset_key:
         dir_meta = json.loads(dir_meta_path.read_text(encoding='utf-8'))
-        meta.update({k: v for k, v in dir_meta.items() if k not in {'storage_format', 'datasets'}})
+        meta.update({k: v for k, v in dir_meta.items() if k != 'datasets'})
         ds = (dir_meta.get('datasets') or {}).get(dataset_key) or {}
-        ds_meta = dict(ds.get('meta') or {})
-        meta.update(ds_meta)
+        meta.update(ds)
+        meta.update(infer_fallback_meta(jsonl_path))
         return meta
 
     legacy_name = LEGACY_META_BY_FILENAME.get(jsonl_path.name)
@@ -40,6 +59,10 @@ def load_effective_meta(jsonl_path: Path) -> dict[str, Any]:
             meta.update(legacy)
             meta.pop('storage_format', None)
             meta.pop('row_fields', None)
+            meta.update(infer_fallback_meta(jsonl_path))
+            return meta
+
+    meta.update(infer_fallback_meta(jsonl_path))
     return meta
 
 

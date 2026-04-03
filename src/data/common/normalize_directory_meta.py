@@ -9,48 +9,57 @@ ROOT = Path(__file__).resolve().parents[3]
 DATA_ROOT = ROOT / 'data'
 DIR_META_NAME = '_meta.json'
 
+DATASET_META_FILENAMES = {
+    'bars_1min.meta.json': 'bars_1min',
+    'quotes.meta.json': 'quotes',
+    'trades.meta.json': 'trades',
+    'options_snapshots.meta.json': 'options_snapshots',
+}
+
 
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding='utf-8'))
 
 
-def build_dir_meta(month_dir: Path) -> dict[str, Any] | None:
-    meta_files = sorted(month_dir.glob('*.meta.json'))
+def build_compact_dir_meta(month_dir: Path) -> tuple[dict[str, Any], list[Path]] | tuple[None, list[Path]]:
+    meta_files = sorted([p for p in month_dir.glob('*.meta.json') if p.name in DATASET_META_FILENAMES])
     if not meta_files:
-        return None
+        return None, []
 
-    datasets: dict[str, Any] = {}
-    shared_source = None
+    dataset_payloads: dict[str, dict[str, Any]] = {}
+    shared_candidates: dict[str, Any] | None = None
 
     for meta_path in meta_files:
         obj = load_json(meta_path)
-        dataset_key = meta_path.name.replace('.meta.json', '')
-        row_fields = obj.pop('row_fields', None)
-        storage_format = obj.pop('storage_format', None)
+        dataset_key = DATASET_META_FILENAMES[meta_path.name]
+        obj.pop('row_fields', None)
+        obj.pop('storage_format', None)
+        dataset_payloads[dataset_key] = obj
+        if shared_candidates is None:
+            shared_candidates = dict(obj)
+        else:
+            for k in list(shared_candidates.keys()):
+                if obj.get(k) != shared_candidates[k]:
+                    shared_candidates.pop(k, None)
 
-        if shared_source is None and 'source' in obj:
-            shared_source = obj['source']
-        if 'source' in obj and shared_source == obj['source']:
-            obj.pop('source', None)
+    shared = shared_candidates or {}
+    # only keep truly useful shared keys at top level
+    allowed_shared = {'source', 'symbol', 'asset_class', 'feed_scope', 'underlying_symbol'}
+    shared = {k: v for k, v in shared.items() if k in allowed_shared}
 
-        datasets[dataset_key] = {
-            'row_fields': row_fields,
-            'storage_format': storage_format,
-            'meta': obj,
-        }
+    datasets: dict[str, dict[str, Any]] = {}
+    for dataset_key, obj in dataset_payloads.items():
+        specific = {k: v for k, v in obj.items() if shared.get(k) != v}
+        datasets[dataset_key] = specific
 
-    dir_meta: dict[str, Any] = {
-        'storage_format': 'month_dir_meta_v1',
-        'datasets': datasets,
-    }
-    if shared_source is not None:
-        dir_meta['source'] = shared_source
-
-    return dir_meta
+    dir_meta: dict[str, Any] = {}
+    dir_meta.update(shared)
+    dir_meta['datasets'] = datasets
+    return dir_meta, meta_files
 
 
 def convert_dir(month_dir: Path, *, apply: bool) -> dict[str, Any]:
-    dir_meta = build_dir_meta(month_dir)
+    dir_meta, meta_files = build_compact_dir_meta(month_dir)
     if dir_meta is None:
         return {
             'path': str(month_dir.relative_to(ROOT)),
@@ -59,12 +68,10 @@ def convert_dir(month_dir: Path, *, apply: bool) -> dict[str, Any]:
         }
 
     dir_meta_path = month_dir / DIR_META_NAME
-    meta_files = sorted(month_dir.glob('*.meta.json'))
     before_bytes = sum(p.stat().st_size for p in meta_files)
-    after_payload = json.dumps(dir_meta, ensure_ascii=False, indent=2) + '\n'
+    after_payload = json.dumps(dir_meta, ensure_ascii=False, separators=(',', ':')) + '\n'
     after_bytes = len(after_payload.encode('utf-8'))
 
-    changed = True
     if apply:
         dir_meta_path.write_text(after_payload, encoding='utf-8')
         for p in meta_files:
@@ -73,7 +80,7 @@ def convert_dir(month_dir: Path, *, apply: bool) -> dict[str, Any]:
 
     return {
         'path': str(month_dir.relative_to(ROOT)),
-        'changed': changed,
+        'changed': True,
         'meta_files_before': [p.name for p in meta_files],
         'meta_file_after': str(dir_meta_path.relative_to(ROOT)),
         'bytes_before': before_bytes,
@@ -83,7 +90,7 @@ def convert_dir(month_dir: Path, *, apply: bool) -> dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Collapse per-dataset month meta files into one shared directory _meta.json')
+    parser = argparse.ArgumentParser(description='Collapse per-dataset month meta files into one compact shared directory _meta.json')
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--only', nargs='*', default=None, help='relative month directories under data/')
     args = parser.parse_args()

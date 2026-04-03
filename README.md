@@ -79,3 +79,34 @@ The following are helper artifacts and should not be treated as primary downstre
 - N-PORT discovery/state/package helper files
 - intermediate ETF -> SEC series mapping candidates
 - month-level coverage manifests
+
+## Research object classes and supported context layers
+
+### 1. Stock research objects
+For stock research/trading candidates, `trading-data` may prepare:
+- full Alpaca stock market data for the researched symbol
+- stock news and options context
+- ETF holdings base snapshots
+- per-symbol ETF context records under `context/constituent_etf_deltas/<SYMBOL>.md`
+
+In short: stocks may use all relevant Alpaca and N-PORT-derived ETF context layers.
+
+### 2. ETF research objects
+For ETF research/trading candidates:
+- the ETF itself may use its own Alpaca market/news/options data
+- ETF -> ETF context layering should not be treated as the primary self-context path
+- non-ETF macro/cross-asset context may still be used where relevant
+
+### 3. Crypto research objects
+Crypto trades 24 hours.
+That means:
+- during stock-market trading hours, crypto research may also use the corresponding ETF and ETF-options context where relevant
+- outside stock-market trading hours, crypto research should rely on its own base market data path rather than stock/ETF market context
+
+## Practical handoff rule to `trading-model`
+
+`trading-data` should not try to precompute ready-to-use per-company outputs for the entire US market.
+Instead:
+- maintain the ETF holdings base layer for the tracked ETF list
+- when a specific research symbol is requested, derive and update that symbol's per-symbol ETF context file
+- hand the researched symbol's market data plus its ETF context file to `trading-model`

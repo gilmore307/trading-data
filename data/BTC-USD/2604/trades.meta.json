@@ -1,0 +1,18 @@
+{
+  "source": "alpaca",
+  "asset_class": "crypto",
+  "feed_scope": "crypto/us",
+  "dataset": "trades",
+  "symbol": "BTC/USD",
+  "storage_format": "trades_v2_row_meta_split",
+  "row_fields": [
+    "ts",
+    "timestamp",
+    "price",
+    "size",
+    "exchange",
+    "conditions",
+    "trade_id",
+    "tape"
+  ]
+}

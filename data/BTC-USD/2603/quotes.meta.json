@@ -1,0 +1,19 @@
+{
+  "source": "alpaca",
+  "asset_class": "crypto",
+  "feed_scope": "crypto/us",
+  "dataset": "quotes",
+  "symbol": "BTC/USD",
+  "storage_format": "quotes_v2_row_meta_split",
+  "row_fields": [
+    "ts",
+    "timestamp",
+    "bid_price",
+    "bid_size",
+    "bid_exchange",
+    "ask_price",
+    "ask_size",
+    "ask_exchange",
+    "conditions"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "source": "alpaca",
+  "asset_class": "stocks",
+  "feed_scope": "stocks",
+  "dataset": "bars",
+  "symbol": "QQQ",
+  "timeframe": "1Min",
+  "storage_format": "bars_1min_v2_row_meta_split",
+  "row_fields": [
+    "ts",
+    "timestamp",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "trade_count",
+    "vwap"
+  ]
+}

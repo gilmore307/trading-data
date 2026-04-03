@@ -1,0 +1,79 @@
+{
+  "storage_format": "month_dir_meta_v1",
+  "datasets": {
+    "bars_1min": {
+      "row_fields": [
+        "ts",
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "trade_count",
+        "vwap"
+      ],
+      "storage_format": "bars_1min_v2_row_meta_split",
+      "meta": {
+        "asset_class": "stocks",
+        "feed_scope": "stocks",
+        "dataset": "bars",
+        "symbol": "SPY",
+        "timeframe": "1Min"
+      }
+    },
+    "options_snapshots": {
+      "row_fields": [
+        "option_symbol",
+        "ts",
+        "timestamp",
+        "snapshot"
+      ],
+      "storage_format": "options_snapshot_v2_row_meta_split",
+      "meta": {
+        "dataset": "options_snapshot",
+        "underlying_symbol": "SPY"
+      }
+    },
+    "quotes": {
+      "row_fields": [
+        "ts",
+        "timestamp",
+        "bid_price",
+        "bid_size",
+        "bid_exchange",
+        "ask_price",
+        "ask_size",
+        "ask_exchange",
+        "conditions"
+      ],
+      "storage_format": "quotes_v2_row_meta_split",
+      "meta": {
+        "asset_class": "stocks",
+        "feed_scope": "stocks",
+        "dataset": "quotes",
+        "symbol": "SPY"
+      }
+    },
+    "trades": {
+      "row_fields": [
+        "ts",
+        "timestamp",
+        "price",
+        "size",
+        "exchange",
+        "conditions",
+        "trade_id",
+        "tape"
+      ],
+      "storage_format": "trades_v2_row_meta_split",
+      "meta": {
+        "asset_class": "stocks",
+        "feed_scope": "stocks",
+        "dataset": "trades",
+        "symbol": "SPY"
+      }
+    }
+  },
+  "source": "alpaca"
+}

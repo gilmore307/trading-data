@@ -1,0 +1,19 @@
+{
+  "storage_format": "month_dir_meta_v1",
+  "datasets": {
+    "options_snapshots": {
+      "row_fields": [
+        "option_symbol",
+        "ts",
+        "timestamp",
+        "snapshot"
+      ],
+      "storage_format": "options_snapshot_v2_row_meta_split",
+      "meta": {
+        "dataset": "options_snapshot",
+        "underlying_symbol": "SPY"
+      }
+    }
+  },
+  "source": "alpaca"
+}

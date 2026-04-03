@@ -32,9 +32,11 @@ Current first-wave tracked mainline storage remains the direct symbol/month raw 
 - `data/<symbol>/<YYMM>/<dataset>.jsonl`
 
 For datasets that carry heavy month-level repeated constants, a sidecar month-meta file is allowed when it materially reduces duplicated row payload without hurting usability.
-Current adopted case:
-- `data/<symbol>/<YYMM>/options_snapshots.jsonl`
-- `data/<symbol>/<YYMM>/options_snapshots.meta.json`
+Current adopted cases:
+- `data/<symbol>/<YYMM>/options_snapshots.jsonl` + `options_snapshots.meta.json`
+- `data/<symbol>/<YYMM>/bars_1min.jsonl` + `bars_1min.meta.json`
+- `data/<symbol>/<YYMM>/quotes.jsonl` + `quotes.meta.json`
+- `data/<symbol>/<YYMM>/trades.jsonl` + `trades.meta.json`
 
 ## Code grouping rule
 

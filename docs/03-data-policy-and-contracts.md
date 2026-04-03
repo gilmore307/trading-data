@@ -119,25 +119,26 @@ Current preference rule:
 
 This keeps the file convenient to consume while preventing repeated refresh runs from inflating storage with near-duplicate option snapshots.
 
-## Options snapshot row/meta split rule
+## Row/meta split rule for compact monthly storage
 
-`options_snapshots` now uses a compact month-level row/meta split.
+Some month files now use a compact row/meta split when repeated month-level constants would otherwise be written on every row.
 
-Files:
-- row data: `data/<symbol>/<YYMM>/options_snapshots.jsonl`
-- month meta: `data/<symbol>/<YYMM>/options_snapshots.meta.json`
+Current adopted files:
+- `data/<symbol>/<YYMM>/options_snapshots.jsonl` + `options_snapshots.meta.json`
+- `data/<symbol>/<YYMM>/bars_1min.jsonl` + `bars_1min.meta.json`
+- `data/<symbol>/<YYMM>/quotes.jsonl` + `quotes.meta.json`
+- `data/<symbol>/<YYMM>/trades.jsonl` + `trades.meta.json`
 
-The month meta file carries the repeated constants:
+The month meta sidecar carries repeated constants such as:
 - `source`
 - `dataset`
-- `underlying_symbol`
+- `symbol` / `underlying_symbol`
+- `asset_class`
+- `feed_scope`
+- `timeframe` where applicable
 - storage-format metadata
 
-Each JSONL row now keeps only the changing fields:
-- `option_symbol`
-- `ts`
-- `timestamp`
-- `snapshot`
+Each JSONL row keeps only the changing fields for that dataset.
 
 Logical consumers should treat the row file plus sidecar meta file as one dataset.
 Compatibility readers may reconstruct full logical rows by merging month meta into each row at read time.

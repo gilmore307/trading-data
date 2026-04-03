@@ -51,10 +51,13 @@ Context datasets currently still stored under symbol/month market-tape path when
 - `news.jsonl`
 - `options_snapshots.jsonl`
 
-Options snapshot storage note:
-- `options_snapshots.jsonl` is now paired with `options_snapshots.meta.json` in the same month directory
-- the JSONL file stores only changing row fields
-- the meta file stores repeated month-level constants such as source / dataset / underlying_symbol
+Row/meta storage note:
+- `options_snapshots.jsonl` is paired with `options_snapshots.meta.json`
+- `bars_1min.jsonl` is paired with `bars_1min.meta.json`
+- `quotes.jsonl` is paired with `quotes.meta.json`
+- `trades.jsonl` is paired with `trades.meta.json`
+- JSONL files store changing row fields
+- meta files store repeated month-level constants such as source / dataset / symbol / asset class / feed scope when applicable
 
 ## Resume / append expectation
 

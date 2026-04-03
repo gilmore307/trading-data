@@ -51,8 +51,10 @@
 - [x] add a reusable output audit/compaction tool for safe in-place cleanup of supported datasets
 - [x] compact existing duplicated AAPL options snapshot month files in place
 - [ ] decide whether options snapshots should remain a single canonical row per `(option_symbol, ts)` or evolve into a more explicitly versioned/event-log contract later
-- [~] evaluate whether other large low-change datasets deserve a similar row/meta split after the options path validation
-- [ ] add a small-file threshold rule so tiny month files do not grow because of sidecar-meta overhead
+- [x] evaluate whether other large low-change datasets deserve a similar row/meta split after the options path validation
+- [x] add a small-file threshold rule so tiny month files do not grow because of sidecar-meta overhead
+- [ ] decide whether news should stay as-is or also adopt a row/meta split when larger month files accumulate
+- [ ] consolidate compatibility readers so downstream code has one obvious import path for logical full-row reads
 
 ## Scope rule
 

@@ -60,12 +60,22 @@ def load_existing_rows(path: Path) -> dict[int, dict[str, Any]]:
     out: dict[int, dict[str, Any]] = {}
     if not path.exists():
         return out
+    meta_path = path.with_name("bars_1min.meta.json")
+    meta: dict[str, Any] = {}
+    if meta_path.exists():
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
     with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
                 continue
             row = json.loads(line)
+            if meta:
+                merged = dict(meta)
+                merged.pop("storage_format", None)
+                merged.pop("row_fields", None)
+                merged.update(row)
+                row = merged
             ts = row.get("ts")
             if ts is not None:
                 out[int(ts)] = row
@@ -89,9 +99,37 @@ def flush_month_store(base_dir: Path, store: dict[str, dict[int, dict[str, Any]]
         out_dir = base_dir / month
         out_dir.mkdir(parents=True, exist_ok=True)
         out = out_dir / f"{dataset_name}.jsonl"
+        meta_path = out_dir / "bars_1min.meta.json"
+        ordered = [rows[ts] for ts in sorted(rows.keys())]
+        meta = None
+        if ordered:
+            sample = ordered[0]
+            meta = {
+                "source": sample.get("source"),
+                "asset_class": sample.get("asset_class"),
+                "feed_scope": sample.get("feed_scope"),
+                "dataset": sample.get("dataset"),
+                "symbol": sample.get("symbol"),
+                "timeframe": sample.get("timeframe"),
+                "storage_format": "bars_1min_v2_row_meta_split",
+                "row_fields": ["ts", "timestamp", "open", "high", "low", "close", "volume", "trade_count", "vwap"],
+            }
         with out.open("w", encoding="utf-8") as f:
-            for ts in sorted(rows.keys()):
-                f.write(json.dumps(rows[ts], ensure_ascii=False) + "\n")
+            for row in ordered:
+                compact = {
+                    "ts": row.get("ts"),
+                    "timestamp": row.get("timestamp"),
+                    "open": row.get("open"),
+                    "high": row.get("high"),
+                    "low": row.get("low"),
+                    "close": row.get("close"),
+                    "volume": row.get("volume"),
+                    "trade_count": row.get("trade_count"),
+                    "vwap": row.get("vwap"),
+                }
+                f.write(json.dumps(compact, ensure_ascii=False) + "\n")
+        if meta is not None:
+            meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def auth_headers() -> dict[str, str]:

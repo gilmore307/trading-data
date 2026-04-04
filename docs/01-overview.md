@@ -19,7 +19,7 @@ It should not be the primary home for:
 
 - `trading-data` -> upstream data layer
 - `trading-model` -> downstream research/modeling layer
-- `quantitative-trading` -> downstream live execution layer
+- `trading-execution` -> downstream live execution layer
 
 ## Current architectural direction
 

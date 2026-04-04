@@ -11,7 +11,7 @@ This repository is responsible for:
 - producing the dataset foundations consumed downstream by `trading-model`
 
 Downstream relationship:
-- `trading-data` -> `trading-model` -> `quantitative-trading`
+- `trading-data` -> `trading-model` -> `trading-execution`
 
 ## Documentation
 

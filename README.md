@@ -9,6 +9,7 @@ This repository is responsible for:
 - cross-market canonical data layers
 - sustainable data-boundary definitions
 - producing the dataset foundations consumed downstream by `trading-model`
+- producing machine-readable data/context outputs that downstream `trading-report` can summarize
 
 Downstream relationship:
 - `trading-data` -> `trading-model` -> `trading-execution`

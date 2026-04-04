@@ -75,6 +75,12 @@ The new `trading-manager` repo will absorb part of the orchestration/storage-lif
 - downstream-ready signal emission
 - data/context artifact definitions
 
+## Reporting boundary
+
+- [ ] migrate canonical final report assembly out of `trading-data` and into `trading-report`
+- [ ] keep `trading-data` focused on machine-readable data/context outputs, readiness signals, and artifact contracts
+- [ ] treat any repo-local report formatting as migration material for the unified report repo
+
 ## Scope rule
 
 `trading-data` should own:

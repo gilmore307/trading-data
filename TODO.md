@@ -57,6 +57,24 @@
 - [ ] decide whether news should stay as-is or also adopt a row/meta split when larger month files accumulate
 - [ ] if news volume grows materially, decide whether `source_name` should stay row-level or move into compact month metadata when constant within a month file
 
+## Control-plane responsibility migration to `trading-manager`
+
+The new `trading-manager` repo will absorb part of the orchestration/storage-lifecycle responsibility that should not remain embedded inside `trading-data`.
+
+### Migrate out of `trading-data`
+- [ ] move managed-symbol onboarding/request handling into `trading-manager` as a control-plane workflow (while keeping the actual data-fetch/build entrypoints in `trading-data`)
+- [ ] move recurring refresh scheduling/timing policy into `trading-manager`; `trading-data` should expose runnable refresh/build entrypoints but not be the long-term scheduler brain
+- [ ] move local cleanup eligibility decisions for completed historical scopes into `trading-manager`
+- [ ] move cold-archive / rehydration orchestration for completed `symbol + month` scopes into `trading-manager`
+- [ ] keep `trading-data` focused on canonical data production, signals, and artifact contracts while removing cross-repo orchestration assumptions over time
+
+### Keep in `trading-data`
+- acquisition/fetch/build logic
+- source adapters
+- canonical month-partitioned storage contract
+- downstream-ready signal emission
+- data/context artifact definitions
+
 ## Scope rule
 
 `trading-data` should own:
@@ -65,8 +83,14 @@
 - raw partitioning and retention rules
 - canonical shared market-data contracts
 - optional enrichment-data contracts
+- runnable refresh/build entrypoints that `trading-manager` can call
+- downstream-ready signal emission and data artifact contracts
 
 `trading-data` should not own:
+- managed-symbol orchestration policy
+- long-term refresh scheduling brain
+- cross-repo workflow sequencing
+- archive/rehydration control-plane decisions across the trading stack
 - strategy family research
 - composite construction logic
 - ranking / selection logic

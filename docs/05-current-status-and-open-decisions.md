@@ -62,3 +62,6 @@ Current compact-contract interpretation:
 - 2026-04-08: first-wave official-source fetchers for FRED / BLS / BEA / Census / Treasury are now present in `src/data/macro/`, so the main remaining work is release-calendar handling, registry cleanup, and operational hardening rather than initial adapter creation
 - 2026-04-08: ETF constituent look-through was removed from the active mainline design so ETFs remain bar/context proxies for regime and divergence analysis
 - 2026-04-08: regime-side calendar refresh was folded into the unified `release_dataset_refresh_tasks.csv` design, with `plan_at` introduced as the earliest eligible execution timestamp for scheduled or immediate tasks
+- 2026-04-08: durable trading-stack artifacts were reaffirmed to belong in `trading-storage`, with code repos staying code-first rather than becoming the long-term storage home
+- 2026-04-08: cross-frequency research alignment was clarified: aggregate higher-frequency market data upward to the analysis timeframe, and treat low-frequency macro releases as carry-forward as-of values between official releases rather than as fabricated high-frequency information
+- 2026-04-08: news and options were reaffirmed as normal retained market-data families that should follow the same explicit canonical-grain / dedupe / storage-discipline as bars and other tracked datasets

@@ -19,7 +19,7 @@ import requests
 BUSINESS_TZ = ZoneInfo("America/New_York")
 BASE_URL = "https://data.alpaca.markets"
 
-from src.data.common.storage_paths import ingest_news_root
+from src.data.common.storage_paths import market_tape_news_root
 
 
 def load_dotenv() -> None:
@@ -115,7 +115,7 @@ def normalize_news(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def default_output_dir(*, symbol: str) -> Path:
-    return ingest_news_root() / symbol
+    return market_tape_news_root() / symbol
 
 
 def _candidate_params(symbol: str, start: str, end: str, limit: int) -> list[dict[str, Any]]:

@@ -17,9 +17,9 @@ if str(ROOT) not in sys.path:
 PYTHON = 'python3'
 BUSINESS_TZ = ZoneInfo('America/New_York')
 BATCHES_PATH = ROOT / 'config' / 'alpaca_monthly_batches.json'
-from src.data.common.storage_paths import context_signals_root
+from src.data.common.storage_paths import market_regime_signals_root
 
-SIGNALS_DIR = context_signals_root()
+SIGNALS_DIR = market_regime_signals_root()
 
 
 def _month_window_from_business_month(year: int, month: int) -> tuple[str, str, str]:

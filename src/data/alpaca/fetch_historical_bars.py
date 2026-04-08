@@ -17,7 +17,7 @@ if str(ROOT) not in sys.path:
 import requests
 
 from src.data.common.month_meta_utils import load_effective_meta, write_month_dir_meta
-from src.data.common.storage_paths import ingest_bars_root
+from src.data.common.storage_paths import market_tape_bars_root
 
 ROOT = Path(__file__).resolve().parents[3]
 BUSINESS_TZ = ZoneInfo("America/New_York")
@@ -159,7 +159,7 @@ def normalize_bar(*, asset_class: str, feed_scope: str, symbol: str, timeframe: 
 
 def default_output_dir(*, asset_class: str, symbol: str) -> Path:
     safe_symbol = symbol.replace("/", "-")
-    return ingest_bars_root() / safe_symbol
+    return market_tape_bars_root() / safe_symbol
 
 
 def fetch_historical_bars(*, asset_class: str, symbol: str, timeframe: str, start: str, end: str, limit: int, resume: bool, output_dir: Path | None) -> dict[str, Any]:

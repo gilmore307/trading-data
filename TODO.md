@@ -53,8 +53,9 @@
 - [x] evaluate whether other large low-change datasets deserve a similar row/meta split after the options path validation
 - [x] add a small-file threshold rule so tiny month files do not grow because of sidecar-meta overhead
 - [x] consolidate compatibility readers so downstream code has one obvious import path for logical full-row reads
-- [ ] decide whether news should stay as-is or also adopt a row/meta split when larger month files accumulate
+- [x] decide whether news should stay as-is or also adopt a row/meta split when larger month files accumulate
 - [ ] if news volume grows materially, decide whether `source_name` should stay row-level or move into compact month metadata when constant within a month file
+- [ ] formalize one standard retained-artifact contract across bars / quote aggregates / trade aggregates / news / options so every market-data family has explicit canonical grain, dedupe rule, and storage path
 
 ## Boundary cleanup after `trading-manager` split
 

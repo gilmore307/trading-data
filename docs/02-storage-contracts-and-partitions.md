@@ -119,6 +119,25 @@ Current canonical rules:
 - `news.jsonl`: one row per `id`
 - `options_snapshots.jsonl`: one row per `(option_symbol, ts)` within a month partition
 
+Standard-processing rule:
+- bars, quote aggregates, trade aggregates, news, and options-context artifacts should all follow the same general retained-artifact discipline
+- each dataset family should have a clear canonical grain, partition rule, dedupe rule, and storage path
+- options and news should not be treated as ad hoc side branches outside the normal retained market-data contract
+
+## Cross-frequency alignment rule
+
+When low-frequency context is joined to higher-frequency market data downstream, do not fabricate higher-frequency information from the low-frequency source.
+
+Current rule:
+- aggregate higher-frequency market data upward to the analysis timeframe rather than pushing low-frequency context downward as if it had real high-frequency resolution
+- if a model is researched at `1min`, low-frequency macro series such as CPI/PPI usually add little value compared with bar/microstructure data and should not be treated as rich minute-level signals
+- if a model is researched at a larger timeframe such as `1h`, more low-frequency context can be joined appropriately after the market data is aggregated to that timeframe
+- for fixed-period official releases (monthly, quarterly, etc.), a released value may be carried forward as the active known value until the next official release updates it
+
+Interpretation rule:
+- carry-forward is an as-of availability rule, not a claim that the world changed at every finer-grained bar
+- downstream consumers should remain aware of the original source frequency and release timing
+
 ## Compact row/meta split rule
 
 Some month files use a compact row/meta split when repeated month-level constants would otherwise be written on every row.

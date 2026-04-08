@@ -114,7 +114,6 @@ def flush_month_store(base_dir: Path, store: dict[str, dict[int, dict[str, Any]]
                     "vwap": row.get("vwap"),
                 }
                 f.write(json.dumps(compact, ensure_ascii=False) + "\n")
-        if ordered:
 
 
 def auth_headers() -> dict[str, str]:

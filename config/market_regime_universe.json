@@ -2,11 +2,13 @@
   "notes": [
     "Permanent market-state / regime benchmarks used to assess broad U.S. market conditions.",
     "Each retained market proxy should have one chosen primary stored bar granularity rather than multiple redundant default granularities.",
-    "Official macro series remain at original source frequency and are not converted into a separate bar-granularity contract here."
+    "Official macro series remain at original source frequency and are not converted into a separate bar-granularity contract here.",
+    "Redundant broad-market ETF duplicates and redundant gold duplicate ETFs are intentionally excluded when a more liquid or already-retained proxy exists.",
+    "Independent crypto proxy ETFs and relatively independent industry/thematic ETFs are included when they add distinct regime information beyond the existing core broad-market/sector set."
   ],
   "primary_bar_granularity": {
     "1m": ["SPY", "QQQ", "IWM", "RSP", "DIA"],
-    "30m": ["SHY", "IEF", "TLT", "HYG", "UUP", "GLD", "SLV", "XLB", "XLC", "XLE", "XLF", "XLK", "XLI", "XLP", "XLRE", "XLU", "XLV", "XLY"],
+    "30m": ["SHY", "IEF", "TLT", "HYG", "UUP", "GLD", "SLV", "IBIT", "ETHA", "XLB", "XLC", "XLE", "XLF", "XLK", "XLI", "XLP", "XLRE", "XLU", "XLV", "XLY", "SMH", "SOXX", "KRE", "ITA", "IYT", "LIT", "GDX", "BOTZ"],
     "1d": ["LQD", "VIXCLS", "VXN", "MOVE", "DBC", "PDBC", "USO"]
   },
   "macro_series_original_frequency": {
@@ -19,9 +21,11 @@
     "broad_beta_style_breadth": ["SPY", "QQQ", "DIA", "IWM", "RSP"],
     "rates_duration": ["SHY", "IEF", "TLT"],
     "safe_haven_fx_metals": ["UUP", "GLD", "SLV"],
+    "crypto_proxy": ["IBIT", "ETHA"],
     "credit_risk_appetite": ["HYG", "LQD"],
     "volatility_and_fear": ["VIXCLS", "VXN", "MOVE"],
     "sector_rotation": ["XLB", "XLC", "XLE", "XLF", "XLK", "XLI", "XLP", "XLRE", "XLU", "XLV", "XLY"],
+    "industry_thematic_independent": ["SMH", "SOXX", "KRE", "ITA", "IYT", "LIT", "GDX", "BOTZ"],
     "inflation_commodity_shock_proxies": ["DBC", "PDBC", "USO"]
   }
 }

@@ -32,6 +32,8 @@ Use these for:
 - `UUP`
 - `GLD`
 - `SLV`
+- `IBIT`
+- `ETHA`
 - sector rotation ETFs:
   - `XLB`
   - `XLC`
@@ -44,13 +46,24 @@ Use these for:
   - `XLU`
   - `XLV`
   - `XLY`
+- relatively independent industry/thematic ETFs:
+  - `SMH`
+  - `SOXX`
+  - `KRE`
+  - `ITA`
+  - `IYT`
+  - `LIT`
+  - `GDX`
+  - `BOTZ`
 
 Use these for:
 - duration and rates sensitivity
 - credit risk appetite
 - dollar pressure
 - metals / safe-haven response
+- crypto proxy context
 - sector rotation
+- relatively independent industry/thematic regime context
 
 ## Daily retained benchmark proxies
 - `LQD`

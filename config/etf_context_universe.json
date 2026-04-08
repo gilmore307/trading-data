@@ -1,12 +1,9 @@
 {
   "version": 2,
-  "last_updated": "2026-04-03",
+  "last_updated": "2026-04-08",
   "categories": {
     "core_broad_market": [
       {"symbol": "SPY", "label": "SPDR S&P 500 ETF Trust", "priority": "core", "notes": "S&P 500 core broad market proxy"},
-      {"symbol": "VOO", "label": "Vanguard S&P 500 ETF", "priority": "core", "notes": "S&P 500 core broad market proxy"},
-      {"symbol": "IVV", "label": "iShares Core S&P 500 ETF", "priority": "core", "notes": "S&P 500 core broad market proxy"},
-      {"symbol": "VTI", "label": "Vanguard Total Stock Market ETF", "priority": "core", "notes": "US total market proxy"},
       {"symbol": "QQQ", "label": "Invesco QQQ Trust", "priority": "core", "notes": "Nasdaq 100 large-cap growth proxy"},
       {"symbol": "IWM", "label": "iShares Russell 2000 ETF", "priority": "core", "notes": "Russell 2000 small-cap proxy"},
       {"symbol": "DIA", "label": "SPDR Dow Jones Industrial Average ETF Trust", "priority": "core", "notes": "Dow proxy"}
@@ -26,7 +23,6 @@
     ],
     "macro_commodity_crypto_proxy": [
       {"symbol": "GLD", "label": "SPDR Gold Shares", "priority": "high", "theme": "gold"},
-      {"symbol": "IAU", "label": "iShares Gold Trust", "priority": "high", "theme": "gold"},
       {"symbol": "SLV", "label": "iShares Silver Trust", "priority": "high", "theme": "silver"},
       {"symbol": "USO", "label": "United States Oil Fund", "priority": "high", "theme": "oil"},
       {"symbol": "DBC", "label": "Invesco DB Commodity Index Tracking Fund", "priority": "high", "theme": "broad_commodities"},
@@ -39,11 +35,8 @@
     "industry_subindustry": [
       {"symbol": "SMH", "label": "VanEck Semiconductor ETF", "priority": "high", "theme": "semiconductors"},
       {"symbol": "SOXX", "label": "iShares Semiconductor ETF", "priority": "high", "theme": "semiconductors"},
-      {"symbol": "IGV", "label": "iShares Expanded Tech-Software Sector ETF", "priority": "high", "theme": "software"},
       {"symbol": "CLOU", "label": "Global X Cloud Computing ETF", "priority": "watch", "theme": "cloud"},
       {"symbol": "BUG", "label": "Global X Cybersecurity ETF", "priority": "watch", "theme": "cybersecurity"},
-      {"symbol": "XBI", "label": "SPDR S&P Biotech ETF", "priority": "high", "theme": "biotech"},
-      {"symbol": "IBB", "label": "iShares Biotechnology ETF", "priority": "high", "theme": "biotech"},
       {"symbol": "IHI", "label": "iShares U.S. Medical Devices ETF", "priority": "watch", "theme": "medical_devices"},
       {"symbol": "IHF", "label": "iShares U.S. Healthcare Providers ETF", "priority": "watch", "theme": "healthcare_services"},
       {"symbol": "XHE", "label": "SPDR S&P Health Care Equipment ETF", "priority": "watch", "theme": "healthcare_equipment"},

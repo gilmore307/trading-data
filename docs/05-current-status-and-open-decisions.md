@@ -59,4 +59,4 @@ Current compact-contract interpretation:
 - 2026-04-03: compact row/meta split was adopted as a mainline retained market-tape contract for the supported month datasets
 - 2026-04-07: a new storage-only sibling project `projects/trading-storage` was introduced so the trading code repos can stay code-first while shared downloaded/context/intermediate/report/output artifacts converge into one storage-first location
 - 2026-04-08: first-wave official-source fetchers for FRED / BLS / BEA / Census / Treasury are now present in `src/data/macro/`, so the main remaining work is release-calendar handling, registry cleanup, and operational hardening rather than initial adapter creation
-- 2026-04-08: ETF constituent look-through via N-PORT was removed from the active mainline design so ETFs remain bar/context proxies for regime and divergence analysis
+- 2026-04-08: ETF constituent look-through was removed from the active mainline design so ETFs remain bar/context proxies for regime and divergence analysis

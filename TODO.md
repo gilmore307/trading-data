@@ -64,7 +64,7 @@
 - [x] review whether any remaining helper/state files in `trading-data` still imply manager ownership instead of artifact ownership
 - [x] tighten signal payload semantics so they remain artifact-readiness signals rather than quasi workflow-state records
 - [x] confirm the exact manager-facing callable contract for each stable `trading-data` entrypoint
-- [x] remove ETF constituent look-through / N-PORT workflows from the active mainline design so ETFs stay bar/context proxies for regime and divergence analysis
+- [x] remove ETF constituent look-through workflows from the active mainline design so ETFs stay bar/context proxies for regime and divergence analysis
 
 ## Scope rule
 

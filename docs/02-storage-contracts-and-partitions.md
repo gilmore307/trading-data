@@ -51,7 +51,8 @@ Current rule:
 - use `context/` rather than `data/` for these artifacts
 - prefer append/upsert accumulation within the context layer rather than treating them as market-tape partitions
 - for single-series or single-dataset official sources, prefer one durable file per logical series or dataset
-- for N-PORT ETF holdings, prefer permanent month-directory accumulation under the context layer because the natural retained object is a month snapshot set rather than a symbol/month tape partition
+- for N-PORT ETF -> constituent holdings, prefer permanent month-directory accumulation under the context layer because the natural retained object is a month snapshot set rather than a symbol/month tape partition
+- for constituent -> ETF derived context, prefer symbol-facing context artifacts under `context/` that can be refreshed with the underlying symbol's usable context state
 - prefer full-history backfill first, then periodic append/update
 
 Examples:

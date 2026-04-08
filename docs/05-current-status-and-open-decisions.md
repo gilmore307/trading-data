@@ -61,7 +61,9 @@ This document summarizes current source coverage, operational status, and the re
 - `quotes_1min.jsonl` and `trades_1min.jsonl` are minute-level aggregates, not persisted raw event-tape files
 - per-dataset state files such as `quotes_1min.state.json` and `trades_1min.state.json` describe resumable partition completion state, not process liveness
 - `complete=false` means non-final/open/interrupted resumable state; it does not by itself mean a builder is still running
-- N-PORT ETF holdings should be interpreted as permanent context accumulation under `context/etf_holdings/`, not as market-tape partitions under `data/`
+- N-PORT ETF data should be interpreted in two layers:
+  - ETF -> constituent month snapshots under `context/etf_holdings/` are permanent context accumulation
+  - constituent -> ETF derived context under `context/constituent_etf_deltas/` is symbol-facing context that should refresh along with the underlying symbol's usable context state
 
 ## Output compaction contract now belongs to the mainline docs
 

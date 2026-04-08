@@ -88,7 +88,9 @@ flowchart TD
 - `quotes_1min.jsonl` and `trades_1min.jsonl` are minute aggregates, not raw event-tape persistence
 - low-frequency macro/economic data should be treated as context artifacts rather than symbol/month tape
 - macro/economic series should prefer full-history append/upsert storage per series rather than market-tape-style month partitioning
-- N-PORT ETF holdings should also be treated as context artifacts with permanent append/upsert month accumulation under the context layer rather than as market-tape partitions
+- N-PORT ETF data should be interpreted in two layers:
+  - ETF -> constituent holdings snapshots under `context/etf_holdings/` belong to the permanent context accumulation layer
+  - constituent -> ETF derived context artifacts under `context/constituent_etf_deltas/` are downstream-facing symbol-context outputs that should be refreshed along with the underlying symbol's usable context state
 - ETF holdings and related mappings live in the context layer
 - downstream artifact readiness is signaled through machine-readable signal files
 

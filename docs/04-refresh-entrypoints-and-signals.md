@@ -48,7 +48,7 @@ Behavior:
 - attempt discovery/availability for the previous month
 - run extraction only when the target month appears available
 - continue automatically into ETF data decomposition/output build for the configured ETF target list
-- append the new month snapshot set into the permanent context family under `context/etf_holdings/<YYMM>/`
+- append the new month snapshot set into the permanent ETF-holdings context family under `context/etf_holdings/<YYMM>/`
 - build/update constituent ETF context outputs directly from the month holdings outputs
 - update N-PORT capture state under the holdings context area
 - emit a downstream-ready signal file under `context/signals/`
@@ -59,8 +59,9 @@ Current retained context artifacts include:
 - downstream-ready constituent ETF context outputs under `context/constituent_etf_deltas/`
 
 Interpretation rule:
-- N-PORT holdings are month-addressed snapshots, but they still belong to the permanent context accumulation layer rather than to market-tape partitions
-- the natural retained object is a context month snapshot family, not a `data/<symbol>/<YYMM>/` market-tape partition
+- the ETF -> constituent holdings month snapshots belong to the permanent context accumulation layer
+- the constituent -> ETF derived outputs are symbol-facing context artifacts built from that permanent layer
+- those derived outputs should be refreshed when the underlying symbol's usable context state is refreshed, rather than being thought of as a completely detached permanent-reference bucket
 
 Current downstream signal meaning:
 - `etf_holdings_ready`

@@ -83,19 +83,28 @@ Current machine-readable configs:
 ## Holdings storage rule
 
 ETF holdings are context metadata, not minute-level market tape.
-They should be treated as a permanent context accumulation path rather than as market-tape partitions.
-They live under:
+But they should be interpreted in two distinct layers.
+
+### Layer 1: ETF -> constituent holdings snapshots
+These live under:
 - `context/etf_holdings/`
 
 Operational/download/discovery helper artifacts live under:
 - `context/etf_holdings/_aux/`
 
-The final ready-to-use downstream constituent artifact is built under:
+Interpretation rule:
+- N-PORT month snapshots of ETF holdings belong to the permanent context accumulation layer
+- they are month-addressed retained context snapshots, not `data/<symbol>/<YYMM>/` market-tape partitions
+- this layer is the authoritative retained ETF-holdings source of truth
+
+### Layer 2: constituent -> ETF derived context
+The downstream-facing derived artifact is built under:
 - `context/constituent_etf_deltas/<SYMBOL>.md`
 
 Interpretation rule:
-- N-PORT holdings are month-scoped context snapshots, but the retained storage family is still a permanent context layer
-- this means they belong with append/upsert context accumulation under `context/`, not with the `data/<symbol>/<YYMM>/` market-tape contract
+- this layer is organized around the underlying symbol rather than around the ETF source month snapshot
+- it should be treated as a symbol-facing derived context artifact that downstream consumers use together with the symbol's market data / modeling inputs
+- so while it is built from the permanent ETF holdings layer, its operational meaning belongs closer to the underlying symbol refresh/consumption path than to a pure permanent-reference bucket
 
 ## Holdings file rule
 
@@ -111,7 +120,7 @@ Current normalized schema keeps only:
 
 ## Direct constituent-context build rule
 
-ETF month construction is owned at the month scope, but the retained downstream-facing derivative should be the constituent ETF context output rather than a separate reverse symbol map artifact.
+ETF month construction is owned at the month scope, but the downstream-facing derivative should be interpreted separately from the ETF snapshot source layer.
 
 For each target month, the N-PORT pipeline should:
 - extract holdings for the full actionable ETF target list
@@ -122,6 +131,7 @@ Current rule:
 - do not treat a reverse symbol map as a required retained artifact
 - the active pipeline should build constituent ETF context outputs directly from the retained month holdings outputs
 - if a temporary reverse lookup is ever used internally during construction, it should remain an implementation detail rather than a durable storage contract
+- the constituent-facing derivative should be treated as symbol-context state that is refreshed from the permanent ETF holdings layer, not as just another permanent reference file with no relationship to underlying refresh state
 
 ## Source-path status
 

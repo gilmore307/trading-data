@@ -86,16 +86,14 @@ def run_symbol(symbol: str, asset_class: str, start: str, end: str) -> bool:
     ]
     subprocess.run(cmd, cwd=ROOT, env=env, check=True)
 
-    for dataset_script in ['fetch_historical_quotes.py', 'fetch_historical_trades.py']:
+    for dataset_script in ['build_quotes_1min.py', 'build_trades_1min.py']:
         cmd = [
             PYTHON,
             f'src/data/alpaca/{dataset_script}',
-            '--asset-class', asset_class,
             '--symbol', symbol,
             '--start', start,
             '--end', end,
             '--limit', '10000',
-            '--resume',
         ]
         subprocess.run(cmd, cwd=ROOT, env=env, check=True)
 

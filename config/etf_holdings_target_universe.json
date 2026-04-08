@@ -1,13 +1,12 @@
 {
-  "version": 2,
+  "version": 3,
   "last_updated": "2026-04-08",
-  "purpose": "Priority ETF target universe for holdings extraction/refresh workflows.",
+  "purpose": "ETF proxy universe used for market-regime and sector/thematic divergence analysis.",
   "notes": [
-    "This file is the actionable ETF holdings target list derived from the broader ETF context universe.",
-    "trading-data should prioritize durable holdings coverage for this list before expanding wider.",
-    "trading-model may still score/prune final usefulness downstream.",
-    "Broad-market ETFs and macro/commodity/crypto proxy ETFs are retained for bar/context use but are not the main focus of N-PORT holdings mapping.",
-    "Active N-PORT holdings mapping should focus on sector ETFs and relatively independent industry/thematic ETFs where constituent-level context is materially useful."
+    "This file now represents the retained ETF proxy set, not an N-PORT holdings-mapping target list.",
+    "Broad-market ETFs and macro/commodity/crypto proxy ETFs are retained for bar/context use.",
+    "Sector and independent industry/thematic ETFs are retained as regime/divergence proxies.",
+    "N-PORT holdings mapping has been removed from the active design to avoid implying constituent-level dependency in the mainline workflow."
   ],
   "bar_only_proxies": {
     "core_broad_market": [
@@ -24,10 +23,8 @@
       "PDBC",
       "IBIT",
       "ETHA"
-    ]
-  },
-  "holdings_mapped_sector_thematic_etfs": {
-    "core_sector": [
+    ],
+    "sector_and_industry_thematic_proxies": [
       "XLK",
       "XLF",
       "XLE",
@@ -38,9 +35,7 @@
       "XLB",
       "XLU",
       "XLRE",
-      "XLC"
-    ],
-    "independent_industry_thematic": [
+      "XLC",
       "SMH",
       "SOXX",
       "KRE",

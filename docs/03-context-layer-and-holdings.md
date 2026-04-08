@@ -1,6 +1,6 @@
 # 03 Context Layer and Holdings
 
-This document defines the non-market-tape context layer for `trading-data`, especially macro/economic context preparation plus ETF context preparation and ETF holdings workflows.
+This document defines the non-market-tape context layer for `trading-data`, especially macro/economic context preparation plus ETF context preparation and any optional ETF holdings source workflows.
 
 ## Underlying-first rule
 
@@ -81,40 +81,27 @@ Current machine-readable configs:
 - `config/etf_holdings_target_universe.json`
 
 Current interpretation rule:
-- not every ETF retained for bar/regime context should also be a first-priority N-PORT holdings-mapping target
-- broad-market ETFs and macro/commodity/crypto proxy ETFs are mainly retained for bar/context use
-- N-PORT holdings mapping should focus on sector ETFs and relatively independent industry/thematic ETFs where constituent-level context is materially useful
-- sec-api resolution is now good for the full active holdings-mapped ETF universe: the Select Sector SPDR set plus `SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, and `BOTZ`
+- ETF proxies are retained primarily for market-regime, sector rotation, and industry/thematic divergence analysis
+- broad-market ETFs and macro/commodity/crypto proxy ETFs are bar/context-first instruments
+- sector and industry/thematic ETFs are also bar/context-first instruments when the goal is to evaluate relative divergence rather than constituent look-through
+- N-PORT holdings mapping is no longer part of the active mainline design because it implies a constituent-level dependency the current workflow does not require
 
 ## Holdings storage rule
 
 ETF holdings are context metadata, not minute-level market tape.
-But they should be interpreted in two distinct layers.
-
-### Layer 1: ETF -> constituent holdings snapshots
-These live under:
+If N-PORT or another source is used in the future, those holdings snapshots should live under:
 - `context/etf_holdings/`
 
 Operational/download/discovery helper artifacts live under:
 - `context/etf_holdings/_aux/`
 
 Interpretation rule:
-- N-PORT month snapshots of ETF holdings belong to the permanent context accumulation layer
-- they are month-addressed retained context snapshots, not `data/<symbol>/<YYMM>/` market-tape partitions
-- this layer is the authoritative retained ETF-holdings source of truth
-
-### Layer 2: constituent -> ETF derived context
-The downstream-facing derived artifact is built under:
-- `context/constituent_etf_deltas/<SYMBOL>.md`
-
-Interpretation rule:
-- this layer is organized around the underlying symbol rather than around the ETF source month snapshot
-- it should be treated as a symbol-facing derived context artifact that downstream consumers use together with the symbol's market data / modeling inputs
-- so while it is built from the permanent ETF holdings layer, its operational meaning belongs closer to the underlying symbol refresh/consumption path than to a pure permanent-reference bucket
+- any ETF holdings source snapshots belong to the permanent context accumulation layer
+- they are optional enrichment artifacts rather than a required dependency of the active sector/thematic divergence workflow
 
 ## Holdings file rule
 
-Group ETF holdings by month directory and use one file per ETF/month snapshot:
+If holdings snapshots are retained, group them by month directory and use one file per ETF/month snapshot:
 - `context/etf_holdings/<YYMM>/<ETF>_<YYMM>.md`
 
 Current normalized schema keeps only:
@@ -124,20 +111,14 @@ Current normalized schema keeps only:
 - `constituent_name`
 - `weight_percent`
 
-## Direct constituent-context build rule
+## Mainline ETF analysis rule
 
-ETF month construction is owned at the month scope, but the downstream-facing derivative should be interpreted separately from the ETF snapshot source layer.
-
-For each target month, the N-PORT pipeline should:
-- extract holdings for the active holdings-mapped ETF target list
-- build the month-level ETF outputs under `context/etf_holdings/<YYMM>/`
-- build/update downstream-ready constituent ETF context outputs directly from those holdings
+The active workflow should treat ETF proxies primarily as retained bar/context instruments.
 
 Current rule:
-- do not treat a reverse symbol map as a required retained artifact
-- the active pipeline should build constituent ETF context outputs directly from the retained month holdings outputs
-- if a temporary reverse lookup is ever used internally during construction, it should remain an implementation detail rather than a durable storage contract
-- the constituent-facing derivative should be treated as symbol-context state that is refreshed from the permanent ETF holdings layer, not as just another permanent reference file with no relationship to underlying refresh state
+- sector/thematic regime evaluation should not depend on constituent-level ETF holdings extraction
+- do not imply that ETF divergence analysis requires N-PORT-based constituent look-through
+- N-PORT-based constituent analysis may be revisited later only if the strategy/modeling workflow explicitly requires constituent exposure analysis
 
 ## Source-path status
 
@@ -147,12 +128,12 @@ Current rule:
 - Finnhub ETF holdings path blocked by current account access
 - Alpaca not yet validated as a direct ETF holdings source
 
-### Candidate authoritative path
-SEC Form N-PORT is currently the most serious candidate authoritative source path for ETF/fund holdings disclosure.
+### Optional future source path
+SEC Form N-PORT remains a possible future authoritative source path for ETF/fund holdings disclosure if constituent-level exposure analysis later becomes necessary.
 
 ## Current N-PORT scaffold
 
-Runnable N-PORT utilities now exist under `src/data/nport/`, including discovery, mapping, extraction, normalization, and monthly-output build helpers.
+Runnable N-PORT utilities exist under `src/data/nport/`, but they are no longer part of the active mainline sector/thematic divergence design.
 
 Current state tracking file:
 - `context/etf_holdings/_aux/state/nport_state.json`

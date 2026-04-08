@@ -29,13 +29,8 @@
 - [x] add first runnable quarterly package discovery scaffold for SEC N-PORT zip datasets
 - [x] add first runnable metadata/readme downloader for latest discovered N-PORT package
 - [x] add first runnable compact holdings normalization scaffold for candidate N-PORT-like records
-- [~] implement ETF ticker -> SEC fund/series/entity identifier mapping path
-  - narrow the target universe by removing redundant broad-market duplicates (`VOO`, `IVV`, `VTI`) and redundant gold duplicate (`IAU`)
-  - treat broad-market and macro/commodity/crypto proxies as bar/context-first rather than holdings-mapping-first
-  - focus active N-PORT holdings mapping on sector ETFs and relatively independent industry/thematic ETFs (`SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, `BOTZ`)
-  - sec-api registry now resolves: all Select Sector SPDR funds plus `SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, `BOTZ`
-  - current unresolved list is now empty for the active holdings-mapped ETF universe
-- [~] implement selective parsing of large N-PORT TSV tables into ETF-specific holdings outputs
+- [x] remove N-PORT holdings mapping from the active mainline design so sector/thematic ETF analysis stays bar/context-first
+- [ ] keep N-PORT only as an optional future source-path if constituent-level exposure analysis is later required
 - [x] define actionable ETF holdings target universe derived from the broader ETF context universe
 - [x] add first N-PORT pipeline runner for the ETF holdings target universe
 - [x] define monthly previous-month Alpaca batch-backfill automation strategy

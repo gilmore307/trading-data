@@ -47,24 +47,20 @@ Runner:
 Behavior:
 - attempt discovery/availability for the previous month
 - run extraction only when the target month appears available
-- continue automatically into ETF data decomposition/output build for the configured holdings-mapped ETF target list
-- append the new month snapshot set into the permanent ETF-holdings context family under `context/etf_holdings/<YYMM>/`
-- build/update constituent ETF context outputs directly from the month holdings outputs
-- update N-PORT capture state under the holdings context area
-- emit a downstream-ready signal file under `context/signals/`
+- update N-PORT availability/capture state under the holdings context area
+- emit a downstream-ready signal file under `context/signals/` when the N-PORT month source is confirmed available/captured
 
 Current retained context artifacts include:
-- per-ETF month outputs under `context/etf_holdings/<YYMM>/`
-- month manifest under `context/etf_holdings/<YYMM>/_manifest_<YYMM>.json`
-- downstream-ready constituent ETF context outputs under `context/constituent_etf_deltas/`
+- source-month N-PORT availability/capture state under the holdings context area
+- any temporary or audit-oriented month artifacts produced by source-specific ingestion work
 
 Interpretation rule:
-- the ETF -> constituent holdings month snapshots belong to the permanent context accumulation layer
-- the constituent -> ETF derived outputs are symbol-facing context artifacts built from that permanent layer
-- those derived outputs should be refreshed when the underlying symbol's usable context state is refreshed, rather than being thought of as a completely detached permanent-reference bucket
+- N-PORT is no longer part of the active primary sector/thematic divergence workflow
+- the mainline trading workflow should not depend on ETF constituent look-through for sector/thematic evaluation
+- sector/thematic ETF bars remain the primary active regime-analysis input
 
 Current downstream signal meaning:
-- `etf_holdings_ready`
+- `etf_holdings_ready` remains a source-month availability/capture signal only, not a claim that constituent-level context is required by the mainline workflow
 
 Historical-coverage rule:
 - months earlier than the supported N-PORT coverage floor should not be treated as retryable publication delay

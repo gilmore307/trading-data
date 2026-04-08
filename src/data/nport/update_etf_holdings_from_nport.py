@@ -88,7 +88,6 @@ def main() -> None:
 
     run([
         PYTHON,
-        'src/data/nport/build_monthly_reverse_symbol_map.py',
         '--target-month', args.target_month,
         *extra_args,
     ], required=False)

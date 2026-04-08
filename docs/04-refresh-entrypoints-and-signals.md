@@ -49,14 +49,14 @@ Behavior:
 - run extraction only when the target month appears available
 - continue automatically into ETF data decomposition/output build for the configured ETF target list
 - generate month directory outputs under `context/etf_holdings/<YYMM>/`
-- build the shared month-level reverse holdings map for all configured ETF targets
+- build/update constituent ETF context outputs directly from the month holdings outputs
 - update N-PORT capture state under the holdings context area
 - emit a downstream-ready signal file under `context/signals/`
 
 Current month-level shared artifacts include:
 - per-ETF month outputs under `context/etf_holdings/<YYMM>/`
 - month manifest under `context/etf_holdings/<YYMM>/_manifest_<YYMM>.json`
-- reverse holdings lookup under `context/etf_holdings/<YYMM>/_reverse_symbol_map_<YYMM>.json`
+- downstream-ready constituent ETF context outputs under `context/constituent_etf_deltas/`
 
 Current downstream signal meaning:
 - `etf_holdings_ready`

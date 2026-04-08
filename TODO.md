@@ -42,6 +42,8 @@
 - [x] define `context/constituent_etf_deltas/<SYMBOL>.md` as the ready-to-use downstream ETF context artifact
 - [x] add first per-symbol ETF monthly-context builder from monthly ETF holdings base snapshots
 - [x] explicitly leave month-over-month delta calculation to downstream layers rather than precomputing it here
+- [x] decide that reverse symbol map should not be a required retained artifact when constituent ETF context outputs already exist
+- [ ] remove reverse-symbol-map generation from the active ETF holdings pipeline where it is still wired in
 
 ## Storage split / trading-storage
 

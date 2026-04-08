@@ -104,22 +104,18 @@ Current normalized schema keeps only:
 - `constituent_name`
 - `weight_percent`
 
-## Month-level shared reverse map rule
+## Direct constituent-context build rule
 
-ETF holdings context is a shared month-level artifact, not a per-underlying private artifact.
+ETF month construction is owned at the month scope, but the retained downstream-facing derivative should be the constituent ETF context output rather than a separate reverse symbol map artifact.
 
 For each target month, the N-PORT pipeline should:
 - extract holdings for the full actionable ETF target list
 - build the month-level ETF outputs under `context/etf_holdings/<YYMM>/`
-- build a shared reverse lookup from underlying stock symbol -> holding ETFs
+- build/update downstream-ready constituent ETF context outputs directly from those holdings
 
-Current shared reverse-map artifact:
-- `context/etf_holdings/<YYMM>/_reverse_symbol_map_<YYMM>.json`
-
-Operational meaning:
-- if a later-added stock symbol starts from a month whose ETF reverse map already exists, downstream repos should reuse that month-level map instead of rebuilding N-PORT just for the new symbol
-- if the symbol is absent from the reverse map, that means it is checked and not held by the configured ETF target universe for that month
-- N-PORT month construction is therefore owned at the month scope; symbol-level lookup is a derived read path
+Current rule:
+- do not treat a reverse symbol map as a required retained artifact
+- if a temporary reverse lookup is ever used internally during construction, it should remain an implementation detail rather than a durable storage contract
 
 ## Source-path status
 

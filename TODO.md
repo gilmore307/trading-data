@@ -24,8 +24,8 @@
 ## Storage split / trading-storage
 
 - [x] define the new `trading-storage` project as the storage-first sibling for downloaded/context/intermediate/report/output artifacts
-- [ ] decide which current `trading-data` artifact families should remain repo-local versus move/copy into `trading-storage`
-- [ ] document the boundary between code repos and the storage-only repo clearly enough that future artifact placement is consistent
+- [x] decide which current `trading-data` artifact families should remain repo-local versus move/copy into `trading-storage`
+- [x] document the boundary between code repos and the storage-only repo clearly enough that future artifact placement is consistent
 
 ## Macro / economic context
 

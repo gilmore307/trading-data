@@ -22,6 +22,7 @@ Design rule:
 - prefer one durable append/upsert file per logical series or dataset
 - do not force low-frequency context data into market-tape-style month partitions
 - preserve source/native frequency rather than fabricating synthetic bar contracts by default
+- when used downstream with higher-frequency market data, treat the latest released observation as the active known value until the next official release replaces it
 
 ## Current source families
 

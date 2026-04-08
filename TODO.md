@@ -33,8 +33,8 @@
   - narrow the target universe by removing redundant broad-market duplicates (`VOO`, `IVV`, `VTI`) and redundant gold duplicate (`IAU`)
   - treat broad-market and macro/commodity/crypto proxies as bar/context-first rather than holdings-mapping-first
   - focus active N-PORT holdings mapping on sector ETFs and relatively independent industry/thematic ETFs (`SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, `BOTZ`)
-  - first-wave sec-api registry now resolves: all Select Sector SPDR funds plus `SMH`, `SOXX`, `KRE`, `GDX`, `BOTZ`
-  - second-wave unresolved symbols still needing deeper resolution: `ITA`, `IYT`, `LIT`
+  - sec-api registry now resolves: all Select Sector SPDR funds plus `SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, `BOTZ`
+  - current unresolved list is now empty for the active holdings-mapped ETF universe
 - [~] implement selective parsing of large N-PORT TSV tables into ETF-specific holdings outputs
 - [x] define actionable ETF holdings target universe derived from the broader ETF context universe
 - [x] add first N-PORT pipeline runner for the ETF holdings target universe

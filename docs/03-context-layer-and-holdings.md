@@ -84,7 +84,7 @@ Current interpretation rule:
 - not every ETF retained for bar/regime context should also be a first-priority N-PORT holdings-mapping target
 - broad-market ETFs and macro/commodity/crypto proxy ETFs are mainly retained for bar/context use
 - N-PORT holdings mapping should focus on sector ETFs and relatively independent industry/thematic ETFs where constituent-level context is materially useful
-- first-wave sec-api resolution is now good for the Select Sector SPDR set plus `SMH`, `SOXX`, `KRE`, `GDX`, and `BOTZ`; `ITA`, `IYT`, and `LIT` still need a deeper second-wave resolution path
+- sec-api resolution is now good for the full active holdings-mapped ETF universe: the Select Sector SPDR set plus `SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, and `BOTZ`
 
 ## Holdings storage rule
 

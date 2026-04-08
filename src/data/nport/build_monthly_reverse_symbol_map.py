@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
-HOLDINGS_ROOT = ROOT / 'context' / 'etf_holdings'
+from src.data.common.storage_paths import context_etf_holdings_root
+
+HOLDINGS_ROOT = context_etf_holdings_root()
 TARGETS_PATH = ROOT / 'config' / 'etf_holdings_target_universe.json'
 
 

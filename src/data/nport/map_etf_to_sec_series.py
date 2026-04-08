@@ -23,7 +23,7 @@ def latest_package_dir() -> Path:
     latest = discovery.get('latest')
     if not latest:
         raise ValueError('no latest discovered package available')
-    return ROOT / 'context' / 'etf_holdings' / '_aux' / 'nport_data' / 'packages' / latest['name'].removesuffix('.zip')
+    return context_etf_aux_root() / 'nport_data' / 'packages' / latest['name'].removesuffix('.zip')
 
 
 def read_fund_rows(package_dir: Path) -> list[dict[str, str]]:

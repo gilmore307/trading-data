@@ -14,7 +14,9 @@ ROOT = Path(__file__).resolve().parents[3]
 PYTHON = 'python3'
 BUSINESS_TZ = ZoneInfo('America/New_York')
 BATCHES_PATH = ROOT / 'config' / 'alpaca_monthly_batches.json'
-SIGNALS_DIR = ROOT.parent / 'trading-storage' / '2_context' / '0_permanent' / '2_signals'
+from src.data.common.storage_paths import context_signals_root
+
+SIGNALS_DIR = context_signals_root()
 
 
 def _month_window_from_business_month(year: int, month: int) -> tuple[str, str, str]:

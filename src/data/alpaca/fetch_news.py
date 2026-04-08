@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[3]
 BUSINESS_TZ = ZoneInfo("America/New_York")
 BASE_URL = "https://data.alpaca.markets"
 
+from src.data.common.storage_paths import ingest_news_root
+
 
 def load_dotenv() -> None:
     env_path = ROOT / ".env"
@@ -109,7 +111,7 @@ def normalize_news(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def default_output_dir(*, symbol: str) -> Path:
-    return ROOT.parent / 'trading-storage' / '1_ingest' / '1_long_retention' / '4_news' / symbol
+    return ingest_news_root() / symbol
 
 
 def _candidate_params(symbol: str, start: str, end: str, limit: int) -> list[dict[str, Any]]:

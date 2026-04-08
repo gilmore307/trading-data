@@ -12,10 +12,12 @@ from typing import Any, Iterator
 import requests
 
 ROOT = Path(__file__).resolve().parents[3]
-DISCOVERY_PATH = ROOT / 'context' / 'etf_holdings' / '_aux' / 'discovery' / 'nport_discovery.json'
-MAPPING_PATH = ROOT / 'context' / 'etf_holdings' / '_aux' / 'mapping' / 'sec_series_mapping_candidates_2603.json'
-OUT_DIR = ROOT / 'context' / 'etf_holdings'
-KEEP_ZIP_DIR = ROOT / 'context' / 'etf_holdings' / '_aux' / 'nport_data' / 'packages'
+from src.data.common.storage_paths import context_etf_aux_root, context_etf_holdings_root
+
+DISCOVERY_PATH = context_etf_aux_root() / 'discovery' / 'nport_discovery.json'
+MAPPING_PATH = context_etf_aux_root() / 'mapping' / 'sec_series_mapping_candidates_2603.json'
+OUT_DIR = context_etf_holdings_root()
+KEEP_ZIP_DIR = context_etf_aux_root() / 'nport_data' / 'packages'
 USER_AGENT = 'Mozilla/5.0 trading-data-research local'
 
 

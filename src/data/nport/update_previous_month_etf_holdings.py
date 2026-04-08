@@ -11,8 +11,10 @@ SIGNAL_CONTRACT_VERSION = 'v1'
 
 ROOT = Path(__file__).resolve().parents[3]
 PYTHON = 'python3'
-STATE_PATH = ROOT / 'context' / 'etf_holdings' / '_aux' / 'state' / 'nport_state.json'
-SIGNALS_DIR = ROOT / 'context' / 'signals'
+from src.data.common.storage_paths import context_etf_aux_root, context_etf_holdings_root, context_signals_root
+
+STATE_PATH = context_etf_aux_root() / 'state' / 'nport_state.json'
+SIGNALS_DIR = context_signals_root()
 
 
 def previous_month_key() -> str:
@@ -88,7 +90,7 @@ def write_signal(*, target_month: str, results: list[dict[str, Any]]) -> Path:
         'artifacts': {
             'signal_scope': 'etf_holdings_month',
             'signal_path': str(signal_path),
-            'context_root': str(ROOT / 'context' / 'etf_holdings'),
+            'context_root': str(context_etf_holdings_root()),
         },
         'results': results,
         'summary': {
@@ -146,7 +148,7 @@ def main() -> None:
     results = []
     for symbol in selected_symbols:
         yy_mm = target_month[2:4] + target_month[5:7]
-        candidate_path = ROOT / 'context' / 'etf_holdings' / yy_mm / f'{symbol}_{yy_mm}.md'
+        candidate_path = context_etf_holdings_root() / yy_mm / f'{symbol}_{yy_mm}.md'
         results.append({'symbol': symbol, 'exists': candidate_path.exists(), 'path': str(candidate_path)})
 
     state = load_json(args.state)

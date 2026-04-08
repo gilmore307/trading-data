@@ -133,7 +133,6 @@ def flush_month_store(base_dir: Path, store: dict[str, dict[tuple[str, int], dic
                     "snapshot": row.get("snapshot"),
                 }
                 f.write(json.dumps(compact, ensure_ascii=False) + "\n")
-        if ordered_rows:
 
 
 def fetch_option_snapshots(*, underlying_symbol: str, limit: int, output_dir: Path | None, resume: bool) -> dict[str, Any]:

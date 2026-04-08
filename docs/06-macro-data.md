@@ -45,6 +45,36 @@ Current behavior:
 - later reruns should upsert by `(year, period)`
 - file path is the durable artifact and should remain append/upsert friendly
 
+## Current BEA row contract
+
+Each row in `context/macro/bea/*.jsonl` should contain fields such as:
+- `source`
+- `dataset`
+- `table_name`
+- `line_number`
+- `frequency`
+- `time_period`
+- `data_value`
+- `line_description`
+- `series_code`
+- `unit`
+
+Current behavior:
+- full-history backfill first
+- later reruns should upsert by time-period row identity
+
+## Current Census row contract
+
+Each row in `context/macro/census/*.jsonl` should contain:
+- `source`
+- `dataset`
+- `time_period`
+- source-native returned fields for the selected dataset
+
+Current behavior:
+- full-history backfill first
+- later reruns should upsert by the chosen time-period field
+
 ## Current FRED row contract
 
 Each row in `context/macro/fred/<series>.jsonl` should contain:

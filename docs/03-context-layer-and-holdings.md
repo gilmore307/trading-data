@@ -115,6 +115,7 @@ For each target month, the N-PORT pipeline should:
 
 Current rule:
 - do not treat a reverse symbol map as a required retained artifact
+- the active pipeline should build constituent ETF context outputs directly from the retained month holdings outputs
 - if a temporary reverse lookup is ever used internally during construction, it should remain an implementation detail rather than a durable storage contract
 
 ## Source-path status

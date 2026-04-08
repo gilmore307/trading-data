@@ -6,9 +6,13 @@ This document defines the repository structure, canonical storage layout, source
 - `docs/` — ordered data-contract documentation
 - `src/` — source adapters, fetch/update/build code, and maintenance logic
 - `config/` — source and pipeline configuration that belongs to the data layer
-- `data/` — tracked monthly-partitioned market-tape storage
-- `context/` — non-market-tape context metadata such as macro/economic series, event calendars, and mapping artifacts
+- `data/` — transitional/local working storage during migration where still needed
+- `context/` — transitional/local context working storage during migration where still needed
 - `tests/` — adapter/data-contract tests as the repo matures
+
+Durable-storage rule:
+- the durable home for trading-stack artifacts is `projects/trading-storage/`
+- `trading-data` should be treated as a code-first repo, not the long-term durable storage home for downloaded/context/output artifacts
 
 ## Scope rule
 
@@ -48,7 +52,7 @@ Alpaca is the primary long-term source and current architectural main focus.
 Macro/economic series and similar context datasets should not be forced into market-tape-style symbol/month partitions.
 
 Current rule:
-- use `context/` rather than `data/` for these artifacts
+- route durable context artifacts into `trading-storage`
 - prefer append/upsert accumulation within the context layer rather than treating them as market-tape partitions
 - for single-series or single-dataset official sources, prefer one durable file per logical series or dataset
 - prefer full-history backfill first, then periodic append/update

@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "last_updated": "2026-04-03",
+  "purpose": "Priority ETF target universe for holdings extraction/refresh workflows.",
+  "notes": [
+    "This file is the actionable ETF holdings target list derived from the broader ETF context universe.",
+    "trading-data should prioritize durable holdings coverage for this list before expanding wider.",
+    "trading-model may still score/prune final usefulness downstream."
+  ],
+  "tiers": {
+    "tier_1_core_broad_market": [
+      "SPY",
+      "VOO",
+      "IVV",
+      "VTI",
+      "QQQ",
+      "IWM",
+      "DIA"
+    ],
+    "tier_2_core_sector": [
+      "XLK",
+      "XLF",
+      "XLE",
+      "XLV",
+      "XLI",
+      "XLY",
+      "XLP",
+      "XLB",
+      "XLU",
+      "XLRE",
+      "XLC"
+    ],
+    "tier_3_priority_macro_proxy": [
+      "GLD",
+      "IAU",
+      "SLV",
+      "USO",
+      "DBC",
+      "PDBC",
+      "IBIT",
+      "ETHA"
+    ],
+    "tier_4_priority_industry_thematic": [
+      "SMH",
+      "SOXX",
+      "IGV",
+      "XBI",
+      "IBB",
+      "KRE",
+      "ITA",
+      "IYT",
+      "LIT",
+      "GDX",
+      "BOTZ"
+    ]
+  }
+}

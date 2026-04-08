@@ -1,0 +1,18 @@
+[
+  {
+    "symbol": "AAPL",
+    "asset_class": "stocks"
+  },
+  {
+    "symbol": "SPY",
+    "asset_class": "stocks"
+  },
+  {
+    "symbol": "QQQ",
+    "asset_class": "stocks"
+  },
+  {
+    "symbol": "BTC/USD",
+    "asset_class": "crypto"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "target_month": "2016-01",
+  "current_month_available": false,
+  "current_month_captured": false,
+  "updated_at": "2026-04-07T05:33:32.536847Z",
+  "last_checked_at": "2026-04-07T05:33:32.743697Z",
+  "source_reference": {
+    "dataset_page": "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets",
+    "last_check_outcome": {
+      "checked_at": "2026-04-07T05:33:32.743697Z",
+      "target_month": "2016-01",
+      "dataset_page": "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets",
+      "availability_signal": "target month is earlier than supported N-PORT coverage floor 2019-01",
+      "coverage_floor": "2019-01",
+      "status": "not_applicable_pre_nport"
+    }
+  },
+  "notes": [
+    "Availability currently uses a coarse page-token check and still needs a stronger filing/package-level detector."
+  ]
+}

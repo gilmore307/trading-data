@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "last_updated": "2026-04-03",
+  "notes": [
+    "This file stores candidate SEC/N-PORT series-name search strings for ETF identifier mapping.",
+    "Values are permissive search candidates, not authoritative mappings."
+  ],
+  "etfs": {
+    "SPY": [
+      "SPDR S&P 500 ETF TRUST",
+      "SPDR S&P 500 ETF"
+    ],
+    "QQQ": [
+      "INVESCO QQQ TRUST",
+      "INVESCO QQQ TRUST, SERIES 1"
+    ],
+    "VOO": [
+      "VANGUARD S&P 500 ETF"
+    ],
+    "IVV": [
+      "ISHARES CORE S&P 500 ETF"
+    ],
+    "VTI": [
+      "VANGUARD TOTAL STOCK MARKET ETF"
+    ],
+    "IWM": [
+      "ISHARES RUSSELL 2000 ETF"
+    ],
+    "DIA": [
+      "SPDR DOW JONES INDUSTRIAL AVERAGE ETF TRUST"
+    ]
+  }
+}

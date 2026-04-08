@@ -71,3 +71,12 @@ They are not symbol/month market-data partitions.
 Manager-side scheduling should prefer:
 - official release-calendar-driven refresh for datasets with clear release timestamps
 - lower-frequency ET-based polling only where a precise maintained calendar is not yet available
+
+Current executable-ledger direction:
+- `trading-storage/1_market_regime/0_permanent/0_task_status/release_dataset_refresh_tasks.csv` is the human-facing ordered task ledger for regime-side release/calendar refresh work
+- calendar refresh is treated as a normal task family inside that ledger rather than as a separate scheduler table
+- tasks may use `plan_at` as the earliest eligible execution timestamp
+- if `plan_at` is blank, the task may start immediately
+- if `plan_at` is in the future, manager should wait until that timestamp
+- once `plan_at` has passed, failed tasks remain eligible on later scans until they succeed or are manually changed
+- `plan_at` may be date-only for all-day tasks or a full ET timestamp for timed releases/events

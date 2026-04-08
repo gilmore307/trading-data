@@ -27,6 +27,7 @@ This document captures the current implemented state of `trading-data`, plus the
 - release-calendar handling for official macro sources
 - clearer source-specific freshness/index visibility for permanent context data
 - final storage boundary cleanup between `trading-data` and `trading-storage`
+- concrete manager-side execution against the new regime release-task ledger
 
 ## Current contract clarifications
 - `quotes_1min.jsonl` and `trades_1min.jsonl` are minute-level aggregates, not persisted raw event-tape files
@@ -60,3 +61,4 @@ Current compact-contract interpretation:
 - 2026-04-07: a new storage-only sibling project `projects/trading-storage` was introduced so the trading code repos can stay code-first while shared downloaded/context/intermediate/report/output artifacts converge into one storage-first location
 - 2026-04-08: first-wave official-source fetchers for FRED / BLS / BEA / Census / Treasury are now present in `src/data/macro/`, so the main remaining work is release-calendar handling, registry cleanup, and operational hardening rather than initial adapter creation
 - 2026-04-08: ETF constituent look-through was removed from the active mainline design so ETFs remain bar/context proxies for regime and divergence analysis
+- 2026-04-08: regime-side calendar refresh was folded into the unified `release_dataset_refresh_tasks.csv` design, with `plan_at` introduced as the earliest eligible execution timestamp for scheduled or immediate tasks

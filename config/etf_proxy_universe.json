@@ -3,10 +3,10 @@
   "last_updated": "2026-04-08",
   "purpose": "ETF proxy universe used for market-regime and sector/thematic divergence analysis.",
   "notes": [
-    "This file now represents the retained ETF proxy set, not an N-PORT holdings-mapping target list.",
+    "This file represents the retained ETF proxy set rather than a constituent-look-through target list.",
     "Broad-market ETFs and macro/commodity/crypto proxy ETFs are retained for bar/context use.",
     "Sector and independent industry/thematic ETFs are retained as regime/divergence proxies.",
-    "N-PORT holdings mapping has been removed from the active design to avoid implying constituent-level dependency in the mainline workflow."
+    "Constituent-look-through workflows were removed from the active design to avoid implying constituent-level dependency in the mainline workflow."
   ],
   "bar_only_proxies": {
     "core_broad_market": [

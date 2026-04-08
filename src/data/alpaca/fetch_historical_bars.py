@@ -154,7 +154,7 @@ def normalize_bar(*, asset_class: str, feed_scope: str, symbol: str, timeframe: 
 
 def default_output_dir(*, asset_class: str, symbol: str) -> Path:
     safe_symbol = symbol.replace("/", "-")
-    return ROOT / "data" / safe_symbol
+    return ROOT.parent / 'trading-storage' / '1_ingest' / '1_long_retention' / '1_bars' / safe_symbol
 
 
 def fetch_historical_bars(*, asset_class: str, symbol: str, timeframe: str, start: str, end: str, limit: int, resume: bool, output_dir: Path | None) -> dict[str, Any]:

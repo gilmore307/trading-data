@@ -109,7 +109,7 @@ def normalize_news(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def default_output_dir(*, symbol: str) -> Path:
-    return ROOT / "data" / symbol
+    return ROOT.parent / 'trading-storage' / '1_ingest' / '1_long_retention' / '4_news' / symbol
 
 
 def _candidate_params(symbol: str, start: str, end: str, limit: int) -> list[dict[str, Any]]:

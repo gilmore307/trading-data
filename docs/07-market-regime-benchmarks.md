@@ -10,22 +10,28 @@ They should be treated as permanent benchmark context.
 Each retained market proxy should have one chosen primary stored bar granularity rather than multiple redundant default granularities.
 Official macro series remain at their original source frequency.
 
-## 30-minute retained benchmark proxies
+## 1-minute retained benchmark proxies
 - `SPY`
 - `QQQ`
 - `IWM`
 - `RSP`
+- `DIA`
 
 Use these for:
 - broad beta
 - growth vs broad market
 - small-cap vs large-cap
 - breadth / concentration
+- old economy / blue-chip benchmark confirmation
 
-## 1-hour retained benchmark proxies
+## 30-minute retained benchmark proxies
+- `SHY`
+- `IEF`
 - `TLT`
 - `HYG`
 - `UUP`
+- `GLD`
+- `SLV`
 - sector rotation ETFs:
   - `XLB`
   - `XLC`
@@ -40,35 +46,33 @@ Use these for:
   - `XLY`
 
 Use these for:
-- rates impulse / duration sensitivity
+- duration and rates sensitivity
 - credit risk appetite
 - dollar pressure
+- metals / safe-haven response
 - sector rotation
 
 ## Daily retained benchmark proxies
-- `DIA`
-- `SHY`
-- `IEF`
-- `GLD`
-- `SLV`
 - `LQD`
+- `VIXCLS`
+- `VXN`
+- `MOVE`
 - `DBC`
+- `PDBC`
 - `USO`
 
 Use these for:
-- old economy / blue-chip benchmark
-- shorter-duration and intermediate-duration bond context that does not need sub-daily storage by default
-- metals and commodity shock context
 - higher-grade credit context
+- volatility / fear context when only daily reliable sources are available
+- broad commodity and energy shock context
 
 ## Original-frequency macro series
 Keep the following at source/native frequency rather than converting into retained benchmark bars:
 - rates / curve: `DFF`, `DGS3MO`, `DGS2`, `DGS10`, `DGS30`, `T10Y2Y`, `T10Y3M`
 - inflation: `CPIAUCSL`, `CPILFESL`
 - labor / growth: `UNRATE`, `PAYEMS`, `ICSA`, `GDPC1`
-- volatility / fear: `VIXCLS`, `VXNCLS`, `MOVE`
 - official source families: BLS, BEA, Census, Treasury Fiscal Data
 
 ## Practical interpretation
 - do not store multiple default bar granularities for the same benchmark proxy
-- if a higher-frequency study is needed later, treat it as a separate scoped acquisition task rather than the default retained benchmark layer
+- if a different higher/lower frequency is needed later, treat it as a separate scoped acquisition task rather than the default retained benchmark layer

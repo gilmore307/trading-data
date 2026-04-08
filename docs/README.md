@@ -14,6 +14,7 @@ It does not own cross-repo orchestration policy.
 4. `04-refresh-entrypoints-and-signals.md`
 5. `05-current-status-and-open-decisions.md`
 6. `06-macro-data.md`
+7. `07-market-regime-benchmarks.md`
 
 ## Appendix
 

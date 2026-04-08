@@ -101,3 +101,4 @@ Read in order:
 5. `docs/04-refresh-entrypoints-and-signals.md`
 6. `docs/05-current-status-and-open-decisions.md`
 7. `docs/06-macro-data.md`
+8. `docs/07-market-regime-benchmarks.md`

@@ -31,7 +31,8 @@
 - [x] add first runnable compact holdings normalization scaffold for candidate N-PORT-like records
 - [~] implement ETF ticker -> SEC fund/series/entity identifier mapping path
   - narrow the target universe by removing redundant broad-market duplicates (`VOO`, `IVV`, `VTI`) and redundant gold duplicate (`IAU`)
-  - keep independent crypto proxy ETFs (`IBIT`, `ETHA`) and independent industry/thematic ETFs (`SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, `BOTZ`) in the active target set
+  - treat broad-market and macro/commodity/crypto proxies as bar/context-first rather than holdings-mapping-first
+  - focus active N-PORT holdings mapping on sector ETFs and relatively independent industry/thematic ETFs (`SMH`, `SOXX`, `KRE`, `ITA`, `IYT`, `LIT`, `GDX`, `BOTZ`)
 - [~] implement selective parsing of large N-PORT TSV tables into ETF-specific holdings outputs
 - [x] define actionable ETF holdings target universe derived from the broader ETF context universe
 - [x] add first N-PORT pipeline runner for the ETF holdings target universe

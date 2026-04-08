@@ -47,7 +47,7 @@ Runner:
 Behavior:
 - attempt discovery/availability for the previous month
 - run extraction only when the target month appears available
-- continue automatically into ETF data decomposition/output build for the configured ETF target list
+- continue automatically into ETF data decomposition/output build for the configured holdings-mapped ETF target list
 - append the new month snapshot set into the permanent ETF-holdings context family under `context/etf_holdings/<YYMM>/`
 - build/update constituent ETF context outputs directly from the month holdings outputs
 - update N-PORT capture state under the holdings context area

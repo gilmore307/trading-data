@@ -1,22 +1,33 @@
 {
-  "version": 1,
+  "version": 2,
   "last_updated": "2026-04-08",
   "purpose": "Priority ETF target universe for holdings extraction/refresh workflows.",
   "notes": [
     "This file is the actionable ETF holdings target list derived from the broader ETF context universe.",
     "trading-data should prioritize durable holdings coverage for this list before expanding wider.",
     "trading-model may still score/prune final usefulness downstream.",
-    "Redundant broad-market duplicates (`VOO`, `IVV`, `VTI`) and redundant gold duplicate (`IAU`) were removed from the active holdings target list.",
-    "Independent crypto proxy ETFs and relatively independent industry/thematic ETFs remain prioritized."
+    "Broad-market ETFs and macro/commodity/crypto proxy ETFs are retained for bar/context use but are not the main focus of N-PORT holdings mapping.",
+    "Active N-PORT holdings mapping should focus on sector ETFs and relatively independent industry/thematic ETFs where constituent-level context is materially useful."
   ],
-  "tiers": {
-    "tier_1_core_broad_market": [
+  "bar_only_proxies": {
+    "core_broad_market": [
       "SPY",
       "QQQ",
       "IWM",
       "DIA"
     ],
-    "tier_2_core_sector": [
+    "macro_commodity_crypto_proxy": [
+      "GLD",
+      "SLV",
+      "USO",
+      "DBC",
+      "PDBC",
+      "IBIT",
+      "ETHA"
+    ]
+  },
+  "holdings_mapped_sector_thematic_etfs": {
+    "core_sector": [
       "XLK",
       "XLF",
       "XLE",
@@ -29,16 +40,7 @@
       "XLRE",
       "XLC"
     ],
-    "tier_3_priority_macro_proxy": [
-      "GLD",
-      "SLV",
-      "USO",
-      "DBC",
-      "PDBC",
-      "IBIT",
-      "ETHA"
-    ],
-    "tier_4_priority_industry_thematic": [
+    "independent_industry_thematic": [
       "SMH",
       "SOXX",
       "KRE",

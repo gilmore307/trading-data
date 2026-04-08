@@ -80,6 +80,11 @@ Current machine-readable configs:
 - `config/underlying_etf_context_candidates.json`
 - `config/etf_holdings_target_universe.json`
 
+Current interpretation rule:
+- not every ETF retained for bar/regime context should also be a first-priority N-PORT holdings-mapping target
+- broad-market ETFs and macro/commodity/crypto proxy ETFs are mainly retained for bar/context use
+- N-PORT holdings mapping should focus on sector ETFs and relatively independent industry/thematic ETFs where constituent-level context is materially useful
+
 ## Holdings storage rule
 
 ETF holdings are context metadata, not minute-level market tape.
@@ -123,7 +128,7 @@ Current normalized schema keeps only:
 ETF month construction is owned at the month scope, but the downstream-facing derivative should be interpreted separately from the ETF snapshot source layer.
 
 For each target month, the N-PORT pipeline should:
-- extract holdings for the full actionable ETF target list
+- extract holdings for the active holdings-mapped ETF target list
 - build the month-level ETF outputs under `context/etf_holdings/<YYMM>/`
 - build/update downstream-ready constituent ETF context outputs directly from those holdings
 

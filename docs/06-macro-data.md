@@ -75,6 +75,18 @@ Current behavior:
 - full-history backfill first
 - later reruns should upsert by the chosen time-period field
 
+## Current Treasury row contract
+
+Each row in `context/macro/treasury/*.jsonl` should contain:
+- `source`
+- `dataset`
+- `time_period` when a natural record date field exists
+- selected source-native returned fields for the chosen Treasury Fiscal Data endpoint
+
+Current behavior:
+- full-history pull by endpoint/dataset name
+- store one durable file per selected Treasury dataset
+
 ## Current FRED row contract
 
 Each row in `context/macro/fred/<series>.jsonl` should contain:

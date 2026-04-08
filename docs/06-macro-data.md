@@ -29,6 +29,22 @@ Examples:
 
 Do not force low-frequency macro series into symbol/month market-tape partitions.
 
+## Current BLS row contract
+
+Each row in `context/macro/bls/<series>.jsonl` should contain:
+- `source`
+- `series_id`
+- `year`
+- `period`
+- `period_name`
+- `value`
+- `footnotes`
+
+Current behavior:
+- full-history backfill first
+- later reruns should upsert by `(year, period)`
+- file path is the durable artifact and should remain append/upsert friendly
+
 ## Current FRED row contract
 
 Each row in `context/macro/fred/<series>.jsonl` should contain:

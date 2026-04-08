@@ -69,7 +69,8 @@ Examples:
 ## Canonical market-tape storage
 
 Mainline path rule:
-- use canonical month files under `data/<symbol>/<YYMM>/`
+- use canonical month files under the `trading-storage` market-tape layout
+- repo-local `data/<symbol>/<YYMM>/` paths should be treated as transitional/local-working mirrors where they still exist during migration
 - current retained market-tape datasets are minute-level files rather than raw quote/trade event partitions
 - resumable builders may also maintain sidecar state files during open/incomplete runs
 

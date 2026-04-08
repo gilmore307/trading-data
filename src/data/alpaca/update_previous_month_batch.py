@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,8 @@ from zoneinfo import ZoneInfo
 SIGNAL_CONTRACT_VERSION = 'v1'
 
 ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 PYTHON = 'python3'
 BUSINESS_TZ = ZoneInfo('America/New_York')
 BATCHES_PATH = ROOT / 'config' / 'alpaca_monthly_batches.json'

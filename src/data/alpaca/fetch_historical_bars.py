@@ -10,6 +10,10 @@ from typing import Any
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 import requests
 
 from src.data.common.month_meta_utils import load_effective_meta, write_month_dir_meta

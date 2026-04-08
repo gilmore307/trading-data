@@ -79,4 +79,4 @@ Current executable-ledger direction:
 - if `plan_at` is blank, the task may start immediately
 - if `plan_at` is in the future, manager should wait until that timestamp
 - once `plan_at` has passed, failed tasks remain eligible on later scans until they succeed or are manually changed
-- `plan_at` may be date-only for all-day tasks or a full ET timestamp for timed releases/events
+- when populated, `plan_at` should be a full ET timestamp rather than a date-only shortcut

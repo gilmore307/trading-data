@@ -39,8 +39,8 @@
 - [x] define the initial core macro series set needed for bar-aligned downstream context
 - [x] define the permanent market-regime benchmark universe and primary stored granularity for each retained market proxy
 - [x] finalize the retained benchmark granularity plan as: 1m broad-beta/style layer, 30m rates-credit-fx-metals-sector layer, 1d volatility/commodity layer, plus original-frequency official macro series
-- [ ] document how low-frequency macro series should later be joined to market bars via as-of alignment downstream
-- [ ] keep macro/economic artifacts in append/upsert per-series files rather than market-tape-style month partitions
+- [x] document how low-frequency macro series should later be joined to market bars via as-of alignment downstream
+- [x] keep macro/economic artifacts in append/upsert per-series files rather than market-tape-style month partitions
 
 ## Output compaction / storage efficiency
 

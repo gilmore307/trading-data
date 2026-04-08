@@ -18,32 +18,8 @@
 - [x] define first ETF/context universe for broad-market, sector, and thematic ETF candidates
 - [x] prepare ETF/context data coverage for underlyings and broad-market proxies
 - [x] add candidate ETF-context mapping skeleton for future relevance modeling downstream
-- [x] add ETF holdings context layer under `context/etf_holdings/`
-- [x] define normalized ETF holdings file schema and monthly accumulation behavior inside `context/etf_holdings/<ETF>.json`
-- [x] decide whether ETF candidate discovery will use browser-assisted/manual etf.com exploration or a more automation-friendly source
-- [x] record SEC Form N-PORT as a candidate authoritative ETF holdings source path
-- [~] research SEC Form N-PORT ingestion details and schema mapping
-- [x] design a system task that checks the N-PORT source path once per day until the current month's data becomes available, then stops for that month
-- [x] define the N-PORT monthly availability signal and local state-tracking file behavior
-- [x] add first runnable N-PORT availability-check scaffold under `src/data/common/`
-- [x] add first runnable quarterly package discovery scaffold for SEC N-PORT zip datasets
-- [x] add first runnable metadata/readme downloader for latest discovered N-PORT package
-- [x] add first runnable compact holdings normalization scaffold for candidate N-PORT-like records
-- [x] remove N-PORT holdings mapping from the active mainline design so sector/thematic ETF analysis stays bar/context-first
-- [ ] keep N-PORT only as an optional future source-path if constituent-level exposure analysis is later required
-- [x] define actionable ETF holdings target universe derived from the broader ETF context universe
-- [x] add first N-PORT pipeline runner for the ETF holdings target universe
 - [x] define monthly previous-month Alpaca batch-backfill automation strategy
-- [x] define daily previous-month N-PORT retry automation strategy
 - [x] emit downstream-ready signal files after successful refresh work
-- [x] move N-PORT workflows into `src/data/nport/` as a dedicated source family
-- [x] automatically continue from N-PORT acquisition into month-directory ETF mapping output build for the configured ETF target list
-- [x] generate a month-level ETF holdings coverage manifest for auxiliary inspection
-- [x] define `context/constituent_etf_deltas/<SYMBOL>.md` as the ready-to-use downstream ETF context artifact
-- [x] add first per-symbol ETF monthly-context builder from monthly ETF holdings base snapshots
-- [x] explicitly leave month-over-month delta calculation to downstream layers rather than precomputing it here
-- [x] decide that reverse symbol map should not be a required retained artifact when constituent ETF context outputs already exist
-- [x] remove reverse-symbol-map generation from the active ETF holdings pipeline and retire the old dedicated script
 
 ## Storage split / trading-storage
 
@@ -88,6 +64,7 @@
 - [x] review whether any remaining helper/state files in `trading-data` still imply manager ownership instead of artifact ownership
 - [x] tighten signal payload semantics so they remain artifact-readiness signals rather than quasi workflow-state records
 - [x] confirm the exact manager-facing callable contract for each stable `trading-data` entrypoint
+- [x] remove ETF constituent look-through / N-PORT workflows from the active mainline design so ETFs stay bar/context proxies for regime and divergence analysis
 
 ## Scope rule
 

@@ -7,7 +7,7 @@ This document defines the repository structure, canonical storage layout, source
 - `src/` — source adapters, fetch/update/build code, and maintenance logic
 - `config/` — source and pipeline configuration that belongs to the data layer
 - `data/` — tracked monthly-partitioned market-tape storage
-- `context/` — non-market-tape context metadata such as ETF holdings, macro/economic series, event calendars, and mapping artifacts
+- `context/` — non-market-tape context metadata such as macro/economic series, event calendars, and mapping artifacts
 - `tests/` — adapter/data-contract tests as the repo matures
 
 ## Scope rule
@@ -45,14 +45,12 @@ Alpaca is the primary long-term source and current architectural main focus.
 
 ## Low-frequency / context storage rule
 
-Macro/economic series, ETF holdings context, and similar context datasets should not be forced into market-tape-style symbol/month partitions.
+Macro/economic series and similar context datasets should not be forced into market-tape-style symbol/month partitions.
 
 Current rule:
 - use `context/` rather than `data/` for these artifacts
 - prefer append/upsert accumulation within the context layer rather than treating them as market-tape partitions
 - for single-series or single-dataset official sources, prefer one durable file per logical series or dataset
-- for N-PORT ETF -> constituent holdings, prefer permanent month-directory accumulation under the context layer because the natural retained object is a month snapshot set rather than a symbol/month tape partition
-- for constituent -> ETF derived context, prefer symbol-facing context artifacts under `context/` that can be refreshed with the underlying symbol's usable context state
 - prefer full-history backfill first, then periodic append/update
 
 Examples:
@@ -63,7 +61,6 @@ Examples:
 - `context/macro/census/retail_sales.jsonl`
 - `context/macro/treasury/debt_to_penny.jsonl`
 - `context/macro/events/fomc_calendar.jsonl`
-- `context/etf_holdings/<YYMM>/<ETF>_<YYMM>.md`
 
 ## Canonical market-tape storage
 
@@ -154,7 +151,6 @@ Current expected families:
 - `src/data/alpaca/`
 - `src/data/okx/`
 - `src/data/bitget/`
-- `src/data/nport/`
 - `src/data/common/`
 
 `src/data/common/` should not become a hidden orchestration layer.

@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from src.data.common.month_meta_utils import load_effective_meta, write_month_dir_meta
+from src.data.common.month_meta_utils import load_effective_meta
 
 ROOT = Path(__file__).resolve().parents[3]
 BUSINESS_TZ = ZoneInfo("America/New_York")
@@ -134,7 +134,6 @@ def flush_month_store(base_dir: Path, store: dict[str, dict[tuple[str, int], dic
                 }
                 f.write(json.dumps(compact, ensure_ascii=False) + "\n")
         if ordered_rows:
-            write_month_dir_meta(out_dir, "options_snapshots", ordered_rows[0])
 
 
 def fetch_option_snapshots(*, underlying_symbol: str, limit: int, output_dir: Path | None, resume: bool) -> dict[str, Any]:

@@ -16,7 +16,7 @@ if str(ROOT) not in sys.path:
 
 import requests
 
-from src.data.common.month_meta_utils import load_effective_meta, write_month_dir_meta
+from src.data.common.month_meta_utils import load_effective_meta
 from src.data.common.storage_paths import market_tape_bars_root
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -115,7 +115,6 @@ def flush_month_store(base_dir: Path, store: dict[str, dict[int, dict[str, Any]]
                 }
                 f.write(json.dumps(compact, ensure_ascii=False) + "\n")
         if ordered:
-            write_month_dir_meta(out_dir, "bars_1min", ordered[0])
 
 
 def auth_headers() -> dict[str, str]:

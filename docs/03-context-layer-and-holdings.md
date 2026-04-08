@@ -83,6 +83,7 @@ Current machine-readable configs:
 ## Holdings storage rule
 
 ETF holdings are context metadata, not minute-level market tape.
+They should be treated as a permanent context accumulation path rather than as market-tape partitions.
 They live under:
 - `context/etf_holdings/`
 
@@ -91,6 +92,10 @@ Operational/download/discovery helper artifacts live under:
 
 The final ready-to-use downstream constituent artifact is built under:
 - `context/constituent_etf_deltas/<SYMBOL>.md`
+
+Interpretation rule:
+- N-PORT holdings are month-scoped context snapshots, but the retained storage family is still a permanent context layer
+- this means they belong with append/upsert context accumulation under `context/`, not with the `data/<symbol>/<YYMM>/` market-tape contract
 
 ## Holdings file rule
 

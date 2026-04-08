@@ -43,15 +43,16 @@ Alpaca is the primary long-term source and current architectural main focus.
 - OKX/Bitget do not redefine the mainline architecture unless a specific reason exists
 - crypto-only enrichments remain optional/supplemental
 
-## Low-frequency context storage rule
+## Low-frequency / context storage rule
 
-Low-frequency macro/economic series and similar context datasets should not be forced into market-tape-style month partitions.
+Macro/economic series, ETF holdings context, and similar context datasets should not be forced into market-tape-style symbol/month partitions.
 
 Current rule:
-- prefer one append/upsert file per logical series or dataset
-- treat the file itself as the durable historical artifact
-- prefer full-history backfill first, then periodic append/update
 - use `context/` rather than `data/` for these artifacts
+- prefer append/upsert accumulation within the context layer rather than treating them as market-tape partitions
+- for single-series or single-dataset official sources, prefer one durable file per logical series or dataset
+- for N-PORT ETF holdings, prefer permanent month-directory accumulation under the context layer because the natural retained object is a month snapshot set rather than a symbol/month tape partition
+- prefer full-history backfill first, then periodic append/update
 
 Examples:
 - `context/macro/fred/DGS10.jsonl`
@@ -61,6 +62,7 @@ Examples:
 - `context/macro/census/retail_sales.jsonl`
 - `context/macro/treasury/debt_to_penny.jsonl`
 - `context/macro/events/fomc_calendar.jsonl`
+- `context/etf_holdings/<YYMM>/<ETF>_<YYMM>.md`
 
 ## Canonical market-tape storage
 
@@ -117,6 +119,7 @@ Current canonical rules:
 ## Compact row/meta split rule
 
 Some month files use a compact row/meta split when repeated month-level constants would otherwise be written on every row.
+This is now part of the mainline retained market-tape contract rather than an appendix-only optimization note.
 
 Current adopted pattern:
 - `data/<symbol>/<YYMM>/_meta.json`
@@ -124,6 +127,12 @@ Current adopted pattern:
 - `data/<symbol>/<YYMM>/quotes_1min.jsonl`
 - `data/<symbol>/<YYMM>/trades_1min.jsonl`
 - `data/<symbol>/<YYMM>/options_snapshots.jsonl`
+
+Current compaction conclusions folded into the mainline contract:
+- the most material duplicate-write bloat was concentrated in `options_snapshots.jsonl`
+- the repo now uses one shared month-directory `_meta.json` rather than per-dataset duplicated sidecar metadata
+- `bars_1min`, `quotes_1min`, `trades_1min`, and `options_snapshots` now participate in the compact row + shared month-meta pattern
+- `news.jsonl` remains outside that compact contract for now because the observed savings were much smaller in the audited sample
 
 Aggregation rule:
 - raw quote and raw trade events should be aggregated to minute level during ingestion rather than persisted as the default long-term canonical store

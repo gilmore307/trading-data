@@ -53,12 +53,12 @@
 
 ## Macro / economic context
 
-- [ ] define the canonical low-frequency macro/economic context contract under `context/macro/`
-- [ ] add first FRED historical series fetcher with full-history backfill + append/update behavior
-- [ ] add first BLS fetcher for key labor / inflation series
-- [ ] add first BEA fetcher for GDP / spending-side series
-- [ ] add first Census fetcher for key retail / housing/activity series
-- [ ] add first Treasury Fiscal Data fetcher for selected fiscal/liquidity datasets
+- [x] define the canonical low-frequency macro/economic context contract under `context/macro/`
+- [x] add first FRED historical series fetcher with full-history backfill + append/update behavior
+- [x] add first BLS fetcher for key labor / inflation series
+- [x] add first BEA fetcher for GDP / spending-side series
+- [x] add first Census fetcher for key retail / housing/activity series
+- [x] add first Treasury Fiscal Data fetcher for selected fiscal/liquidity datasets
 - [ ] add first Federal Reserve official event/calendar fetcher for FOMC and related policy events
 - [x] define the initial core macro series set needed for bar-aligned downstream context
 - [x] define the permanent market-regime benchmark universe and primary stored granularity for each retained market proxy

@@ -5,6 +5,7 @@ This document defines the first-wave macro/economic data contract for `trading-d
 ## Scope
 
 Macro/economic data is treated as a low-frequency context layer, not as market tape.
+The same broader storage principle also applies to N-PORT ETF holdings: month-scoped holdings snapshots belong to the permanent context layer, even though their natural retained object is a month snapshot directory rather than one single series file.
 
 Current source plan:
 - FRED for core historical macro time series

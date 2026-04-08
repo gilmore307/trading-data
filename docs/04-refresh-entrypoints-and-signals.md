@@ -21,7 +21,7 @@ Those control-plane concerns belong in `trading-manager`.
 
 There are two refresh rhythms and they stay separate:
 1. market-tape refresh for Alpaca market data
-2. low-frequency ETF holdings refresh for N-PORT context data
+2. context accumulation refresh for N-PORT ETF holdings and other non-market-tape context data
 
 ## 1. Alpaca monthly market-data backfill
 
@@ -39,7 +39,7 @@ Behavior:
 Current downstream signal meaning:
 - `market_data_ready`
 
-## 2. ETF holdings / N-PORT monthly retry entrypoint
+## 2. ETF holdings / N-PORT context refresh entrypoint
 
 Runner:
 - `src/data/nport/update_previous_month_etf_holdings.py`
@@ -48,15 +48,19 @@ Behavior:
 - attempt discovery/availability for the previous month
 - run extraction only when the target month appears available
 - continue automatically into ETF data decomposition/output build for the configured ETF target list
-- generate month directory outputs under `context/etf_holdings/<YYMM>/`
+- append the new month snapshot set into the permanent context family under `context/etf_holdings/<YYMM>/`
 - build/update constituent ETF context outputs directly from the month holdings outputs
 - update N-PORT capture state under the holdings context area
 - emit a downstream-ready signal file under `context/signals/`
 
-Current month-level shared artifacts include:
+Current retained context artifacts include:
 - per-ETF month outputs under `context/etf_holdings/<YYMM>/`
 - month manifest under `context/etf_holdings/<YYMM>/_manifest_<YYMM>.json`
 - downstream-ready constituent ETF context outputs under `context/constituent_etf_deltas/`
+
+Interpretation rule:
+- N-PORT holdings are month-addressed snapshots, but they still belong to the permanent context accumulation layer rather than to market-tape partitions
+- the natural retained object is a context month snapshot family, not a `data/<symbol>/<YYMM>/` market-tape partition
 
 Current downstream signal meaning:
 - `etf_holdings_ready`

@@ -16,6 +16,7 @@ It does not own cross-repo orchestration policy.
 6. `06-macro-data.md`
 7. `07-market-regime-benchmarks.md`
 
-## Appendix
+## Note
 
-- `appendix-output-compaction-audit-2026-04-03.md`
+The older compaction audit appendix has been folded into the mainline storage/status docs.
+`02-storage-contracts-and-partitions.md` and `05-current-status-and-open-decisions.md` are now the authoritative source for the retained compact month-directory contract and its current interpretation.

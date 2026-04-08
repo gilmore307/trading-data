@@ -1,119 +1,73 @@
 # 04 Refresh Entrypoints and Signals
 
-This document defines the stable refresh/build entrypoints exposed by `trading-data` and the artifact-level outputs they produce.
-
-## Boundary rule
-
-`trading-data` owns:
-- runnable data refresh/build entrypoints
-- canonical output contracts
-- readiness signals attached to completed artifacts
-
-`trading-data` does not own:
-- scheduler selection
-- queueing / sequencing policy
-- cross-repo dependency state machines
-- long-lived retry / recovery control-plane policy
-
-Those control-plane concerns belong in `trading-manager`.
+This document defines the stable refresh/build entrypoints that `trading-manager` may call and the signal semantics produced by `trading-data`.
 
 ## Guiding split
 
 There are two refresh rhythms and they stay separate:
 1. market-tape refresh for Alpaca market data
-2. context accumulation refresh for N-PORT ETF holdings and other non-market-tape context data
+2. permanent-context refresh for macro/economic datasets and other non-market-tape context data
 
-## 1. Alpaca monthly market-data backfill
+## 1. Alpaca market-data refresh entrypoints
 
+### Current-month refresh entrypoint
+Runner family:
+- `src/data/alpaca/update_current_month.py`
+
+Behavior:
+- refresh the current open month for configured symbols
+- maintain resumable canonical month outputs under `data/<symbol>/<YYMM>/`
+
+### Previous-month batch entrypoint
 Runner:
 - `src/data/alpaca/update_previous_month_batch.py`
 
 Behavior:
-- backfill the previous completed month only
-- define month windows using `America/New_York` month boundaries before converting request timestamps to UTC
-- write into normal symbol/month market-tape partitions under `data/`
-- preserve canonical per-dataset dedupe rules when rerun
-- current retained quote/trade outputs are minute-level aggregate files (`quotes_1min.jsonl`, `trades_1min.jsonl`) rather than persisted raw event-tape multipart outputs
+- build/refresh the previous month for the configured batch of symbols
+- write retained month outputs under `data/<symbol>/<YYMM>/`
 - emit a downstream-ready signal file under `context/signals/`
 
-Current downstream signal meaning:
+Current signal meaning:
 - `market_data_ready`
 
-## 2. ETF holdings / N-PORT context refresh entrypoint
+## 2. Macro / permanent-context refresh entrypoints
 
-Runner:
-- `src/data/nport/update_previous_month_etf_holdings.py`
+Runner families:
+- `src/data/macro/fetch_fred_series.py`
+- `src/data/macro/fetch_bls_series.py`
+- `src/data/macro/fetch_bea_series.py`
+- `src/data/macro/fetch_census_series.py`
+- `src/data/macro/fetch_treasury_dataset.py`
 
 Behavior:
-- attempt discovery/availability for the previous month
-- run extraction only when the target month appears available
-- update N-PORT availability/capture state under the holdings context area
-- emit a downstream-ready signal file under `context/signals/` when the N-PORT month source is confirmed available/captured
-
-Current retained context artifacts include:
-- source-month N-PORT availability/capture state under the holdings context area
-- any temporary or audit-oriented month artifacts produced by source-specific ingestion work
+- fetch or update durable macro/economic context series or datasets
+- upsert into canonical permanent context files under `context/macro/`
 
 Interpretation rule:
-- N-PORT is no longer part of the active primary sector/thematic divergence workflow
-- the mainline trading workflow should not depend on ETF constituent look-through for sector/thematic evaluation
-- sector/thematic ETF bars remain the primary active regime-analysis input
+- these are context refreshes, not market-tape partitions
+- success should mean the target series/dataset file was refreshed successfully
 
-Current downstream signal meaning:
-- `etf_holdings_ready` remains a source-month availability/capture signal only, not a claim that constituent-level context is required by the mainline workflow
+## Signal and state philosophy
 
-Historical-coverage rule:
-- months earlier than the supported N-PORT coverage floor should not be treated as retryable publication delay
-- those months should resolve to a stable non-applicable state such as `not_applicable_pre_nport`
-- manager may continue forward month construction for the symbol after recording that state
-
-## Partition state-file rule
-
-For the current quote/trade minute builders, resumability should be derived from the retained month file itself rather than from a separate persistent state artifact.
+Signals should describe artifact readiness, not workflow orchestration state.
 
 Current rule:
-- `quotes_1min` and `trades_1min` should resume from the existing month file tail when present
-- successful quote/trade minute builds should not leave behind persistent `*.state.json` files
-- the retained month file is the authoritative recovery source for quote/trade minute aggregation progress
+- signals should remain machine-readable and scoped to the artifact family they prove ready
+- downstream systems may use signals as evidence, but `trading-data` should not try to encode the manager control-plane state machine inside those files
 
-## Downstream signal rule
+## Current stable manager-facing entrypoints
 
-Signals belong under:
-- `context/signals/`
+### Alpaca previous-month market-data batch
+- command: `python3 src/data/alpaca/update_previous_month_batch.py [--target-month YYYY-MM] [--batch ...]`
+- output class: retained month market-tape partitions
+- downstream signal: `market_data_ready`
 
-Signal payload rule:
-- use artifact-readiness semantics only
-- include stable fields such as:
-  - `kind`
-  - `source`
-  - `pipeline`
-  - `target_month`
-  - `generated_at`
-  - `contract_version`
-  - `readiness`
-  - `artifacts`
-  - `results`
-- do not embed downstream action instructions, scheduler policy, or quasi workflow-state claims inside the signal payload
+### Macro/economic series refresh commands
+Examples:
+- `python3 src/data/macro/fetch_fred_series.py --series DGS10`
+- `python3 src/data/macro/fetch_bls_series.py --series ... --start-year ... --end-year ...`
+- `python3 src/data/macro/fetch_bea_series.py --dataset ... --table-name ... --line-number ... --frequency ... --year ...`
+- `python3 src/data/macro/fetch_census_series.py --name ... --url ... --fields ... --time-field ...`
+- `python3 src/data/macro/fetch_treasury_dataset.py --name ... --endpoint ...`
 
-## Manager-facing callable contract
-
-### Alpaca previous-month batch
-- command: `python3 src/data/alpaca/update_previous_month_batch.py --batch <batch_name>`
-- expected final stdout JSON fields:
-  - `signal_path`
-  - `results`
-
-### ETF holdings / N-PORT previous-month retry
-- command: `python3 src/data/nport/update_previous_month_etf_holdings.py [--tier <tier> ...] [--symbol <symbol> ...]`
-- expected final stdout JSON fields:
-  - `available`
-  - `captured`
-  - `signal_path` when capture succeeds
-
-## Manager integration rule
-
-`trading-manager` decides:
-- when monthly Alpaca backfill tasks run
-- when retryable N-PORT calls are attempted
-- how cross-repo dependency checks are sequenced
-- how failures/retries/manual overrides are tracked over time
+These should be treated as permanent-context refresh entrypoints rather than market-month builders.

@@ -1,23 +1,14 @@
 # 06 Macro Data
 
-This document defines the first-wave macro/economic data contract for `trading-data`.
+This document defines the permanent macro/economic context layer for `trading-data`.
 
 ## Scope
 
 Macro/economic data is treated as a low-frequency context layer, not as market tape.
-A similar storage principle applies to the ETF -> constituent N-PORT holdings snapshots, but not identically to the constituent-facing derived artifacts: the source holdings month snapshots belong to the permanent context layer, while the constituent -> ETF derived outputs should be treated as symbol-facing context artifacts refreshed from that permanent layer.
-
-Current source plan:
-- FRED for core historical macro time series
-- BLS for labor/inflation official source coverage
-- BEA for GDP / spending-side official source coverage
-- Census for retail / housing / activity official source coverage
-- Treasury Fiscal Data for fiscal/liquidity datasets
-- Federal Reserve official webpages / RSS / calendars for policy event timelines
 
 ## Storage rule
 
-Use append/upsert full-history files per logical series or dataset.
+Use canonical permanent context files under `context/macro/`.
 
 Examples:
 - `context/macro/fred/DGS10.jsonl`
@@ -26,97 +17,57 @@ Examples:
 - `context/macro/bea/GDPC1.jsonl`
 - `context/macro/census/retail_sales.jsonl`
 - `context/macro/treasury/debt_to_penny.jsonl`
-- `context/macro/events/fomc_calendar.jsonl`
 
-Do not force low-frequency macro series into symbol/month market-tape partitions.
+Design rule:
+- prefer one durable append/upsert file per logical series or dataset
+- do not force low-frequency context data into market-tape-style month partitions
+- preserve source/native frequency rather than fabricating synthetic bar contracts by default
 
-## Current BLS row contract
+## Current source families
 
-Each row in `context/macro/bls/<series>.jsonl` should contain:
-- `source`
-- `series_id`
-- `year`
-- `period`
-- `period_name`
-- `value`
-- `footnotes`
+### FRED
+Supported via:
+- `src/data/macro/fetch_fred_series.py`
 
-Current behavior:
-- full-history backfill first
-- later reruns should upsert by `(year, period)`
-- file path is the durable artifact and should remain append/upsert friendly
+Use for:
+- rates / curve
+- inflation
+- labor / growth
+- selected broad macro state inputs
 
-## Current BEA row contract
+### BLS
+Supported via:
+- `src/data/macro/fetch_bls_series.py`
 
-Each row in `context/macro/bea/*.jsonl` should contain fields such as:
-- `source`
-- `dataset`
-- `table_name`
-- `line_number`
-- `frequency`
-- `time_period`
-- `data_value`
-- `line_description`
-- `series_code`
-- `unit`
+Use for:
+- inflation and labor-market source series where BLS is the authoritative publisher
 
-Current behavior:
-- full-history backfill first
-- later reruns should upsert by time-period row identity
+### BEA
+Supported via:
+- `src/data/macro/fetch_bea_series.py`
 
-## Current Census row contract
+Use for:
+- GDP and related national accounts series
 
-Each row in `context/macro/census/*.jsonl` should contain:
-- `source`
-- `dataset`
-- `time_period`
-- source-native returned fields for the selected dataset
+### Census
+Supported via:
+- `src/data/macro/fetch_census_series.py`
 
-Current behavior:
-- full-history backfill first
-- later reruns should upsert by the chosen time-period field
+Use for:
+- retail / housing / activity datasets where Census is the authoritative publisher
 
-## Current Treasury row contract
+### Treasury Fiscal Data
+Supported via:
+- `src/data/macro/fetch_treasury_dataset.py`
 
-Each row in `context/macro/treasury/*.jsonl` should contain:
-- `source`
-- `dataset`
-- `time_period` when a natural record date field exists
-- selected source-native returned fields for the chosen Treasury Fiscal Data endpoint
+Use for:
+- fiscal / debt / liquidity-related official datasets
 
-Current behavior:
-- full-history pull by endpoint/dataset name
-- store one durable file per selected Treasury dataset
+## Operational rule
 
-## Current FRED row contract
+These macro datasets should be refreshed as permanent context artifacts.
+They are not symbol/month market-data partitions.
 
-Each row in `context/macro/fred/<series>.jsonl` should contain:
-- `source`
-- `series_id`
-- `observation_date`
-- `value`
-- `realtime_start`
-- `realtime_end`
-
-Current behavior:
-- full-history backfill first
-- later reruns should upsert by `(observation_date, realtime_start, realtime_end)`
-- file path is the durable artifact and should remain append/upsert friendly
-
-## Initial recommended core series
-
-- `DFF`
-- `DGS2`
-- `DGS10`
-- `T10Y2Y`
-- `CPIAUCSL`
-- `CPILFESL`
-- `UNRATE`
-- `PAYEMS`
-- `ICSA`
-- `GDPC1`
-
-## Downstream alignment rule
-
-Macro series are expected to be joined to market bars downstream via as-of alignment.
-`trading-data` owns acquisition and durable storage; downstream repos own bar-level feature joining.
+Manager-side scheduling should prefer:
+- official release-calendar-driven refresh for datasets with clear release timestamps
+- lower-frequency ET-based polling only where a precise maintained calendar is not yet available

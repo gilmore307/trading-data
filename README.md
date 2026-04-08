@@ -10,7 +10,7 @@ It acquires and normalizes market/context data, stores canonical monthly partiti
 - source adapters and data-maintenance code
 - raw partitioning and storage policy
 - canonical data-layer contracts
-- ETF/context-layer artifacts
+- ETF/context proxy artifacts
 - stable data refresh/build entrypoints
 - readiness signals for completed artifacts
 
@@ -39,10 +39,8 @@ flowchart LR
 ## Optional inputs
 - OKX API responses
 - Bitget API responses
-- SEC / N-PORT discovery pages and source files
 - low-frequency macro/economic source responses from FRED, BLS, BEA, Census, and Treasury Fiscal Data
 - Federal Reserve official webpage/RSS/calendar event sources
-- local helper/state files under `context/etf_holdings/_aux/`
 
 ## Primary outputs
 - `data/<symbol>/<YYMM>/bars_1min.jsonl`
@@ -57,13 +55,10 @@ flowchart LR
 - `context/macro/census/<series>.jsonl`
 - `context/macro/treasury/<dataset>.jsonl`
 - `context/macro/events/*.jsonl`
-- `context/etf_holdings/<YYMM>/<ETF>_<YYMM>.md`
-- `context/constituent_etf_deltas/<SYMBOL>.md`
 
 ## Completion artifacts
 - `context/signals/*.json`
   - `market_data_ready...json`
-  - `etf_holdings_ready...json`
 
 ## Data flow
 
@@ -88,10 +83,7 @@ flowchart TD
 - `quotes_1min.jsonl` and `trades_1min.jsonl` are minute aggregates, not raw event-tape persistence
 - low-frequency macro/economic data should be treated as context artifacts rather than symbol/month tape
 - macro/economic series should prefer full-history append/upsert storage per series rather than market-tape-style month partitioning
-- N-PORT ETF data should be interpreted in two layers:
-  - ETF -> constituent holdings snapshots under `context/etf_holdings/` belong to the permanent context accumulation layer
-  - constituent -> ETF derived context artifacts under `context/constituent_etf_deltas/` are downstream-facing symbol-context outputs that should be refreshed along with the underlying symbol's usable context state
-- ETF holdings and related mappings live in the context layer
+- ETF proxies should be treated as market-regime / sector-rotation / thematic-divergence context instruments via their own retained bar data
 - downstream artifact readiness is signaled through machine-readable signal files
 
 ## Documentation

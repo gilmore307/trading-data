@@ -60,7 +60,8 @@
 - [ ] add first Census fetcher for key retail / housing/activity series
 - [ ] add first Treasury Fiscal Data fetcher for selected fiscal/liquidity datasets
 - [ ] add first Federal Reserve official event/calendar fetcher for FOMC and related policy events
-- [ ] define the initial core macro series set needed for bar-aligned downstream context
+- [x] define the initial core macro series set needed for bar-aligned downstream context
+- [x] define the permanent market-regime benchmark universe and primary stored granularity for each retained market proxy
 - [ ] document how low-frequency macro series should later be joined to market bars via as-of alignment downstream
 - [ ] keep macro/economic artifacts in append/upsert per-series files rather than market-tape-style month partitions
 

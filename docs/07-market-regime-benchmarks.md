@@ -5,47 +5,70 @@ This document defines the permanent market-state benchmark set used to assess br
 These instruments/series are not normal sector/theme ETF context candidates.
 They should be treated as permanent benchmark context.
 
-## Core idea
+## Storage / granularity rule
 
-Keep a permanent benchmark layer for:
-- broad equity benchmarks
-- rates / curve shape
-- safe-haven and FX context
-- volatility and credit context
+Each retained market proxy should have one chosen primary stored bar granularity rather than multiple redundant default granularities.
+Official macro series remain at their original source frequency.
 
-## Equity benchmarks
-- S&P 500 -> `SPY`
-- Nasdaq 100 -> `QQQ`
-- Dow Jones Industrial Average -> `DIA`
-- Russell 2000 -> `IWM`
-- S&P 500 Equal Weight -> `RSP`
+## 30-minute retained benchmark proxies
+- `SPY`
+- `QQQ`
+- `IWM`
+- `RSP`
 
-## Rates / curve
-FRED series:
-- `DFF`
-- `DGS3MO`
-- `DGS2`
-- `DGS10`
-- `DGS30`
-- `T10Y2Y`
-- `T10Y3M`
+Use these for:
+- broad beta
+- growth vs broad market
+- small-cap vs large-cap
+- breadth / concentration
 
-Tradeable bond proxies:
+## 1-hour retained benchmark proxies
+- `TLT`
+- `HYG`
+- `UUP`
+- sector rotation ETFs:
+  - `XLB`
+  - `XLC`
+  - `XLE`
+  - `XLF`
+  - `XLK`
+  - `XLI`
+  - `XLP`
+  - `XLRE`
+  - `XLU`
+  - `XLV`
+  - `XLY`
+
+Use these for:
+- rates impulse / duration sensitivity
+- credit risk appetite
+- dollar pressure
+- sector rotation
+
+## Daily retained benchmark proxies
+- `DIA`
 - `SHY`
 - `IEF`
-- `TLT`
-
-## Safe havens / FX
-- Gold -> `GLD`
-- Dollar proxy -> `UUP`
-
-## Volatility / credit
-- `VIXCLS`
-- `HYG`
+- `GLD`
+- `SLV`
 - `LQD`
+- `DBC`
+- `USO`
 
-## Storage rule
+Use these for:
+- old economy / blue-chip benchmark
+- shorter-duration and intermediate-duration bond context that does not need sub-daily storage by default
+- metals and commodity shock context
+- higher-grade credit context
 
-- low-frequency series should remain under `trading-storage/2_context/0_permanent/1_macro/`
-- tradeable proxy benchmark tape should remain under `trading-storage/1_ingest/1_long_retention/1_bars/` and related tape families when downloaded
-- this benchmark set is permanent context and should not be mixed into the normal ETF candidate universe
+## Original-frequency macro series
+Keep the following at source/native frequency rather than converting into retained benchmark bars:
+- rates / curve: `DFF`, `DGS3MO`, `DGS2`, `DGS10`, `DGS30`, `T10Y2Y`, `T10Y3M`
+- inflation: `CPIAUCSL`, `CPILFESL`
+- labor / growth: `UNRATE`, `PAYEMS`, `ICSA`, `GDPC1`
+- volatility / fear: `VIXCLS`, `VXNCLS`, `MOVE`
+- official source families: BLS, BEA, Census, Treasury Fiscal Data
+
+## Practical interpretation
+- do not store multiple default bar granularities for the same benchmark proxy
+- if a higher-frequency study is needed later, treat it as a separate scoped acquisition task rather than the default retained benchmark layer

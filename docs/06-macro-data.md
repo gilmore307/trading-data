@@ -88,7 +88,11 @@ Preferred fields include:
 - `forecast` / `expected`
 - `previous`
 - `importance`
-- `calendar_source`
+- `calendar_source_type`
+- `calendar_source_name`
+- `source_url`
+- `source_title`
+- `last_verified_at`
 - `notes`
 
 ### 2. Release result / actual layer
@@ -110,6 +114,7 @@ Preferred fields include:
 Design rule:
 - the calendar layer should answer "what is scheduled / expected"
 - the result layer should answer "what was actually released"
+- provenance should be recorded at the individual event-row level rather than only at the whole-calendar-file level
 - downstream surprise analysis should compare `actual` against `forecast`/`expected` while preserving revision context
 
 ## Operational rule

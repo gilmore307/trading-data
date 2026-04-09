@@ -132,6 +132,7 @@ Current executable-ledger direction:
 - a first maintained calendar builder now exists at `src/data/macro/build_official_macro_release_calendar.py` and writes `trading-storage/1_market_regime/0_permanent/7_events_and_calendars/official_us_macro_release_calendar.jsonl`
 - a first search-backed fallback builder now also exists at `src/data/macro/build_official_macro_release_calendar_via_search.py` and writes `official_us_macro_release_calendar.search_fallback.jsonl` with explicit source provenance fields
 - intended source priority for `official_us_core` is: official/source-backed parser first, search-backed fallback second, maintained fallback last
+- a first merge builder now exists at `src/data/macro/build_official_macro_release_calendar_merged.py` and creates a canonical merged calendar artifact from maintained and search-backed inputs using that source priority
 - Brave search may be used for calendar-coverage fallback when official parsing is weak, but it should be used sparingly and in batched discovery mode rather than as a high-frequency polling layer
 - manager can read the maintained calendar artifact and generate future `macro_release` tasks from it
 - tasks may use `plan_at` as the earliest eligible execution timestamp

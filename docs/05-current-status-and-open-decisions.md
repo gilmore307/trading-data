@@ -24,7 +24,7 @@ This document captures the current implemented state of `trading-data`, plus the
 
 ## Still incomplete / not yet hardened
 - broader operational hardening and validation for macro source families
-- release-calendar handling for official macro sources
+- official macro release-calendar handling still needs to move from the first seeded maintained artifact/builder into a real maintained source-backed refresh flow
 - clearer source-specific freshness/index visibility for permanent context data
 - final storage boundary cleanup between `trading-data` and `trading-storage`
 - concrete manager-side execution against the new regime release-task ledger

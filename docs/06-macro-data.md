@@ -76,8 +76,10 @@ Manager-side scheduling should prefer:
 Current executable-ledger direction:
 - `trading-storage/1_market_regime/0_permanent/0_task_status/release_dataset_refresh_tasks.csv` is the human-facing ordered task ledger for regime-side release/calendar refresh work
 - calendar refresh is treated as a normal task family inside that ledger rather than as a separate scheduler table
+- a first maintained calendar builder now exists at `src/data/macro/build_official_macro_release_calendar.py` and writes `trading-storage/1_market_regime/0_permanent/7_events_and_calendars/official_us_macro_release_calendar.jsonl`
+- manager can read that calendar artifact and generate future `macro_release` tasks from it
 - tasks may use `plan_at` as the earliest eligible execution timestamp
 - if `plan_at` is blank, the task may start immediately
 - if `plan_at` is in the future, manager should wait until that timestamp
-- once `plan_at` has passed, failed tasks remain eligible on later scans until they succeed or are manually changed
+- once `plan_at` has passed, failed tasks remain eligible on later scans only when their retry policy permits it
 - when populated, `plan_at` should be a full ET timestamp rather than a date-only shortcut

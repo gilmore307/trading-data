@@ -8,7 +8,7 @@ from typing import Any
 from src.data.common.storage_paths import market_tape_root
 
 ROOT = Path(__file__).resolve().parents[3]
-DATA_ROOT = market_tape_root() / "1_long_retention"
+DATA_ROOT = market_tape_root() / "2_rolling"
 MIN_ROWS_FOR_META_SPLIT = 2
 
 DATASET_CONFIGS: dict[str, dict[str, Any]] = {

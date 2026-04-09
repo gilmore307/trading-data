@@ -1,20 +1,15 @@
 # trading-data docs
 
-This docs tree is the canonical documentation layer for `trading-data`.
+This docs tree is organized by functional blocks instead of historical accumulation order.
 
-Use it in this order:
-1. `01-overview.md` — repository role, boundaries, and stack position
-2. `02-storage-contracts-and-partitions.md` — canonical retained-artifact and path contract
-3. `03-context-layer-and-holdings.md` — context/ETF/macro placement rules
-4. `04-refresh-entrypoints-and-signals.md` — manager-facing runnable entrypoints and signal semantics
-5. `05-current-status-and-open-decisions.md` — what is implemented vs still unsettled
-6. `06-macro-data.md` — permanent market-regime macro/calendar layer
-7. `07-market-regime-benchmarks.md` — retained benchmark/proxy universe and intended use
+Read in this order:
+1. `10-role-and-boundaries.md`
+2. `20-artifact-contracts.md`
+3. `30-entrypoints-and-signals.md`
+4. `40-market-regime-context.md`
+5. `50-status-and-open-questions.md`
 
 ## Reading rule
 - `README.md` = fast operator entrypoint
-- `docs/` = durable design and contract layer
-- `TODO.md` = next queued work
-
-## Current integration rule
-`trading-data` is code-first, but its durable outputs should land in `trading-storage` by default.
+- `docs/` = durable contract and design layer
+- `TODO.md` = next queued implementation work

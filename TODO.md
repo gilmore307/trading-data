@@ -1,90 +1,37 @@
 # TODO
 
-## Initial bootstrap
+## Core contracts
+- [x] define `trading-data` as the code-first upstream data repo
+- [x] define stable manager-facing fetch/build entrypoints
+- [x] define retained market-tape contracts for bars / quotes / trades / news / options snapshots
+- [x] define artifact-readiness signal semantics that stay separate from manager control-plane state
+- [ ] formalize one final standard retained-artifact contract across bars / quote aggregates / trade aggregates / news / options so every market-data family has explicit canonical grain, dedupe rule, and storage path
 
-- [x] create local clone of `trading-data`
-- [x] seed initial documentation from `trading-model`
-- [x] replace seeded docs with a fresh numbered `trading-data` doc set
-- [x] move first-wave market-data acquisition code into this repo under `src/`
-- [x] move first-wave canonical data-policy docs into this repo
-- [x] define first-wave Alpaca adapter layout as the primary source structure
-- [x] add tracked `data/` tree bootstrap for monthly-partitioned in-repo storage
-- [x] define first-wave OKX/Bitget supplemental adapter layout as backup/enrichment source structure
-- [x] define canonical raw/intermediate/derived/report/manifests structure
-- [x] add repo to autosync watcher configuration
-- [x] register project in workspace memory/handoff system
+## Storage migration
+- [x] define the boundary between code repos and `trading-storage`
+- [x] repath active market-tape writes into `trading-storage/2_market_tape/`
+- [x] repath macro / calendar / signal writes into `trading-storage/1_market_regime/`
+- [x] repath compaction / normalize tools away from repo-local `data/` and toward `trading-storage`
+- [ ] run clean-storage validation to confirm every active entrypoint lands in the intended storage partitions
+
+## Market-tape acquisition
 - [x] implement first Alpaca acquisition entrypoints under `src/data/alpaca/`
-- [x] verify repo-local Alpaca `.env` auth flow and current-month batch refresh on approved sample universe
-- [x] define first ETF/context universe for broad-market, sector, and thematic ETF candidates
-- [x] prepare ETF/context data coverage for underlyings and broad-market proxies
-- [x] add candidate ETF-context mapping skeleton for future relevance modeling downstream
-- [x] define monthly previous-month Alpaca batch-backfill automation strategy
-- [x] emit downstream-ready signal files after successful refresh work
-
-## Storage split / trading-storage
-
-- [x] define the new `trading-storage` project as the storage-first sibling for downloaded/context/intermediate/report/output artifacts
-- [x] decide which current `trading-data` artifact families should remain repo-local versus move/copy into `trading-storage`
-- [x] document the boundary between code repos and the storage-only repo clearly enough that future artifact placement is consistent
-
-## Macro / economic context
-
-- [x] define the canonical low-frequency macro/economic context contract under `trading-storage/1_market_regime/0_permanent/1_macro/`
-- [x] add first FRED historical series fetcher with full-history backfill + append/update behavior
-- [x] add first BLS fetcher for key labor / inflation series
-- [x] add first BEA fetcher for GDP / spending-side series
-- [x] add first Census fetcher for key retail / housing/activity series
-- [x] add first Treasury Fiscal Data fetcher for selected fiscal/liquidity datasets
-- [x] add first Federal Reserve official event/calendar fetcher for FOMC and related policy events
-- [x] add first maintained official macro release-calendar fetch/build entrypoint that can populate the planned regime calendar registry targets in `trading-manager`
-- [x] define the initial core macro series set needed for bar-aligned downstream context
-- [x] define the permanent market-regime benchmark universe and primary stored granularity for each retained market proxy
-- [x] finalize the retained benchmark granularity plan as: 1m broad-beta/style layer, 30m rates-credit-fx-metals-sector layer, 1d volatility/commodity layer, plus original-frequency official macro series
-- [x] document how low-frequency macro series should later be joined to market bars via as-of alignment downstream
-- [x] keep macro/economic artifacts in append/upsert per-series files rather than market-tape-style month partitions
-
-## Output compaction / storage efficiency
-
-- [x] audit current tracked JSONL outputs for duplicate-write inflation
-- [x] identify `options_snapshots.jsonl` append growth as the current main output-bloat path
-- [x] convert Alpaca options snapshot fetcher to resumable canonical overwrite behavior
-- [x] add a reusable output audit/compaction tool for safe in-place cleanup of supported datasets
-- [x] compact existing duplicated AAPL options snapshot month files in place
-- [ ] decide whether options snapshots should remain a single canonical row per `(option_symbol, ts)` or evolve into a more explicitly versioned/event-log contract later
-- [x] evaluate whether other large low-change datasets deserve a similar row/meta split after the options path validation
-- [x] add a small-file threshold rule so tiny month files do not grow because of sidecar-meta overhead
-- [x] consolidate compatibility readers so downstream code has one obvious import path for logical full-row reads
-- [x] decide whether news should stay as-is or also adopt a row/meta split when larger month files accumulate
+- [x] verify repo-local Alpaca `.env` auth flow and sample refresh capability
+- [x] define monthly previous-month Alpaca batch-backfill strategy
+- [x] emit downstream-ready signal files after successful month refresh work
+- [ ] decide whether options snapshots should remain one canonical row per `(option_symbol, ts)` or evolve into a more explicitly versioned/event-log contract later
 - [ ] if news volume grows materially, decide whether `source_name` should stay row-level or move into compact month metadata when constant within a month file
-- [ ] formalize one standard retained-artifact contract across bars / quote aggregates / trade aggregates / news / options so every market-data family has explicit canonical grain, dedupe rule, and storage path
 
-## Boundary cleanup after `trading-manager` split
+## Market-regime context
+- [x] define the canonical low-frequency macro/economic context contract under `trading-storage/1_market_regime/0_permanent/1_macro/`
+- [x] add first FRED / BLS / BEA / Census / Treasury fetchers
+- [x] add first official calendar / event builders
+- [x] define the initial market-regime benchmark universe and retained granularity plan
+- [x] document as-of alignment intent for low-frequency context joined to higher-frequency bars
 
+## Boundary cleanup
 - [x] make `trading-manager` the documented control-plane owner for scheduling / sequencing / retry policy
-- [x] keep `trading-data` documentation focused on runnable fetch/build entrypoints plus artifact contracts
-- [x] remove stale repo-local research/control-plane leftovers that still reference old `scripts/data/` and `data/raw|intermediate|derived|reports` layouts
-- [x] review whether any remaining helper/state files in `trading-data` still imply manager ownership instead of artifact ownership
-- [x] tighten signal payload semantics so they remain artifact-readiness signals rather than quasi workflow-state records
-- [x] confirm the exact manager-facing callable contract for each stable `trading-data` entrypoint
-- [x] remove ETF constituent look-through workflows from the active mainline design so ETFs stay bar/context proxies for regime and divergence analysis
-
-## Scope rule
-
-`trading-data` should own:
-- data acquisition
-- source-specific fetch/build adapters under `src/`
-- raw partitioning and retention rules
-- canonical shared market-data contracts
-- optional enrichment-data contracts
-- runnable refresh/build entrypoints that `trading-manager` can call
-- downstream-ready signal emission and data artifact contracts
-
-`trading-data` should not own:
-- managed-symbol orchestration policy
-- long-term refresh scheduling brain
-- cross-repo workflow sequencing
-- archive/rehydration control-plane decisions across the trading stack
-- strategy family research
-- composite construction logic
-- ranking / selection logic
-- live trading execution
+- [x] keep `trading-data` docs focused on fetch/build entrypoints plus artifact contracts
+- [x] remove stale repo-local research/control-plane leftovers that still implied old layouts or manager ownership
+- [x] confirm the manager-facing callable contract for each stable `trading-data` entrypoint
+- [x] remove ETF constituent look-through from the active mainline design so ETFs stay regime/context proxies

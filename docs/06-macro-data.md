@@ -125,7 +125,8 @@ Current executable-ledger direction:
 - `trading-storage/1_market_regime/0_permanent/0_task_status/release_dataset_refresh_tasks.csv` is the human-facing ordered task ledger for regime-side release/calendar refresh work
 - calendar refresh is treated as a normal task family inside that ledger rather than as a separate scheduler table
 - a first maintained calendar builder now exists at `src/data/macro/build_official_macro_release_calendar.py` and writes `trading-storage/1_market_regime/0_permanent/7_events_and_calendars/official_us_macro_release_calendar.jsonl`
-- manager can read that calendar artifact and generate future `macro_release` tasks from it
+- a first search-backed fallback builder now also exists at `src/data/macro/build_official_macro_release_calendar_via_search.py` and writes `official_us_macro_release_calendar.search_fallback.jsonl` with explicit source provenance fields
+- manager can read the maintained calendar artifact and generate future `macro_release` tasks from it
 - tasks may use `plan_at` as the earliest eligible execution timestamp
 - if `plan_at` is blank, the task may start immediately
 - if `plan_at` is in the future, manager should wait until that timestamp

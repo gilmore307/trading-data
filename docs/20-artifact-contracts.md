@@ -28,6 +28,21 @@ Canonical retained market-tape artifacts live under `trading-storage/2_market_ta
 - `news.jsonl`: one row per `id`
 - `options_snapshots.jsonl`: one row per `(option_symbol, ts)` within a month partition
 
+### Re-run / existing-artifact rule
+When a task starts and the target artifact path already exists, do not treat existence alone as success.
+
+Current states:
+- `missing` = target file absent
+- `ready` = file exists, is readable, and any relevant completion evidence is consistent
+- `partial` = file exists but appears incomplete/interrupted
+- `invalid` = file exists but is not trustworthy
+
+Current action rule:
+- `missing` -> run normally
+- `ready` -> skip/reuse
+- `partial` -> resume or rebuild the dataset
+- `invalid` -> delete and rebuild
+
 ### Compact month-directory rule
 Supported month directories may include:
 - shared `_meta.json`

@@ -48,4 +48,10 @@ Current rule:
 - signals remain machine-readable and artifact-scoped
 - manager may use them as evidence
 - `trading-data` should not encode queue/workflow state machines inside the signal payload
-- stdout/stderr and other execution traces belong in storage log partitions, not in signal files
+- stdout/stderr and other execution traces belong in storage temporary partitions, not in signal files
+
+## Existing-artifact restart rule
+If a rerun encounters an already-existing target file:
+- do not mark it complete only because it exists
+- classify it as `missing`, `ready`, `partial`, or `invalid`
+- treat `invalid` as delete-and-rebuild

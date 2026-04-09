@@ -28,6 +28,9 @@
 - [x] add first official calendar / event builders
 - [x] define the initial market-regime benchmark universe and retained granularity plan
 - [x] document as-of alignment intent for low-frequency context joined to higher-frequency bars
+- [ ] split regime-universe ETF/proxy control into formal reusable core ETFs vs non-reusable watch/secondary ETFs
+- [ ] update regime-universe control so only core ETFs such as SPY/QQQ-style large/liquid products are marked K-line reusable for downstream symbol work
+- [ ] raise reusable core ETF regime bars to 1-minute target granularity where that is the intended downstream reuse standard
 
 ## Boundary cleanup
 - [x] make `trading-manager` the documented control-plane owner for scheduling / sequencing / retry policy

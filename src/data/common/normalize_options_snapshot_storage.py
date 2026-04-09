@@ -5,8 +5,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.data.common.storage_paths import market_tape_options_snapshots_root
+
 ROOT = Path(__file__).resolve().parents[3]
-DATA_ROOT = ROOT / "data"
+DATA_ROOT = market_tape_options_snapshots_root()
 META_NAME = "options_snapshots.meta.json"
 DATASET_NAME = "options_snapshots.jsonl"
 
@@ -104,7 +106,7 @@ def convert_file(path: Path, *, apply: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize options_snapshots storage into row-data + month-meta layout.")
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--only", nargs="*", default=None, help="relative options_snapshots.jsonl paths under data/")
+    parser.add_argument("--only", nargs="*", default=None, help="relative options_snapshots.jsonl paths under trading-storage/2_market_tape/1_long_retention/5_options_snapshots/")
     args = parser.parse_args()
 
     if args.only:

@@ -45,15 +45,15 @@ Examples:
 ## Macro/economic context storage rule
 
 Macro/economic context should live under:
-- `context/macro/`
+- `trading-storage/1_market_regime/0_permanent/`
 
 Current structure preference:
-- `context/macro/fred/<series>.jsonl`
-- `context/macro/bls/<series>.jsonl`
-- `context/macro/bea/<series>.jsonl`
-- `context/macro/census/<series>.jsonl`
-- `context/macro/treasury/<dataset>.jsonl`
-- `context/macro/events/*.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/fred/<series>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bls/<series>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bea/<series>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/census/<series>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/treasury/<dataset>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/7_events_and_calendars/*.jsonl`
 
 Design rule:
 - these datasets are low-frequency context artifacts rather than market tape

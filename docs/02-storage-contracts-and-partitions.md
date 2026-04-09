@@ -58,13 +58,13 @@ Current rule:
 - prefer full-history backfill first, then periodic append/update
 
 Examples:
-- `context/macro/fred/DGS10.jsonl`
-- `context/macro/fred/CPIAUCSL.jsonl`
-- `context/macro/bls/CUUR0000SA0.jsonl`
-- `context/macro/bea/GDPC1.jsonl`
-- `context/macro/census/retail_sales.jsonl`
-- `context/macro/treasury/debt_to_penny.jsonl`
-- `context/macro/events/fomc_calendar.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/fred/DGS10.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/fred/CPIAUCSL.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bls/CUUR0000SA0.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bea/GDPC1.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/census/retail_sales.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/treasury/debt_to_penny.jsonl`
+- `trading-storage/1_market_regime/0_permanent/7_events_and_calendars/fomc_calendar.jsonl`
 
 ## Canonical market-tape storage
 
@@ -145,11 +145,11 @@ Some month files use a compact row/meta split when repeated month-level constant
 This is now part of the mainline retained market-tape contract rather than an appendix-only optimization note.
 
 Current adopted pattern:
-- `data/<symbol>/<YYMM>/_meta.json`
-- `data/<symbol>/<YYMM>/bars_1min.jsonl`
-- `data/<symbol>/<YYMM>/quotes_1min.jsonl`
-- `data/<symbol>/<YYMM>/trades_1min.jsonl`
-- `data/<symbol>/<YYMM>/options_snapshots.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/<dataset_family>/<symbol>/<YYMM>/_meta.json`
+- `trading-storage/2_market_tape/1_long_retention/1_bars/<symbol>/<YYMM>/bars_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/2_quotes/<symbol>/<YYMM>/quotes_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/3_trades/<symbol>/<YYMM>/trades_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/5_options_snapshots/<symbol>/<YYMM>/options_snapshots.jsonl`
 
 Current compaction conclusions folded into the mainline contract:
 - the most material duplicate-write bloat was concentrated in `options_snapshots.jsonl`

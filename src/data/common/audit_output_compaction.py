@@ -6,8 +6,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+from src.data.common.storage_paths import market_tape_root
+
 ROOT = Path(__file__).resolve().parents[3]
-DATA_ROOT = ROOT / "data"
+DATA_ROOT = market_tape_root() / "1_long_retention"
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -115,7 +117,7 @@ def analyze_file(path: Path, *, apply: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit and optionally compact tracked trading-data output files.")
     parser.add_argument("--apply", action="store_true", help="rewrite supported datasets in place")
-    parser.add_argument("--only", nargs="*", default=None, help="limit to specific relative paths under data/")
+    parser.add_argument("--only", nargs="*", default=None, help="limit to specific relative paths under trading-storage/2_market_tape/1_long_retention/")
     args = parser.parse_args()
 
     paths: list[Path]

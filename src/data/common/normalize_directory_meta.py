@@ -5,8 +5,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.data.common.storage_paths import market_tape_root
+
 ROOT = Path(__file__).resolve().parents[3]
-DATA_ROOT = ROOT / 'data'
+DATA_ROOT = market_tape_root() / '1_long_retention'
 DIR_META_NAME = '_meta.json'
 
 DATASET_META_FILENAMES = {
@@ -92,7 +94,7 @@ def convert_dir(month_dir: Path, *, apply: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Collapse per-dataset month meta files into one compact shared directory _meta.json')
     parser.add_argument('--apply', action='store_true')
-    parser.add_argument('--only', nargs='*', default=None, help='relative month directories under data/')
+    parser.add_argument('--only', nargs='*', default=None, help='relative month directories under trading-storage/2_market_tape/1_long_retention/')
     args = parser.parse_args()
 
     if args.only:

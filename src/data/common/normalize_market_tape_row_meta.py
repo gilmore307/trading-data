@@ -5,8 +5,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src.data.common.storage_paths import market_tape_root
+
 ROOT = Path(__file__).resolve().parents[3]
-DATA_ROOT = ROOT / "data"
+DATA_ROOT = market_tape_root() / "1_long_retention"
 MIN_ROWS_FOR_META_SPLIT = 2
 
 DATASET_CONFIGS: dict[str, dict[str, Any]] = {
@@ -125,7 +127,7 @@ def convert_file(path: Path, cfg: dict[str, Any], *, apply: bool) -> dict[str, A
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize market-tape JSONL datasets into row-data + month-meta layout when profitable.")
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--only", nargs="*", default=None, help="relative dataset paths under data/")
+    parser.add_argument("--only", nargs="*", default=None, help="relative dataset paths under trading-storage/2_market_tape/1_long_retention/")
     args = parser.parse_args()
 
     if args.only:

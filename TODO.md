@@ -29,7 +29,7 @@
 
 ## Macro / economic context
 
-- [x] define the canonical low-frequency macro/economic context contract under `context/macro/`
+- [x] define the canonical low-frequency macro/economic context contract under `trading-storage/1_market_regime/0_permanent/1_macro/`
 - [x] add first FRED historical series fetcher with full-history backfill + append/update behavior
 - [x] add first BLS fetcher for key labor / inflation series
 - [x] add first BEA fetcher for GDP / spending-side series

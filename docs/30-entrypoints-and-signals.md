@@ -48,3 +48,4 @@ Current rule:
 - signals remain machine-readable and artifact-scoped
 - manager may use them as evidence
 - `trading-data` should not encode queue/workflow state machines inside the signal payload
+- stdout/stderr and other execution traces belong in storage log partitions, not in signal files

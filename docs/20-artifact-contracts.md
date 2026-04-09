@@ -43,6 +43,7 @@ Current compact-contract mainline:
 
 ## Market-regime contract
 Canonical low-frequency and cross-symbol context artifacts live under `trading-storage/1_market_regime/0_permanent/`.
+Execution traces and refresh logs for that work should live under `trading-storage/1_market_regime/2_logs/`.
 
 ### Current families
 - `1_macro/`

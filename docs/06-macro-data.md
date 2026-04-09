@@ -64,6 +64,46 @@ Supported via:
 Use for:
 - fiscal / debt / liquidity-related official datasets
 
+## Economic-event schema rule
+
+For scheduled macro/economic events, model the data in two layers rather than one blended object.
+
+### 1. Calendar / expectation layer
+This is the pre-release layer used for scheduling and expectation-aware research.
+
+Preferred fields include:
+- `event_id`
+- `dataset_id`
+- `series_id`
+- `release_period`
+- `plan_at`
+- `forecast` / `expected`
+- `previous`
+- `importance`
+- `calendar_source`
+- `notes`
+
+### 2. Release result / actual layer
+This is the post-release layer used for surprise analysis and realized-event research.
+
+Preferred fields include:
+- `event_id`
+- `dataset_id`
+- `series_id`
+- `release_period`
+- `released_at`
+- `actual`
+- `previous`
+- `revised_previous`
+- `result_source`
+- `release_status`
+- `notes`
+
+Design rule:
+- the calendar layer should answer "what is scheduled / expected"
+- the result layer should answer "what was actually released"
+- downstream surprise analysis should compare `actual` against `forecast`/`expected` while preserving revision context
+
 ## Operational rule
 
 These macro datasets should be refreshed as permanent context artifacts.

@@ -35,7 +35,7 @@
 - [x] add first BEA fetcher for GDP / spending-side series
 - [x] add first Census fetcher for key retail / housing/activity series
 - [x] add first Treasury Fiscal Data fetcher for selected fiscal/liquidity datasets
-- [ ] add first Federal Reserve official event/calendar fetcher for FOMC and related policy events
+- [x] add first Federal Reserve official event/calendar fetcher for FOMC and related policy events
 - [x] add first maintained official macro release-calendar fetch/build entrypoint that can populate the planned regime calendar registry targets in `trading-manager`
 - [x] define the initial core macro series set needed for bar-aligned downstream context
 - [x] define the permanent market-regime benchmark universe and primary stored granularity for each retained market proxy

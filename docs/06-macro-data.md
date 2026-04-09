@@ -64,6 +64,14 @@ Supported via:
 Use for:
 - fiscal / debt / liquidity-related official datasets
 
+### Federal Reserve official calendars
+Supported via:
+- `src/data/macro/build_fomc_calendar.py`
+
+Use for:
+- FOMC meeting calendar maintenance
+- policy-event scheduling context
+
 ## Economic-event schema rule
 
 For scheduled macro/economic events, model the data in two layers rather than one blended object.

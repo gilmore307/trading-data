@@ -75,13 +75,14 @@ Mainline path rule:
 - resumable builders may also maintain sidecar state files during open/incomplete runs
 
 Examples:
-- `data/AAPL/2604/bars_1min.jsonl`
-- `data/AAPL/2604/quotes_1min.jsonl`
-- `data/AAPL/2604/trades_1min.jsonl`
-- `data/AAPL/2604/options_snapshots.jsonl`
-- `data/AAPL/2604/_meta.json`
-- `data/AAPL/2604/quotes_1min.state.json`
-- `data/AAPL/2604/trades_1min.state.json`
+- `trading-storage/2_market_tape/1_long_retention/1_bars/AAPL/2604/bars_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/2_quotes/AAPL/2604/quotes_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/3_trades/AAPL/2604/trades_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/5_options_snapshots/AAPL/2604/options_snapshots.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/2_quotes/AAPL/2604/quotes_1min.state.json`
+- `trading-storage/2_market_tape/1_long_retention/3_trades/AAPL/2604/trades_1min.state.json`
+
+Repo-local `data/<symbol>/<YYMM>/...` examples should now be treated as legacy/transitional wording unless a specific local-working mirror is being discussed.
 
 ## Canonical retained granularity rule
 

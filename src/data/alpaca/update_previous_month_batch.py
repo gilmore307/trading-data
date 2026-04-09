@@ -17,9 +17,10 @@ if str(ROOT) not in sys.path:
 PYTHON = 'python3'
 BUSINESS_TZ = ZoneInfo('America/New_York')
 BATCHES_PATH = ROOT / 'config' / 'alpaca_monthly_batches.json'
-from src.data.common.storage_paths import market_regime_signals_root
+from src.data.common.storage_paths import market_regime_signals_root, market_tape_root
 
 SIGNALS_DIR = market_regime_signals_root()
+MARKET_TAPE_ROOT = market_tape_root()
 
 
 def _month_window_from_business_month(year: int, month: int) -> tuple[str, str, str]:
@@ -136,7 +137,7 @@ def write_signal(*, batch_name: str, target_month: str, results: list[dict[str, 
             'signal_scope': 'market_data_month',
             'signal_batch': batch_name,
             'signal_path': str(signal_path),
-            'month_root': str(ROOT / 'data'),
+            'month_root': str(MARKET_TAPE_ROOT),
         },
         'results': results,
         'summary': {

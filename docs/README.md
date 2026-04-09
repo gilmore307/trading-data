@@ -1,22 +1,20 @@
 # trading-data docs
 
-This docs tree is the canonical home for the `trading-data` repository documentation.
+This docs tree is the canonical documentation layer for `trading-data`.
 
-`trading-data` is the canonical upstream market-data repository for the trading system.
-It acquires and normalizes market/context data, stores canonical monthly partitions, and exposes stable fetch/build entrypoints that `trading-manager` can call.
-It does not own cross-repo orchestration policy.
+Use it in this order:
+1. `01-overview.md` — repository role, boundaries, and stack position
+2. `02-storage-contracts-and-partitions.md` — canonical retained-artifact and path contract
+3. `03-context-layer-and-holdings.md` — context/ETF/macro placement rules
+4. `04-refresh-entrypoints-and-signals.md` — manager-facing runnable entrypoints and signal semantics
+5. `05-current-status-and-open-decisions.md` — what is implemented vs still unsettled
+6. `06-macro-data.md` — permanent market-regime macro/calendar layer
+7. `07-market-regime-benchmarks.md` — retained benchmark/proxy universe and intended use
 
-## Read in workflow order
+## Reading rule
+- `README.md` = fast operator entrypoint
+- `docs/` = durable design and contract layer
+- `TODO.md` = next queued work
 
-1. `01-overview.md`
-2. `02-storage-contracts-and-partitions.md`
-3. `03-context-layer-and-holdings.md`
-4. `04-refresh-entrypoints-and-signals.md`
-5. `05-current-status-and-open-decisions.md`
-6. `06-macro-data.md`
-7. `07-market-regime-benchmarks.md`
-
-## Note
-
-The older compaction audit appendix has been folded into the mainline storage/status docs.
-`02-storage-contracts-and-partitions.md` and `05-current-status-and-open-decisions.md` are now the authoritative source for the retained compact month-directory contract and its current interpretation.
+## Current integration rule
+`trading-data` is code-first, but its durable outputs should land in `trading-storage` by default.

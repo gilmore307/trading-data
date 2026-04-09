@@ -8,15 +8,15 @@ Macro/economic data is treated as a low-frequency context layer, not as market t
 
 ## Storage rule
 
-Use canonical permanent context files under `context/macro/`.
+Use canonical permanent context files under `trading-storage/1_market_regime/0_permanent/1_macro/`.
 
 Examples:
-- `context/macro/fred/DGS10.jsonl`
-- `context/macro/fred/CPIAUCSL.jsonl`
-- `context/macro/bls/CUUR0000SA0.jsonl`
-- `context/macro/bea/GDPC1.jsonl`
-- `context/macro/census/retail_sales.jsonl`
-- `context/macro/treasury/debt_to_penny.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/fred/DGS10.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/fred/CPIAUCSL.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bls/CUUR0000SA0.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bea/GDPC1.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/census/retail_sales.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/treasury/debt_to_penny.jsonl`
 
 Design rule:
 - prefer one durable append/upsert file per logical series or dataset

@@ -43,30 +43,29 @@ flowchart LR
 - Federal Reserve official webpage/RSS/calendar event sources
 
 ## Primary outputs
-- `data/<symbol>/<YYMM>/bars_1min.jsonl`
-- `data/<symbol>/<YYMM>/quotes_1min.jsonl`
-- `data/<symbol>/<YYMM>/trades_1min.jsonl`
-- `data/<symbol>/<YYMM>/news.jsonl` when present
-- `data/<symbol>/<YYMM>/options_snapshots.jsonl` when present
-- `data/<symbol>/<YYMM>/_meta.json`
-- `context/macro/fred/<series>.jsonl`
-- `context/macro/bls/<series>.jsonl`
-- `context/macro/bea/<series>.jsonl`
-- `context/macro/census/<series>.jsonl`
-- `context/macro/treasury/<dataset>.jsonl`
-- `context/macro/events/*.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/1_bars/<symbol>/<YYMM>/bars_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/2_quotes/<symbol>/<YYMM>/quotes_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/3_trades/<symbol>/<YYMM>/trades_1min.jsonl`
+- `trading-storage/2_market_tape/1_long_retention/4_news/<symbol>/<YYMM>/news.jsonl` when present
+- `trading-storage/2_market_tape/1_long_retention/5_options_snapshots/<symbol>/<YYMM>/options_snapshots.jsonl` when present
+- `trading-storage/1_market_regime/0_permanent/1_macro/fred/<series>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bls/<series>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/bea/<series>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/census/<dataset>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/1_macro/treasury/<dataset>.jsonl`
+- `trading-storage/1_market_regime/0_permanent/7_events_and_calendars/*.jsonl`
 
 ## Completion artifacts
-- `context/signals/*.json`
+- `trading-storage/1_market_regime/0_permanent/8_signals/*.json`
   - `market_data_ready...json`
 
 ## Data flow
 
 ```mermaid
 flowchart TD
-    A[Source adapters] --> B[Monthly partitions under data/]
-    A --> C[Context artifacts under context/]
-    B --> D[Ready signals]
+    A[Source adapters] --> B[Market-tape artifacts under trading-storage/2_market_tape]
+    A --> C[Macro and calendar artifacts under trading-storage/1_market_regime]
+    B --> D[Ready signals under trading-storage/1_market_regime/0_permanent/8_signals]
     C --> D
     D --> E[trading-manager / downstream consumers]
 ```

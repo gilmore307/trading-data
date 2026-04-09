@@ -28,3 +28,5 @@ This document captures current implementation status and remaining open decision
 - signals are artifact-readiness evidence, not orchestration state
 - ETFs remain regime/context proxies rather than constituent-look-through-first objects
 - low-frequency context should keep source/native frequency rather than being forced into month-partitioned tape
+- regime ETF/proxy monthly refresh is intended to run as recurring periodic task flow rather than planner-discovered month gaps
+- calendar refresh should only occur when future event coverage is nearly exhausted; planner then expands refreshed calendar events into scheduled release tasks

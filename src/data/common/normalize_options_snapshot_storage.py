@@ -106,7 +106,7 @@ def convert_file(path: Path, *, apply: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize options_snapshots storage into row-data + month-meta layout.")
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--only", nargs="*", default=None, help="relative options_snapshots.jsonl paths under trading-storage/2_market_tape/1_long_retention/5_options_snapshots/")
+    parser.add_argument("--only", nargs="*", default=None, help="relative options_snapshots.jsonl paths under trading-storage/2_market_tape/2_rolling/5_options_snapshots/")
     args = parser.parse_args()
 
     if args.only:

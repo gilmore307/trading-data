@@ -23,7 +23,7 @@ Runner:
 Behavior:
 - build/refresh the previous month for the configured batch of symbols
 - write retained month outputs under `trading-storage/2_market_tape/.../<symbol>/<YYMM>/`
-- emit a downstream-ready signal file under `trading-storage/1_market_regime/0_permanent/8_signals/`
+- emit a downstream-ready signal file under `trading-storage/1_market_regime/1_permanent/8_signals/`
 
 Current signal meaning:
 - `market_data_ready`
@@ -39,7 +39,7 @@ Runner families:
 
 Behavior:
 - fetch or update durable macro/economic context series, datasets, or calendars
-- upsert into canonical permanent files under `trading-storage/1_market_regime/0_permanent/`
+- upsert into canonical permanent files under `trading-storage/1_market_regime/1_permanent/`
 
 ## Signal philosophy
 Signals should describe artifact readiness, not manager control-plane state.

@@ -6,7 +6,7 @@ This document defines the canonical retained-artifact contract for `trading-data
 Durable outputs should land in `trading-storage`, not remain repo-local by default.
 
 ## Market-tape contract
-Canonical retained market-tape artifacts live under `trading-storage/2_market_tape/1_long_retention/`.
+Canonical retained market-tape artifacts live under `trading-storage/2_market_tape/2_rolling/`.
 
 ### Current dataset families
 - `1_bars/<symbol>/<YYMM>/bars_1min.jsonl`
@@ -57,8 +57,8 @@ Current compact-contract mainline:
 `news.jsonl` remains outside the compact row/meta split for now.
 
 ## Market-regime contract
-Canonical low-frequency and cross-symbol context artifacts live under `trading-storage/1_market_regime/0_permanent/`.
-Temporary execution traces for that work should live under `trading-storage/1_market_regime/2_temporary/`.
+Canonical low-frequency and cross-symbol context artifacts live under `trading-storage/1_market_regime/1_permanent/`.
+Temporary execution traces for that work should live under `trading-storage/1_market_regime/3_temporary/`.
 
 ### Current families
 - `1_macro/`

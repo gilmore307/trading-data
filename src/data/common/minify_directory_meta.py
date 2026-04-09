@@ -87,7 +87,7 @@ def minify_meta(month_dir: Path, *, apply: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Minify directory-level _meta.json by lifting shared fields and removing path-derivable fields')
     parser.add_argument('--apply', action='store_true')
-    parser.add_argument('--only', nargs='*', default=None, help='relative month dirs under trading-storage/2_market_tape/1_long_retention/')
+    parser.add_argument('--only', nargs='*', default=None, help='relative month dirs under trading-storage/2_market_tape/2_rolling/')
     args = parser.parse_args()
 
     if args.only:

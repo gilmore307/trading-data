@@ -9,7 +9,7 @@ This document groups the market-regime context layer used by `trading-data`.
 - options-context enrichment inputs
 
 ## Macro/economic storage rule
-Use canonical permanent files under `trading-storage/1_market_regime/0_permanent/`.
+Use canonical permanent files under `trading-storage/1_market_regime/1_permanent/`.
 
 Examples:
 - `1_macro/fred/<series>.jsonl`

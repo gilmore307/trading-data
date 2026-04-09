@@ -117,7 +117,7 @@ def analyze_file(path: Path, *, apply: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit and optionally compact tracked trading-data output files.")
     parser.add_argument("--apply", action="store_true", help="rewrite supported datasets in place")
-    parser.add_argument("--only", nargs="*", default=None, help="limit to specific relative paths under trading-storage/2_market_tape/1_long_retention/")
+    parser.add_argument("--only", nargs="*", default=None, help="limit to specific relative paths under trading-storage/2_market_tape/2_rolling/")
     args = parser.parse_args()
 
     paths: list[Path]

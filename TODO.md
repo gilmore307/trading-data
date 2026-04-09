@@ -23,7 +23,7 @@
 - [ ] if news volume grows materially, decide whether `source_name` should stay row-level or move into compact month metadata when constant within a month file
 
 ## Market-regime context
-- [x] define the canonical low-frequency macro/economic context contract under `trading-storage/1_market_regime/0_permanent/1_macro/`
+- [x] define the canonical low-frequency macro/economic context contract under `trading-storage/1_market_regime/1_permanent/1_macro/`
 - [x] add first FRED / BLS / BEA / Census / Treasury fetchers
 - [x] add first official calendar / event builders
 - [x] define the initial market-regime benchmark universe and retained granularity plan

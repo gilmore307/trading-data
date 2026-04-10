@@ -13,6 +13,7 @@
 - [x] repath macro / calendar / signal writes into `trading-storage/1_market_regime/`
 - [x] repath compaction / normalize tools away from repo-local `data/` and toward `trading-storage`
 - [ ] run clean-storage validation to confirm every active entrypoint lands in the intended storage partitions
+- [x] add a single-symbol / single-month Alpaca refresh entrypoint so manager periodic regime rows do not have to misuse shared batch workflows
 
 ## Market-tape acquisition
 - [x] implement first Alpaca acquisition entrypoints under `src/data/alpaca/`

@@ -23,10 +23,11 @@ Runner:
 Behavior:
 - build/refresh the previous month for the configured batch of symbols
 - write retained month outputs under `trading-storage/2_market_tape/.../<symbol>/<YYMM>/`
-- emit a downstream-ready signal file under `trading-storage/1_market_regime/1_permanent/8_signals/`
+- emit a downstream-ready signal file under `trading-storage/1_market_regime/2_rolling/<group_name>/<symbol>/`
 
 Current signal meaning:
 - `market_data_ready`
+- the single-symbol monthly Alpaca entrypoint must always emit a completion signal instead of finishing without readiness evidence, because manager-ledger advancement depends on that artifact
 
 ## Permanent-context entrypoints
 Runner families:

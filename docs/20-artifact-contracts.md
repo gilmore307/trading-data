@@ -36,12 +36,27 @@ Current states:
 - `ready` = file exists, is readable, and any relevant completion evidence is consistent
 - `partial` = file exists but appears incomplete/interrupted
 - `invalid` = file exists but is not trustworthy
+- `not_applicable` = this dataset family is not part of the required contract for the symbol/asset-class task being evaluated
 
 Current action rule:
 - `missing` -> run normally
 - `ready` -> skip/reuse
 - `partial` -> resume or rebuild the dataset
 - `invalid` -> delete and rebuild
+
+### Market-tape symbol capability contract
+For ordinary market-tape symbol/month work, completion is based on the symbol's required dataset contract rather than on one universal five-family requirement.
+
+Current pinned contract:
+- `stocks` symbols, including ETF symbols when they are being treated as tradable symbols rather than regime context:
+  - required = `bars`, `quotes`, `trades`, `news`, `options`
+- `crypto` symbols (current validated example: `BTC/USD`):
+  - required = `bars`, `news`
+  - `quotes`, `trades`, and `options` are currently `not_applicable`
+
+Interpretation rule:
+- a tradable ETF such as `QQQ` still follows the full stock-symbol contract when it is being maintained as a market-tape symbol
+- an ETF used under the separate regime ledger does **not** inherit this full market-tape contract; regime ETF/proxy work remains bars-only
 
 ### Compact month-directory rule
 Supported month directories may include:

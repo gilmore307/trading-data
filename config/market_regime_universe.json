@@ -9,7 +9,7 @@
   "primary_bar_granularity": {
     "1m": ["SPY", "QQQ", "IWM", "RSP", "DIA"],
     "30m": ["SHY", "IEF", "TLT", "HYG", "UUP", "GLD", "SLV", "IBIT", "ETHA", "VIXY", "XLB", "XLC", "XLE", "XLF", "XLK", "XLI", "XLP", "XLRE", "XLU", "XLV", "XLY", "SMH", "SOXX", "KRE", "ITA", "IYT", "LIT", "GDX", "BOTZ"],
-    "1d": ["LQD", "MOVE", "DBC", "PDBC", "USO"]
+    "1d": ["LQD", "MOVE", "DBC", "USO"]
   },
   "macro_series_original_frequency": {
     "rates_and_curve": ["DFF", "DGS3MO", "DGS2", "DGS10", "DGS30", "T10Y2Y", "T10Y3M"],
@@ -26,6 +26,6 @@
     "volatility_and_fear": ["VIXY", "MOVE"],
     "sector_rotation": ["XLB", "XLC", "XLE", "XLF", "XLK", "XLI", "XLP", "XLRE", "XLU", "XLV", "XLY"],
     "industry_thematic_independent": ["SMH", "SOXX", "KRE", "ITA", "IYT", "LIT", "GDX", "BOTZ"],
-    "inflation_commodity_shock_proxies": ["DBC", "PDBC", "USO"]
+    "inflation_commodity_shock_proxies": ["DBC", "USO"]
   }
 }

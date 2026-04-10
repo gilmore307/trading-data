@@ -26,7 +26,6 @@
       {"symbol": "SLV", "label": "iShares Silver Trust", "priority": "high", "theme": "silver"},
       {"symbol": "USO", "label": "United States Oil Fund", "priority": "high", "theme": "oil"},
       {"symbol": "DBC", "label": "Invesco DB Commodity Index Tracking Fund", "priority": "high", "theme": "broad_commodities"},
-      {"symbol": "PDBC", "label": "Invesco Optimum Yield Diversified Commodity Strategy No K-1 ETF", "priority": "high", "theme": "broad_commodities"},
       {"symbol": "IBIT", "label": "iShares Bitcoin Trust ETF", "priority": "high", "theme": "bitcoin_proxy"},
       {"symbol": "ETHA", "label": "iShares Ethereum Trust ETF", "priority": "high", "theme": "ethereum_proxy"},
       {"symbol": "FSOL", "label": "Fidelity Solana Fund", "priority": "watch", "theme": "solana_proxy"},

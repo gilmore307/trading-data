@@ -17,7 +17,7 @@ This document captures current implementation status and remaining open decision
 - cleaner dataset-refresh evidence contract for permanent macro/context refresh
 - end-to-end validation against a clean storage skeleton
 - some remaining open design choices around news/options compactness and evidence contracts
-- sector-observation ETF holdings acquisition is not built yet; issuer-site holdings should become the canonical source for downstream stock-selection support
+- sector-observation ETF holdings acquisition is now starting as a first issuer-site-based path, but it is not fully hardened yet across all issuers and edge cases
 
 ## Open questions
 - should options snapshots remain one canonical row per `(option_symbol, ts)` or evolve into a more explicit event/version model?

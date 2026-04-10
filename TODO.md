@@ -31,8 +31,13 @@
 - [x] document as-of alignment intent for low-frequency context joined to higher-frequency bars
 - [x] simplify regime-universe control into an execution-definition surface rather than a flag-heavy eligibility table
 - [x] classify ETF rows by modeling role (`market_state_etf` vs `sector_observation_etf`) and modeling-purpose groupings
-- [ ] build holdings-acquisition support for `sector_observation_etf` rows using issuer websites as the canonical source of ETF constituents
-- [ ] normalize issuer-specific holdings fetch/build flows for the recurring sector-observation ETF families (for example iShares, SPDR, Invesco, Global X, ARK, VanEck, ProShares)
+- [~] build holdings-acquisition support for `sector_observation_etf` rows using issuer websites as the canonical source of ETF constituents
+  - [x] first minimal holdings snapshot entrypoint exists
+  - [ ] validate issuer-specific fetch reliability across all supported providers
+  - [ ] harden schema/filtering/dedupe rules for U.S.-listed holdings only
+- [~] normalize issuer-specific holdings fetch/build flows for the recurring sector-observation ETF families (for example iShares, SPDR, Invesco, Global X, ARK, VanEck, ProShares)
+  - [x] first unified issuer-routed fetcher exists
+  - [ ] add remaining issuer paths not yet covered by the first implementation
 - [ ] define the retained holdings artifact contract for sector-observation ETFs in `trading-storage` so downstream stock-selection work can consume normalized constituent snapshots
 
 ## Boundary cleanup

@@ -139,7 +139,7 @@ def flush_month_store(base_dir: Path, store: dict[str, dict[tuple[str, int], dic
 def fetch_option_snapshots(*, underlying_symbol: str, limit: int, output_dir: Path | None, resume: bool) -> dict[str, Any]:
     obj = request_json(f"/v1beta1/options/snapshots/{underlying_symbol}", {"limit": limit})
     snapshots = obj.get("snapshots", {})
-    out_dir = output_dir or (market_tape_options_snapshots_root() / underlying_symbol.replace("/", "-"))
+    out_dir = output_dir or (market_tape_options_snapshots_root(symbol=underlying_symbol) / underlying_symbol.replace("/", "-"))
     store = load_month_store(out_dir, dataset_name="options_snapshots", resume=resume)
     count = 0
     months: set[str] = set()

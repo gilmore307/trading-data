@@ -74,13 +74,19 @@ Temporary execution traces for that work should live under `trading-storage/1_ma
 ### Regime ETF/proxy bars contract
 Mainline Alpaca regime ETF/proxy retention is now **bars-first**.
 
-Canonical path:
-- `trading-storage/1_market_regime/1_permanent/2_etf/<priority>/<SYMBOL>/<YYMM>/bars_1min.jsonl`
+Canonical path pattern:
+- `trading-storage/1_market_regime/1_permanent/2_etf/<priority>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
 
-Current rule:
-- regime ETF/proxy month refresh should only require `bars_1min.jsonl`
+Current readiness contract:
+- required now: `bars_1min.jsonl`
+- supported later without changing the top-level routing shape: `bars_5min.jsonl`, `bars_15min.jsonl`, `bars_1hour.jsonl`, `bars_1day.jsonl`
 - do **not** reuse the ordinary market-tape bundle (`quotes / trades / news / options`) as the default regime contract
 - old misplaced nested paths such as `<SYMBOL>/<SYMBOL>/<YYMM>/...` are legacy artifacts, not the active contract
+
+Interpretation rule:
+- multiple ETF bar timeframes are allowed in the storage contract
+- manager readiness / preflight for the current regime rollforward mainline still only requires the minimal `bars_1min.jsonl` evidence
+- additional timeframe bars should be treated as optional enrichment until the manager contract is explicitly expanded
 
 ### Macro/context rule
 - prefer one durable append/upsert file per logical dataset or series

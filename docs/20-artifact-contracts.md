@@ -80,7 +80,10 @@ Canonical path pattern:
 Current rule:
 - the target timeframe is driven by `trading-storage/1_market_regime/0_status/1_summaries/regime_universe_summary.csv`
 - use the row's `target_bar_granularity` to choose the retained bars filename for that symbol
-- current observed mainline granularities include `1m`, `30m`, and `1d`
+- current ETF granularity defaults are now grouped by `group_name`:
+  - `1m`: `us_equity_core`, `commodities`, `usd_volatility`
+  - `30m`: `rates_curve`, `credit`, `crypto_beta`, `sp500_sector`
+  - `1d`: `thematic_growth`, `industry_chain`, `ark_thematic`
 - do **not** reuse the ordinary market-tape bundle (`quotes / trades / news / options`) as the default regime contract
 - old misplaced nested paths such as `<SYMBOL>/<SYMBOL>/<YYMM>/...` are legacy artifacts, not the active contract
 

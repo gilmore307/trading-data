@@ -75,7 +75,7 @@ Temporary execution traces for that work should live under `trading-storage/1_ma
 Mainline Alpaca regime ETF/proxy retention is now **bars-first**.
 
 Canonical path pattern:
-- `trading-storage/1_market_regime/1_permanent/2_etf/<priority>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
+- `trading-storage/1_market_regime/1_permanent/2_etf/<group_name>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
 
 Current rule:
 - the target timeframe is driven by `trading-storage/1_market_regime/0_status/1_summaries/regime_universe_summary.csv`

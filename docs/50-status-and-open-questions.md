@@ -35,3 +35,4 @@ This document captures current implementation status and remaining open decision
 - regime ETF/proxy monthly refresh is intended to run as recurring periodic task flow rather than planner-discovered month gaps
 - calendar refresh should only occur when future event coverage is nearly exhausted; planner then expands refreshed calendar events into scheduled release tasks
 - sector-observation ETF constituent holdings should later be acquired directly from issuer websites instead of being approximated by summary-table metadata
+- holdings filtering should remain equity-oriented: keep ordinary U.S. stock holdings and exclude obvious cash, derivatives, futures/forward rows, and non-plain-equity placeholders from the primary artifact

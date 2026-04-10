@@ -34,7 +34,10 @@
 - [~] build holdings-acquisition support for `sector_observation_etf` rows using issuer websites as the canonical source of ETF constituents
   - [x] first minimal holdings snapshot entrypoint exists
   - [ ] validate issuer-specific fetch reliability across all supported providers
-  - [ ] harden schema/filtering/dedupe rules for U.S.-listed holdings only
+  - [~] harden schema/filtering/dedupe rules for U.S.-listed holdings only
+    - [x] remove obvious `nan` / cash / money-market placeholders
+    - [x] exclude obvious derivative / futures / forward-style rows and non-plain-equity tickers with digits
+    - [ ] keep refining issuer-specific edge-case filters where a fund family still leaks non-stock exposures into the holdings feed
 - [~] normalize issuer-specific holdings fetch/build flows for the recurring sector-observation ETF families (for example iShares, SPDR, Invesco, Global X, ARK, VanEck, ProShares)
   - [x] first unified issuer-routed fetcher exists
   - [ ] add remaining issuer paths not yet covered by the first implementation

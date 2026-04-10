@@ -90,6 +90,7 @@ Current rule:
 Interpretation rule:
 - manager readiness / preflight for regime rollforward should validate the symbol's configured bars artifact, not a hard-coded universal `bars_1min`
 - if a symbol's `target_bar_granularity` changes later, the expected retained bars filename should change with it
+- rolling readiness signal files for these artifacts should live under `1_market_regime/2_rolling/<group_name>/<symbol>/...` instead of a permanent shared signals directory
 
 ### Macro/context rule
 - prefer one durable append/upsert file per logical dataset or series

@@ -17,6 +17,7 @@ This document captures current implementation status and remaining open decision
 - cleaner dataset-refresh evidence contract for permanent macro/context refresh
 - end-to-end validation against a clean storage skeleton
 - some remaining open design choices around news/options compactness and evidence contracts
+- sector-observation ETF holdings acquisition is not built yet; issuer-site holdings should become the canonical source for downstream stock-selection support
 
 ## Open questions
 - should options snapshots remain one canonical row per `(option_symbol, ts)` or evolve into a more explicit event/version model?
@@ -26,7 +27,11 @@ This document captures current implementation status and remaining open decision
 ## Durable recent decisions
 - durable outputs belong in `trading-storage`
 - signals are artifact-readiness evidence, not orchestration state
-- ETFs remain regime/context proxies rather than constituent-look-through-first objects
+- ETFs remain regime/context proxies rather than constituent-look-through-first objects in the main regime summary itself
+- ETF rows are now split by modeling role:
+  - `market_state_etf` = direct market-state model inputs
+  - `sector_observation_etf` = sector/theme observation layer for downstream stock-selection support
 - low-frequency context should keep source/native frequency rather than being forced into month-partitioned tape
 - regime ETF/proxy monthly refresh is intended to run as recurring periodic task flow rather than planner-discovered month gaps
 - calendar refresh should only occur when future event coverage is nearly exhausted; planner then expands refreshed calendar events into scheduled release tasks
+- sector-observation ETF constituent holdings should later be acquired directly from issuer websites instead of being approximated by summary-table metadata

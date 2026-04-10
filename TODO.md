@@ -29,9 +29,11 @@
 - [x] add first official calendar / event builders
 - [x] define the initial market-regime benchmark universe and retained granularity plan
 - [x] document as-of alignment intent for low-frequency context joined to higher-frequency bars
-- [ ] split regime-universe ETF/proxy control into formal reusable core ETFs vs non-reusable watch/secondary ETFs
-- [ ] update regime-universe control so only core ETFs such as SPY/QQQ-style large/liquid products are marked K-line reusable for downstream symbol work
-- [ ] raise reusable core ETF regime bars to 1-minute target granularity where that is the intended downstream reuse standard
+- [x] simplify regime-universe control into an execution-definition surface rather than a flag-heavy eligibility table
+- [x] classify ETF rows by modeling role (`market_state_etf` vs `sector_observation_etf`) and modeling-purpose groupings
+- [ ] build holdings-acquisition support for `sector_observation_etf` rows using issuer websites as the canonical source of ETF constituents
+- [ ] normalize issuer-specific holdings fetch/build flows for the recurring sector-observation ETF families (for example iShares, SPDR, Invesco, Global X, ARK, VanEck, ProShares)
+- [ ] define the retained holdings artifact contract for sector-observation ETFs in `trading-storage` so downstream stock-selection work can consume normalized constituent snapshots
 
 ## Boundary cleanup
 - [x] make `trading-manager` the documented control-plane owner for scheduling / sequencing / retry policy

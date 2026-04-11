@@ -12,11 +12,11 @@ This document groups the market-regime context layer used by `trading-data`.
 Use canonical regime data files under `trading-storage/1_market_regime/1_data/`.
 
 Examples:
-- `macro/fred/<series>.jsonl`
-- `macro/bls/<series>.jsonl`
-- `macro/bea/<series>.jsonl`
-- `macro/census/<dataset>.jsonl`
-- `macro/treasury/<dataset>.jsonl`
+- `<group_name>/<entity_id>/<entity_file>.jsonl`
+- `<group_name>/<entity_id>/<entity_file>.jsonl`
+- `<group_name>/<entity_id>/<entity_file>.jsonl`
+- `<group_name>/<entity_id>/<entity_file>.jsonl`
+- `<group_name>/<entity_id>/<entity_file>.jsonl`
 - `official_calendar/<entity_id>/*.jsonl`
 
 ## ETF/proxy rule

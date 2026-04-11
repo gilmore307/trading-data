@@ -76,7 +76,7 @@ Canonical low-frequency and cross-symbol context artifacts live under `trading-s
 Temporary execution traces for that work should live under `trading-storage/1_market_regime/4_temporary/`.
 
 ### Current families
-- `macro/`
+- `<group_name>/`
 - `official_calendar/<entity_id>/`
 - `etf/<group_name>/...`
 - signal/readiness evidence under `3_credentials/`, structurally aligned with the relevant `1_data/` paths

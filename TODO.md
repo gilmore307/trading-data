@@ -26,7 +26,7 @@
   - current pinned contract keeps `source_name` row-level for now; revisit only if file-size pressure becomes material
 
 ## Market-regime context
-- [x] define the canonical low-frequency macro/economic context contract under `trading-storage/1_market_regime/1_data/macro/`
+- [x] define the canonical low-frequency macro/economic context contract under `trading-storage/1_market_regime/1_data/<group_name>/<entity_id>/`
 - [x] add first FRED / BLS / BEA / Census / Treasury fetchers
 - [x] add first official calendar / event builders
 - [x] define the initial market-regime benchmark universe and retained granularity plan

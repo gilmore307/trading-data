@@ -6,7 +6,7 @@ This document defines the canonical retained-artifact contract for `trading-data
 Durable outputs should land in `trading-storage`, not remain repo-local by default.
 
 ## Market-tape contract
-Canonical retained market-tape artifacts live under `trading-storage/2_market_tape/2_rolling/`.
+Canonical retained market-tape artifacts live under `trading-storage/2_market_tape/1_data/`.
 
 ### Current dataset families
 - `1_bars/<symbol>/<YYMM>/bars_1min.jsonl`
@@ -73,7 +73,7 @@ Current compact-contract mainline:
 
 ## Market-regime contract
 Canonical low-frequency and cross-symbol context artifacts live under `trading-storage/1_market_regime/1_permanent/`.
-Temporary execution traces for that work should live under `trading-storage/1_market_regime/3_temporary/`.
+Temporary execution traces for that work should live under `trading-storage/1_market_regime/4_temporary/`.
 
 ### Current families
 - `1_macro/`
@@ -90,10 +90,10 @@ Temporary execution traces for that work should live under `trading-storage/1_ma
 Mainline Alpaca regime ETF/proxy retention is now **bars-first**.
 
 Canonical path pattern:
-- `trading-storage/1_market_regime/1_permanent/2_etf/<group_name>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
+- `trading-storage/1_market_regime/1_data/etf/<group_name>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
 
 Current rule:
-- the target timeframe is driven by `trading-storage/1_market_regime/0_status/1_summaries/regime_universe_summary.csv`
+- the target timeframe is driven by `trading-storage/1_market_regime/0_management/market_regime_summary/regime_universe_summary.csv`
 - use the row's `target_bar_granularity` to choose the retained bars filename for that symbol
 - current ETF granularity defaults are now grouped by `group_name`:
   - `1m`: `us_equity_core`, `commodities`, `usd_volatility`
@@ -105,7 +105,7 @@ Current rule:
 Interpretation rule:
 - manager readiness / preflight for regime rollforward should validate the symbol's configured bars artifact, not a hard-coded universal `bars_1min`
 - if a symbol's `target_bar_granularity` changes later, the expected retained bars filename should change with it
-- rolling readiness signal files for these artifacts should live under `1_market_regime/2_rolling/<group_name>/<symbol>/...` instead of a permanent shared signals directory
+- rolling readiness signal files for these artifacts should live under `1_market_regime/3_credentials/etf/<group_name>/<symbol>/...` instead of a permanent shared signals directory
 
 ### Macro/context rule
 - prefer one durable append/upsert file per logical dataset or series

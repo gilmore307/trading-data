@@ -23,7 +23,7 @@ Runner:
 Behavior:
 - build/refresh the previous month for the configured batch of symbols
 - write retained month outputs under `trading-storage/2_market_tape/.../<symbol>/<YYMM>/`
-- emit a downstream-ready signal file under `trading-storage/1_market_regime/2_rolling/<group_name>/<symbol>/`
+- emit a downstream-ready signal file under `trading-storage/1_market_regime/3_credentials/etf/<group_name>/<symbol>/`
 
 Current signal meaning:
 - `market_data_ready`

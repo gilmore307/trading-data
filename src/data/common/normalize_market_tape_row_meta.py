@@ -127,7 +127,7 @@ def convert_file(path: Path, cfg: dict[str, Any], *, apply: bool) -> dict[str, A
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize market-tape JSONL datasets into row-data + month-meta layout when profitable.")
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--only", nargs="*", default=None, help="relative dataset paths under trading-storage/2_market_tape/2_rolling/")
+    parser.add_argument("--only", nargs="*", default=None, help="relative dataset paths under trading-storage/2_market_tape/1_data/")
     args = parser.parse_args()
 
     if args.only:

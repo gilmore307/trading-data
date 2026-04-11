@@ -39,7 +39,7 @@ flowchart LR
 ## Canonical outputs
 - market-tape artifacts under `trading-storage/2_market_tape/`
 - market-regime artifacts under `trading-storage/1_market_regime/`
-- readiness signals under `trading-storage/1_market_regime/2_rolling/<group_name>/<symbol>/`
+- readiness signals under `trading-storage/1_market_regime/3_credentials/etf/<group_name>/<symbol>/`
 
 ## Current mainline contract
 - Alpaca is the primary source for retained market-tape data
@@ -54,7 +54,7 @@ flowchart LR
 
 ## Current status
 - storage write paths have been repathed to `trading-storage`
-- signal output has been repathed to `trading-storage/1_market_regime/2_rolling/<group_name>/<symbol>/`
+- signal output has been repathed to `trading-storage/1_market_regime/3_credentials/etf/<group_name>/<symbol>/`
 - compaction / normalize tools now target `trading-storage` instead of repo-local `data/`
 - remaining work is mostly contract cleanup and validation rather than topology redesign
 

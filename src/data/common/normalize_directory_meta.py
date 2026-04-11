@@ -94,7 +94,7 @@ def convert_dir(month_dir: Path, *, apply: bool) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Collapse per-dataset month meta files into one compact shared directory _meta.json')
     parser.add_argument('--apply', action='store_true')
-    parser.add_argument('--only', nargs='*', default=None, help='relative month directories under trading-storage/2_market_tape/2_rolling/')
+    parser.add_argument('--only', nargs='*', default=None, help='relative month directories under trading-storage/2_market_tape/1_data/')
     args = parser.parse_args()
 
     if args.only:

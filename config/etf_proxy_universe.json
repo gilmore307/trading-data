@@ -1,6 +1,0 @@
-{
-  "deprecated": true,
-  "canonical_source": "projects/trading-storage/1_market_regime/0_management/market_regime_summary/regime_universe_summary.csv",
-  "reason": "ETF proxy selection and grouping now belong to the canonical regime summary table.",
-  "replacement_rule": "Do not use this file as an active proxy-universe definition. Read summary rows directly from the storage summary CSV."
-}

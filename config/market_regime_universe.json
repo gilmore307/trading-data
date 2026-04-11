@@ -1,6 +1,0 @@
-{
-  "deprecated": true,
-  "canonical_source": "projects/trading-storage/1_market_regime/0_management/market_regime_summary/regime_universe_summary.csv",
-  "reason": "Regime universe definitions must come from the storage summary table, not from a parallel JSON config.",
-  "replacement_rule": "Read regime universe rows directly from the summary CSV and do not maintain a separate competing universe definition here."
-}

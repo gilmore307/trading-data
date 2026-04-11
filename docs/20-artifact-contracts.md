@@ -76,16 +76,38 @@ Canonical low-frequency and cross-symbol context artifacts live under `trading-s
 Temporary execution traces for that work should live under `trading-storage/1_market_regime/4_temporary/`.
 
 ### Current families
-- `<group_name>/`
-- `official_calendar/<entity_id>/`
-- `etf/<group_name>/...`
+- `<group_name>/<entity_or_symbol>/...`
 - signal/readiness evidence under `3_credentials/`, structurally aligned with the relevant `1_data/` paths
+
+### Regime artifact mutability rule
+Regime/context artifacts are split into two durability classes:
+
+1. **Canonical mutable entity files**
+   - one durable file per logical low-frequency dataset/entity
+   - future refreshes update the same canonical file rather than creating a new timestamped artifact per run
+   - examples:
+     - `1_market_regime/1_data/rates_and_curve/DGS10/DGS10.jsonl`
+     - `1_market_regime/1_data/labor_and_growth/UNRATE/UNRATE.jsonl`
+     - `1_market_regime/1_data/treasury/treasury.debt_to_penny/debt_to_penny.jsonl`
+     - `1_market_regime/1_data/official_calendar/federal_reserve.fomc_calendar/fomc_calendar.jsonl`
+
+2. **Partitioned symbol-month artifacts**
+   - one file per symbol + business-month partition
+   - used for regime ETF/proxy bar history where monthly partitions are meaningful operationally
+   - examples:
+     - `1_market_regime/1_data/us_equity_core/SPY/2503/bars_1min.jsonl`
+     - `1_market_regime/1_data/credit/HYG/2503/bars_30min.jsonl`
+
+Interpretation rule:
+- low-frequency macro/context/calendar entities should default to the canonical mutable-file contract
+- high-volume historical regime ETF/proxy bars should remain partitioned by symbol/month
+- run-by-run refresh traces belong in `4_temporary/`, not as extra timestamped siblings beside the canonical artifact
 
 ### Regime ETF/proxy bars contract
 Mainline Alpaca regime ETF/proxy retention is now **bars-first**.
 
 Canonical path pattern:
-- `trading-storage/1_market_regime/1_data/etf/<group_name>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
+- `trading-storage/1_market_regime/1_data/<group_name>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
 
 Current rule:
 - the target timeframe is driven by `trading-storage/1_market_regime/0_management/market_regime_summary.csv`
@@ -100,7 +122,7 @@ Current rule:
 Interpretation rule:
 - manager readiness / preflight for regime rollforward should validate the symbol's configured bars artifact, not a hard-coded universal `bars_1min`
 - if a symbol's `target_bar_granularity` changes later, the expected retained bars filename should change with it
-- rolling readiness signal files for these artifacts should live under `1_market_regime/3_credentials/etf/<group_name>/<symbol>/...` instead of a permanent shared signals directory
+- rolling readiness signal files for these artifacts should live under `1_market_regime/3_credentials/<group_name>/<symbol>/...` instead of a permanent shared signals directory
 
 ### Macro/context rule
 - prefer one durable append/upsert file per logical dataset or series

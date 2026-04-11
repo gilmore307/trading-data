@@ -119,8 +119,11 @@ def load_month_store(base_dir: Path, *, dataset_name: str, resume: bool) -> dict
 
 
 def flush_month_store(base_dir: Path, store: dict[str, dict[tuple[str, int], dict[str, Any]]], *, dataset_name: str) -> None:
-    base_dir.mkdir(parents=True, exist_ok=True)
+    if not store:
+        return
     for month, rows in store.items():
+        if not rows:
+            continue
         out_dir = base_dir / month
         out_dir.mkdir(parents=True, exist_ok=True)
         out = out_dir / f"{dataset_name}.jsonl"

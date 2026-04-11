@@ -88,7 +88,7 @@ Canonical path pattern:
 - `trading-storage/1_market_regime/1_data/etf/<group_name>/<SYMBOL>/<YYMM>/bars_<timeframe>.jsonl`
 
 Current rule:
-- the target timeframe is driven by `trading-storage/1_market_regime/0_management/market_regime_summary/regime_universe_summary.csv`
+- the target timeframe is driven by `trading-storage/1_market_regime/0_management/market_regime_summary/market_regime_summary.csv`
 - use the row's `target_bar_granularity` to choose the retained bars filename for that symbol
 - current ETF granularity defaults are now grouped by `group_name`:
   - `1m`: `us_equity_core`, `commodities`, `usd_volatility`

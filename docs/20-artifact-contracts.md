@@ -77,7 +77,7 @@ Temporary execution traces for that work should live under `trading-storage/1_ma
 
 ### Current families
 - `macro/`
-- `events_and_calendars/`
+- `official_calendar/<entity_id>/`
 - `etf/<group_name>/...`
 - signal/readiness evidence under `3_credentials/`, structurally aligned with the relevant `1_data/` paths
 

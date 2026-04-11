@@ -17,7 +17,7 @@ Examples:
 - `macro/bea/<series>.jsonl`
 - `macro/census/<dataset>.jsonl`
 - `macro/treasury/<dataset>.jsonl`
-- `events_and_calendars/*.jsonl`
+- `official_calendar/<entity_id>/*.jsonl`
 
 ## ETF/proxy rule
 ETF and proxy instruments are retained primarily as market-regime/context instruments.

@@ -9,27 +9,32 @@ This document groups the market-regime context layer used by `trading-data`.
 - options-context enrichment inputs
 
 ## Macro/economic storage rule
-Use canonical permanent files under `trading-storage/1_market_regime/1_permanent/`.
+Use canonical regime data files under `trading-storage/1_market_regime/1_data/`.
 
 Examples:
-- `1_macro/fred/<series>.jsonl`
-- `1_macro/bls/<series>.jsonl`
-- `1_macro/bea/<series>.jsonl`
-- `1_macro/census/<dataset>.jsonl`
-- `1_macro/treasury/<dataset>.jsonl`
-- `7_events_and_calendars/*.jsonl`
+- `macro/fred/<series>.jsonl`
+- `macro/bls/<series>.jsonl`
+- `macro/bea/<series>.jsonl`
+- `macro/census/<dataset>.jsonl`
+- `macro/treasury/<dataset>.jsonl`
+- `events_and_calendars/*.jsonl`
 
 ## ETF/proxy rule
 ETF and proxy instruments are retained primarily as market-regime/context instruments.
 
 Current interpretation:
-- broad-beta ETFs
+- broad market-state ETFs
 - rates/credit/fx/metals proxies
 - sector rotation ETFs
 - selected industry/thematic ETFs
 - crypto proxy ETFs
 
 These are bar/context-first instruments, not a separate orchestration layer.
+
+Current storage rule:
+- regime ETF/proxy data belongs under `trading-storage/1_market_regime/1_data/etf/<group_name>/<SYMBOL>/...`
+- `group_name` must come from `regime_universe_summary.csv`
+- old taxonomy folders are not the mainline contract
 
 ## ETF holdings / look-through rule
 The active mainline does **not** depend on constituent-level ETF look-through.

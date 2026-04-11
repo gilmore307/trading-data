@@ -72,19 +72,14 @@ Current compact-contract mainline:
 `news.jsonl` remains outside the compact row/meta split for now.
 
 ## Market-regime contract
-Canonical low-frequency and cross-symbol context artifacts live under `trading-storage/1_market_regime/1_permanent/`.
+Canonical low-frequency and cross-symbol context artifacts live under `trading-storage/1_market_regime/1_data/`.
 Temporary execution traces for that work should live under `trading-storage/1_market_regime/4_temporary/`.
 
 ### Current families
-- `1_macro/`
-- `2_broad_beta/`
-- `2_etf/`
-- `3_rates_credit_fx_metals/`
-- `4_sector_rotation/`
-- `5_volatility_and_commodity/`
-- `6_crypto_proxy/`
-- `7_events_and_calendars/`
-- `8_signals/`
+- `macro/`
+- `events_and_calendars/`
+- `etf/<group_name>/...`
+- signal/readiness evidence under `3_credentials/`, structurally aligned with the relevant `1_data/` paths
 
 ### Regime ETF/proxy bars contract
 Mainline Alpaca regime ETF/proxy retention is now **bars-first**.

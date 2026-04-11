@@ -69,4 +69,4 @@ flowchart LR
 ## Next work
 See `TODO.md`.
 
-Current next-mile work is now mostly about holdings-source hardening and a few remaining path/edge-case cleanups rather than contract ambiguity.
+Current next-mile work is now mostly broader operational validation and a few remaining path/edge-case cleanups rather than contract ambiguity.

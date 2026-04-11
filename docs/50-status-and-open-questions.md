@@ -11,11 +11,11 @@ This document captures current implementation status and remaining open decision
 - first maintained and merged official calendar artifacts
 - storage-path migration into `trading-storage`
 - compaction/normalize tooling repathed to storage-aware roots
+- sector-observation ETF holdings fetch/build path validated across the currently supported issuer families when run under the repo `.venv`
 
 ## Still incomplete / not fully hardened
 - broader operational validation across all context families
 - cleaner dataset-refresh evidence contract for permanent macro/context refresh
-- sector-observation ETF holdings acquisition is now starting as a first issuer-site-based path, but it is not fully hardened yet across all issuers and edge cases
 
 ## Open questions
 - how far should official release calendars be normalized into local maintained artifacts versus source-backed on-demand fetches?

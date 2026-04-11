@@ -15,14 +15,15 @@ This document captures current implementation status and remaining open decision
 ## Still incomplete / not fully hardened
 - broader operational validation across all context families
 - cleaner dataset-refresh evidence contract for permanent macro/context refresh
-- end-to-end validation against a clean storage skeleton
-- some remaining open design choices around news/options compactness and evidence contracts
 - sector-observation ETF holdings acquisition is now starting as a first issuer-site-based path, but it is not fully hardened yet across all issuers and edge cases
 
 ## Open questions
-- should options snapshots remain one canonical row per `(option_symbol, ts)` or evolve into a more explicit event/version model?
-- if news grows materially, should repeated source metadata move into compact month metadata?
 - how far should official release calendars be normalized into local maintained artifacts versus source-backed on-demand fetches?
+
+## Recently pinned answers
+- options snapshots remain on the current canonical retained contract: one row per `(option_symbol, ts)` within a month partition rather than a separate event/version-log model for now
+- `news.source_name` stays row-level for now; only revisit compact month-metadata lifting if real storage pressure appears
+- clean-storage validation has now been exercised across the active Alpaca market-tape and regime symbol entrypoints, with the remaining practical issue being path/edge-case cleanup rather than topology ambiguity
 
 ## Durable recent decisions
 - durable outputs belong in `trading-storage`

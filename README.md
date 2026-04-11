@@ -60,13 +60,13 @@ flowchart LR
 
 ## Read in order
 1. `docs/README.md`
-2. `docs/01-overview.md`
-3. `docs/02-storage-contracts-and-partitions.md`
-4. `docs/03-context-layer-and-holdings.md`
-5. `docs/04-refresh-entrypoints-and-signals.md`
-6. `docs/05-current-status-and-open-decisions.md`
-7. `docs/06-macro-data.md`
-8. `docs/07-market-regime-benchmarks.md`
+2. `docs/10-role-and-boundaries.md`
+3. `docs/20-artifact-contracts.md`
+4. `docs/30-entrypoints-and-signals.md`
+5. `docs/40-market-regime-context.md`
+6. `docs/50-status-and-open-questions.md`
 
 ## Next work
 See `TODO.md`.
+
+Current next-mile work is now mostly about holdings-source hardening and a few remaining path/edge-case cleanups rather than contract ambiguity.

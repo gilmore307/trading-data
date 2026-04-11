@@ -115,7 +115,7 @@ def normalize_news(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def default_output_dir(*, symbol: str) -> Path:
-    return market_tape_news_root(symbol=symbol) / symbol
+    return market_tape_news_root(symbol=symbol) / symbol.replace('/', '-')
 
 
 def _candidate_params(symbol: str, start: str, end: str, limit: int) -> list[dict[str, Any]]:

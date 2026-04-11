@@ -1,48 +1,6 @@
 {
-  "version": 3,
-  "last_updated": "2026-04-08",
-  "purpose": "ETF proxy universe used for market-regime and sector/thematic divergence analysis.",
-  "notes": [
-    "This file represents the retained ETF proxy set rather than a constituent-look-through target list.",
-    "Broad-market ETFs and macro/commodity/crypto proxy ETFs are retained for bar/context use.",
-    "Sector and independent industry/thematic ETFs are retained as regime/divergence proxies.",
-    "Constituent-look-through workflows were removed from the active design to avoid implying constituent-level dependency in the mainline workflow."
-  ],
-  "bar_only_proxies": {
-    "core_broad_market": [
-      "SPY",
-      "QQQ",
-      "IWM",
-      "DIA"
-    ],
-    "macro_commodity_crypto_proxy": [
-      "GLD",
-      "SLV",
-      "USO",
-      "DBC",
-      "IBIT",
-      "ETHA"
-    ],
-    "sector_and_industry_thematic_proxies": [
-      "XLK",
-      "XLF",
-      "XLE",
-      "XLV",
-      "XLI",
-      "XLY",
-      "XLP",
-      "XLB",
-      "XLU",
-      "XLRE",
-      "XLC",
-      "SMH",
-      "SOXX",
-      "KRE",
-      "ITA",
-      "IYT",
-      "LIT",
-      "GDX",
-      "BOTZ"
-    ]
-  }
+  "deprecated": true,
+  "canonical_source": "projects/trading-storage/1_market_regime/0_management/market_regime_summary/regime_universe_summary.csv",
+  "reason": "ETF proxy selection and grouping now belong to the canonical regime summary table.",
+  "replacement_rule": "Do not use this file as an active proxy-universe definition. Read summary rows directly from the storage summary CSV."
 }

@@ -1,38 +1,6 @@
 {
-  "version": 4,
-  "last_updated": "2026-04-10",
-  "notes": [
-    "This config now follows the canonical regime summary semantics instead of acting as a separate competing universe definition.",
-    "ETF/proxy routing should follow group_name from regime_universe_summary.csv.",
-    "Macro series and calendar entries remain part of the regime universe even though they do not use ETF bar-granularity semantics."
-  ],
-  "primary_bar_granularity": {
-    "1m": ["DBC", "DIA", "GLD", "IWM", "QQQ", "RSP", "SLV", "SPY", "USO", "UUP", "VIXY"],
-    "30m": ["BITW", "ETHA", "FSOL", "HYG", "IBIT", "IEF", "LQD", "SHY", "TLT", "XLB", "XLC", "XLE", "XLF", "XLI", "XLK", "XLP", "XLRE", "XLU", "XLV", "XLY"],
-    "1d": ["AIQ", "ARKF", "ARKG", "ARKW", "ARKX", "BKCH", "BOTZ", "BUG", "CLOU", "DRIV", "DTCR", "EBIZ", "FINX", "GDX", "HERO", "IHE", "IHF", "IHI", "ITA", "IYT", "KRE", "LIT", "NLR", "REMX", "SMH", "SOCL", "XES", "XOP"]
-  },
-  "macro_series_original_frequency": {
-    "rates_and_curve": ["DFF", "DGS3MO", "DGS2", "DGS10", "DGS30", "T10Y2Y", "T10Y3M"],
-    "inflation": ["CPIAUCSL", "CPILFESL"],
-    "labor_and_growth": ["UNRATE", "PAYEMS", "ICSA", "GDPC1"],
-    "official_sources": ["census.housing_starts", "census.retail_sales", "treasury.debt_to_penny", "federal_reserve.fomc_calendar", "macro_release.official_us_core"]
-  },
-  "market_state_layers": {
-    "us_equity_core": ["SPY", "QQQ", "DIA", "IWM", "RSP"],
-    "rates_curve": ["SHY", "IEF", "TLT"],
-    "commodities": ["GLD", "SLV", "USO", "DBC"],
-    "crypto_beta": ["IBIT", "ETHA", "FSOL", "BITW"],
-    "credit": ["HYG", "LQD"],
-    "usd_volatility": ["UUP", "VIXY"],
-    "sp500_sector": ["XLB", "XLC", "XLE", "XLF", "XLI", "XLK", "XLP", "XLRE", "XLU", "XLV", "XLY"],
-    "industry_chain": ["GDX", "IHE", "IHF", "IHI", "ITA", "IYT", "KRE", "NLR", "REMX", "SMH", "XES", "XOP"],
-    "thematic_growth": ["AIQ", "BKCH", "BOTZ", "BUG", "CLOU", "DRIV", "DTCR", "EBIZ", "FINX", "HERO", "LIT", "SOCL"],
-    "ark_thematic": ["ARKF", "ARKG", "ARKW", "ARKX"],
-    "rates_and_curve": ["DFF", "DGS3MO", "DGS2", "DGS10", "DGS30", "T10Y2Y", "T10Y3M"],
-    "inflation": ["CPIAUCSL", "CPILFESL"],
-    "labor_and_growth": ["UNRATE", "PAYEMS", "ICSA", "GDPC1"],
-    "census": ["census.housing_starts", "census.retail_sales"],
-    "treasury": ["treasury.debt_to_penny"],
-    "official_calendar": ["federal_reserve.fomc_calendar", "macro_release.official_us_core"]
-  }
+  "deprecated": true,
+  "canonical_source": "projects/trading-storage/1_market_regime/0_management/market_regime_summary/regime_universe_summary.csv",
+  "reason": "Regime universe definitions must come from the storage summary table, not from a parallel JSON config.",
+  "replacement_rule": "Read regime universe rows directly from the summary CSV and do not maintain a separate competing universe definition here."
 }

@@ -32,7 +32,7 @@ Current interpretation:
 These are bar/context-first instruments, not a separate orchestration layer.
 
 Current storage rule:
-- regime ETF/proxy data belongs under `trading-storage/1_market_regime/1_data/etf/<group_name>/<SYMBOL>/...`
+- regime ETF/proxy data belongs under `trading-storage/1_market_regime/1_data/<group_name>/<SYMBOL>/...`
 - `group_name` must come from `market_regime_summary.csv`
 - old taxonomy folders are not the mainline contract
 

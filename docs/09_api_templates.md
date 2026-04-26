@@ -85,5 +85,8 @@ Initial bundle planning names remain:
 - `macro_release_<release_key>`
 - `calendar_discovery`
 - `etf_holdings`
+- `sec_company_financials`
 
 Macro bundles must be split by release event or release family, not grouped merely because they are macro data.
+
+`sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `sec_company_financials_task_...` and `sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.

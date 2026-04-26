@@ -79,6 +79,7 @@ Current registered provider config and source-of-truth surfaces:
 | BEA | `https://apps.bea.gov/API/docs/index.htm` | Economic accounts and macroeconomic data acquisition. | `BEA_SECRET_ALIAS` | source alias `bea`; JSON path `/root/secrets/bea.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bea.json` and must not be copied into this repository. |
 | BLS | `https://www.bls.gov/developers/api_signature_v2.htm` | Labor and economic data acquisition. | `BLS_SECRET_ALIAS` | source alias `bls`; JSON path `/root/secrets/bls.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bls.json` and must not be copied into this repository. |
 | U.S. Treasury Fiscal Data | `https://fiscaldata.treasury.gov/api-documentation/` | Federal finance datasets including debt, revenue, spending, interest rates, and savings bonds. | None; provider term `US_TREASURY_FISCAL_DATA` is registered. | No secret alias currently; official docs describe the API as open and not requiring a user account or token. | Connector design must still document dataset coverage, pagination, rate/usage behavior, timestamp semantics, and fixture policy. |
+| SEC EDGAR | `https://www.sec.gov/search-filings/edgar-application-programming-interfaces` | Public company submissions, XBRL facts, company financial reporting data, and filing metadata. | None; provider term `SEC_EDGAR` and bundle term `SEC_COMPANY_FINANCIALS` are registered. | No credential required; SEC automated access still requires fair-access behavior including an identifying User-Agent. | Preferred bundle key: `sec_company_financials`. Use official SEC endpoints such as company facts and submissions, preserve source filing dates/accession metadata, use America/New_York for research timestamps, and persist only final cleaned outputs. |
 | FOMC Calendar | `https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm` | FOMC meeting calendar and related monetary policy event information. | None; source term `FOMC_CALENDAR` is registered. | No credential required. | Official Federal Reserve page is the source of truth. Connector work must preserve source URL and retrieval timestamp. |
 | Official macro release calendars | Web search to current official agency pages. | Release dates/times for macroeconomic publications relevant to market context. | None; source term `OFFICIAL_MACRO_RELEASE_CALENDAR` is registered. | No general credential rule; use official agency sources. | Use web search for discovery, then confirm official government/issuing-agency domains. Third-party calendars are secondary only unless explicitly approved. |
 | ETF issuer holdings | Issuer websites or issuer-published holdings files. | ETF constituent stocks and portfolio weights/proportions. | None; source term `ETF_ISSUER_HOLDINGS` is registered. | Usually no credential; issuer-specific access rules remain open. | Issuer website is the source of truth. Preserve issuer URL, as-of date, retrieval timestamp, holdings file format, and any cash/derivative rows. |
@@ -99,8 +100,27 @@ Source connector scripts should be split by historical data type and usage bundl
 - Macro releases: split into release-event bundles by publication time/cadence; group only records released together or intentionally consumed as one release package.
 - Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
+- SEC company financials: one official SEC EDGAR workflow for public-company financial report facts, filings/submissions metadata, and future normalized statement outputs.
 
 These are historical acquisition boundaries. Realtime streaming and execution-time feeds remain out of scope for `trading-data`. Each bundle should start as one `pipeline.py` file with `fetch`, `clean`, `save`, and `write_receipt` functions; split files only when complexity justifies it. Bundle-specific API details belong in the bundle README.
+
+## SEC Company Financials Bundle Rule
+
+The SEC company financials bundle key is `sec_company_financials`.
+
+This bundle should fetch public company financial report data from official SEC EDGAR APIs, starting with company facts and submissions/filing metadata. It should not use third-party SEC mirror APIs as the source of truth unless separately reviewed.
+
+Bundle design must document:
+
+- SEC endpoint URL patterns and CIK/ticker mapping behavior;
+- required identifying User-Agent and SEC fair-access/rate-limit behavior;
+- requested company identifiers, filing form filters such as 10-K/10-Q, fiscal period/year filters, taxonomy/tag selection, and revision/amendment handling;
+- source filing dates, accession numbers, report periods, fiscal year/period fields, and retrieval timestamps;
+- timestamp handling in America/New_York for stock-research workflow metadata;
+- stable random ID prefixes: `sec_company_financials_task_...` and `sec_company_financials_run_...`;
+- segment fetch-clean-save behavior so large company/history ranges can resume without saving bulky raw intermediates;
+- final cleaned development outputs only, with durable SQL mapping deferred to storage contracts;
+- development-only tiny sanitized SEC response fixtures, removed or replaced with minimal synthetic contract fixtures before production hardening.
 
 
 ## Macro Release Bundle Rule

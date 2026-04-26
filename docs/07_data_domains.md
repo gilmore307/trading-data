@@ -40,6 +40,7 @@ Examples may include, once providers are selected:
 - trades, quotes, and liquidity features;
 - corporate actions or symbol metadata;
 - fundamentals or events when accepted as provider inputs;
+- SEC EDGAR company financial report facts, filings/submissions metadata, and normalized statement inputs;
 - ETF issuer holdings constituents and weights when the instrument is an ETF;
 - symbol-specific calendar and session context.
 

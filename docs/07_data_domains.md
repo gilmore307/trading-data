@@ -60,6 +60,8 @@ Examples may include, once providers are selected:
 - implied volatility and Greeks when provided or accepted for calculation;
 - expiration, strike, moneyness, and liquidity views.
 
+ThetaData is the currently registered provider term for this domain, but connector and credential layout remain open.
+
 Boundary:
 
 - This repository may clean and structure options data for downstream use.

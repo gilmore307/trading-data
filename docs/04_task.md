@@ -11,6 +11,7 @@
 - Define data artifact reference and manifest requirements with `trading-main` and `trading-storage`.
 - Define source connector layout and provider inventory format.
 - Define any additional provider secret alias names through `trading-main` once providers are selected.
+- Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
 - Define raw vs normalized artifact policy.
 - Define fixture storage policy for provider responses.
 - Define first implementation skeleton after contracts are clear.
@@ -32,6 +33,7 @@
 
 ## Recently Accepted
 
+- Recorded ThetaData as registered provider terminology for option data, with connector/JAR/credential layout deferred.
 - Recorded Alpaca as first registered stock/ETF data provider config surface using source-level secret alias `alpaca`.
 - Recorded OKX as first registered crypto provider config surface using a `trading-main` source-level secret alias and non-secret metadata.
 - Added optional data-domain and data-source docs for the three data/model lanes and provider connection boundary.

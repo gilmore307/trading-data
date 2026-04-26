@@ -243,3 +243,25 @@ Alpaca directly supports the initial non-crypto instrument data needs. Keeping i
 - Alpaca JSON fields are `api_key`, `secret_key`, and `endpoint`.
 - Default tests must not require live Alpaca credentials or network calls.
 - Any Alpaca connector implementation must document rate limits, timestamp semantics, and fixture/live-test policy before acceptance.
+
+## D012 - ThetaData is registered for options data but connector layout is deferred
+
+Date: 2026-04-26
+
+### Context
+
+The user identified ThetaData as the intended options-data provider for chain timeline, quote, trade, OHLC, Greeks, and related options datasets. ThetaData requires credentials to be stored in a `creds.txt` file beside `ThetaTerminalv3.jar`.
+
+### Decision
+
+Record ThetaData as the current registered options-data provider term, but defer connector implementation, JAR placement, and `creds.txt` placement until the source connector boundary is designed.
+
+### Rationale
+
+ThetaData's terminal-based credential requirement is different from source-level JSON providers such as OKX and Alpaca. It needs a deliberate local runtime layout before implementation.
+
+### Consequences
+
+- `trading-data` may plan options data around ThetaData.
+- No ThetaData credentials or `creds.txt` are stored in this repository.
+- Implementation remains blocked on connector/JAR/credential layout policy.

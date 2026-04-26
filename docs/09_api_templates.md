@@ -19,11 +19,15 @@ Reusable template files live in `trading-main/templates/data_tasks/`. This file 
 
 These templates are drafts, not accepted schemas. Stable field names, statuses, task types, receipt shapes, and storage contracts still require `trading-main` registry/contract review.
 
+## Runtime JSON Minimalism
+
+`task_key.json` and `completion_receipt.json` should stay small. Add a field only when manager, runner, bundle code, or receipt readers actually consume it. Provider documentation URLs, explanatory notes, and source research details belong in registry rows, provider docs, or the bundle README, not runtime JSON.
+
 ## Bundle Design Order
 
 For each source bundle, design in this order:
 
-1. Identify the API/source endpoint, official docs, credentials/no-key rule, and source-of-truth page.
+1. Identify the API/source endpoint, official docs, credentials/no-key rule, and source-of-truth page in the bundle README/specs.
 2. Fill the fetch spec from the provider's concrete API requirements.
 3. Fill the clean spec from the raw response shape and target normalized outputs.
 4. Fill the save spec for development files under `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT`.

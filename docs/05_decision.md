@@ -466,3 +466,25 @@ One pipeline file keeps early development simple and makes manager invocation st
 - Future source folder shape is `src/trading_data/data_sources/<bundle>/README.md` plus `pipeline.py`.
 - `trading-main/templates/data_tasks/pipeline.py` is the default implementation template.
 - The fetch/clean/save/receipt spec templates remain design documents, not required separate Python files.
+
+## D022 - Runtime JSON templates stay minimal
+
+Date: 2026-04-26
+
+### Context
+
+The user pointed out that fields such as provider documentation URL do not serve the task-key or receipt runtime use case and should not be pushed into JSON templates.
+
+### Decision
+
+Keep task key and completion receipt JSON minimal. Runtime JSON should include only fields consumed by manager, runner, bundle execution, output location, or receipt readers. Provider documentation URLs and explanatory metadata belong in registry/provider docs or bundle README/specs.
+
+### Rationale
+
+This prevents over-designed templates and keeps manager-generated task keys easy to produce and validate.
+
+### Consequences
+
+- Bundle-specific details remain in README/spec templates.
+- Task key bundle-specific inputs should usually go under `params`.
+- New runtime JSON fields require a clear consumer.

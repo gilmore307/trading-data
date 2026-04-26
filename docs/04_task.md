@@ -42,6 +42,7 @@
 
 ## Recently Accepted
 
+- Recorded runtime JSON minimalism for task key and completion receipt templates.
 - Updated bundle implementation guidance to default to one `pipeline.py` file with four internal step functions and bundle-specific README details.
 - Added API template application guide for data source bundles and linked `trading-main/templates/data_tasks/`.
 - Changed development-stage task outputs from SQL writes to ignored local files under `data/storage/`.

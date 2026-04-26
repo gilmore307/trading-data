@@ -86,6 +86,7 @@ Initial bundle planning names remain:
 - `thetadata_option_snapshot_bundle`
 - `okx_bars`
 - `macro_release_<release_key>`
+- `treasury_fiscal_data`
 - `calendar_discovery`
 - `etf_holdings`
 - `sec_company_financials`

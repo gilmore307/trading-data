@@ -99,6 +99,7 @@ Source connector scripts should be split by historical data type and usage bundl
 - ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
 - OKX bars: one bars-only script/bundle.
 - Macro releases: split into release-event bundles by publication time/cadence; group only records released together or intentionally consumed as one release package.
+- Treasury fiscal data: one standalone no-key source bundle for the official U.S. Treasury Fiscal Data API and its dataset catalog.
 - Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
 - SEC company financials: one official SEC EDGAR workflow for public-company financial report facts, filings/submissions metadata, and future normalized statement outputs.
@@ -135,6 +136,14 @@ Accepted Alpaca bundle keys are:
 - `alpaca_news` for news.
 
 `alpaca_news` must document article timestamps in America/New_York for research workflow metadata, provider publication timestamp semantics, symbols/entities covered, source/publisher fields, pagination, and rate-limit behavior. Task/run IDs should use `alpaca_news_task_...` and `alpaca_news_run_...` prefixes. Development should persist only final cleaned news outputs; tiny sanitized provider response fixtures are allowed only during development and should be replaced before production hardening.
+
+## Treasury Fiscal Data Bundle Rule
+
+Treasury Fiscal Data is an official open/no-key source and should have its own bundle key: `treasury_fiscal_data`.
+
+This bundle covers federal finance datasets from `https://fiscaldata.treasury.gov/api-documentation/`, including debt, revenue, spending, interest rates, and savings-bond datasets when selected. It should document dataset identifiers, endpoint URL patterns, pagination, filters, sort behavior, update cadence, publication/as-of semantics, America/New_York research timestamps, and final cleaned outputs. Task/run IDs should use `treasury_fiscal_data_task_...` and `treasury_fiscal_data_run_...` prefixes.
+
+Do not fold Treasury Fiscal Data into a broad macro bundle merely because it is macro/context data. Use `macro_release_<release_key>` only when the unit of work is a specific scheduled release event or release family.
 
 ## Macro Release Bundle Rule
 

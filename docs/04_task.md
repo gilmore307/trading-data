@@ -32,7 +32,7 @@
 
 ## Recently Accepted
 
-- Recorded OKX as first registered crypto provider config surface using `trading-main` secret aliases and non-secret metadata.
+- Recorded OKX as first registered crypto provider config surface using a `trading-main` source-level secret alias and non-secret metadata.
 - Added optional data-domain and data-source docs for the three data/model lanes and provider connection boundary.
 - Created initial `trading-data` docs spine and repository boundary.
 - Added initial `.gitignore` for local environments, generated data, artifacts, logs, and secrets.

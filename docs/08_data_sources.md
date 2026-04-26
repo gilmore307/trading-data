@@ -68,7 +68,7 @@ provider-name/api-key
 provider-name/account-id
 ```
 
-OKX is the first accepted provider config surface for crypto data acquisition and later trading access. Additional provider aliases remain open until providers are selected.
+OKX is the first accepted provider config surface for crypto data acquisition and later trading access. Source credentials use one JSON secret file per provider/source. Additional provider aliases remain open until providers are selected.
 
 
 ## Registered Provider Configs
@@ -77,9 +77,9 @@ Current registered provider config surface:
 
 | Provider | Purpose | Registered config keys | Secret aliases / values | Notes |
 |---|---|---|---|---|
-| OKX | Crypto data acquisition and later trading access. | `OKX_API_KEY_SECRET_ALIAS`, `OKX_SECRET_KEY_SECRET_ALIAS`, `OKX_PASSPHRASE_SECRET_ALIAS`, `OKX_ALLOWED_IP_ADDRESS`, `OKX_API_KEY_REMARK_NAME` | `okx/api-key`, `okx/secret-key`, `okx/passphrase`; allowed IPv4 `66.206.20.138`; remark `OpenClaw` | Secret values live under `/root/secrets/okx/` and must not be copied into this repository. |
+| OKX | Crypto data acquisition and later trading access. | `OKX_SECRET_ALIAS`, `OKX_ALLOWED_IP_ADDRESS`, `OKX_API_KEY_REMARK_NAME` | source alias `okx`; JSON path `/root/secrets/okx.json`; JSON keys `api_key`, `secret_key`, `passphrase`; allowed IPv4 `66.206.20.138`; remark `OpenClaw` | Secret values live in `/root/secrets/okx.json` and must not be copied into this repository. |
 
-`trading-main` owns the registry rows for these aliases and non-secret metadata. `trading-data` may use the aliases once implementation has a connector boundary and default tests do not require live credentials.
+`trading-main` owns the registry rows for this source-level alias, registered JSON key names, and non-secret metadata. `trading-data` may use the alias once implementation has a connector boundary and default tests do not require live credentials.
 
 ## Provider Inventory Template
 
@@ -116,6 +116,6 @@ A provider/source connector is acceptable only when:
 - Which non-OKX provider(s), if any, support market board data?
 - Which provider(s) support non-crypto instrument data?
 - Whether OKX option data coverage is sufficient for the intended option data domain, or another options provider is needed.
-- Which additional secret aliases should be registered in `trading-main`?
+- Which additional source-level secret aliases should be registered in `trading-main`?
 - What live-call guardrail is acceptable for manual provider smoke tests?
 - Which provider fixtures are safe and useful to commit?

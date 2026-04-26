@@ -209,7 +209,7 @@ The user provided OKX API credentials and the OpenClaw server public IPv4 for OK
 
 ### Decision
 
-Use OKX as the first registered crypto provider config surface. Store secret values only under `/root/secrets/okx/`; use `trading-main` registry config rows for secret aliases and non-secret metadata.
+Use OKX as the first registered crypto provider config surface. Store secret values only in `/root/secrets/okx.json`; use `trading-main` registry config rows for the source-level alias and non-secret metadata.
 
 ### Rationale
 
@@ -217,7 +217,7 @@ Provider access needs to be explicit before source connectors depend on it, but 
 
 ### Consequences
 
-- Registered aliases are `okx/api-key`, `okx/secret-key`, and `okx/passphrase`.
+- Registered source-level alias is `okx`, pointing to `/root/secrets/okx.json`; JSON keys are `api_key`, `secret_key`, and `passphrase`.
 - Registered non-secret metadata includes allowed IPv4 `66.206.20.138` and API key remark `OpenClaw`.
 - Default tests must still avoid live OKX calls unless explicitly guarded.
 - Trading behavior remains outside `trading-data`; execution usage belongs to `trading-execution`.

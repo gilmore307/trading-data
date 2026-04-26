@@ -217,7 +217,7 @@ Provider access needs to be explicit before source connectors depend on it, but 
 
 ### Consequences
 
-- Registered source-level alias is `okx`, pointing to `/root/secrets/okx.json`; JSON keys are `api_key`, `secret_key`, and `passphrase`.
-- Registered non-secret metadata includes allowed IPv4 `66.206.20.138` and API key remark `OpenClaw`.
+- Registered source-level alias is `okx`, pointing to `/root/secrets/okx.json`; JSON keys are `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, and `api_key_remark_name`.
+- OKX credential JSON includes `allowed_ip_address` for `66.206.20.138` and `api_key_remark_name` for `OpenClaw`; these are part of the source-level OKX credential bundle.
 - Default tests must still avoid live OKX calls unless explicitly guarded.
 - Trading behavior remains outside `trading-data`; execution usage belongs to `trading-execution`.

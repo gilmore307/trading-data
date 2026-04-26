@@ -11,4 +11,4 @@
 - Current planning domains are market board data / 盘面数据, instrument data / 标的数据, and option data / 期权数据; they correspond to later model lanes but are not model logic.
 - Data-source connectors are the first implementation layer; provider tokens/API keys live under `/root/secrets/` and are referenced by aliases, not stored in this repository.
 - `trading-data` input is a task instruction from `trading-manager`; output is cleaned data artifacts plus manifests/ready signals after contracts are accepted.
-- OKX is the first registered crypto provider config surface. Use `trading-main` config alias `okx` / `OKX_SECRET_ALIAS`, backed by `/root/secrets/okx.json` with fields `api_key`, `secret_key`, and `passphrase`; do not copy secret values into this repo.
+- OKX is the first registered crypto provider config surface. Use `trading-main` config alias `okx` / `OKX_SECRET_ALIAS`, backed by `/root/secrets/okx.json` with fields `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, and `api_key_remark_name`; do not copy secret values into this repo.

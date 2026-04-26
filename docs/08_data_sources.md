@@ -77,7 +77,7 @@ Current registered provider config surface:
 
 | Provider | Purpose | Registered config keys | Secret aliases / values | Notes |
 |---|---|---|---|---|
-| OKX | Crypto data acquisition and later trading access. | `OKX_SECRET_ALIAS`, `OKX_ALLOWED_IP_ADDRESS`, `OKX_API_KEY_REMARK_NAME` | source alias `okx`; JSON path `/root/secrets/okx.json`; JSON keys `api_key`, `secret_key`, `passphrase`; allowed IPv4 `66.206.20.138`; remark `OpenClaw` | Secret values live in `/root/secrets/okx.json` and must not be copied into this repository. |
+| OKX | Crypto data acquisition and later trading access. | `OKX_SECRET_ALIAS` | source alias `okx`; JSON path `/root/secrets/okx.json`; JSON keys `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, `api_key_remark_name` | Secret values and credential metadata live in `/root/secrets/okx.json` and must not be copied into this repository. |
 
 `trading-main` owns the registry rows for this source-level alias, registered JSON key names, and non-secret metadata. `trading-data` may use the alias once implementation has a connector boundary and default tests do not require live credentials.
 

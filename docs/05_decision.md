@@ -364,7 +364,7 @@ The user clarified that current data acquisition work is historical data only. R
 
 ### Decision
 
-`trading-data` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the target storage SQL destination. `trading-data` runs the specified script, writes cleaned data to the specified storage target, and writes a task completion receipt through `trading-storage`.
+`trading-data` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the output destination. During development, `trading-data` writes cleaned data and a task completion receipt under `data/storage/`; durable storage SQL destinations and storage-resident receipts wait for accepted `trading-storage` contracts.
 
 ### Rationale
 
@@ -374,7 +374,7 @@ This keeps orchestration in `trading-manager`, historical data acquisition in `t
 
 - Realtime feeds are out of scope for `trading-data`.
 - Script boundaries are organized by data type / usage bundle.
-- The exact task key schema, SQL table contract, and completion receipt schema remain pending cross-repository contract work.
+- The exact task key schema, development output layout, SQL table contract, and durable completion receipt schema remain pending cross-repository contract work.
 - Default tests must use fixtures/mocks and must not require live provider calls.
 
 ## D018 - Macro release acquisition is split by release event
@@ -399,3 +399,26 @@ Release-time alignment matters for historical market context and avoids accident
 - Connector work must preserve release timestamp/window, covered period, revision/vintage evidence, and source URL.
 - Macro datasets may be grouped only when they are published together or intentionally consumed together.
 - A macro release event inventory remains open work before implementation.
+
+## D019 - Development data outputs use local data/storage instead of SQL
+
+Date: 2026-04-26
+
+### Context
+
+The previous workflow described writing cleaned historical data rows to storage SQL targets once contracts are accepted. The user clarified that during development, data should not be written into SQL because that would dirty the database and make cleanup harder.
+
+### Decision
+
+During development, `trading-data` task outputs and development completion receipts should be written as ignored local files under `data/storage/`. SQL writes are deferred until a durable `trading-storage` contract is accepted or an explicitly guarded integration path is approved.
+
+### Rationale
+
+Local files are easier to inspect, delete, and regenerate while schemas, task keys, and provider connectors are still changing. This avoids polluting durable databases during early development.
+
+### Consequences
+
+- Registered config `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT` points to `data/storage`.
+- `.gitignore` keeps generated contents under `data/storage/` out of Git.
+- Implementation should group outputs by task/run under the development storage root.
+- Future SQL table/partition contracts remain `trading-storage` work.

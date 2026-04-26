@@ -14,10 +14,12 @@ This repository exists to make data production explicit, testable, and reusable 
 - Connect to approved market data, macro data, calendar, options, and related data sources once providers are chosen.
 - Normalize provider responses into documented data shapes for market board data, instrument data, and option data.
 - Validate data completeness, schema expectations, timestamps, market calendars, and known provider quirks.
-- Execute `trading-manager` task key files for historical data acquisition and write cleaned outputs to specified storage SQL targets once contracts are accepted.
+- Execute `trading-manager` task key files for historical data acquisition.
+- During development, write cleaned outputs and task receipts to ignored local files under `data/storage/` instead of SQL.
+- Move durable outputs to specified storage SQL/artifact targets only after `trading-storage` contracts are accepted.
 - Produce data artifacts for downstream repositories.
 - Produce run manifests and ready signals using `trading-main` contracts once concrete schemas are accepted.
-- Coordinate with `trading-storage` for durable output placement and retention rules.
+- Coordinate with `trading-storage` for future durable output placement, SQL contracts, receipt storage, and retention rules.
 - Expose component-local tests for data parsing, validation, and fixture-based provider behavior.
 - Track data-provider limitations, quotas, and quality caveats that affect this repository.
 - Build provider/source connector layer boundaries before domain pipelines depend on live APIs.
@@ -43,9 +45,9 @@ The repository should prefer explicit provider boundaries, deterministic normali
 
 ## Boundary Rules
 
-- `trading-data` owns historical data acquisition and data-output production; it does not own realtime execution feeds or downstream interpretation.
+- `trading-data` owns historical data acquisition and data-output production; in development those outputs live under ignored local `data/storage/`; it does not own realtime execution feeds or downstream interpretation.
 - Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-main`.
-- Durable storage layout and retention belong in `trading-storage`.
+- Durable storage layout, SQL table contracts, and retention belong in `trading-storage`; `data/storage/` is only a local development staging area.
 - Scheduling, retries, and lifecycle routing belong in `trading-manager`.
 - Generated data and provider responses are runtime artifacts, not source files.
 - Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.

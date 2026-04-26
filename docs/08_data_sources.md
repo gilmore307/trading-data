@@ -121,7 +121,7 @@ Each release-event bundle should document:
 - covered period;
 - revision/vintage behavior;
 - source URL;
-- target SQL table/partition;
+- development file destination and future target SQL table/partition;
 - whether the values are used together as one release package.
 
 Do not group macro data merely because it is macro data. Group only by shared publication event, shared release cadence, and downstream usage together.

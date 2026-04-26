@@ -2,7 +2,7 @@
 
 `trading-data` is the data upstream repository for the trading system.
 
-It owns historical market and related data ingestion, normalization, validation, and data-output production for downstream trading repositories. It executes self-contained task key files from `trading-manager`, writes cleaned outputs to storage SQL targets once contracts are accepted, and produces completion evidence through shared contracts defined in `trading-main` and persistent layout rules owned by `trading-storage`.
+It owns historical market and related data ingestion, normalization, validation, and data-output production for downstream trading repositories. It executes self-contained task key files from `trading-manager`; during development it writes cleaned outputs and receipts under ignored local files in `data/storage/`, and later it will move to durable storage targets once `trading-storage` contracts are accepted.
 
 It does not own shared storage policy, strategy logic, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
 
@@ -10,6 +10,7 @@ It does not own shared storage policy, strategy logic, model research, execution
 
 ```text
 docs/        Required docs spine plus component-specific guides for data domains and data sources.
+data/        Local runtime data area; only README files are tracked. `data/storage/` is the development output root.
 ```
 
 Source, tests, and package layout are intentionally not created yet. They should be added only after the data contracts, provider choices, and storage handoff expectations are explicit.
@@ -33,7 +34,9 @@ docs/
 
 Input: self-contained historical data task key files from `trading-manager` once the task-key contract is accepted.
 
-Output: cleaned storage SQL outputs plus task completion receipts, with manifests and ready signals once cross-repository contracts are accepted.
+Development output: cleaned local files and task completion receipts under `data/storage/` (ignored by Git).
+
+Future durable output: storage-backed SQL/artifact outputs plus manifests and ready signals once cross-repository contracts are accepted.
 
 `trading-data` fetches and cleans historical data; realtime feeds belong to `trading-execution`, and generated datasets must not be stored in Git.
 

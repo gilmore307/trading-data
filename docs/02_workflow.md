@@ -11,7 +11,7 @@ It describes how approved data requests become validated data artifacts, manifes
 `trading-data` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
 
 ```text
-manager task key file -> validate key -> classify data domain -> select acquisition script -> fetch historical data -> normalize -> validate -> write to specified storage SQL target -> write task completion receipt in storage
+manager task key file -> validate key -> classify data domain -> select acquisition script -> fetch historical data -> normalize -> validate -> write development files under data/storage -> write development task receipt under data/storage
 ```
 
 Where:
@@ -23,10 +23,10 @@ Where:
 - **fetch historical data** calls external providers, official web sources, issuer websites, or approved local sources through documented source connectors;
 - **normalize** converts provider-specific responses into accepted table-oriented data shapes;
 - **validate** checks schema, timestamps, completeness, calendars, duplicates, and provider caveats;
-- **write to specified storage SQL target** stores cleaned outputs at the SQL destination named by the task key, subject to `trading-storage` contracts;
-- **write task completion receipt** records task status and evidence in storage so `trading-manager` can continue lifecycle routing.
+- **write development files under `data/storage/`** stores cleaned outputs in the registered development local storage root instead of writing to SQL;
+- **write development task receipt under `data/storage/`** records task status and evidence as a local file so runs remain inspectable and disposable during development.
 
-The exact task key file schema, SQL table contract, and completion receipt schema remain cross-repository contract work with `trading-main` and `trading-storage`.
+The development storage root is registered as `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT` with relative path `data/storage`. The exact task key file schema, future SQL table contract, and durable completion receipt schema remain cross-repository contract work with `trading-main` and `trading-storage`.
 
 ## Collaboration Flow
 
@@ -38,8 +38,8 @@ flowchart TD
   D --> E[Fetch Historical Source Data]
   E --> F[Normalize Rows]
   F --> G[Validate Dataset]
-  G --> H[Write Cleaned Rows to Storage SQL Target]
-  H --> I[Write Task Completion Receipt in trading-storage]
+  G --> H[Write Cleaned Development Files under data/storage]
+  H --> I[Write Development Task Receipt under data/storage]
   I --> J[trading-manager Lifecycle]
   I --> K[trading-model / trading-strategy / trading-dashboard via accepted contracts]
 ```
@@ -55,7 +55,7 @@ flowchart TD
 - Provider responses should be normalized before downstream exposure.
 - Validation evidence belongs in completion receipts/manifests, not only logs.
 - Downstream repositories should consume storage-backed outputs and receipts/manifests, not provider internals.
-- Storage SQL targets must follow `trading-storage` contracts once those contracts exist.
+- Development outputs must stay under ignored `data/storage/`; SQL targets must not be used until `trading-storage` contracts are accepted or a guarded integration test explicitly opts in.
 - Shared fields, statuses, and type names must come from `trading-main/registry/`.
 - Live provider calls should be minimized in tests; prefer fixtures, recorded examples, or provider adapters with controlled mocks.
 
@@ -73,12 +73,25 @@ The manager-issued task key file should eventually include at least:
 - source credential aliases or confirmation that no credential is required;
 - provider-specific parameters;
 - idempotency/replay key;
-- storage SQL destination, partition expectations, and overwrite/append policy;
+- development output destination under `data/storage/`, plus future storage SQL destination/partition expectations when contracts exist;
 - validation expectations;
-- completion receipt destination;
+- development completion receipt destination under `data/storage/`, plus future durable receipt destination when contracts exist;
 - priority, deadline, cancellation, and retry expectations when manager scheduling supports them.
 
 The task key file is a contract surface, not an implementation shortcut. Its exact schema must be accepted through `trading-main` before code treats it as stable.
+
+
+## Development Storage Rule
+
+During development, `trading-data` must not write task outputs into SQL by default. Use the registered development local storage root instead:
+
+```text
+data/storage/
+```
+
+This directory is ignored by Git except for README files. It is intentionally easy to inspect, clear, and recreate. Development outputs, temporary raw responses, cleaned files, manifests, and task receipts should be grouped by task/run inside this root when implementation begins.
+
+SQL writes are future durable-storage behavior and should require an accepted `trading-storage` contract or an explicitly guarded integration/smoke path.
 
 ## Historical Acquisition Script Bundles
 
@@ -101,13 +114,13 @@ These names are planning names until accepted through registry/contract review.
 
 Macro data should not use one catch-all bundle across FRED, Census, BEA, BLS, Treasury, and official agency pages. Macro releases should be split by release event and publication time because they are usually consumed independently.
 
-A macro release bundle may group data only when the records are published together or intentionally consumed as one release package. The task key should identify the release key, source agency, expected publication timestamp or release window, covered period, revision/vintage expectations, and target SQL table/partition.
+A macro release bundle may group data only when the records are published together or intentionally consumed as one release package. The task key should identify the release key, source agency, expected publication timestamp or release window, covered period, revision/vintage expectations, development file destination, and future target SQL table/partition when durable contracts exist.
 
 Examples of acceptable bundle granularity include one bundle per official release family or release event, such as an employment release, inflation release, GDP/account release, Treasury dataset publication, or other agency-specific release package. Exact release keys remain pending provider/source inventory work.
 
 ## Completion Receipt Requirements
 
-After each task attempt, `trading-data` should write a completion receipt through `trading-storage`. The receipt should eventually record:
+After each task attempt during development, `trading-data` should write a local completion receipt under `data/storage/`. Once durable contracts are accepted, this receipt can move through `trading-storage`. The receipt should eventually record:
 
 - task key reference and idempotency/replay key;
 - selected script/bundle and code version;
@@ -115,7 +128,7 @@ After each task attempt, `trading-data` should write a completion receipt throug
 - status and failure reason when applicable;
 - provider/source URLs and credential alias evidence without secret values;
 - request parameters actually used;
-- output SQL table/partition references;
+- development file references and future output SQL table/partition references;
 - row counts and validation summary;
 - retry/rate-limit evidence;
 - references to raw/normalized artifacts or manifests if those contracts are accepted.
@@ -167,4 +180,4 @@ The following workflow details must be defined before implementation depends on 
 - fixture storage policy;
 - retry/backoff defaults;
 - live-provider test policy;
-- storage SQL table/partition contract and shared storage root/path contract.
+- development-to-durable promotion rule, storage SQL table/partition contract, and shared storage root/path contract.

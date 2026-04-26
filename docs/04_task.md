@@ -10,7 +10,8 @@
 - Define initial manager-issued data task key file schema with `trading-main`.
 - Define data artifact reference and manifest requirements with `trading-main` and `trading-storage`.
 - Define storage-resident data task completion receipt schema with `trading-main` and `trading-storage`.
-- Define storage SQL table/partition contract for data-task outputs.
+- Define development local output layout under `data/storage/`.
+- Define storage SQL table/partition contract for data-task outputs before durable/production mode.
 - Define source connector layout and provider inventory format.
 - Finalize historical acquisition script bundle names and invocation contract.
 - Define macro release event inventory, release-key naming, and per-release bundle boundaries.
@@ -29,7 +30,8 @@
 - Exact manager task key file/request schema.
 - Exact data artifact schema and reference format.
 - Exact completion receipt schema and storage location.
-- Exact storage SQL table/partition destination contract.
+- Exact development output subdirectory/file layout under `data/storage/`.
+- Exact storage SQL table/partition destination contract for durable/production mode.
 - Exact manifest and ready-signal schema.
 - Shared storage root and partition layout.
 - Timestamp/timezone normalization rules.
@@ -39,8 +41,9 @@
 
 ## Recently Accepted
 
+- Changed development-stage task outputs from SQL writes to ignored local files under `data/storage/`.
 - Re-scoped macro acquisition from one broad bundle into per-release-event bundles based on publication time/cadence.
-- Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, SQL output target written, storage-resident completion receipt produced.
+- Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, development output/receipt files are written under `data/storage/`, and durable SQL/storage receipts remain future contract work.
 - Recorded FOMC calendar, official macro release calendar discovery, and ETF issuer holdings source-of-truth rules.
 - Recorded U.S. Treasury Fiscal Data as an open/no-key provider term with documentation path.
 - Added provider documentation URLs to data-source planning docs, matching registry provider term paths.

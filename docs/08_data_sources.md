@@ -86,6 +86,22 @@ Current registered provider config and source-of-truth surfaces:
 `trading-main` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-data` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
 
 
+
+## Acquisition Script Boundary
+
+Source connector scripts should be split by historical data type and usage bundle so `trading-manager` can freely compose data tasks through task key files. Initial planning boundaries are:
+
+- Alpaca bars: one bars-only script/bundle.
+- Alpaca market events: one bundle for quotes, trades, and news because these are commonly consumed together; outputs remain separable.
+- ThetaData option 1-minute bundle: one bundle for `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, and `open_interest_1m`.
+- ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
+- OKX bars: one bars-only script/bundle.
+- Macro releases: grouped by release/publication set when data is released or consumed together.
+- Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
+- ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
+
+These are historical acquisition boundaries. Realtime streaming and execution-time feeds remain out of scope for `trading-data`.
+
 ## Web-Discovered And Issuer-Sourced Inputs
 
 Some accepted source surfaces are source-of-truth rules rather than credentialed APIs:

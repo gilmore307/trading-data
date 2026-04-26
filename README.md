@@ -2,7 +2,7 @@
 
 `trading-data` is the data upstream repository for the trading system.
 
-It owns market and related data ingestion, normalization, validation, and data-output production for downstream trading repositories. It produces data artifacts, manifests, and ready signals that are consumed through shared contracts defined in `trading-main` and persistent layout rules owned by `trading-storage`.
+It owns historical market and related data ingestion, normalization, validation, and data-output production for downstream trading repositories. It executes self-contained task key files from `trading-manager`, writes cleaned outputs to storage SQL targets once contracts are accepted, and produces completion evidence through shared contracts defined in `trading-main` and persistent layout rules owned by `trading-storage`.
 
 It does not own shared storage policy, strategy logic, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
 
@@ -31,11 +31,11 @@ docs/
 
 ## Input And Output
 
-Input: task instructions from `trading-manager`.
+Input: self-contained historical data task key files from `trading-manager` once the task-key contract is accepted.
 
-Output: cleaned data artifacts, with manifests and ready signals once cross-repository contracts are accepted.
+Output: cleaned storage SQL outputs plus task completion receipts, with manifests and ready signals once cross-repository contracts are accepted.
 
-`trading-data` fetches and cleans data; it does not store generated datasets in Git.
+`trading-data` fetches and cleans historical data; realtime feeds belong to `trading-execution`, and generated datasets must not be stored in Git.
 
 ## Data Domains
 

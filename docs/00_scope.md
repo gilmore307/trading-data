@@ -10,10 +10,11 @@ This repository exists to make data production explicit, testable, and reusable 
 
 ## In Scope
 
-- Define component-local data ingestion workflows.
+- Define component-local historical data ingestion workflows.
 - Connect to approved market data, macro data, calendar, options, and related data sources once providers are chosen.
 - Normalize provider responses into documented data shapes for market board data, instrument data, and option data.
 - Validate data completeness, schema expectations, timestamps, market calendars, and known provider quirks.
+- Execute `trading-manager` task key files for historical data acquisition and write cleaned outputs to specified storage SQL targets once contracts are accepted.
 - Produce data artifacts for downstream repositories.
 - Produce run manifests and ready signals using `trading-main` contracts once concrete schemas are accepted.
 - Coordinate with `trading-storage` for durable output placement and retention rules.
@@ -28,8 +29,9 @@ This repository exists to make data production explicit, testable, and reusable 
 - Strategy implementation or backtesting.
 - Model training, market-state discovery, or strategy-result analysis.
 - Live or paper trade execution.
+- Realtime market data feeds, streaming ingestion, or execution-time data handling unless explicitly re-scoped by a later cross-repository contract.
 - Dashboard frontend or backend implementation.
-- Promotion, scheduling, retry policy, or lifecycle orchestration owned by `trading-manager`.
+- Promotion, scheduling, retry policy, task-key creation, or lifecycle orchestration owned by `trading-manager`.
 - Storing generated data, raw provider dumps, logs, notebooks, credentials, or secrets in Git.
 - General-purpose data platform work unrelated to the trading system.
 
@@ -41,7 +43,7 @@ The repository should prefer explicit provider boundaries, deterministic normali
 
 ## Boundary Rules
 
-- `trading-data` owns data acquisition and data-output production; it does not own downstream interpretation.
+- `trading-data` owns historical data acquisition and data-output production; it does not own realtime execution feeds or downstream interpretation.
 - Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-main`.
 - Durable storage layout and retention belong in `trading-storage`.
 - Scheduling, retries, and lifecycle routing belong in `trading-manager`.

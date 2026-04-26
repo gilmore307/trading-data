@@ -353,3 +353,26 @@ Calendar and holdings data are easy to corrupt through secondary aggregators. Th
 - Third-party macro calendars and ETF aggregators are secondary references only unless explicitly approved.
 - Connectors must preserve source URL, retrieval timestamp, as-of/effective date, and file/page format.
 - Default tests must use fixtures or mocks rather than live web search or issuer website calls.
+
+## D017 - Data tasks are manager-driven historical acquisitions
+
+Date: 2026-04-26
+
+### Context
+
+The user clarified that current data acquisition work is historical data only. Realtime data belongs to trade execution later. Data acquisition should be initiated by `trading-manager` through a task key file containing all information needed for `trading-data` to complete the task.
+
+### Decision
+
+`trading-data` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the target storage SQL destination. `trading-data` runs the specified script, writes cleaned data to the specified storage target, and writes a task completion receipt through `trading-storage`.
+
+### Rationale
+
+This keeps orchestration in `trading-manager`, historical data acquisition in `trading-data`, durable storage in `trading-storage`, and realtime execution behavior out of the data repository.
+
+### Consequences
+
+- Realtime feeds are out of scope for `trading-data`.
+- Script boundaries are organized by data type / usage bundle.
+- The exact task key schema, SQL table contract, and completion receipt schema remain pending cross-repository contract work.
+- Default tests must use fixtures/mocks and must not require live provider calls.

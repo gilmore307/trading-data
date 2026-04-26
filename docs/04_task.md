@@ -7,9 +7,12 @@
 ## Queued Tasks
 
 - Define remaining data provider shortlist and selection criteria for non-OKX market board, instrument, and option data needs.
-- Define initial data request schema with `trading-main`.
+- Define initial manager-issued data task key file schema with `trading-main`.
 - Define data artifact reference and manifest requirements with `trading-main` and `trading-storage`.
+- Define storage-resident data task completion receipt schema with `trading-main` and `trading-storage`.
+- Define storage SQL table/partition contract for data-task outputs.
 - Define source connector layout and provider inventory format.
+- Finalize historical acquisition script bundle names and invocation contract.
 - Define any additional provider secret alias names through `trading-main` once providers are selected.
 - Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
 - Define raw vs normalized artifact policy.
@@ -22,8 +25,10 @@
 - Exact external data providers beyond OKX.
 - Secret-alias names for any provider credentials beyond registered OKX aliases.
 - Provider quota/rate-limit policy.
-- Exact data request schema.
+- Exact manager task key file/request schema.
 - Exact data artifact schema and reference format.
+- Exact completion receipt schema and storage location.
+- Exact storage SQL table/partition destination contract.
 - Exact manifest and ready-signal schema.
 - Shared storage root and partition layout.
 - Timestamp/timezone normalization rules.
@@ -33,6 +38,7 @@
 
 ## Recently Accepted
 
+- Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, SQL output target written, storage-resident completion receipt produced.
 - Recorded FOMC calendar, official macro release calendar discovery, and ETF issuer holdings source-of-truth rules.
 - Recorded U.S. Treasury Fiscal Data as an open/no-key provider term with documentation path.
 - Added provider documentation URLs to data-source planning docs, matching registry provider term paths.

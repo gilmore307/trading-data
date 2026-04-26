@@ -7,11 +7,11 @@
 Acceptance focuses on:
 
 - repository boundary clarity;
-- workflow clarity;
+- manager-driven historical workflow clarity;
 - provider/source boundary clarity;
 - data-domain boundary clarity;
 - contract compatibility with `trading-main`;
-- storage compatibility with `trading-storage`;
+- storage compatibility with `trading-storage`, including SQL output destinations and completion receipts once contracts are accepted;
 - absence of committed data, logs, notebooks, and secrets;
 - evidence-backed parsing, normalization, validation, and artifact writing once code exists.
 
@@ -32,13 +32,14 @@ Documentation changes are acceptable when they:
 
 Implementation changes are acceptable only when they:
 
-- keep source code component-local to data ingestion, normalization, validation, and artifact production;
+- keep source code component-local to historical data ingestion, normalization, validation, and artifact production;
 - avoid committing generated data, provider dumps, notebooks, logs, credentials, or secrets;
 - include tests for parsing and validation behavior;
 - avoid live provider calls in default tests unless explicitly documented and guarded;
 - respect provider rate limits and retry/backoff expectations;
-- produce or preserve manifest/ready-signal evidence once those contracts are accepted;
-- use `trading-storage` contracts for durable output placement once storage contracts exist;
+- execute only from a self-contained manager task key file once that contract is accepted;
+- produce or preserve completion receipt, manifest, and ready-signal evidence once those contracts are accepted;
+- use `trading-storage` contracts for durable SQL output placement and receipt storage once storage contracts exist;
 - route new shared names through `trading-main/registry/`;
 - document every provider/source connector before domain pipelines depend on it.
 
@@ -59,10 +60,11 @@ Provider integrations are acceptable when they document:
 Artifact-producing changes are acceptable when they:
 
 - write outputs outside Git-tracked source paths;
+- target storage SQL tables/partitions only through accepted `trading-storage` contracts;
 - produce deterministic or explainably variable outputs;
 - document schema and partition assumptions;
 - record validation evidence;
-- produce manifests and ready signals once contracts are accepted;
+- produce completion receipts, manifests, and ready signals once contracts are accepted;
 - do not bypass `trading-storage` layout rules.
 
 ## Verification Commands
@@ -106,6 +108,7 @@ A change must be rejected or returned if it:
 - stores secret values or provider keys;
 - makes live provider calls in default tests without guardrails;
 - ignores provider rate limits;
-- writes artifacts to undocumented paths;
+- writes artifacts or SQL rows to undocumented destinations;
 - claims acceptance without test or inspection evidence;
-- duplicates global contract definitions locally instead of referencing `trading-main`.
+- duplicates global contract definitions locally instead of referencing `trading-main`;
+- introduces realtime feed/execution behavior into `trading-data`.

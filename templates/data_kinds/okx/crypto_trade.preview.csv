@@ -1,0 +1,2 @@
+data_kind,source,symbol,timestamp_utc,timestamp_et,trade_id,side,price,size,notional
+crypto_trade,okx,BTC-USDT,2026-04-26T22:13:10.242000+00:00,2026-04-26T18:13:10.242000-04:00,997363272,buy,78535.1,0.0013739,107.89386989

@@ -78,6 +78,7 @@ Current registered provider config surface:
 | Census | `https://www.census.gov/data/developers/guidance/api-user-guide.html` | Demographic and economic data acquisition. | `CENSUS_SECRET_ALIAS` | source alias `census`; JSON path `/root/secrets/census.json`; JSON key `api_key` | Secret value lives in `/root/secrets/census.json` and must not be copied into this repository. |
 | BEA | `https://apps.bea.gov/API/docs/index.htm` | Economic accounts and macroeconomic data acquisition. | `BEA_SECRET_ALIAS` | source alias `bea`; JSON path `/root/secrets/bea.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bea.json` and must not be copied into this repository. |
 | BLS | `https://www.bls.gov/developers/api_signature_v2.htm` | Labor and economic data acquisition. | `BLS_SECRET_ALIAS` | source alias `bls`; JSON path `/root/secrets/bls.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bls.json` and must not be copied into this repository. |
+| U.S. Treasury Fiscal Data | `https://fiscaldata.treasury.gov/api-documentation/` | Federal finance datasets including debt, revenue, spending, interest rates, and savings bonds. | None; provider term `US_TREASURY_FISCAL_DATA` is registered. | No secret alias currently; official docs describe the API as open and not requiring a user account or token. | Connector design must still document dataset coverage, pagination, rate/usage behavior, timestamp semantics, and fixture policy. |
 
 `trading-main` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-data` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
 
@@ -117,5 +118,6 @@ A provider/source connector is acceptable only when:
 - Which non-Alpaca provider(s), if any, support non-crypto instrument data?
 - ThetaData connector/JAR/credential layout for the option data domain.
 - Which additional source-level secret aliases should be registered in `trading-main`?
+- U.S. Treasury Fiscal Data dataset and endpoint coverage for federal finance context.
 - What live-call guardrail is acceptable for manual provider smoke tests?
 - Which provider fixtures are safe and useful to commit?

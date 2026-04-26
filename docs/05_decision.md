@@ -309,3 +309,25 @@ This lets connector work dereference documentation through the registry without 
 - Data-source docs list provider documentation paths.
 - Credential lookup remains source-alias based.
 - Default tests must still avoid live provider calls unless explicitly guarded.
+
+## D015 - U.S. Treasury Fiscal Data is an open provider without a secret alias
+
+Date: 2026-04-26
+
+### Context
+
+The user identified U.S. Treasury Fiscal Data as a likely no-key API source for federal finance datasets. The official documentation describes the API as open and not requiring a user account or token.
+
+### Decision
+
+Treat U.S. Treasury Fiscal Data as a registered provider term with a documentation path, but do not register a source-secret alias yet.
+
+### Rationale
+
+No-key/open APIs should not get unnecessary secret rows. The documentation URL is still useful as a registry-backed source connector reference.
+
+### Consequences
+
+- Provider term is `US_TREASURY_FISCAL_DATA`.
+- No local `/root/secrets/treasury*.json` file is required.
+- Connector implementation must still document dataset coverage, pagination, rate/usage behavior, timestamp semantics, and fixture/live-call policy.

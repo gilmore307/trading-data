@@ -16,3 +16,4 @@
 - ThetaData is the registered options-data provider term for chain timeline, quote, trade, OHLC, Greeks, and related options datasets. Its connector/JAR/creds.txt layout is intentionally deferred; never commit `creds.txt` or credentials.
 - FRED, Census, BEA, and BLS are registered economic/macro provider config surfaces. Use `trading-main` aliases `fred`, `census`, `bea`, and `bls`, each backed by `/root/secrets/<source>.json` with field `api_key`; do not copy secret values into this repo.
 - Registered provider term `path` values hold public documentation URLs; `*_SECRET_ALIAS` config `path` values still point to local source-secret JSON files.
+- U.S. Treasury Fiscal Data is registered as provider term `US_TREASURY_FISCAL_DATA` with docs path `https://fiscaldata.treasury.gov/api-documentation/`; no secret alias is registered because the official docs describe the API as open/no-token.

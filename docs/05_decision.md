@@ -377,7 +377,7 @@ This keeps orchestration in `trading-manager`, historical data acquisition in `t
 - The exact task key schema, development output layout, SQL table contract, and durable completion receipt schema remain pending cross-repository contract work.
 - Default tests must use fixtures/mocks and must not require live provider calls.
 
-## D018 - Macro release acquisition is split by release event
+## D018 - Macro release acquisition was initially split by release event
 
 Date: 2026-04-26
 
@@ -387,7 +387,7 @@ The initial acquisition bundle plan included a broad macro release bundle across
 
 ### Decision
 
-Do not use one catch-all macro release bundle. Split macro acquisition into release-event or release-family bundles based on publication time, source agency, cadence, and intended joint usage. A planning name shape is `macro_release_<release_key>` until exact release keys are accepted.
+This decision was superseded later on 2026-04-26. The current accepted bundle is `macro_data`, with source/release/series selection moved into task params.
 
 ### Rationale
 
@@ -395,10 +395,9 @@ Release-time alignment matters for historical market context and avoids accident
 
 ### Consequences
 
-- Macro task keys must identify the release key or release family.
-- Connector work must preserve release timestamp/window, covered period, revision/vintage evidence, and source URL.
-- Macro datasets may be grouped only when they are published together or intentionally consumed together.
-- A macro release event inventory remains open work before implementation.
+- Superseded: do not create separate registry bundles for each macro release by default.
+- Connector work must still preserve release timestamp/window, covered period, revision/vintage evidence, and source URL in task params and receipts.
+- Macro source/release inventory remains useful as parameter vocabulary, not as bundle inventory.
 
 ## D019 - Development data outputs use local data/storage instead of SQL
 
@@ -511,3 +510,28 @@ This keeps the task definition stable and lets manager compare or inspect runs w
 - Run outputs live under `data/storage/<task-id>/runs/<run-id>/`.
 - `completion_receipt.json` lives at task level and contains `runs[]`.
 - `pipeline.py` receives `run_id` separately from the task key.
+
+## D024 - Macro data uses one parameterized bundle
+
+Date: 2026-04-26
+
+### Context
+
+After reviewing separate macro release and Treasury source bundle planning, the user judged the bundle inventory too fragmented. The desired shape is one macro acquisition bundle with task parameters selecting the concrete data.
+
+### Decision
+
+Use one accepted macro bundle key: `macro_data`.
+
+The bundle covers FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages. Task params must specify the provider/source, dataset or release key, series identifiers when applicable, cadence, covered period/time range, publication or revision behavior, source URL, credential/no-key rule, and output target.
+
+### Rationale
+
+A single macro bundle keeps manager routing and bundle inventory clear. Macro data still needs precise source and release semantics, but those details belong in input params and bundle-specific validation rather than in many registry bundle rows.
+
+### Consequences
+
+- Do not register separate macro bundles merely because data comes from a different macro agency.
+- `macro_release_<release_key>` and `treasury_fiscal_data` are superseded as registry bundle keys.
+- Macro task params must be stricter because the bundle name no longer carries the release/source boundary.
+- A macro source/release inventory is still needed, but it should feed parameter validation and docs rather than bundle proliferation.

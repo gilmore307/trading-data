@@ -140,20 +140,21 @@ Initial script boundaries should be organized around data-type bundles:
 | `thetadata_option_1m_bundle` | ThetaData | `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, `open_interest_1m`. | One bundle because these option 1-minute datasets are normally consumed together. |
 | `thetadata_option_snapshot_bundle` | ThetaData | Snapshot, open interest, and Greeks at a specified timestamp. | Separate from the 1-minute bundle because request shape and use case differ. |
 | `okx_bars` | OKX | Historical crypto bars. | Current OKX scope is bars only. |
-| `macro_release_<release_key>` | FRED, Census, BEA, BLS, official agency pages | One official macro release event or publication set sharing a release time/cadence. | Do not combine unrelated agencies or release times into one macro bundle. Preserve release time, period, revision/vintage evidence, and source URL. |
-| `treasury_fiscal_data` | U.S. Treasury Fiscal Data | Federal finance datasets from the open/no-key Treasury Fiscal Data API. | Separate source bundle because it has its own official API, dataset catalog, pagination, and update semantics. |
+| `macro_data` | FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, official agency pages | Parameterized macro data acquisition. | One macro bundle for clarity; task params must select provider/source, dataset/release/series, cadence, time range, and output target. |
 | `calendar_discovery` | Official web sources discovered by search | FOMC and official macro release calendars. | Confirm official source domains before accepting results. |
 | `etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |
 
 These names are planning names until accepted through registry/contract review.
 
-## Macro Release Bundle Rule
+## Macro Data Bundle Rule
 
-Macro data should not use one catch-all bundle across FRED, Census, BEA, BLS, and official agency pages. Macro releases should be split by release event and publication time because they are usually consumed independently. U.S. Treasury Fiscal Data has its own source bundle, `treasury_fiscal_data`, when the task is about Treasury's official dataset API rather than a scheduled release-event bundle.
+Macro data uses one accepted bundle key: `macro_data`.
 
-A macro release bundle may group data only when the records are published together or intentionally consumed as one release package. The task key should identify the release key, source agency, expected publication timestamp or release window, covered period, revision/vintage expectations, development file destination, and future target SQL table/partition when durable contracts exist.
+This keeps bundle inventory small while moving selection detail into task params. A `macro_data` task must explicitly identify the requested source/provider, dataset or release key, series identifiers when applicable, publication/revision behavior, cadence, covered period or time range, official source URL, and output target.
 
-Examples of acceptable bundle granularity include one bundle per official release family or release event, such as an employment release, inflation release, GDP/account release, retail-sales release, or other agency-specific release package. Exact release keys remain pending provider/source inventory work.
+Examples of valid `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, Census durable goods, selected FRED series/groups, U.S. Treasury Fiscal Data datasets, and official agency release pages.
+
+Do not create a new bundle just because a macro dataset comes from a different agency. Split inside `params`, not in the bundle registry, unless a future implementation proves one source needs a fundamentally different runner boundary.
 
 ## Completion Receipt Requirements
 

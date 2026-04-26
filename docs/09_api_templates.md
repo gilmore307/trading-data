@@ -85,12 +85,11 @@ Initial bundle planning names remain:
 - `thetadata_option_1m_bundle`
 - `thetadata_option_snapshot_bundle`
 - `okx_bars`
-- `macro_release_<release_key>`
-- `treasury_fiscal_data`
+- `macro_data`
 - `calendar_discovery`
 - `etf_holdings`
 - `sec_company_financials`
 
-Macro bundles must be split by release event or release family, not grouped merely because they are macro data.
+`macro_data` is the single macro acquisition bundle. It stays clear by requiring task params to name the concrete provider/source, dataset/release/series, cadence, period, and output target.
 
 `sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `sec_company_financials_task_...` and `sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.

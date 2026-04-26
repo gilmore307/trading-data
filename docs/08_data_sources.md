@@ -98,8 +98,7 @@ Source connector scripts should be split by historical data type and usage bundl
 - ThetaData option 1-minute bundle: one bundle for `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, and `open_interest_1m`.
 - ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
 - OKX bars: one bars-only script/bundle.
-- Macro releases: split into release-event bundles by publication time/cadence; group only records released together or intentionally consumed as one release package.
-- Treasury fiscal data: one standalone no-key source bundle for the official U.S. Treasury Fiscal Data API and its dataset catalog.
+- Macro data: one parameterized bundle for FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages; task params select the concrete provider/source, dataset/release/series, cadence, period, and output target.
 - Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
 - SEC company financials: one official SEC EDGAR workflow for public-company financial report facts, filings/submissions metadata, and future normalized statement outputs.
@@ -137,36 +136,25 @@ Accepted Alpaca bundle keys are:
 
 `alpaca_news` must document article timestamps in America/New_York for research workflow metadata, provider publication timestamp semantics, symbols/entities covered, source/publisher fields, pagination, and rate-limit behavior. Task/run IDs should use `alpaca_news_task_...` and `alpaca_news_run_...` prefixes. Development should persist only final cleaned news outputs; tiny sanitized provider response fixtures are allowed only during development and should be replaced before production hardening.
 
-## Treasury Fiscal Data Bundle Rule
+## Macro Data Bundle Rule
 
-Treasury Fiscal Data is an official open/no-key source and should have its own bundle key: `treasury_fiscal_data`.
+Macro data uses one bundle key: `macro_data`.
 
-This bundle covers federal finance datasets from `https://fiscaldata.treasury.gov/api-documentation/`, including debt, revenue, spending, interest rates, and savings-bond datasets when selected. It should document dataset identifiers, endpoint URL patterns, pagination, filters, sort behavior, update cadence, publication/as-of semantics, America/New_York research timestamps, and final cleaned outputs. Task/run IDs should use `treasury_fiscal_data_task_...` and `treasury_fiscal_data_run_...` prefixes.
+This bundle covers FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages. It intentionally keeps the bundle layer simple; task params must carry the source-specific selection detail.
 
-Do not fold Treasury Fiscal Data into a broad macro bundle merely because it is macro/context data. Use `macro_release_<release_key>` only when the unit of work is a specific scheduled release event or release family.
+A `macro_data` task must document:
 
-## Macro Release Bundle Rule
+- provider/source, such as `fred`, `bls`, `census`, `bea`, `us_treasury_fiscal_data`, or an official agency page;
+- dataset, release key, or series/group identifiers;
+- publication timestamp or expected release window when relevant;
+- covered period, time range, cadence, and revision/vintage behavior;
+- endpoint URL pattern or source URL;
+- credential config id when required, or no-key rule when not required;
+- pagination, filters, sorting, and rate-limit behavior;
+- America/New_York research timestamps;
+- development file destination and future target SQL table/partition.
 
-Macro data from FRED, Census, BEA, BLS, and official agency pages should not be fetched through one broad `macro_release_bundle`. Different agencies and release families publish at different times, and the data is usually consumed independently. Treasury Fiscal Data is handled separately by `treasury_fiscal_data` unless a future task explicitly defines a Treasury scheduled release-event bundle.
-
-Macro source connector work should define one bundle per release event or release family, using a planning shape like:
-
-```text
-macro_release_<release_key>
-```
-
-Each release-event bundle should document:
-
-- source agency or official page;
-- release key/name;
-- publication timestamp or expected release window;
-- covered period;
-- revision/vintage behavior;
-- source URL;
-- development file destination and future target SQL table/partition;
-- whether the values are used together as one release package.
-
-Do not group macro data merely because it is macro data. Group only by shared publication event, shared release cadence, and downstream usage together.
+Examples of `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, selected FRED series/groups, and Treasury Fiscal Data datasets. Do not create separate registry bundles for each macro agency or release unless implementation later proves a separate runner boundary is necessary.
 
 ## Web-Discovered And Issuer-Sourced Inputs
 

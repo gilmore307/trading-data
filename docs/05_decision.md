@@ -535,3 +535,25 @@ A single macro bundle keeps manager routing and bundle inventory clear. Macro da
 - `macro_release_<release_key>` and `treasury_fiscal_data` are superseded as registry bundle keys.
 - Macro task params must be stricter because the bundle name no longer carries the release/source boundary.
 - A macro source/release inventory is still needed, but it should feed parameter validation and docs rather than bundle proliferation.
+
+## D025 - FRED only fetches FRED-unique macro data by default
+
+Date: 2026-04-26
+
+### Context
+
+The user clarified that the same economic measure should use one unified, consistent data source. FRED aggregates many BLS, BEA, Census, Treasury, and other official series, but using FRED and official agencies interchangeably would create duplicate acquisition paths and possible inconsistencies.
+
+### Decision
+
+Use official agency sources as canonical for their own measures. Use FRED only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups.
+
+### Rationale
+
+Consistent source ownership avoids duplicate rows, conflicting revisions, mismatched metadata, and uncertainty about which version of a measure downstream research used.
+
+### Consequences
+
+- `macro_data` params may use `source = "fred"` only for FRED-unique/approved FRED-native series.
+- BLS, BEA, Census, Treasury, and other official-agency measures should use their official source params by default.
+- Any exception that uses FRED for an official-agency measure needs explicit review and documentation of why FRED is the chosen canonical path.

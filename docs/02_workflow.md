@@ -140,7 +140,7 @@ Initial script boundaries should be organized around data-type bundles:
 | `thetadata_option_1m_bundle` | ThetaData | `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, `open_interest_1m`. | One bundle because these option 1-minute datasets are normally consumed together. |
 | `thetadata_option_snapshot_bundle` | ThetaData | Snapshot, open interest, and Greeks at a specified timestamp. | Separate from the 1-minute bundle because request shape and use case differ. |
 | `okx_bars` | OKX | Historical crypto bars. | Current OKX scope is bars only. |
-| `macro_data` | FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, official agency pages | Parameterized macro data acquisition. | One macro bundle for clarity; task params must select provider/source, dataset/release/series, cadence, time range, and output target. |
+| `macro_data` | FRED-unique series, Census, BEA, BLS, U.S. Treasury Fiscal Data, official agency pages | Parameterized macro data acquisition. | One macro bundle for clarity; task params must select provider/source, dataset/release/series, cadence, time range, and output target. Do not use FRED to duplicate data whose official source is accepted elsewhere. |
 | `calendar_discovery` | Official web sources discovered by search | FOMC and official macro release calendars. | Confirm official source domains before accepting results. |
 | `etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |
 
@@ -152,9 +152,11 @@ Macro data uses one accepted bundle key: `macro_data`.
 
 This keeps bundle inventory small while moving selection detail into task params. A `macro_data` task must explicitly identify the requested source/provider, dataset or release key, series identifiers when applicable, publication/revision behavior, cadence, covered period or time range, official source URL, and output target.
 
-Examples of valid `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, Census durable goods, selected FRED series/groups, U.S. Treasury Fiscal Data datasets, and official agency release pages.
+Examples of valid `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, Census durable goods, FRED-unique St. Louis Fed/ALFRED/research series, U.S. Treasury Fiscal Data datasets, and official agency release pages.
 
 Do not create a new bundle just because a macro dataset comes from a different agency. Split inside `params`, not in the bundle registry, unless a future implementation proves one source needs a fundamentally different runner boundary.
+
+For source consistency, the same economic measure should have one canonical acquisition source. Use official agency sources for BLS, BEA, Census, Treasury, and other agency-owned data. Use FRED only for data that is unique to FRED/St. Louis Fed/ALFRED or for explicitly approved FRED-native research series/groups, not as a duplicate path for the same official data.
 
 ## Completion Receipt Requirements
 

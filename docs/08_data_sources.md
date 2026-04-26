@@ -74,7 +74,7 @@ Current registered provider config and source-of-truth surfaces:
 | OKX | `https://www.okx.com/docs-v5/en/` | Crypto data acquisition and later trading access. | `OKX_SECRET_ALIAS` | source alias `okx`; JSON path `/root/secrets/okx.json`; JSON keys `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, `api_key_remark_name` | Secret values and credential metadata live in `/root/secrets/okx.json` and must not be copied into this repository. |
 | Alpaca | `https://docs.alpaca.markets/` | Stock and ETF bars, quotes, trades, and news data acquisition. | `ALPACA_SECRET_ALIAS` | source alias `alpaca`; JSON path `/root/secrets/alpaca.json`; JSON keys `api_key`, `secret_key`, `endpoint` | Secret values and endpoint config live in `/root/secrets/alpaca.json` and must not be copied into this repository. |
 | ThetaData | `https://http-docs.thetadata.us/` | Options chain timeline, quote, trade, OHLC, Greeks, and related options datasets. | None yet; provider term `THETADATA` is registered. | Credentials must eventually follow ThetaData terminal requirements: email on line 1 and password on line 2 in `creds.txt` beside `ThetaTerminalv3.jar`. | Connector/JAR/credential layout is deferred until implementation design. Do not commit `creds.txt` or credentials. |
-| FRED | `https://fred.stlouisfed.org/docs/api/fred/` | Macroeconomic and market-context data acquisition. | `FRED_SECRET_ALIAS` | source alias `fred`; JSON path `/root/secrets/fred.json`; JSON key `api_key` | Secret value lives in `/root/secrets/fred.json` and must not be copied into this repository. |
+| FRED | `https://fred.stlouisfed.org/docs/api/fred/` | FRED/St. Louis Fed/ALFRED-unique macro series and explicitly approved FRED-native research series/groups. | `FRED_SECRET_ALIAS` | source alias `fred`; JSON path `/root/secrets/fred.json`; JSON key `api_key` | Secret value lives in `/root/secrets/fred.json` and must not be copied into this repository. Do not use FRED as a duplicate acquisition path for BLS/BEA/Census/Treasury data that has an accepted official source. |
 | Census | `https://www.census.gov/data/developers/guidance/api-user-guide.html` | Demographic and economic data acquisition. | `CENSUS_SECRET_ALIAS` | source alias `census`; JSON path `/root/secrets/census.json`; JSON key `api_key` | Secret value lives in `/root/secrets/census.json` and must not be copied into this repository. |
 | BEA | `https://apps.bea.gov/API/docs/index.htm` | Economic accounts and macroeconomic data acquisition. | `BEA_SECRET_ALIAS` | source alias `bea`; JSON path `/root/secrets/bea.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bea.json` and must not be copied into this repository. |
 | BLS | `https://www.bls.gov/developers/api_signature_v2.htm` | Labor and economic data acquisition. | `BLS_SECRET_ALIAS` | source alias `bls`; JSON path `/root/secrets/bls.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bls.json` and must not be copied into this repository. |
@@ -98,7 +98,7 @@ Source connector scripts should be split by historical data type and usage bundl
 - ThetaData option 1-minute bundle: one bundle for `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, and `open_interest_1m`.
 - ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
 - OKX bars: one bars-only script/bundle.
-- Macro data: one parameterized bundle for FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages; task params select the concrete provider/source, dataset/release/series, cadence, period, and output target.
+- Macro data: one parameterized bundle for FRED-unique series, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages; task params select the concrete provider/source, dataset/release/series, cadence, period, and output target.
 - Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
 - SEC company financials: one official SEC EDGAR workflow for public-company financial report facts, filings/submissions metadata, and future normalized statement outputs.
@@ -140,7 +140,7 @@ Accepted Alpaca bundle keys are:
 
 Macro data uses one bundle key: `macro_data`.
 
-This bundle covers FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages. It intentionally keeps the bundle layer simple; task params must carry the source-specific selection detail.
+This bundle covers FRED-unique series, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages. It intentionally keeps the bundle layer simple; task params must carry the source-specific selection detail.
 
 A `macro_data` task must document:
 
@@ -154,7 +154,9 @@ A `macro_data` task must document:
 - America/New_York research timestamps;
 - development file destination and future target SQL table/partition.
 
-Examples of `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, selected FRED series/groups, and Treasury Fiscal Data datasets. Do not create separate registry bundles for each macro agency or release unless implementation later proves a separate runner boundary is necessary.
+Examples of `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, FRED-unique St. Louis Fed/ALFRED/research series, and Treasury Fiscal Data datasets. Do not create separate registry bundles for each macro agency or release unless implementation later proves a separate runner boundary is necessary.
+
+For source consistency, one economic measure should not be fetched from multiple providers by default. If a measure belongs to BLS, BEA, Census, Treasury, or another official agency, use that official source as canonical. Use FRED only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups.
 
 ## Web-Discovered And Issuer-Sourced Inputs
 

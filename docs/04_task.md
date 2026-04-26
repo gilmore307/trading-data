@@ -9,7 +9,7 @@
 - Define initial manager-issued data task key file schema with `trading-main` and `trading-manager`.
 - Define source connector package layout and provider inventory format before connector code lands.
 - Fill API-specific templates for the first implementation bundle before writing connector code.
-- Define strict `macro_data` parameter vocabulary and validation rules for source, dataset/release/series, cadence, period, revision/vintage behavior, and output target.
+- Define strict `macro_data` parameter vocabulary and validation rules using registered `data_kind` rows for source, dataset/release/series, cadence, period, revision/vintage behavior, and output target.
 - Define bundle-specific task/run ID prefix rules in implementation helpers.
 - Define segment checkpoint/resume behavior for long historical fetch-clean-save jobs.
 - Define data artifact reference and manifest requirements with `trading-main` and `trading-storage`.
@@ -35,13 +35,14 @@
 - Timestamp normalization contract for payload fields that must remain America/New_York versus any required UTC/database fields.
 - Provider quota/rate-limit policy and live-call guardrails.
 - First supported implementation bundle, market/instrument/granularity, and acceptance path.
-- Macro source/release/series inventory for `macro_data` params, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
+- Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
 - ETF issuer priority list, source-file formats, and as-of-date handling.
 - ThetaData connector/JAR/credential layout.
 - Data-domain vocabulary registration in `trading-main` if exact domain keys become cross-repository contract values.
 
 ## Recently Accepted
 
+- Registered the initial source-availability `data_kind` inventory in `trading-main` and documented it in `docs/10_source_availability.md`.
 - Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.
 - Consolidated macro acquisition into one accepted `macro_data` bundle with source/dataset/release/series selection in task params.
 - Added `data_bundle` as a registry kind and registered current acquisition bundle keys there.

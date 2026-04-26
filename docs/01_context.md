@@ -42,7 +42,7 @@ Potential external interfaces include:
 - symbol/reference-data providers;
 - local or shared storage through `trading-storage` contracts.
 
-Specific provider choices, secret aliases, credentials, quotas, retry expectations, and commercial limits are not settled yet. See `docs/08_data_sources.md` for the source-connection boundary.
+OKX is registered in `trading-main` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/08_data_sources.md` for the source-connection boundary.
 
 ## Environment
 

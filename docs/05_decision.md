@@ -198,3 +198,26 @@ Provider connections are a boundary risk: secrets, quotas, timestamp semantics, 
 - `docs/08_data_sources.md` owns provider/source connector planning.
 - Default tests must not require live provider credentials.
 - Provider choices and secret aliases remain open gaps until selected and reviewed.
+
+## D010 - OKX is the first registered crypto provider config surface
+
+Date: 2026-04-26
+
+### Context
+
+The user provided OKX API credentials and the OpenClaw server public IPv4 for OKX allowlisting. OKX is intended for crypto data acquisition and later trading access.
+
+### Decision
+
+Use OKX as the first registered crypto provider config surface. Store secret values only under `/root/secrets/okx/`; use `trading-main` registry config rows for secret aliases and non-secret metadata.
+
+### Rationale
+
+Provider access needs to be explicit before source connectors depend on it, but credentials must not enter Git. Registry config aliases give implementation a stable reference without exposing secret material.
+
+### Consequences
+
+- Registered aliases are `okx/api-key`, `okx/secret-key`, and `okx/passphrase`.
+- Registered non-secret metadata includes allowed IPv4 `66.206.20.138` and API key remark `OpenClaw`.
+- Default tests must still avoid live OKX calls unless explicitly guarded.
+- Trading behavior remains outside `trading-data`; execution usage belongs to `trading-execution`.

@@ -69,8 +69,8 @@ Every bundle design should answer:
 - How are pagination, retries, and rate limits handled?
 - What timezone and timestamp semantics does the source use?
 - What historical range limits or snapshot semantics apply?
-- What raw files are produced?
-- What cleaned outputs are produced?
+- What raw files are produced transiently, if any? High-volume trade/quote raw rows should normally be stream/segment inputs only, not saved outputs.
+- What cleaned/aggregated outputs are produced? For high-volume market microstructure data, default persisted outputs should be ET-aligned aggregates rather than raw rows.
 - What files are saved under `data/storage/<task-id>/runs/<run-id>/`?
 - What run receipt fields prove success or failure?
 - Which fixtures cover expected and edge-case responses?

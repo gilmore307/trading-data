@@ -94,7 +94,7 @@ Every obtainable data category accepted after source/API availability review sho
 
 `data_kind` rows are for concrete data categories such as bars, quotes, option Greeks, SEC company facts, CPI, GDP, or Treasury datasets. They are separate from `data_bundle` rows: bundles choose the runner boundary, while data kinds identify what data can be requested, validated, routed, and eventually mapped to storage.
 
-High-volume raw trade and quote kinds are requestable source inputs, not default persisted outputs. For Alpaca quotes/trades, production persistence should target ET-aligned aggregate data kinds such as `equity_trade_bar_derived`, `equity_quote_bar_derived`, and `equity_microstructure_bar_derived`. Raw `equity_trade` and `equity_quote` rows may be streamed or temporarily segmented during a run for aggregation and validation, then discarded unless a bounded debug fixture/incident artifact is explicitly approved.
+High-volume raw trade and quote kinds are requestable source inputs, not default persisted outputs. For Alpaca quotes/trades, production persistence should target the ET-aligned aggregate data kind `equity_liquidity_bar`. Raw `equity_trade` and `equity_quote` rows may be streamed or temporarily segmented during a run for aggregation and validation, then discarded unless a bounded debug fixture/incident artifact is explicitly approved.
 
 ## Acquisition Script Boundary
 

@@ -90,7 +90,7 @@ Live interface reports write under ignored `data/storage/source_interfaces/` and
 Current API-level findings:
 
 - Alpaca live checks succeeded for `equity_bar`, `equity_trade`, `equity_quote`, `equity_snapshot`, and `equity_news` using the data API endpoint. Response shapes include bars (`t/o/h/l/c/v/vw/n`), trades (`t/p/s/x/i/c/z`), quotes (`t/bp/bs/bx/ap/as/ax/c/z`), snapshots (`latestTrade`, `latestQuote`, `minuteBar`, `dailyBar`, `prevDailyBar`), and news (`headline`, `source`, `url`, `symbols`, timestamps, summary/content/image metadata).
-  Persistence rule: raw Alpaca trades/quotes are too large for default retention; they should be transient inputs used to produce ET-aligned aggregate outputs (`equity_trade_bar_derived`, `equity_quote_bar_derived`, `equity_microstructure_bar_derived`).
+  Persistence rule: raw Alpaca trades/quotes are too large for default retention; they should be transient inputs used to produce the ET-aligned aggregate output `equity_liquidity_bar`.
 - OKX live checks succeeded for `crypto_bar`, `crypto_trade`, `crypto_quote`, and `crypto_order_book`. OKX bar rows are positional arrays; trades, tickers, and books are JSON objects under `data[]`.
 - SEC EDGAR live checks succeeded for submissions, company facts, company concept, and XBRL frames using Apple CIK / Assets as bounded smoke examples. Companyfacts can be very large, so production code should request only needed concepts or normalize streamed/segmented facts.
 - ThetaData Terminal was installed/running locally outside the repo, currently serving v3 on `127.0.0.1:25503`. Live checks succeeded for option contracts, trades, quotes, trade+quote/NBBO, OHLC, EOD, open interest, implied volatility, first-order Greeks, and snapshots. Second-order Greeks, third-order Greeks, and trade Greeks returned entitlement blocks requiring a professional ThetaData subscription; the current account is options STANDARD.
@@ -124,9 +124,7 @@ Exact source-specific parameter dictionaries remain open work. They should be de
 
 `src/trading_data/data_sources/alpaca_quotes_trades/` now contains the first aggregate-only implementation. It requests Alpaca trades and quotes with bounded pagination, treats raw rows as transient run inputs, aligns intervals in `America/New_York`, and persists only derived aggregate outputs:
 
-- `equity_trade_bar_derived` — trade count, volume, notional, OHLC from trades, VWAP, first/last trade timestamps.
-- `equity_quote_bar_derived` — quote count, average bid/ask/mid/spread, min/max spread, average sizes, last quote state.
-- `equity_microstructure_bar_derived` — interval-level trade/quote combined features such as trade VWAP vs average quote mid.
+- `equity_liquidity_bar` — one ET-aligned interval row combining trade count/volume/VWAP/OHLC, quote count/spread/mid/depth summaries, and trade-vs-quote liquidity features such as VWAP minus average mid.
 
 Current implementation supports `1Min`, `5Min`, `15Min`, `1Hour`, and `1Day` buckets. Raw Alpaca trades/quotes are not written as saved outputs.
 

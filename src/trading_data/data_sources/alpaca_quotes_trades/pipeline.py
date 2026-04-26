@@ -163,30 +163,15 @@ def clean(context: BundleContext, fetched: FetchedPayload) -> StepResult:
     timeframe = str(params.get("timeframe", "1Min"))
     if timeframe not in SUPPORTED_TIMEFRAMES:
         raise AlpacaQuotesTradesError(f"unsupported timeframe {timeframe!r}; supported={sorted(SUPPORTED_TIMEFRAMES)}")
-    trade_rows = aggregate_trades(fetched.symbol, fetched.trades, timeframe)
-    quote_rows = aggregate_quotes(fetched.symbol, fetched.quotes, timeframe)
-    micro_rows = aggregate_microstructure(fetched.symbol, fetched.trades, fetched.quotes, timeframe)
+    liquidity_rows = aggregate_liquidity_bars(fetched.symbol, fetched.trades, fetched.quotes, timeframe)
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    outputs = {
-        "equity_trade_bar_derived": trade_rows,
-        "equity_quote_bar_derived": quote_rows,
-        "equity_microstructure_bar_derived": micro_rows,
-    }
-    references = []
-    row_counts = {}
-    schemas = {}
-    for name, rows in outputs.items():
-        path = context.cleaned_dir / f"{name}.jsonl"
-        with path.open("w", encoding="utf-8") as handle:
-            for row in rows:
-                handle.write(json.dumps(row, sort_keys=True) + "\n")
-        references.append(str(path))
-        row_counts[name] = len(rows)
-        schemas[name] = sorted({key for row in rows for key in row})
+    output = context.cleaned_dir / "equity_liquidity_bar.jsonl"
+    with output.open("w", encoding="utf-8") as handle:
+        for row in liquidity_rows:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
     schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps(schemas, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    references.append(str(schema_path))
-    return StepResult("succeeded", references, row_counts, details={"timeframe": timeframe, "timezone": "America/New_York"})
+    schema_path.write_text(json.dumps({"equity_liquidity_bar": sorted({key for row in liquidity_rows for key in row})}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(output), str(schema_path)], {"equity_liquidity_bar": len(liquidity_rows)}, details={"timeframe": timeframe, "timezone": "America/New_York"})
 
 
 def aggregate_trades(symbol: str, trades: list[dict[str, Any]], timeframe: str) -> list[dict[str, Any]]:
@@ -197,7 +182,7 @@ def aggregate_trades(symbol: str, trades: list[dict[str, Any]], timeframe: str) 
         key = bucket.isoformat()
         price = float(trade.get("p") or 0)
         size = int(trade.get("s") or 0)
-        row = buckets.setdefault(key, {"data_kind": "equity_trade_bar_derived", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "trade_count": 0, "trade_volume": 0, "trade_notional": 0.0, "trade_open": price, "trade_high": price, "trade_low": price, "trade_close": price, "first_trade_ts_et": _et_iso(ts), "last_trade_ts_et": _et_iso(ts)})
+        row = buckets.setdefault(key, {"data_kind": "_transient_trade_interval", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "trade_count": 0, "trade_volume": 0, "trade_notional": 0.0, "trade_open": price, "trade_high": price, "trade_low": price, "trade_close": price, "first_trade_ts_et": _et_iso(ts), "last_trade_ts_et": _et_iso(ts)})
         row["trade_count"] += 1
         row["trade_volume"] += size
         row["trade_notional"] += price * size
@@ -223,7 +208,7 @@ def aggregate_quotes(symbol: str, quotes: list[dict[str, Any]], timeframe: str) 
         ask_size = int(quote.get("as") or 0)
         spread = ask - bid if bid and ask else None
         mid = (ask + bid) / 2 if bid and ask else None
-        row = buckets.setdefault(key, {"data_kind": "equity_quote_bar_derived", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "quote_count": 0, "sum_bid": 0.0, "sum_ask": 0.0, "sum_mid": 0.0, "sum_spread": 0.0, "spread_count": 0, "min_spread": None, "max_spread": None, "sum_bid_size": 0, "sum_ask_size": 0, "first_quote_ts_et": _et_iso(ts), "last_quote_ts_et": _et_iso(ts), "last_bid": bid, "last_ask": ask, "last_mid": mid})
+        row = buckets.setdefault(key, {"data_kind": "_transient_quote_interval", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "quote_count": 0, "sum_bid": 0.0, "sum_ask": 0.0, "sum_mid": 0.0, "sum_spread": 0.0, "spread_count": 0, "min_spread": None, "max_spread": None, "sum_bid_size": 0, "sum_ask_size": 0, "first_quote_ts_et": _et_iso(ts), "last_quote_ts_et": _et_iso(ts), "last_bid": bid, "last_ask": ask, "last_mid": mid})
         row["quote_count"] += 1
         row["sum_bid"] += bid
         row["sum_ask"] += ask
@@ -251,9 +236,9 @@ def aggregate_quotes(symbol: str, quotes: list[dict[str, Any]], timeframe: str) 
     return out
 
 
-def aggregate_microstructure(symbol: str, trades: list[dict[str, Any]], quotes: list[dict[str, Any]], timeframe: str) -> list[dict[str, Any]]:
-    # For this first implementation, microstructure is interval-level trade/quote
-    # alignment, not tick-level previous-quote matching. Tick-level matching can
+def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: list[dict[str, Any]], timeframe: str) -> list[dict[str, Any]]:
+    # For this first implementation, liquidity is interval-level trade/quote
+    # aggregation, not tick-level previous-quote matching. Tick-level matching can
     # be added later without changing the raw non-persistence rule.
     trade_by_bucket = {row["interval_start_et"]: row for row in aggregate_trades(symbol, trades, timeframe)}
     quote_by_bucket = {row["interval_start_et"]: row for row in aggregate_quotes(symbol, quotes, timeframe)}
@@ -263,7 +248,33 @@ def aggregate_microstructure(symbol: str, trades: list[dict[str, Any]], quotes: 
         q = quote_by_bucket.get(key, {})
         trade_vwap = t.get("trade_vwap")
         avg_mid = q.get("avg_mid")
-        rows.append({"data_kind": "equity_microstructure_bar_derived", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "trade_count": t.get("trade_count", 0), "quote_count": q.get("quote_count", 0), "trade_volume": t.get("trade_volume", 0), "trade_vwap": trade_vwap, "avg_mid": avg_mid, "avg_spread": q.get("avg_spread"), "vwap_minus_avg_mid": round(trade_vwap - avg_mid, 10) if isinstance(trade_vwap, (int, float)) and isinstance(avg_mid, (int, float)) else None, "last_mid": q.get("last_mid"), "last_trade_price": t.get("trade_close")})
+        rows.append({
+            "data_kind": "equity_liquidity_bar",
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "interval_start_et": key,
+            "trade_count": t.get("trade_count", 0),
+            "quote_count": q.get("quote_count", 0),
+            "trade_volume": t.get("trade_volume", 0),
+            "trade_vwap": trade_vwap,
+            "trade_open": t.get("trade_open"),
+            "trade_high": t.get("trade_high"),
+            "trade_low": t.get("trade_low"),
+            "trade_close": t.get("trade_close"),
+            "avg_bid": q.get("avg_bid"),
+            "avg_ask": q.get("avg_ask"),
+            "avg_mid": avg_mid,
+            "avg_spread": q.get("avg_spread"),
+            "min_spread": q.get("min_spread"),
+            "max_spread": q.get("max_spread"),
+            "avg_bid_size": q.get("avg_bid_size"),
+            "avg_ask_size": q.get("avg_ask_size"),
+            "last_bid": q.get("last_bid"),
+            "last_ask": q.get("last_ask"),
+            "last_mid": q.get("last_mid"),
+            "last_trade_price": t.get("trade_close"),
+            "vwap_minus_avg_mid": round(trade_vwap - avg_mid, 10) if isinstance(trade_vwap, (int, float)) and isinstance(avg_mid, (int, float)) else None,
+        })
     return rows
 
 

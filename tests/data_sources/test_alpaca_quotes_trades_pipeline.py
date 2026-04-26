@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.alpaca_quotes_trades.pipeline import aggregate_microstructure, aggregate_quotes, aggregate_trades, run
+from trading_data.data_sources.alpaca_quotes_trades.pipeline import aggregate_liquidity_bars, aggregate_quotes, aggregate_trades, run
 from trading_data.source_availability.http import HttpResult
 
 
@@ -52,8 +52,8 @@ class AlpacaQuotesTradesPipelineTests(unittest.TestCase):
         self.assertEqual(rows[0]['avg_spread'], 1.0)
         self.assertEqual(rows[0]['avg_bid_size'], 2.5)
 
-    def test_microstructure_combines_interval_rows(self):
-        rows = aggregate_microstructure('AAPL', [{'t': '2024-01-02T14:30:00Z', 'p': 11, 's': 1}], [{'t': '2024-01-02T14:30:00Z', 'bp': 10, 'bs': 1, 'ap': 12, 'as': 1}], '1Min')
+    def test_liquidity_bar_combines_interval_rows(self):
+        rows = aggregate_liquidity_bars('AAPL', [{'t': '2024-01-02T14:30:00Z', 'p': 11, 's': 1}], [{'t': '2024-01-02T14:30:00Z', 'bp': 10, 'bs': 1, 'ap': 12, 'as': 1}], '1Min')
         self.assertEqual(rows[0]['vwap_minus_avg_mid'], 0.0)
 
     def test_pipeline_saves_only_derived_outputs(self):
@@ -76,12 +76,12 @@ class AlpacaQuotesTradesPipelineTests(unittest.TestCase):
                 pipeline.load_secret_alias = old
             self.assertEqual(result.status, 'succeeded')
             saved = Path(task_key['output_root']) / 'runs' / 'alpaca_quotes_trades_run_test' / 'saved'
-            self.assertTrue((saved / 'equity_trade_bar_derived.jsonl').exists())
-            self.assertTrue((saved / 'equity_quote_bar_derived.jsonl').exists())
-            self.assertTrue((saved / 'equity_microstructure_bar_derived.jsonl').exists())
+            self.assertTrue((saved / 'equity_liquidity_bar.jsonl').exists())
+            self.assertFalse((saved / 'equity_trade_bar_derived.jsonl').exists())
+            self.assertFalse((saved / 'equity_quote_bar_derived.jsonl').exists())
             self.assertFalse((saved / 'raw_trades.jsonl').exists())
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
-            self.assertEqual(receipt['runs'][0]['row_counts']['equity_trade_bar_derived'], 2)
+            self.assertEqual(receipt['runs'][0]['row_counts']['equity_liquidity_bar'], 2)
 
 
 if __name__ == '__main__':

@@ -54,62 +54,24 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 - Persistence rule: stream or segment during aggregation, then discard by default.
 - Reason: raw trade/quote rows can reach hundreds or thousands of rows per minute and would overwhelm storage over longer histories.
 
-### `equity_trade_bar_derived`
+### `equity_liquidity_bar`
 
-- **Source:** Derived from Alpaca `equity_trade`.
+- **Source:** Derived from transient Alpaca trades and quotes.
 - **Bundle:** `alpaca_quotes_trades`.
 - **Status:** `derived-implemented`.
-- **Persistence policy:** Persisted default output for trade-derived information.
-- **Earliest available range:** Same as `equity_trade`; implementation live-confirmed AAPL 2024-01-02 09:30 ET.
-- **Default timestamp semantics:** `interval_start_et` in `America/New_York`.
-- **Natural grain:** One symbol/timeframe ET interval aggregate.
-- **Request parameters:** Parent task uses `symbol`, `start`, `end`, `timeframe`; optional `limit`, `max_pages`, `feed`.
-- **Pagination/range behavior:** Aggregates paginated transient trades into ET buckets.
-- **Preview:**
-
-```json
-{"data_kind":"equity_trade_bar_derived","symbol":"AAPL","timeframe":"1Min","interval_start_et":"2024-01-02T09:30:00-05:00","trade_count":1000,"trade_volume":53862,"trade_vwap":187.0966001819,"trade_open":187.18,"trade_high":187.25,"trade_low":186.35,"trade_close":187.06}
-```
-
-- **Known caveats:** Current first implementation computes basic trade OHLC/VWAP/count/volume. Later filters may exclude conditions or odd lots.
-
-### `equity_quote_bar_derived`
-
-- **Source:** Derived from Alpaca `equity_quote`.
-- **Bundle:** `alpaca_quotes_trades`.
-- **Status:** `derived-implemented`.
-- **Persistence policy:** Persisted default output for quote-derived information.
-- **Earliest available range:** Same as `equity_quote`; implementation live-confirmed AAPL 2024-01-02 09:30 ET.
-- **Default timestamp semantics:** `interval_start_et` in `America/New_York`.
-- **Natural grain:** One symbol/timeframe ET interval aggregate.
-- **Request parameters:** Parent task uses `symbol`, `start`, `end`, `timeframe`; optional `limit`, `max_pages`, `feed`.
-- **Pagination/range behavior:** Aggregates paginated transient quotes into ET buckets.
-- **Preview:**
-
-```json
-{"data_kind":"equity_quote_bar_derived","symbol":"AAPL","timeframe":"1Min","interval_start_et":"2024-01-02T09:30:00-05:00","quote_count":1000,"avg_bid":187.06611,"avg_ask":187.09592,"avg_mid":187.081015,"avg_spread":0.02981,"last_bid":187.0,"last_ask":187.05,"last_mid":187.025}
-```
-
-- **Known caveats:** Current implementation uses simple interval averages, not time-weighted quote state. Time-weighted variants should be explicitly registered/implemented if needed.
-
-### `equity_microstructure_bar_derived`
-
-- **Source:** Derived from Alpaca trades and quotes.
-- **Bundle:** `alpaca_quotes_trades`.
-- **Status:** `derived-implemented`.
-- **Persistence policy:** Persisted default output for bar-aligned microstructure features.
+- **Persistence policy:** Persisted default output for trade/quote liquidity information. Raw trade and quote rows are discarded by default after aggregation.
 - **Earliest available range:** Same as Alpaca trades/quotes; implementation live-confirmed AAPL 2024-01-02 09:30 ET.
 - **Default timestamp semantics:** `interval_start_et` in `America/New_York`.
 - **Natural grain:** One symbol/timeframe ET interval aggregate.
 - **Request parameters:** Parent task uses `symbol`, `start`, `end`, `timeframe`; optional `limit`, `max_pages`, `feed`.
-- **Pagination/range behavior:** Combines trade and quote aggregate rows by interval.
+- **Pagination/range behavior:** Aggregates paginated transient trades and quotes into one ET bucketed output.
 - **Preview:**
 
 ```json
-{"data_kind":"equity_microstructure_bar_derived","symbol":"AAPL","timeframe":"1Min","interval_start_et":"2024-01-02T09:30:00-05:00","trade_count":1000,"quote_count":1000,"trade_volume":53862,"trade_vwap":187.0966001819,"avg_mid":187.081015,"avg_spread":0.02981,"vwap_minus_avg_mid":0.0155851819}
+{"data_kind":"equity_liquidity_bar","symbol":"AAPL","timeframe":"1Min","interval_start_et":"2024-01-02T09:30:00-05:00","trade_count":1000,"quote_count":1000,"trade_volume":53862,"trade_vwap":187.0966001819,"trade_open":187.18,"trade_high":187.25,"trade_low":186.35,"trade_close":187.06,"avg_bid":187.06611,"avg_ask":187.09592,"avg_mid":187.081015,"avg_spread":0.02981,"last_bid":187.0,"last_ask":187.05,"last_mid":187.025,"vwap_minus_avg_mid":0.0155851819}
 ```
 
-- **Known caveats:** Current implementation is interval-level alignment, not tick-level previous-quote matching. Effective/realized spread and trade-sign rules need separate explicit design.
+- **Known caveats:** Current implementation is interval-level trade/quote aggregation, not tick-level previous-quote matching. Effective/realized spread, trade-sign rules, and time-weighted quote features need separate explicit design.
 
 ## Alpaca non-final snapshot
 

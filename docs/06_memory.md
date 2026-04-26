@@ -17,3 +17,4 @@
 - FRED, Census, BEA, and BLS are registered economic/macro provider config surfaces. Use `trading-main` aliases `fred`, `census`, `bea`, and `bls`, each backed by `/root/secrets/<source>.json` with field `api_key`; do not copy secret values into this repo.
 - Registered provider term `path` values hold public documentation URLs; `*_SECRET_ALIAS` config `path` values still point to local source-secret JSON files.
 - U.S. Treasury Fiscal Data is registered as provider term `US_TREASURY_FISCAL_DATA` with docs path `https://fiscaldata.treasury.gov/api-documentation/`; no secret alias is registered because the official docs describe the API as open/no-token.
+- FOMC calendar uses the official Federal Reserve page. Official macro release calendars are found via web search but must resolve to official government/issuing-agency pages. ETF holdings stocks and weights must come from issuer websites or issuer-published holdings files.

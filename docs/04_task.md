@@ -33,6 +33,7 @@
 
 ## Recently Accepted
 
+- Recorded FOMC calendar, official macro release calendar discovery, and ETF issuer holdings source-of-truth rules.
 - Recorded U.S. Treasury Fiscal Data as an open/no-key provider term with documentation path.
 - Added provider documentation URLs to data-source planning docs, matching registry provider term paths.
 - Recorded FRED, Census, BEA, and BLS as registered economic/macro provider config surfaces using source-level secret aliases.

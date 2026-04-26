@@ -331,3 +331,25 @@ No-key/open APIs should not get unnecessary secret rows. The documentation URL i
 - Provider term is `US_TREASURY_FISCAL_DATA`.
 - No local `/root/secrets/treasury*.json` file is required.
 - Connector implementation must still document dataset coverage, pagination, rate/usage behavior, timestamp semantics, and fixture/live-call policy.
+
+## D016 - Web-discovered calendars and issuer ETF holdings require official sources
+
+Date: 2026-04-26
+
+### Context
+
+The user identified FOMC calendar, official macro release calendars, and ETF holdings constituents/weights as required data-source surfaces. These sources are not necessarily credentialed APIs.
+
+### Decision
+
+Use the official Federal Reserve page for FOMC calendar data. Use web search to discover official macro release calendars, then accept only official government or issuing-agency pages as source of truth. Use ETF issuer websites or issuer-published holdings files for ETF constituent stocks and weights.
+
+### Rationale
+
+Calendar and holdings data are easy to corrupt through secondary aggregators. The source-of-truth rule must be explicit before connector or scraper work begins.
+
+### Consequences
+
+- Third-party macro calendars and ETF aggregators are secondary references only unless explicitly approved.
+- Connectors must preserve source URL, retrieval timestamp, as-of/effective date, and file/page format.
+- Default tests must use fixtures or mocks rather than live web search or issuer website calls.

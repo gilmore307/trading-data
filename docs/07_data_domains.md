@@ -21,7 +21,7 @@ Examples may include, once providers are selected:
 - index and sector movement;
 - broad market breadth;
 - volatility/regime indicators;
-- macro or calendar context relevant to market state;
+- macro or calendar context relevant to market state, including FOMC calendar and official macro release calendars;
 - cross-symbol snapshots used to classify market background.
 
 Boundary:
@@ -40,6 +40,7 @@ Examples may include, once providers are selected:
 - trades, quotes, and liquidity features;
 - corporate actions or symbol metadata;
 - fundamentals or events when accepted as provider inputs;
+- ETF issuer holdings constituents and weights when the instrument is an ETF;
 - symbol-specific calendar and session context.
 
 Boundary:

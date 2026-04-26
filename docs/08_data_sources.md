@@ -65,9 +65,9 @@ Provider `term` rows may use their `path` field for canonical public documentati
 OKX is the first accepted provider config surface for crypto data acquisition and later trading access. Source credentials use one JSON secret file per provider/source. Additional provider aliases remain open until providers are selected.
 
 
-## Registered Provider Configs
+## Registered Provider And Source Surfaces
 
-Current registered provider config surface:
+Current registered provider config and source-of-truth surfaces:
 
 | Provider | Documentation path | Purpose | Registered config keys | Secret aliases / values | Notes |
 |---|---|---|---|---|---|
@@ -79,8 +79,29 @@ Current registered provider config surface:
 | BEA | `https://apps.bea.gov/API/docs/index.htm` | Economic accounts and macroeconomic data acquisition. | `BEA_SECRET_ALIAS` | source alias `bea`; JSON path `/root/secrets/bea.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bea.json` and must not be copied into this repository. |
 | BLS | `https://www.bls.gov/developers/api_signature_v2.htm` | Labor and economic data acquisition. | `BLS_SECRET_ALIAS` | source alias `bls`; JSON path `/root/secrets/bls.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bls.json` and must not be copied into this repository. |
 | U.S. Treasury Fiscal Data | `https://fiscaldata.treasury.gov/api-documentation/` | Federal finance datasets including debt, revenue, spending, interest rates, and savings bonds. | None; provider term `US_TREASURY_FISCAL_DATA` is registered. | No secret alias currently; official docs describe the API as open and not requiring a user account or token. | Connector design must still document dataset coverage, pagination, rate/usage behavior, timestamp semantics, and fixture policy. |
+| FOMC Calendar | `https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm` | FOMC meeting calendar and related monetary policy event information. | None; source term `FOMC_CALENDAR` is registered. | No credential required. | Official Federal Reserve page is the source of truth. Connector work must preserve source URL and retrieval timestamp. |
+| Official macro release calendars | Web search to current official agency pages. | Release dates/times for macroeconomic publications relevant to market context. | None; source term `OFFICIAL_MACRO_RELEASE_CALENDAR` is registered. | No general credential rule; use official agency sources. | Use web search for discovery, then confirm official government/issuing-agency domains. Third-party calendars are secondary only unless explicitly approved. |
+| ETF issuer holdings | Issuer websites or issuer-published holdings files. | ETF constituent stocks and portfolio weights/proportions. | None; source term `ETF_ISSUER_HOLDINGS` is registered. | Usually no credential; issuer-specific access rules remain open. | Issuer website is the source of truth. Preserve issuer URL, as-of date, retrieval timestamp, holdings file format, and any cash/derivative rows. |
 
 `trading-main` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-data` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
+
+
+## Web-Discovered And Issuer-Sourced Inputs
+
+Some accepted source surfaces are source-of-truth rules rather than credentialed APIs:
+
+- FOMC calendar data should come from the official Federal Reserve FOMC calendar page.
+- Macro release calendars should be found through web search, then accepted only after confirming an official government or issuing-agency domain.
+- ETF holdings constituents and weights should come from issuer websites or issuer-published holdings files.
+
+For these inputs, connector design must record:
+
+- source URL;
+- retrieval timestamp;
+- publication, effective, or as-of date when available;
+- file/page format;
+- whether the source is official primary, official mirror, or approved secondary reference;
+- fixture sanitization and live-call guardrails.
 
 ## Provider Inventory Template
 
@@ -119,5 +140,7 @@ A provider/source connector is acceptable only when:
 - ThetaData connector/JAR/credential layout for the option data domain.
 - Which additional source-level secret aliases should be registered in `trading-main`?
 - U.S. Treasury Fiscal Data dataset and endpoint coverage for federal finance context.
+- FOMC and official macro release calendar discovery/update cadence.
+- ETF issuer holdings source coverage, issuer priority, file formats, and as-of-date handling.
 - What live-call guardrail is acceptable for manual provider smoke tests?
 - Which provider fixtures are safe and useful to commit?

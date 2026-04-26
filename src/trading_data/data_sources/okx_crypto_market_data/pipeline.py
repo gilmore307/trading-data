@@ -223,25 +223,26 @@ def clean(context: BundleContext, fetched: FetchedPayload) -> StepResult:
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     outputs = {
         "crypto_bar": (bar_rows, CRYPTO_BAR_FIELDS),
-        "crypto_trade": (trade_rows, CRYPTO_TRADE_FIELDS),
         "crypto_liquidity_bar": (liquidity_rows, CRYPTO_LIQUIDITY_FIELDS),
     }
+    transient_outputs = {"crypto_trade_transient": (trade_rows, CRYPTO_TRADE_FIELDS)}
     refs = []
-    for name, (rows, _fields) in outputs.items():
+    for name, (rows, _fields) in {**outputs, **transient_outputs}.items():
         path = context.cleaned_dir / f"{name}.jsonl"
         _write_jsonl(path, rows)
         refs.append(str(path))
     schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({name: fields for name, (_rows, fields) in outputs.items()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    schema_path.write_text(json.dumps({name: fields for name, (_rows, fields) in {**outputs, **transient_outputs}.items()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     refs.append(str(schema_path))
-    return StepResult("succeeded", refs, {name: len(rows) for name, (rows, _fields) in outputs.items()}, details={"timezone": "America/New_York", "quote_features_available": False})
+    row_counts = {name: len(rows) for name, (rows, _fields) in outputs.items()}
+    row_counts["crypto_trade_transient"] = len(trade_rows)
+    return StepResult("succeeded", refs, row_counts, details={"timezone": "America/New_York", "quote_features_available": False, "transient_inputs": ["crypto_trade"]})
 
 
 def save(context: BundleContext) -> StepResult:
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     outputs = {
         "crypto_bar": CRYPTO_BAR_FIELDS,
-        "crypto_trade": CRYPTO_TRADE_FIELDS,
         "crypto_liquidity_bar": CRYPTO_LIQUIDITY_FIELDS,
     }
     refs: list[str] = []

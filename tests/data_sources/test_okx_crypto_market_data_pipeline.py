@@ -68,11 +68,13 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
             result = run(task_key, run_id='okx_crypto_market_data_run_test', client=FakeOkxClient())
             saved = Path(task_key['output_root']) / 'runs' / 'okx_crypto_market_data_run_test' / 'saved'
             self.assertEqual(result.row_counts['crypto_bar'], 1)
-            self.assertEqual(result.row_counts['crypto_trade'], 2)
+            self.assertNotIn('crypto_trade', result.row_counts)
             self.assertEqual(result.row_counts['crypto_liquidity_bar'], 1)
-            for name in ['crypto_bar', 'crypto_trade', 'crypto_liquidity_bar']:
+            for name in ['crypto_bar', 'crypto_liquidity_bar']:
                 self.assertTrue((saved / f'{name}.csv').exists())
                 self.assertFalse((saved / f'{name}.jsonl').exists())
+            self.assertFalse((saved / 'crypto_trade.csv').exists())
+            self.assertTrue((Path(task_key['output_root']) / 'runs' / 'okx_crypto_market_data_run_test' / 'cleaned' / 'crypto_trade_transient.jsonl').exists())
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
             self.assertEqual(receipt['bundle'], 'okx_crypto_market_data')
 

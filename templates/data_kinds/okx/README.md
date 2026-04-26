@@ -20,19 +20,14 @@ Normalize OKX crypto rows toward the Alpaca-like market-data shape where practic
 - **Preview file:** see `crypto_bar.preview.csv`.
 - **Known caveats:** OKX raw candle rows are positional arrays; normalize before model use.
 
-### `crypto_trade`
+## Transient Raw Inputs
 
-- **Source:** OKX public market data API.
-- **Bundle:** `okx_crypto_market_data`.
-- **Status:** `implemented`.
-- **Persistence policy:** Persist cleaned final normalized trade rows as CSV only. Do not persist raw provider payloads by default once a pipeline exists.
-- **Earliest available range:** `unknown`; live preview confirmed current BTC-USDT trades.
-- **Default timestamp semantics:** Convert OKX millisecond `ts` to `timestamp_utc` and `timestamp_et`.
-- **Natural grain:** One crypto trade print.
-- **Request parameters:** `instId`, optional `limit`; historical/pagination range requires further endpoint-range testing.
-- **Pagination/range behavior:** OKX REST returns recent trades; historical depth/range behavior must be verified before backfill claims.
-- **Preview file:** see `crypto_trade.preview.csv`.
-- **Known caveats:** OKX raw values are strings; normalize numeric columns explicitly. OKX `side` is already `buy`/`sell`; Alpaca crypto `tks` maps from `B`/`S` if cross-source normalization is needed.
+Raw OKX `crypto_trade` source rows are live-confirmed but are **not** final saved data kinds for this project. They are normalized transiently toward an Alpaca-like trade shape, consumed by `okx_crypto_market_data`, and aggregated into `crypto_liquidity_bar`.
+
+- Raw trade preview shape: `instId`, `side`, `sz`, `px`, `source`, `tradeId`, `ts`.
+- Transient normalized shape: `data_kind`, `source`, `symbol`, `timestamp_utc`, `timestamp_et`, `trade_id`, `side`, `price`, `size`, `notional`.
+- Persistence rule: keep only run-local cleaned transient JSONL while building liquidity bars; do not save standalone `crypto_trade.csv` by default.
+- Reason: `crypto_liquidity_bar` contains the accepted trade-derived final features, so saving both duplicates storage.
 
 ### `crypto_liquidity_bar`
 

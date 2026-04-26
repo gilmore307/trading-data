@@ -24,7 +24,7 @@ templates/data_kinds/
 | Source | Folder | Final saved data kinds | Notes |
 |---|---|---|---|
 | Alpaca Market Data API | `alpaca/` | `equity_bar`, `equity_liquidity_bar`, `equity_news` | Raw trades/quotes are transient inputs for `equity_liquidity_bar`; snapshots are non-final until accepted. |
-| OKX Market Data API | `okx/` | `crypto_bar`, `crypto_trade`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
+| OKX Market Data API | `okx/` | `crypto_bar`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; raw trades are transient inputs to liquidity bars and quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
 
 ## Source README Fields
 

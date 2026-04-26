@@ -12,6 +12,7 @@ dependencies = []
 [project.scripts]
 trading-data-source-availability = "trading_data.source_availability.__main__:main"
 trading-data-macro-data = "trading_data.data_sources.macro_data.__main__:main"
+trading-data-source-interfaces = "trading_data.source_interfaces.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

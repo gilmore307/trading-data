@@ -70,6 +70,31 @@ Use this implementation path to discover actual source formats before accepting 
 | ETF issuers | Holdings rows/snapshots, fund metadata, constituent weights. | Usually public web/file downloads. | No universal API; implement issuer-specific adapters and source URL/as-of tracking. |
 | Federal Reserve FOMC page | Meetings, statements, minutes, SEP markers. | Public web. | No stable JSON API confirmed; preserve source URL and retrieval timestamp. |
 
+
+## Provider/Data-Kind Interface Layer
+
+The source inventory now has an executable provider/data-kind layer under `src/trading_data/source_interfaces/`. This is separate from source-level smoke probes: it maps each obtainable `data_kind` to a concrete source, bundle, endpoint family, access rule, and bounded smoke request.
+
+Common commands:
+
+```bash
+PYTHONPATH=src python3 -m trading_data.source_interfaces --list
+PYTHONPATH=src python3 -m trading_data.source_interfaces --source alpaca
+PYTHONPATH=src python3 -m trading_data.source_interfaces --source okx
+PYTHONPATH=src python3 -m trading_data.source_interfaces --source sec_company_financials
+PYTHONPATH=src python3 -m trading_data.source_interfaces --source thetadata
+```
+
+Live interface reports write under ignored `data/storage/source_interfaces/` and contain sanitized endpoint/status/shape/sample evidence only.
+
+Current API-level findings:
+
+- Alpaca live checks succeeded for `equity_bar`, `equity_trade`, `equity_quote`, `equity_snapshot`, and `equity_news` using the data API endpoint. Response shapes include bars (`t/o/h/l/c/v/vw/n`), trades (`t/p/s/x/i/c/z`), quotes (`t/bp/bs/bx/ap/as/ax/c/z`), snapshots (`latestTrade`, `latestQuote`, `minuteBar`, `dailyBar`, `prevDailyBar`), and news (`headline`, `source`, `url`, `symbols`, timestamps, summary/content/image metadata).
+- OKX live checks succeeded for `crypto_bar`, `crypto_trade`, `crypto_quote`, and `crypto_order_book`. OKX bar rows are positional arrays; trades, tickers, and books are JSON objects under `data[]`.
+- SEC EDGAR live checks succeeded for submissions, company facts, company concept, and XBRL frames using Apple CIK / Assets as bounded smoke examples. Companyfacts can be very large, so production code should request only needed concepts or normalize streamed/segmented facts.
+- ThetaData endpoint families are cataloged for option contracts, trades, quotes, NBBO, OHLC, EOD, open interest, implied volatility, Greeks, trade Greeks, and snapshots, but live checks are blocked until Theta Terminal is reachable on `127.0.0.1:25510` and entitlement is confirmed.
+- ETF holdings and official macro release calendars remain adapter-specific web/file sources; no universal API should be assumed.
+
 ## Registered Data Kind Groups
 
 Initial `data_kind` rows are registered in `trading-main` for:

@@ -12,7 +12,7 @@ from typing import Any
 
 
 DEFAULT_TIMEOUT_SECONDS = 8
-MAX_RESPONSE_BYTES = 192_000
+MAX_RESPONSE_BYTES = 5_000_000
 
 
 @dataclass(frozen=True)

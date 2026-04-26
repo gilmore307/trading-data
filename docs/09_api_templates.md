@@ -23,6 +23,8 @@ These templates are drafts, not accepted schemas. Stable field names, statuses, 
 
 `task_key.json` and `completion_receipt.json` should stay small. Add a field only when manager, runner, bundle code, or receipt readers actually consume it. Provider documentation URLs, explanatory notes, and source research details belong in registry rows, provider docs, or the bundle README, not runtime JSON.
 
+A task key is stable across many invocations, including periodic or scheduled tasks. Per-run values do not belong in the task key; they belong in completion receipt `runs[]`.
+
 ## Bundle Design Order
 
 For each source bundle, design in this order:
@@ -45,7 +47,7 @@ src/trading_data/data_sources/<bundle>/
   pipeline.py
 ```
 
-`pipeline.py` should expose one public `run(...)` entry point and keep four internal step functions:
+`pipeline.py` should expose one public `run(task_key, run_id=...)` entry point and keep four internal step functions:
 
 - `fetch(...)` retrieves source data and writes raw development files.
 - `clean(...)` normalizes raw files into cleaned outputs.
@@ -67,8 +69,8 @@ Every bundle design should answer:
 - What historical range limits or snapshot semantics apply?
 - What raw files are produced?
 - What cleaned outputs are produced?
-- What files are saved under `data/storage/<task-or-run-id>/`?
-- What receipt fields prove success, partial success, or failure?
+- What files are saved under `data/storage/<task-id>/runs/<run-id>/`?
+- What run receipt fields prove success or failure?
 - Which fixtures cover expected and edge-case responses?
 
 ## Bundle-Specific Notes

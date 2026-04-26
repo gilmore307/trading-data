@@ -488,3 +488,26 @@ This prevents over-designed templates and keeps manager-generated task keys easy
 - Bundle-specific details remain in README/spec templates.
 - Task key bundle-specific inputs should usually go under `params`.
 - New runtime JSON fields require a clear consumer.
+
+## D023 - Stable task keys may have many runs
+
+Date: 2026-04-26
+
+### Context
+
+The user clarified that one task may have multiple runs, for example when it is periodic or scheduled. The task key should remain fixed while run-specific data changes each invocation.
+
+### Decision
+
+Keep task keys stable. Record each invocation as an entry in task-level completion receipt `runs[]`, with run id, status, timestamps, output directory, outputs, row counts, and error.
+
+### Rationale
+
+This keeps the task definition stable and lets manager compare or inspect runs without creating a new task key for every scheduled invocation.
+
+### Consequences
+
+- `task_key.json` uses `output_root`.
+- Run outputs live under `data/storage/<task-id>/runs/<run-id>/`.
+- `completion_receipt.json` lives at task level and contains `runs[]`.
+- `pipeline.py` receives `run_id` separately from the task key.

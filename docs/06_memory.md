@@ -24,3 +24,4 @@
 - API-specific source bundles should be designed from `trading-main/templates/data_tasks/` before code: task key, bundle README, fetch spec, clean spec, save spec, completion receipt, and fixture policy. `docs/09_api_templates.md` owns the local application guide.
 - Source bundles should default to one `pipeline.py` with `fetch`, `clean`, `save`, and `write_receipt` functions. Bundle-specific API details belong in each bundle README; split step functions into separate modules only when complexity justifies it.
 - Keep `task_key.json` and `completion_receipt.json` minimal. Do not put provider documentation URLs or other non-consumed metadata in runtime JSON; use registry/provider docs or bundle README/specs instead.
+- Data task keys are stable across periodic/scheduled runs. Per-run evidence belongs in `completion_receipt.json` under `runs[]`, with outputs under `data/storage/<task-id>/runs/<run-id>/`.

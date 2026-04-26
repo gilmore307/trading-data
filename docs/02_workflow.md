@@ -64,7 +64,7 @@ flowchart TD
 
 The manager-issued task key file should eventually include at least:
 
-- task identity and schema version;
+- stable task identity;
 - requested acquisition script or script bundle;
 - target data domain;
 - provider/source identifiers;
@@ -73,9 +73,9 @@ The manager-issued task key file should eventually include at least:
 - source credential aliases or confirmation that no credential is required;
 - provider-specific parameters;
 - idempotency/replay key;
-- development output destination under `data/storage/`, plus future storage SQL destination/partition expectations when contracts exist;
+- stable development output root under `data/storage/<task-id>/`, plus future storage SQL destination/partition expectations when contracts exist;
 - validation expectations;
-- development completion receipt destination under `data/storage/`, plus future durable receipt destination when contracts exist;
+- task-level development completion receipt destination under `data/storage/<task-id>/completion_receipt.json`, plus future durable receipt destination when contracts exist;
 - priority, deadline, cancellation, and retry expectations when manager scheduling supports them.
 
 The task key file is a contract surface, not an implementation shortcut. Its exact schema must be accepted through `trading-main` before code treats it as stable.
@@ -97,6 +97,25 @@ Before implementation creates a source bundle folder, the bundle should be desig
 
 This gate keeps API-specific requirements explicit before code lands while avoiding premature four-file bundle sprawl.
 
+## Task Runs
+
+A task key is stable. A scheduled or periodic task may run many times with the same task key. Each invocation is a data task run with its own `run_id`, run output directory, status, row counts, and error evidence.
+
+Development output layout should follow:
+
+```text
+data/storage/<task-id>/
+  task_key.json
+  completion_receipt.json
+  runs/
+    <run-id>/
+      raw/
+      cleaned/
+      saved/
+```
+
+The task-level completion receipt should contain `runs[]` so manager can inspect every run without changing the task key.
+
 ## Development Storage Rule
 
 During development, `trading-data` must not write task outputs into SQL by default. Use the registered development local storage root instead:
@@ -105,7 +124,7 @@ During development, `trading-data` must not write task outputs into SQL by defau
 data/storage/
 ```
 
-This directory is ignored by Git except for README files. It is intentionally easy to inspect, clear, and recreate. Development outputs, temporary raw responses, cleaned files, manifests, and task receipts should be grouped by task/run inside this root when implementation begins.
+This directory is ignored by Git except for README files. It is intentionally easy to inspect, clear, and recreate. Development outputs, temporary raw responses, cleaned files, manifests, and task receipts should be grouped by stable task id and run id inside this root when implementation begins.
 
 SQL writes are future durable-storage behavior and should require an accepted `trading-storage` contract or an explicitly guarded integration/smoke path.
 

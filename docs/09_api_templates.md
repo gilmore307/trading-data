@@ -82,13 +82,21 @@ Initial bundle planning names remain:
 - `alpaca_bars`
 - `alpaca_liquidity`
 - `alpaca_news`
-- `thetadata_option_1m_bundle`
-- `thetadata_option_snapshot_bundle`
+- `thetadata_option_primary_tracking`
+- `thetadata_option_event_timeline`
+- `thetadata_option_selection_snapshot`
 - `okx_crypto_market_data`
 - `macro_data`
 - `calendar_discovery`
 - `etf_holdings`
 - `sec_company_financials`
+
+
+ThetaData option acquisition is intentionally split by use case, not endpoint family:
+
+- `thetadata_option_primary_tracking` supplements equity bars/liquidity by selecting one primary option contract and tracking it at the same research grain.
+- `thetadata_option_event_timeline` produces news-like timestamped option activity events.
+- `thetadata_option_selection_snapshot` captures point-in-time option-chain information visible when an equity signal needs to choose a contract.
 
 `macro_data` is the single macro acquisition bundle. It stays clear by requiring task params to name the concrete provider/source, dataset/release/series, cadence, period, and output target. For source consistency, FRED should be used only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups, not as a duplicate path for official BLS/BEA/Census/Treasury data.
 

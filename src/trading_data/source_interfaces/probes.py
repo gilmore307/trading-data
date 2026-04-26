@@ -126,10 +126,10 @@ def _probe_okx(interface: DataKindInterface, client: HttpClient) -> ProbeResult:
 def _probe_thetadata(interface: DataKindInterface, client: HttpClient) -> ProbeResult:
     secret = load_secret_alias("thetadata")
     summary = public_secret_summary(secret)
-    path = interface.endpoint_kind.split(" ", 1)[1]
-    # Use a cheap terminal health/data-kind route. Historical endpoints need exact
-    # contract params; if terminal is unreachable, this records the real blocker.
-    http = client.get("http://127.0.0.1:25510" + path, params={k: str(v) for k, v in interface.smoke_params.items()})
+    base = "http://127.0.0.1:25503"
+    endpoint = interface.endpoint_kind.split(" ", 1)[1]
+    params = _thetadata_params(interface)
+    http = client.get(base + endpoint, params=params)
     if http.status is None:
         return ProbeResult(
             source=interface.source,
@@ -141,16 +141,51 @@ def _probe_thetadata(interface: DataKindInterface, client: HttpClient) -> ProbeR
             endpoint=sanitize_url(http.url),
             http_status=http.status,
             secret_alias=summary,
-            skipped_reason="Theta Terminal not reachable on 127.0.0.1:25510",
+            skipped_reason="Theta Terminal not reachable on 127.0.0.1:25503",
             error_type=http.error_type,
             error_message=http.error_message,
             notes=list(interface.notes),
         )
-    try:
-        payload = _json(http)
-    except json.JSONDecodeError:
-        payload = {"text_sample": http.text()[:240]}
+    payload = _json(http)
+    if http.status == 403 and "professional subscription" in http.text().lower():
+        return ProbeResult(
+            source=interface.source,
+            status="skipped",
+            available=False,
+            data_kind_candidates=[interface.data_kind],
+            access=interface.access,
+            docs_url=interface.docs_url or "",
+            endpoint=sanitize_url(http.url),
+            http_status=http.status,
+            secret_alias=summary,
+            skipped_reason="ThetaData account entitlement requires professional subscription",
+            error_type=http.error_type,
+            error_message="entitlement blocked",
+            response_shape_keys=shape_keys(payload),
+            sample_rows=_safe_samples(payload, ()),
+            notes=list(interface.notes),
+        )
     return _result(interface, http, payload, row_path=("response",), secret_alias=summary)
+
+
+def _thetadata_params(interface: DataKindInterface) -> dict[str, str]:
+    # Known liquid AAPL option/date selected from live list/contracts smoke so
+    # history trade/quote/OHLC endpoints return real rows under STANDARD options.
+    contract = {
+        "symbol": "AAPL",
+        "expiration": "2026-05-15",
+        "strike": "270.000",
+        "right": "call",
+        "format": "json",
+    }
+    one_day = {"start_date": "2026-04-24", "end_date": "2026-04-24"}
+    if interface.data_kind == "option_contract":
+        return {"symbol": "AAPL", "date": "2026-04-24", "format": "json"}
+    if interface.data_kind in {"option_trade", "option_quote", "option_nbbo", "option_ohlc", "option_eod", "option_open_interest", "option_greeks_first_order", "option_greeks_second_order", "option_greeks_third_order", "option_trade_greeks"}:
+        return {**contract, **one_day}
+    if interface.data_kind in {"option_implied_volatility", "option_snapshot"}:
+        return {"symbol": "AAPL", "expiration": "*", "format": "json"}
+    return {k: str(v) for k, v in interface.smoke_params.items()}
 
 
 def _probe_sec(interface: DataKindInterface, client: HttpClient, *, sec_user_agent: str) -> ProbeResult:

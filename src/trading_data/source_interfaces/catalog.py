@@ -64,57 +64,57 @@ INTERFACES: dict[str, DataKindInterface] = {
     ),
     # ThetaData local terminal endpoints. These require the local terminal.
     "option_contract": DataKindInterface(
-        "option_contract", "thetadata", "thetadata_option_1m_bundle", "GET /v2/list/contracts/option/quote",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL", "exp": "20240119"},
-        ("Requires Theta Terminal on localhost:25510 and entitlement validation.",),
+        "option_contract", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/list/contracts/quote",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL", "date": "2026-04-24"},
+        ("Requires Theta Terminal on localhost:25503 and entitlement validation.",),
     ),
     "option_trade": DataKindInterface(
-        "option_trade", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/trade",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_trade", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/trade",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_quote": DataKindInterface(
-        "option_quote", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/quote",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_quote", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/quote",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_nbbo": DataKindInterface(
-        "option_nbbo", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/nbbo",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_nbbo", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/trade_quote",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_ohlc": DataKindInterface(
-        "option_ohlc", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/ohlc",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL", "ivl": "60000"},
+        "option_ohlc", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/ohlc",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL", "start_date": "2026-04-24", "end_date": "2026-04-24"},
     ),
     "option_eod": DataKindInterface(
-        "option_eod", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/eod",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_eod", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/eod",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_open_interest": DataKindInterface(
-        "option_open_interest", "thetadata", "thetadata_option_snapshot_bundle", "GET /v2/hist/option/open_interest",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_open_interest", "thetadata", "thetadata_option_snapshot_bundle", "GET /v3/option/history/open_interest",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_implied_volatility": DataKindInterface(
-        "option_implied_volatility", "thetadata", "thetadata_option_snapshot_bundle", "GET /v2/bulk_snapshot/option/implied_volatility",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_implied_volatility", "thetadata", "thetadata_option_snapshot_bundle", "GET /v3/option/snapshot/greeks/implied_volatility",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_greeks_first_order": DataKindInterface(
-        "option_greeks_first_order", "thetadata", "thetadata_option_snapshot_bundle", "GET /v2/bulk_snapshot/option/greeks",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_greeks_first_order", "thetadata", "thetadata_option_snapshot_bundle", "GET /v3/option/snapshot/greeks/first_order",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_greeks_second_order": DataKindInterface(
-        "option_greeks_second_order", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/greeks_second_order",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_greeks_second_order", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/greeks/second_order",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_greeks_third_order": DataKindInterface(
-        "option_greeks_third_order", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/greeks_third_order",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_greeks_third_order", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/greeks/third_order",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_trade_greeks": DataKindInterface(
-        "option_trade_greeks", "thetadata", "thetadata_option_1m_bundle", "GET /v2/hist/option/trade_greeks",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_trade_greeks", "thetadata", "thetadata_option_1m_bundle", "GET /v3/option/history/trade_greeks/first_order",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_snapshot": DataKindInterface(
-        "option_snapshot", "thetadata", "thetadata_option_snapshot_bundle", "GET /v2/snapshot/option/quote",
-        "https://http-docs.thetadata.us/", "local-terminal", {"root": "AAPL"},
+        "option_snapshot", "thetadata", "thetadata_option_snapshot_bundle", "GET /v3/option/snapshot/quote",
+        "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     # SEC EDGAR open APIs.
     "sec_submission": DataKindInterface(

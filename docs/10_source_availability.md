@@ -92,8 +92,14 @@ Current API-level findings:
 - Alpaca live checks succeeded for `equity_bar`, `equity_trade`, `equity_quote`, `equity_snapshot`, and `equity_news` using the data API endpoint. Response shapes include bars (`t/o/h/l/c/v/vw/n`), trades (`t/p/s/x/i/c/z`), quotes (`t/bp/bs/bx/ap/as/ax/c/z`), snapshots (`latestTrade`, `latestQuote`, `minuteBar`, `dailyBar`, `prevDailyBar`), and news (`headline`, `source`, `url`, `symbols`, timestamps, summary/content/image metadata).
 - OKX live checks succeeded for `crypto_bar`, `crypto_trade`, `crypto_quote`, and `crypto_order_book`. OKX bar rows are positional arrays; trades, tickers, and books are JSON objects under `data[]`.
 - SEC EDGAR live checks succeeded for submissions, company facts, company concept, and XBRL frames using Apple CIK / Assets as bounded smoke examples. Companyfacts can be very large, so production code should request only needed concepts or normalize streamed/segmented facts.
-- ThetaData endpoint families are cataloged for option contracts, trades, quotes, NBBO, OHLC, EOD, open interest, implied volatility, Greeks, trade Greeks, and snapshots, but live checks are blocked until Theta Terminal is reachable on `127.0.0.1:25510` and entitlement is confirmed.
+- ThetaData Terminal was installed/running locally outside the repo, currently serving v3 on `127.0.0.1:25503`. Live checks succeeded for option contracts, trades, quotes, trade+quote/NBBO, OHLC, EOD, open interest, implied volatility, first-order Greeks, and snapshots. Second-order Greeks, third-order Greeks, and trade Greeks returned entitlement blocks requiring a professional ThetaData subscription; the current account is options STANDARD.
 - ETF holdings and official macro release calendars remain adapter-specific web/file sources; no universal API should be assumed.
+
+
+
+### ThetaData local runtime note
+
+ThetaData v3 requires Java 21+ and a local Theta Terminal. The local runtime is intentionally outside the Git repository under `/root/tools/thetadata-terminal/`; credentials are generated from `/root/secrets/thetadata.json` into a local `creds.txt` with `0600` permissions and must never be committed. The current terminal config serves REST on `127.0.0.1:25503/v3`.
 
 ## Registered Data Kind Groups
 

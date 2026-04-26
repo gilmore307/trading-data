@@ -307,7 +307,7 @@ def probe_thetadata(client: HttpClient, sec_user_agent: str) -> ProbeResult:
     del sec_user_agent
     candidate = SOURCES["thetadata"]
     secret = load_secret_alias("thetadata")
-    result = client.get("http://127.0.0.1:25510/v2/list/roots/option")
+    result = client.get("http://127.0.0.1:25503/v3/option/list/symbols", params={"format": "json"})
     if result.status is None:
         return ProbeResult(
             source=candidate.source,
@@ -319,7 +319,7 @@ def probe_thetadata(client: HttpClient, sec_user_agent: str) -> ProbeResult:
             endpoint=sanitize_url(result.url),
             http_status=result.status,
             secret_alias=public_secret_summary(secret),
-            skipped_reason="Theta Terminal not reachable on 127.0.0.1:25510",
+            skipped_reason="Theta Terminal not reachable on 127.0.0.1:25503",
             error_type=result.error_type,
             error_message=result.error_message,
         )

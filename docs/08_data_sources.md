@@ -93,7 +93,8 @@ Current registered provider config and source-of-truth surfaces:
 Source connector scripts should be split by historical data type and usage bundle so `trading-manager` can freely compose data tasks through task key files. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
 
 - Alpaca bars: one bars-only script/bundle.
-- Alpaca market events: one bundle for quotes, trades, and news because these are commonly consumed together; outputs remain separable.
+- Alpaca quotes/trades: one bundle for quotes and trades, excluding news.
+- Alpaca news: one standalone bundle for stock/ETF news because request shape, cadence, text/article metadata, and downstream usage differ from quotes/trades.
 - ThetaData option 1-minute bundle: one bundle for `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, and `open_interest_1m`.
 - ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
 - OKX bars: one bars-only script/bundle.
@@ -122,6 +123,18 @@ Bundle design must document:
 - final cleaned development outputs only, with durable SQL mapping deferred to storage contracts;
 - development-only tiny sanitized SEC response fixtures, removed or replaced with minimal synthetic contract fixtures before production hardening.
 
+
+## Alpaca News Bundle Rule
+
+News is intentionally separated from Alpaca quote/trade market events.
+
+Accepted Alpaca bundle keys are:
+
+- `alpaca_bars` for bars;
+- `alpaca_quotes_trades` for quotes and trades;
+- `alpaca_news` for news.
+
+`alpaca_news` must document article timestamps in America/New_York for research workflow metadata, provider publication timestamp semantics, symbols/entities covered, source/publisher fields, pagination, and rate-limit behavior. Task/run IDs should use `alpaca_news_task_...` and `alpaca_news_run_...` prefixes. Development should persist only final cleaned news outputs; tiny sanitized provider response fixtures are allowed only during development and should be replaced before production hardening.
 
 ## Macro Release Bundle Rule
 

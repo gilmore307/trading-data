@@ -78,7 +78,8 @@ Every bundle design should answer:
 Initial bundle planning names remain:
 
 - `alpaca_bars`
-- `alpaca_market_events`
+- `alpaca_quotes_trades`
+- `alpaca_news`
 - `thetadata_option_1m_bundle`
 - `thetadata_option_snapshot_bundle`
 - `okx_bars`

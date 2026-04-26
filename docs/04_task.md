@@ -40,6 +40,8 @@
 
 ## Recently Accepted
 
+- Implemented `alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` JSONL/CSV without full raw payload persistence.
+- Implemented `alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` JSONL/CSV without full raw payload persistence.
 - Implemented `alpaca_quotes_trades` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves `equity_trade_bar_derived`, `equity_quote_bar_derived`, and `equity_microstructure_bar_derived` JSONL/CSV, and writes completion receipts without raw trade/quote persistence.
 - Decided raw high-volume Alpaca trade/quote rows must not be persisted by default; `alpaca_quotes_trades` should save ET-aligned aggregate/derived outputs and discard transient raw segments after aggregation unless a bounded debug artifact is explicitly approved.
 - Added provider/data-kind source interface catalog and smoke runner under `src/trading_data/source_interfaces/`; live checks now confirm Alpaca equity bars/trades/quotes/snapshots/news, OKX crypto bars/trades/tickers/books, and SEC submissions/companyfacts/companyconcept/frames; ThetaData option endpoint families are cataloged but blocked until local Theta Terminal is reachable.

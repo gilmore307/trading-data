@@ -129,3 +129,11 @@ Exact source-specific parameter dictionaries remain open work. They should be de
 - `equity_microstructure_bar_derived` — interval-level trade/quote combined features such as trade VWAP vs average quote mid.
 
 Current implementation supports `1Min`, `5Min`, `15Min`, `1Hour`, and `1Day` buckets. Raw Alpaca trades/quotes are not written as saved outputs.
+
+## Alpaca bars and news implementations
+
+`src/trading_data/data_sources/alpaca_bars/` now fetches Alpaca stock/ETF bars, normalizes timestamps to `America/New_York`, and saves cleaned `equity_bar` JSONL/CSV outputs.
+
+`src/trading_data/data_sources/alpaca_news/` now fetches Alpaca news, normalizes `created_at`/`updated_at` to `America/New_York`, and saves cleaned `equity_news` JSONL/CSV outputs.
+
+Both bundles use bounded pagination, sanitized request manifests, completion receipts, and no default full raw provider payload persistence.

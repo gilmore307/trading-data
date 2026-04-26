@@ -12,3 +12,4 @@
 - Data-source connectors are the first implementation layer; provider tokens/API keys live under `/root/secrets/` and are referenced by aliases, not stored in this repository.
 - `trading-data` input is a task instruction from `trading-manager`; output is cleaned data artifacts plus manifests/ready signals after contracts are accepted.
 - OKX is the first registered crypto provider config surface. Use `trading-main` config alias `okx` / `OKX_SECRET_ALIAS`, backed by `/root/secrets/okx.json` with fields `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, and `api_key_remark_name`; do not copy secret values into this repo.
+- Alpaca is the first registered stock/ETF data provider config surface for bars, quotes, trades, and news. Use `trading-main` config alias `alpaca` / `ALPACA_SECRET_ALIAS`, backed by `/root/secrets/alpaca.json` with fields `api_key`, `secret_key`, and `endpoint`; do not copy secret values into this repo.

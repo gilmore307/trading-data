@@ -78,6 +78,7 @@ Current registered provider config surface:
 | Provider | Purpose | Registered config keys | Secret aliases / values | Notes |
 |---|---|---|---|---|
 | OKX | Crypto data acquisition and later trading access. | `OKX_SECRET_ALIAS` | source alias `okx`; JSON path `/root/secrets/okx.json`; JSON keys `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, `api_key_remark_name` | Secret values and credential metadata live in `/root/secrets/okx.json` and must not be copied into this repository. |
+| Alpaca | Stock and ETF bars, quotes, trades, and news data acquisition. | `ALPACA_SECRET_ALIAS` | source alias `alpaca`; JSON path `/root/secrets/alpaca.json`; JSON keys `api_key`, `secret_key`, `endpoint` | Secret values and endpoint config live in `/root/secrets/alpaca.json` and must not be copied into this repository. |
 
 `trading-main` owns the registry rows for this source-level alias, registered JSON key names, and non-secret metadata. `trading-data` may use the alias once implementation has a connector boundary and default tests do not require live credentials.
 
@@ -114,7 +115,7 @@ A provider/source connector is acceptable only when:
 ## Open Provider Decisions
 
 - Which non-OKX provider(s), if any, support market board data?
-- Which provider(s) support non-crypto instrument data?
+- Which non-Alpaca provider(s), if any, support non-crypto instrument data?
 - Whether OKX option data coverage is sufficient for the intended option data domain, or another options provider is needed.
 - Which additional source-level secret aliases should be registered in `trading-main`?
 - What live-call guardrail is acceptable for manual provider smoke tests?

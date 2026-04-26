@@ -221,3 +221,25 @@ Provider access needs to be explicit before source connectors depend on it, but 
 - OKX credential JSON includes `allowed_ip_address` for `66.206.20.138` and `api_key_remark_name` for `OpenClaw`; these are part of the source-level OKX credential bundle.
 - Default tests must still avoid live OKX calls unless explicitly guarded.
 - Trading behavior remains outside `trading-data`; execution usage belongs to `trading-execution`.
+
+## D011 - Alpaca is the first registered stock and ETF data provider config surface
+
+Date: 2026-04-26
+
+### Context
+
+The user provided Alpaca paper API credentials and endpoint for acquiring stock and ETF bars, quotes, trades, and news.
+
+### Decision
+
+Use Alpaca as the first registered stock/ETF data provider config surface. Store credentials and endpoint in `/root/secrets/alpaca.json`; use `trading-main` registry config row `ALPACA_SECRET_ALIAS` for the source-level alias.
+
+### Rationale
+
+Alpaca directly supports the initial non-crypto instrument data needs. Keeping its credentials and endpoint in one source JSON file follows the accepted source-secret pattern.
+
+### Consequences
+
+- Alpaca JSON fields are `api_key`, `secret_key`, and `endpoint`.
+- Default tests must not require live Alpaca credentials or network calls.
+- Any Alpaca connector implementation must document rate limits, timestamp semantics, and fixture/live-test policy before acceptance.

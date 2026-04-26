@@ -32,6 +32,7 @@
 
 ## Recently Accepted
 
+- Recorded Alpaca as first registered stock/ETF data provider config surface using source-level secret alias `alpaca`.
 - Recorded OKX as first registered crypto provider config surface using a `trading-main` source-level secret alias and non-secret metadata.
 - Added optional data-domain and data-source docs for the three data/model lanes and provider connection boundary.
 - Created initial `trading-data` docs spine and repository boundary.

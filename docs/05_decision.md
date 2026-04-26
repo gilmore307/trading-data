@@ -265,3 +265,25 @@ ThetaData's terminal-based credential requirement is different from source-level
 - `trading-data` may plan options data around ThetaData.
 - No ThetaData credentials or `creds.txt` are stored in this repository.
 - Implementation remains blocked on connector/JAR/credential layout policy.
+
+## D013 - Economic data providers are registered source-level API key surfaces
+
+Date: 2026-04-26
+
+### Context
+
+The user provided API keys for FRED, Census, BEA, and BLS. These providers support macroeconomic, demographic, labor, and market-context data acquisition for data-domain planning.
+
+### Decision
+
+Use source-level secret aliases for FRED, Census, BEA, and BLS. Each source JSON uses the shared key `api_key`.
+
+### Rationale
+
+These providers match the standard source-level JSON secret pattern and should be available for later data-source connector implementation without exposing key values in Git.
+
+### Consequences
+
+- Registered config aliases are `FRED_SECRET_ALIAS`, `CENSUS_SECRET_ALIAS`, `BEA_SECRET_ALIAS`, and `BLS_SECRET_ALIAS`.
+- Default tests must not require live credentials or network calls.
+- Connector implementation must document rate limits, timestamp semantics, and fixture/live-test policy before acceptance.

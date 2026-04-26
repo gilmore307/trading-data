@@ -119,3 +119,13 @@ Initial `data_kind` rows are registered in `trading-main` for:
 - FRED-native and ALFRED/vintage data.
 
 Exact source-specific parameter dictionaries remain open work. They should be defined before the first connector implementation for each source.
+
+## Alpaca quotes/trades implementation
+
+`src/trading_data/data_sources/alpaca_quotes_trades/` now contains the first aggregate-only implementation. It requests Alpaca trades and quotes with bounded pagination, treats raw rows as transient run inputs, aligns intervals in `America/New_York`, and persists only derived aggregate outputs:
+
+- `equity_trade_bar_derived` — trade count, volume, notional, OHLC from trades, VWAP, first/last trade timestamps.
+- `equity_quote_bar_derived` — quote count, average bid/ask/mid/spread, min/max spread, average sizes, last quote state.
+- `equity_microstructure_bar_derived` — interval-level trade/quote combined features such as trade VWAP vs average quote mid.
+
+Current implementation supports `1Min`, `5Min`, `15Min`, `1Hour`, and `1Day` buckets. Raw Alpaca trades/quotes are not written as saved outputs.

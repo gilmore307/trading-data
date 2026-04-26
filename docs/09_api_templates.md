@@ -93,3 +93,7 @@ Initial bundle planning names remain:
 `macro_data` is the single macro acquisition bundle. It stays clear by requiring task params to name the concrete provider/source, dataset/release/series, cadence, period, and output target. For source consistency, FRED should be used only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups, not as a duplicate path for official BLS/BEA/Census/Treasury data.
 
 `sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `sec_company_financials_task_...` and `sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.
+
+## Implemented bundle CLIs
+
+- `trading-data-alpaca-quotes-trades` / `python -m trading_data.data_sources.alpaca_quotes_trades` runs the aggregate-only Alpaca quotes/trades pipeline.

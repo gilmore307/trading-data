@@ -10,6 +10,7 @@ Reusable template files live in `trading-main/templates/data_tasks/`. This file 
 |---|---|
 | `templates/data_tasks/task_key.json` | Draft the manager-issued task key shape for a bundle. |
 | `templates/data_tasks/bundle_readme.md` | Draft the bundle README and boundary. |
+| `templates/data_tasks/pipeline.py` | Default single-file bundle implementation template. |
 | `templates/data_tasks/fetch_spec.md` | Capture API/source fetch requirements. |
 | `templates/data_tasks/clean_spec.md` | Capture normalization and validation-prep requirements. |
 | `templates/data_tasks/save_spec.md` | Capture development-save layout and future durable mapping. |
@@ -28,7 +29,7 @@ For each source bundle, design in this order:
 4. Fill the save spec for development files under `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT`.
 5. Fill the completion receipt template for both success and failure evidence.
 6. Fill the fixture policy before writing default tests.
-7. Only then create implementation files under the accepted source package layout.
+7. Only then create `pipeline.py` under the accepted source package layout.
 
 ## Future Source Folder Shape
 
@@ -37,20 +38,17 @@ When implementation starts, each bundle should eventually have a folder like:
 ```text
 src/trading_data/data_sources/<bundle>/
   README.md
-  fetch.py
-  clean.py
-  save.py
-  receipt.py
+  pipeline.py
 ```
 
-The four step modules must remain separate:
+`pipeline.py` should expose one public `run(...)` entry point and keep four internal step functions:
 
-- `fetch.py` retrieves source data and writes raw development files.
-- `clean.py` normalizes raw files into cleaned outputs.
-- `save.py` writes development outputs under `data/storage/`; durable SQL waits for storage contracts.
-- `receipt.py` emits success/failure completion receipts.
+- `fetch(...)` retrieves source data and writes raw development files.
+- `clean(...)` normalizes raw files into cleaned outputs.
+- `save(...)` writes development outputs under `data/storage/`; durable SQL waits for storage contracts.
+- `write_receipt(...)` emits success/failure completion receipts.
 
-A shared runner should orchestrate the steps from a task key so `trading-manager` does not need to know bundle internals.
+A shared runner should call bundle `run(...)` from a task key so `trading-manager` does not need to know bundle internals. Split the step functions into separate modules only when a bundle becomes too large for one file.
 
 ## API-Specific Checklist
 

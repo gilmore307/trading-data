@@ -444,3 +444,25 @@ Provider/API requirements differ significantly. A template design gate keeps cre
 - `docs/09_api_templates.md` owns the component guide for applying the templates.
 - Source bundle folders should not be created as ad hoc scripts without filled API requirements.
 - Stable fields or status values discovered while filling templates must route through `trading-main` registry review.
+
+## D021 - Source bundles default to one pipeline file
+
+Date: 2026-04-26
+
+### Context
+
+The previous source folder plan used separate `fetch.py`, `clean.py`, `save.py`, and `receipt.py` modules for every bundle. The user approved simplifying this into one file per bundle by default while keeping the four processing stages as internal functions.
+
+### Decision
+
+Each bundle should start with one `pipeline.py` file containing `run(...)`, `fetch(...)`, `clean(...)`, `save(...)`, and `write_receipt(...)`. Bundle-specific API details belong in the bundle README. Split step functions into separate modules only when complexity justifies it.
+
+### Rationale
+
+One pipeline file keeps early development simple and makes manager invocation straightforward. Internal step functions preserve replay, test, and failure-evidence boundaries.
+
+### Consequences
+
+- Future source folder shape is `src/trading_data/data_sources/<bundle>/README.md` plus `pipeline.py`.
+- `trading-main/templates/data_tasks/pipeline.py` is the default implementation template.
+- The fetch/clean/save/receipt spec templates remain design documents, not required separate Python files.

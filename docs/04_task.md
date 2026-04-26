@@ -42,6 +42,7 @@
 
 ## Recently Accepted
 
+- Updated bundle implementation guidance to default to one `pipeline.py` file with four internal step functions and bundle-specific README details.
 - Added API template application guide for data source bundles and linked `trading-main/templates/data_tasks/`.
 - Changed development-stage task outputs from SQL writes to ignored local files under `data/storage/`.
 - Re-scoped macro acquisition from one broad bundle into per-release-event bundles based on publication time/cadence.

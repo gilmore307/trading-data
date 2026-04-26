@@ -100,7 +100,7 @@ Source connector scripts should be split by historical data type and usage bundl
 - Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
 
-These are historical acquisition boundaries. Realtime streaming and execution-time feeds remain out of scope for `trading-data`.
+These are historical acquisition boundaries. Realtime streaming and execution-time feeds remain out of scope for `trading-data`. Each bundle should start as one `pipeline.py` file with `fetch`, `clean`, `save`, and `write_receipt` functions; split files only when complexity justifies it. Bundle-specific API details belong in the bundle README.
 
 
 ## Macro Release Bundle Rule

@@ -92,9 +92,10 @@ Before implementation creates a source bundle folder, the bundle should be desig
 - clean/normalization requirements;
 - save/output requirements;
 - completion receipt shape;
-- fixture/live-call policy.
+- fixture/live-call policy;
+- default `pipeline.py` shape with `fetch`, `clean`, `save`, and `write_receipt` step functions.
 
-This gate keeps API-specific requirements explicit before code lands.
+This gate keeps API-specific requirements explicit before code lands while avoiding premature four-file bundle sprawl.
 
 ## Development Storage Rule
 

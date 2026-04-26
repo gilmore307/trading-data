@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json,tempfile,unittest
+import csv,json,tempfile,unittest
 from pathlib import Path
 from trading_data.source_availability.http import HttpResult
 
@@ -21,8 +21,10 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 tk={'task_id':'alpaca_bars_task_test','bundle':'alpaca_bars','params':{'symbol':'AAPL','timeframe':'1Day','start':'2024-01-02T00:00:00Z','end':'2024-01-03T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
                 r=p.run(tk,run_id='alpaca_bars_run_test',client=FakeBarsClient())
                 self.assertEqual(r.status,'succeeded')
-                row=json.loads((Path(tk['output_root'])/'runs/alpaca_bars_run_test/saved/equity_bar.jsonl').read_text().splitlines()[0])
+                with (Path(tk['output_root'])/'runs/alpaca_bars_run_test/saved/equity_bar.csv').open(newline='') as handle:
+                    row=next(csv.DictReader(handle))
                 self.assertEqual(row['timestamp_et'],'2024-01-02T00:00:00-05:00')
+                self.assertFalse((Path(tk['output_root'])/'runs/alpaca_bars_run_test/saved/equity_bar.jsonl').exists())
         finally: p.load_secret_alias=old
     def test_news_pipeline_et_timestamps(self):
         import trading_data.data_sources.alpaca_news.pipeline as p
@@ -32,7 +34,9 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 tk={'task_id':'alpaca_news_task_test','bundle':'alpaca_news','params':{'symbols':'AAPL','start':'2024-01-09T00:00:00Z','end':'2024-01-10T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
                 r=p.run(tk,run_id='alpaca_news_run_test',client=FakeNewsClient())
                 self.assertEqual(r.status,'succeeded')
-                row=json.loads((Path(tk['output_root'])/'runs/alpaca_news_run_test/saved/equity_news.jsonl').read_text().splitlines()[0])
+                with (Path(tk['output_root'])/'runs/alpaca_news_run_test/saved/equity_news.csv').open(newline='') as handle:
+                    row=next(csv.DictReader(handle))
                 self.assertEqual(row['created_at_et'],'2024-01-09T14:46:19-05:00')
+                self.assertFalse((Path(tk['output_root'])/'runs/alpaca_news_run_test/saved/equity_news.jsonl').exists())
         finally: p.load_secret_alias=old
 if __name__=='__main__': unittest.main()

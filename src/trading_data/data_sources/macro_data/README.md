@@ -22,7 +22,7 @@ Outputs are written under `output_root/runs/<run-id>/`:
 
 - `request_manifest.json` — sanitized endpoint/request evidence; no full raw response.
 - `cleaned/macro_data_rows.jsonl` and `cleaned/schema.json` — normalized transient cleaned rows/schema.
-- `saved/macro_data_rows.jsonl` and `saved/macro_data_rows.csv` — development final outputs.
+- `saved/macro_data_rows.csv` — development final output.
 - `completion_receipt.json` at task root — per-run status, row counts, output references, and errors.
 
 The bundle intentionally does not persist full raw/intermediate provider payloads

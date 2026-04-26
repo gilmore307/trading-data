@@ -1,6 +1,6 @@
 """Alpaca bars acquisition bundle."""
 from __future__ import annotations
-import csv,json,shutil
+import csv,json
 from dataclasses import asdict,dataclass,field
 from datetime import datetime,timezone
 from pathlib import Path
@@ -66,11 +66,11 @@ def clean(context,fetched):
     (context.cleaned_dir/'schema.json').write_text(json.dumps({'equity_bar':sorted({k for r in rows for k in r})},indent=2,sort_keys=True)+'\n')
     return StepResult('succeeded',[str(path),str(context.cleaned_dir/'schema.json')],{'equity_bar':len(rows)},details={'timezone':'America/New_York'})
 def save(context,clean_result):
-    context.saved_dir.mkdir(parents=True,exist_ok=True); refs=[]; src=context.cleaned_dir/'equity_bar.jsonl'; dst=context.saved_dir/src.name; shutil.copyfile(src,dst); refs.append(str(dst))
-    rows=[json.loads(l) for l in dst.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_bar.csv'; cols=sorted({k for r in rows for k in r})
+    context.saved_dir.mkdir(parents=True,exist_ok=True); refs=[]; src=context.cleaned_dir/'equity_bar.jsonl'
+    rows=[json.loads(l) for l in src.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_bar.csv'; cols=sorted({k for r in rows for k in r})
     with csvp.open('w',newline='') as h:
         w=csv.DictWriter(h,fieldnames=cols); w.writeheader(); w.writerows(rows)
-    refs.append(str(csvp)); return StepResult('succeeded',refs,dict(clean_result.row_counts))
+    refs.append(str(csvp)); return StepResult('succeeded',refs,dict(clean_result.row_counts),details={'format':'csv'})
 def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_result=None,error=None):
     context.receipt_path.parent.mkdir(parents=True,exist_ok=True); existing={'task_id':context.task_key.get('task_id'),'bundle':'alpaca_bars','runs':[]}
     if context.receipt_path.exists():

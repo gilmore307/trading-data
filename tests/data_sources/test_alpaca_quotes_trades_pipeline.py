@@ -76,7 +76,8 @@ class AlpacaQuotesTradesPipelineTests(unittest.TestCase):
                 pipeline.load_secret_alias = old
             self.assertEqual(result.status, 'succeeded')
             saved = Path(task_key['output_root']) / 'runs' / 'alpaca_quotes_trades_run_test' / 'saved'
-            self.assertTrue((saved / 'equity_liquidity_bar.jsonl').exists())
+            self.assertTrue((saved / 'equity_liquidity_bar.csv').exists())
+            self.assertFalse((saved / 'equity_liquidity_bar.jsonl').exists())
             self.assertFalse((saved / 'equity_trade_bar_derived.jsonl').exists())
             self.assertFalse((saved / 'equity_quote_bar_derived.jsonl').exists())
             self.assertFalse((saved / 'raw_trades.jsonl').exists())

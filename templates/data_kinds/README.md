@@ -1,13 +1,13 @@
-# Data Kind Catalog
+# Data Kind Templates
 
-This catalog tracks concrete data kinds that `trading-data` will actually use or save as final outputs. It is deliberately **not** a bundle list: bundles are execution
+This folder tracks concrete data kinds that `trading-data` will actually use or save as final CSV outputs. It is deliberately **not** a bundle list: bundles are execution
 boundaries, while cataloged data kinds here are the final/persisted categories available to tasks, validation, routing, and future storage mapping.
 
 ## Scope
 
 Only final used/saved data kinds belong as top-level entries here. High-volume raw provider rows such as raw trades and raw quotes should be documented only as transient source inputs under the final derived data kind that consumes them. Do not create top-level catalog entries for raw/transient data unless the user explicitly accepts that data kind as a saved output.
 
-## Catalog Fields
+## README Fields
 
 For each final data kind, record:
 
@@ -21,8 +21,16 @@ For each final data kind, record:
 - **Natural grain** — row granularity such as one saved bar, one article, one contract/day, or one interval aggregate.
 - **Request parameters** — required and important optional params.
 - **Pagination/range behavior** — pagination token, date segmentation, symbol segmentation, or source-specific range limits.
-- **Preview** — tiny sanitized sample row or shape from live smoke/implementation.
+- **Preview file** — small CSV sample file in this folder for the final saved format.
 - **Known caveats** — entitlements, exchange conditions, source quirks, large-volume risks, or production-hardening notes.
+
+## Preview Files
+
+Each final data kind should have a small CSV preview file beside this README. The preview is a template/sample of the final saved format, not a raw provider dump. Current previews:
+
+- `equity_bar.preview.csv`
+- `equity_liquidity_bar.preview.csv`
+- `equity_news.preview.csv`
 
 ## Alpaca
 
@@ -37,13 +45,17 @@ For each final data kind, record:
 - **Natural grain:** One OHLCV bar per symbol/timeframe/timestamp.
 - **Request parameters:** `symbol`, `timeframe`, `start`, `end`; optional `limit`, `max_pages`, `adjustment`, `feed`.
 - **Pagination/range behavior:** Alpaca `next_page_token`; implementation uses bounded `max_pages`.
-- **Preview:**
-
-```json
-{"data_kind":"equity_bar","symbol":"AAPL","timeframe":"1Day","timestamp_et":"2024-01-02T00:00:00-05:00","open":187.15,"high":188.44,"low":183.885,"close":185.64,"volume":82496943,"vwap":185.846233,"trade_count":1009074}
-```
+- **Preview file:** see `equity_bar.preview.csv`.
 
 - **Known caveats:** Provider timestamp is UTC; normalized output uses ET. Feed entitlement and full range limits still need broader testing.
+
+## Preview Files
+
+Each final data kind should have a small CSV preview file beside this README. The preview is a template/sample of the final saved format, not a raw provider dump. Current previews:
+
+- `equity_bar.preview.csv`
+- `equity_liquidity_bar.preview.csv`
+- `equity_news.preview.csv`
 
 ## Alpaca transient raw inputs
 
@@ -65,13 +77,17 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 - **Natural grain:** One symbol/timeframe ET interval aggregate.
 - **Request parameters:** Parent task uses `symbol`, `start`, `end`, `timeframe`; optional `limit`, `max_pages`, `feed`.
 - **Pagination/range behavior:** Aggregates paginated transient trades and quotes into one ET bucketed output.
-- **Preview:**
-
-```json
-{"data_kind":"equity_liquidity_bar","symbol":"AAPL","timeframe":"1Min","interval_start_et":"2024-01-02T09:30:00-05:00","trade_count":1000,"quote_count":1000,"trade_volume":53862,"trade_vwap":187.0966001819,"trade_open":187.18,"trade_high":187.25,"trade_low":186.35,"trade_close":187.06,"avg_bid":187.06611,"avg_ask":187.09592,"avg_mid":187.081015,"avg_spread":0.02981,"last_bid":187.0,"last_ask":187.05,"last_mid":187.025,"vwap_minus_avg_mid":0.0155851819}
-```
+- **Preview file:** see `equity_liquidity_bar.preview.csv`.
 
 - **Known caveats:** Current implementation is interval-level trade/quote aggregation, not tick-level previous-quote matching. Effective/realized spread, trade-sign rules, and time-weighted quote features need separate explicit design.
+
+## Preview Files
+
+Each final data kind should have a small CSV preview file beside this README. The preview is a template/sample of the final saved format, not a raw provider dump. Current previews:
+
+- `equity_bar.preview.csv`
+- `equity_liquidity_bar.preview.csv`
+- `equity_news.preview.csv`
 
 ## Alpaca non-final snapshot
 
@@ -88,10 +104,6 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 - **Natural grain:** One news article/item.
 - **Request parameters:** `symbols`, `start`, `end`; optional `limit`, `max_pages`.
 - **Pagination/range behavior:** Alpaca `next_page_token`; implementation uses bounded `max_pages`.
-- **Preview:**
-
-```json
-{"data_kind":"equity_news","id":36564250,"headline":"Bank Of America Predicts 10 2024 Market Surprises: From Booming IPOs To Japanese Equity Surge","source":"benzinga","author":"Piero Cingari","created_at_et":"2024-01-09T14:46:19-05:00","updated_at_et":"2024-01-09T14:46:19-05:00","symbols":["AAPL","EWJ","IHE","KBE","NVDA"],"summary":"Bank of America lists 10 market surprises...","url":"https://www.benzinga.com/...","image_count":3}
-```
+- **Preview file:** see `equity_news.preview.csv`.
 
 - **Known caveats:** Article text may be empty or provider-limited; URLs/images are external references and should be treated as source metadata, not local media assets.

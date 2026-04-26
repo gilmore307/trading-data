@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import json
 import math
-import shutil
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -282,10 +281,7 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     references = []
     for src in context.cleaned_dir.glob("*.jsonl"):
-        dst_jsonl = context.saved_dir / src.name
-        shutil.copyfile(src, dst_jsonl)
-        references.append(str(dst_jsonl))
-        rows = [json.loads(line) for line in dst_jsonl.read_text(encoding="utf-8").splitlines() if line.strip()]
+        rows = [json.loads(line) for line in src.read_text(encoding="utf-8").splitlines() if line.strip()]
         csv_path = context.saved_dir / (src.stem + ".csv")
         columns = sorted({key for row in rows for key in row.keys()})
         with csv_path.open("w", newline="", encoding="utf-8") as handle:
@@ -293,7 +289,7 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
             writer.writeheader()
             writer.writerows(rows)
         references.append(str(csv_path))
-    return StepResult("succeeded", references, dict(clean_result.row_counts), details={"raw_persistence": "not_persisted_by_default"})
+    return StepResult("succeeded", references, dict(clean_result.row_counts), details={"format": "csv", "raw_persistence": "not_persisted_by_default"})
 
 
 def write_receipt(context: BundleContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:

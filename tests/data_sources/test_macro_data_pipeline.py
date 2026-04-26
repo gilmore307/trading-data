@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 import tempfile
 import unittest
@@ -44,9 +45,10 @@ class MacroDataPipelineTests(unittest.TestCase):
             }
             result = run(task_key, run_id="macro_data_run_test", client=FakeMacroClient(payload))
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "macro_data_run_test" / "saved" / "macro_data_rows.jsonl"
+            saved = Path(task_key["output_root"]) / "runs" / "macro_data_run_test" / "saved" / "macro_data_rows.csv"
             self.assertTrue(saved.exists())
-            row = json.loads(saved.read_text().splitlines()[0])
+            with saved.open(newline="") as handle:
+                row = next(csv.DictReader(handle))
             self.assertEqual(row["source"], "bls")
             self.assertEqual(row["series_id"], "CUUR0000SA0")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())

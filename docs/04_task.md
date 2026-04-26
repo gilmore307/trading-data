@@ -40,14 +40,15 @@
 
 ## Recently Accepted
 
-- Refined `docs/11_data_kind_catalog.md` scope so top-level entries cover only final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
-- Added `docs/11_data_kind_catalog.md` as the concrete data-kind catalog separate from bundle docs; populated Alpaca bars, trades, quotes, derived aggregates, snapshot, and news with source/bundle/status/persistence/range/timestamp/preview details.
-- Implemented `alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` JSONL/CSV without full raw payload persistence.
-- Implemented `alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` JSONL/CSV without full raw payload persistence.
-- Implemented `alpaca_quotes_trades` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` JSONL/CSV, and writes completion receipts without raw trade/quote persistence.
+- Standardized final saved bundle outputs on CSV only; JSONL may remain a transient cleaned/run-local format but is no longer duplicated into saved outputs.
+- Refined `templates/data_kinds/README.md` scope so top-level entries cover only final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
+- Added `templates/data_kinds/README.md` as the concrete data-kind catalog separate from bundle docs; populated Alpaca bars, trades, quotes, derived aggregates, snapshot, and news with source/bundle/status/persistence/range/timestamp/preview details.
+- Implemented `alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` CSV without full raw payload persistence.
+- Implemented `alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` CSV without full raw payload persistence.
+- Implemented `alpaca_quotes_trades` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` CSV, and writes completion receipts without raw trade/quote persistence.
 - Decided raw high-volume Alpaca trade/quote rows must not be persisted by default; `alpaca_quotes_trades` should save ET-aligned aggregate/derived outputs and discard transient raw segments after aggregation unless a bounded debug artifact is explicitly approved.
 - Added provider/data-kind source interface catalog and smoke runner under `src/trading_data/source_interfaces/`; live checks now confirm Alpaca equity bars/trades/quotes/snapshots/news, OKX crypto bars/trades/tickers/books, and SEC submissions/companyfacts/companyconcept/frames; ThetaData option endpoint families are cataloged but blocked until local Theta Terminal is reachable.
-- Added the first API-backed `macro_data` acquisition bundle under `src/trading_data/data_sources/macro_data/`; it runs real bounded requests for BLS, Census, BEA, U.S. Treasury Fiscal Data, and FRED, normalizes rows, saves cleaned JSONL/CSV development outputs, and writes completion receipts without persisting full raw provider payloads by default.
+- Added the first API-backed `macro_data` acquisition bundle under `src/trading_data/data_sources/macro_data/`; it runs real bounded requests for BLS, Census, BEA, U.S. Treasury Fiscal Data, and FRED, normalizes rows, saves cleaned CSV development outputs, and writes completion receipts without persisting full raw provider payloads by default.
 - Added `src/trading_data/source_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `data/storage/source_availability/` and default tests use mocks/fixtures only.
 - Registered the initial source-availability `data_kind` inventory in `trading-main` and documented it in `docs/10_source_availability.md`.
 - Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.

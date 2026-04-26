@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import csv
 import json
-import shutil
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -254,10 +253,8 @@ def _normalize_rows(source: str, payload: Any) -> list[dict[str, Any]]:
 
 def save(context: BundleContext, clean_result: StepResult) -> StepResult:
     context.saved_dir.mkdir(parents=True, exist_ok=True)
-    saved_jsonl = context.saved_dir / "macro_data_rows.jsonl"
-    shutil.copyfile(context.cleaned_dir / "macro_data_rows.jsonl", saved_jsonl)
     csv_path = context.saved_dir / "macro_data_rows.csv"
-    rows = [json.loads(line) for line in saved_jsonl.read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows = [json.loads(line) for line in (context.cleaned_dir / "macro_data_rows.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     columns = sorted({key for row in rows for key in row.keys()})
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
@@ -265,9 +262,9 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
         writer.writerows(rows)
     return StepResult(
         status="succeeded",
-        references=[str(saved_jsonl), str(csv_path)],
+        references=[str(csv_path)],
         row_counts=dict(clean_result.row_counts),
-        details={"format": ["jsonl", "csv"], "columns": columns},
+        details={"format": "csv", "columns": columns},
     )
 
 

@@ -15,6 +15,9 @@ This directory is the authoritative documentation set for `trading-data`: the re
 - `08_data_sources.md` — optional guide for data-source connectors, provider credentials, and API/token boundaries.
 - `09_api_templates.md` — optional guide for applying `trading-main/templates/data_tasks/` to API-specific bundles.
 - `10_source_availability.md` — optional inventory of verified source availability and registered data-kind groups.
-- `11_data_kind_catalog.md` — optional catalog of concrete data kinds, source/bundle mapping, previews, ranges, timestamp semantics, and persistence policy.
 
 Optional docs are allowed when they have a clear component-specific boundary and do not duplicate the required spine. Do not place generated data, notebooks, logs, credentials, or implementation artifacts in this directory.
+
+## Related Templates
+
+- `../templates/data_kinds/README.md` — final saved data-kind catalog and per-kind CSV preview templates.

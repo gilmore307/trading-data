@@ -13,5 +13,6 @@ This directory is the authoritative documentation set for `trading-data`: the re
 - `06_memory.md` — durable local continuity that does not fit narrower docs.
 - `07_data_domains.md` — optional guide for the three data domains: market board, instrument, and option data.
 - `08_data_sources.md` — optional guide for data-source connectors, provider credentials, and API/token boundaries.
+- `09_api_templates.md` — optional guide for applying `trading-main/templates/data_tasks/` to API-specific bundles.
 
 Optional docs are allowed when they have a clear component-specific boundary and do not duplicate the required spine. Do not place generated data, notebooks, logs, credentials, or implementation artifacts in this directory.

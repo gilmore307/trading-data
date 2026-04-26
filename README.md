@@ -28,6 +28,7 @@ docs/
   06_memory.md
   07_data_domains.md
   08_data_sources.md
+  09_api_templates.md
 ```
 
 ## Input And Output
@@ -48,7 +49,7 @@ Future durable output: storage-backed SQL/artifact outputs plus manifests and re
 - instrument data / 标的数据;
 - option data / 期权数据.
 
-See `docs/07_data_domains.md`.
+See `docs/07_data_domains.md`. API-specific bundle design guidance is in `docs/09_api_templates.md`.
 
 ## Platform Dependencies
 

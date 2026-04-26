@@ -422,3 +422,25 @@ Local files are easier to inspect, delete, and regenerate while schemas, task ke
 - `.gitignore` keeps generated contents under `data/storage/` out of Git.
 - Implementation should group outputs by task/run under the development storage root.
 - Future SQL table/partition contracts remain `trading-storage` work.
+
+## D020 - API-specific bundles require template design before code
+
+Date: 2026-04-26
+
+### Context
+
+The user approved designing templates around concrete API requirements before implementing source bundles. Each bundle will eventually have fetch, clean, save, and receipt steps.
+
+### Decision
+
+Before connector code lands, each bundle should be designed using `trading-main/templates/data_tasks/`: task key, bundle README, fetch spec, clean spec, save spec, completion receipt, and fixture policy.
+
+### Rationale
+
+Provider/API requirements differ significantly. A template design gate keeps credentials, rate limits, timestamp semantics, raw/cleaned outputs, development storage, and receipt evidence explicit before implementation.
+
+### Consequences
+
+- `docs/09_api_templates.md` owns the component guide for applying the templates.
+- Source bundle folders should not be created as ad hoc scripts without filled API requirements.
+- Stable fields or status values discovered while filling templates must route through `trading-main` registry review.

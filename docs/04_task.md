@@ -13,6 +13,7 @@
 - Define development local output layout under `data/storage/`.
 - Define storage SQL table/partition contract for data-task outputs before durable/production mode.
 - Define source connector layout and provider inventory format.
+- Fill API-specific templates for the first implementation bundle before writing connector code.
 - Finalize historical acquisition script bundle names and invocation contract.
 - Define macro release event inventory, release-key naming, and per-release bundle boundaries.
 - Define any additional provider secret alias names through `trading-main` once providers are selected.
@@ -41,6 +42,7 @@
 
 ## Recently Accepted
 
+- Added API template application guide for data source bundles and linked `trading-main/templates/data_tasks/`.
 - Changed development-stage task outputs from SQL writes to ignored local files under `data/storage/`.
 - Re-scoped macro acquisition from one broad bundle into per-release-event bundles based on publication time/cadence.
 - Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, development output/receipt files are written under `data/storage/`, and durable SQL/storage receipts remain future contract work.

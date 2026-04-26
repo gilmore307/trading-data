@@ -81,6 +81,21 @@ The manager-issued task key file should eventually include at least:
 The task key file is a contract surface, not an implementation shortcut. Its exact schema must be accepted through `trading-main` before code treats it as stable.
 
 
+
+## API Template Design Gate
+
+Before implementation creates a source bundle folder, the bundle should be designed from `trading-main/templates/data_tasks/`:
+
+- task key shape;
+- bundle README boundary;
+- fetch requirements;
+- clean/normalization requirements;
+- save/output requirements;
+- completion receipt shape;
+- fixture/live-call policy.
+
+This gate keeps API-specific requirements explicit before code lands.
+
 ## Development Storage Rule
 
 During development, `trading-data` must not write task outputs into SQL by default. Use the registered development local storage root instead:

@@ -141,7 +141,7 @@ Initial script boundaries should be organized around data-type bundles:
 | `alpaca_news` | Alpaca | Stock/ETF news. | Standalone bundle for news retrieval, article metadata, source/timestamp handling, and final cleaned news outputs. |
 | `thetadata_option_1m_bundle` | ThetaData | `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, `open_interest_1m`. | One bundle because these option 1-minute datasets are normally consumed together. |
 | `thetadata_option_snapshot_bundle` | ThetaData | Snapshot, open interest, and Greeks at a specified timestamp. | Separate from the 1-minute bundle because request shape and use case differ. |
-| `okx_bars` | OKX | Historical crypto bars. | Current OKX scope is bars only. |
+| `okx_crypto_market_data` | OKX | Historical crypto bars/trades/liquidity. | Quote-derived liquidity fields may be blank when no sampled order-book snapshots exist. |
 | `macro_data` | FRED-unique series, Census, BEA, BLS, U.S. Treasury Fiscal Data, official agency pages | Parameterized macro data acquisition. | One macro bundle for clarity; task params must select provider/source, dataset/release/series, cadence, time range, and output target. Do not use FRED to duplicate data whose official source is accepted elsewhere. |
 | `calendar_discovery` | Official web sources discovered by search | FOMC and official macro release calendars. | Confirm official source domains before accepting results. |
 | `etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |

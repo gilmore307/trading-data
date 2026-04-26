@@ -84,7 +84,7 @@ Initial bundle planning names remain:
 - `alpaca_news`
 - `thetadata_option_1m_bundle`
 - `thetadata_option_snapshot_bundle`
-- `okx_bars`
+- `okx_crypto_market_data`
 - `macro_data`
 - `calendar_discovery`
 - `etf_holdings`
@@ -99,3 +99,4 @@ Initial bundle planning names remain:
 - `trading-data-alpaca-bars` / `python -m trading_data.data_sources.alpaca_bars` runs the Alpaca bars pipeline.
 - `trading-data-alpaca-liquidity` / `python -m trading_data.data_sources.alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
 - `trading-data-alpaca-news` / `python -m trading_data.data_sources.alpaca_news` runs the Alpaca news pipeline.
+- `trading-data-okx-crypto-market-data` / `python -m trading_data.data_sources.okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.

@@ -47,19 +47,19 @@ INTERFACES: dict[str, DataKindInterface] = {
     ),
     # OKX public market data.
     "crypto_bar": DataKindInterface(
-        "crypto_bar", "okx", "okx_bars", "GET /api/v5/market/candles",
+        "crypto_bar", "okx", "okx_crypto_market_data", "GET /api/v5/market/candles",
         "https://www.okx.com/docs-v5/en/#order-book-trading-market-data-get-candlesticks", "open/no-key", {"instId": "BTC-USDT"},
     ),
     "crypto_trade": DataKindInterface(
-        "crypto_trade", "okx", "okx_bars", "GET /api/v5/market/trades",
+        "crypto_trade", "okx", "okx_crypto_market_data", "GET /api/v5/market/trades",
         "https://www.okx.com/docs-v5/en/#order-book-trading-market-data-get-trades", "open/no-key", {"instId": "BTC-USDT"},
     ),
     "crypto_quote": DataKindInterface(
-        "crypto_quote", "okx", "okx_bars", "GET /api/v5/market/ticker",
+        "crypto_quote", "okx", "okx_crypto_market_data", "GET /api/v5/market/ticker",
         "https://www.okx.com/docs-v5/en/#order-book-trading-market-data-get-ticker", "open/no-key", {"instId": "BTC-USDT"},
     ),
     "crypto_order_book": DataKindInterface(
-        "crypto_order_book", "okx", "okx_bars", "GET /api/v5/market/books",
+        "crypto_order_book", "okx", "okx_crypto_market_data", "GET /api/v5/market/books",
         "https://www.okx.com/docs-v5/en/#order-book-trading-market-data-get-order-book", "open/no-key", {"instId": "BTC-USDT"},
     ),
     # ThetaData local terminal endpoints. These require the local terminal.

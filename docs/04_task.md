@@ -42,6 +42,7 @@
 
 ## Recently Accepted
 
+- Confirmed and registered all current task key / completion receipt JSON fields through `trading-main`.
 - Clarified stable task key versus per-run completion receipt `runs[]` model.
 - Recorded runtime JSON minimalism for task key and completion receipt templates.
 - Updated bundle implementation guidance to default to one `pipeline.py` file with four internal step functions and bundle-specific README details.

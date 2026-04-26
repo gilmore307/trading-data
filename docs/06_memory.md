@@ -25,3 +25,4 @@
 - Source bundles should default to one `pipeline.py` with `fetch`, `clean`, `save`, and `write_receipt` functions. Bundle-specific API details belong in each bundle README; split step functions into separate modules only when complexity justifies it.
 - Keep `task_key.json` and `completion_receipt.json` minimal. Do not put provider documentation URLs or other non-consumed metadata in runtime JSON; use registry/provider docs or bundle README/specs instead.
 - Data task keys are stable across periodic/scheduled runs. Per-run evidence belongs in `completion_receipt.json` under `runs[]`, with outputs under `data/storage/<task-id>/runs/<run-id>/`.
+- All current runtime JSON fields in `task_key.json` and `completion_receipt.json` are registered in `trading-main` as `kind=field` rows with scopes `data_task_key`, `data_task_completion_receipt`, and `data_task_completion_receipt_run`. Future JSON fields need registry review.

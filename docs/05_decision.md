@@ -287,3 +287,25 @@ These providers match the standard source-level JSON secret pattern and should b
 - Registered config aliases are `FRED_SECRET_ALIAS`, `CENSUS_SECRET_ALIAS`, `BEA_SECRET_ALIAS`, and `BLS_SECRET_ALIAS`.
 - Default tests must not require live credentials or network calls.
 - Connector implementation must document rate limits, timestamp semantics, and fixture/live-test policy before acceptance.
+
+## D014 - Provider documentation URLs live on provider term paths
+
+Date: 2026-04-26
+
+### Context
+
+Data-source connector implementation will frequently need provider documentation. The registry has provider `term` rows and secret `config` rows, both with nullable `path` locators.
+
+### Decision
+
+Use provider `term` row `path` values for official documentation URLs. Keep secret `config` row `path` values pointed at local source-secret JSON files.
+
+### Rationale
+
+This lets connector work dereference documentation through the registry without confusing public docs with private credential files.
+
+### Consequences
+
+- Data-source docs list provider documentation paths.
+- Credential lookup remains source-alias based.
+- Default tests must still avoid live provider calls unless explicitly guarded.

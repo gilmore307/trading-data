@@ -52,21 +52,15 @@ This is a planning shape, not an accepted implementation contract. Any final sou
 
 Provider tokens, API keys, account identifiers, private keys, and credentials must never be committed to this repository.
 
-Credential material belongs outside Git under the local secrets store:
+Credential material belongs outside Git under one source-level JSON file per provider/source:
 
 ```text
-/root/secrets/<provider>/<credential-name>
+/root/secrets/<source>.json
 ```
 
-Shared or reviewed references should be stored as secret aliases, not values. When a provider credential becomes a cross-repository or durable config dependency, register a `config` row in `trading-main` whose payload is the secret alias.
+Shared or reviewed references should be stored as source aliases, not values. When a provider credential becomes a cross-repository or durable config dependency, register a `config` row in `trading-main` whose payload is the source alias and whose `path` mirrors the local source JSON file.
 
-Example alias shape:
-
-```text
-provider-name/api-token
-provider-name/api-key
-provider-name/account-id
-```
+Provider `term` rows may use their `path` field for canonical public documentation URLs. Secret `config` rows keep their `path` field pointed at local source JSON files.
 
 OKX is the first accepted provider config surface for crypto data acquisition and later trading access. Source credentials use one JSON secret file per provider/source. Additional provider aliases remain open until providers are selected.
 
@@ -75,17 +69,17 @@ OKX is the first accepted provider config surface for crypto data acquisition an
 
 Current registered provider config surface:
 
-| Provider | Purpose | Registered config keys | Secret aliases / values | Notes |
-|---|---|---|---|---|
-| OKX | Crypto data acquisition and later trading access. | `OKX_SECRET_ALIAS` | source alias `okx`; JSON path `/root/secrets/okx.json`; JSON keys `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, `api_key_remark_name` | Secret values and credential metadata live in `/root/secrets/okx.json` and must not be copied into this repository. |
-| Alpaca | Stock and ETF bars, quotes, trades, and news data acquisition. | `ALPACA_SECRET_ALIAS` | source alias `alpaca`; JSON path `/root/secrets/alpaca.json`; JSON keys `api_key`, `secret_key`, `endpoint` | Secret values and endpoint config live in `/root/secrets/alpaca.json` and must not be copied into this repository. |
-| ThetaData | Options chain timeline, quote, trade, OHLC, Greeks, and related options datasets. | None yet; provider term `THETADATA` is registered. | Credentials must eventually follow ThetaData terminal requirements: email on line 1 and password on line 2 in `creds.txt` beside `ThetaTerminalv3.jar`. | Connector/JAR/credential layout is deferred until implementation design. Do not commit `creds.txt` or credentials. |
-| FRED | Macroeconomic and market-context data acquisition. | `FRED_SECRET_ALIAS` | source alias `fred`; JSON path `/root/secrets/fred.json`; JSON key `api_key` | Secret value lives in `/root/secrets/fred.json` and must not be copied into this repository. |
-| Census | Demographic and economic data acquisition. | `CENSUS_SECRET_ALIAS` | source alias `census`; JSON path `/root/secrets/census.json`; JSON key `api_key` | Secret value lives in `/root/secrets/census.json` and must not be copied into this repository. |
-| BEA | Economic accounts and macroeconomic data acquisition. | `BEA_SECRET_ALIAS` | source alias `bea`; JSON path `/root/secrets/bea.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bea.json` and must not be copied into this repository. |
-| BLS | Labor and economic data acquisition. | `BLS_SECRET_ALIAS` | source alias `bls`; JSON path `/root/secrets/bls.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bls.json` and must not be copied into this repository. |
+| Provider | Documentation path | Purpose | Registered config keys | Secret aliases / values | Notes |
+|---|---|---|---|---|---|
+| OKX | `https://www.okx.com/docs-v5/en/` | Crypto data acquisition and later trading access. | `OKX_SECRET_ALIAS` | source alias `okx`; JSON path `/root/secrets/okx.json`; JSON keys `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, `api_key_remark_name` | Secret values and credential metadata live in `/root/secrets/okx.json` and must not be copied into this repository. |
+| Alpaca | `https://docs.alpaca.markets/` | Stock and ETF bars, quotes, trades, and news data acquisition. | `ALPACA_SECRET_ALIAS` | source alias `alpaca`; JSON path `/root/secrets/alpaca.json`; JSON keys `api_key`, `secret_key`, `endpoint` | Secret values and endpoint config live in `/root/secrets/alpaca.json` and must not be copied into this repository. |
+| ThetaData | `https://http-docs.thetadata.us/` | Options chain timeline, quote, trade, OHLC, Greeks, and related options datasets. | None yet; provider term `THETADATA` is registered. | Credentials must eventually follow ThetaData terminal requirements: email on line 1 and password on line 2 in `creds.txt` beside `ThetaTerminalv3.jar`. | Connector/JAR/credential layout is deferred until implementation design. Do not commit `creds.txt` or credentials. |
+| FRED | `https://fred.stlouisfed.org/docs/api/fred/` | Macroeconomic and market-context data acquisition. | `FRED_SECRET_ALIAS` | source alias `fred`; JSON path `/root/secrets/fred.json`; JSON key `api_key` | Secret value lives in `/root/secrets/fred.json` and must not be copied into this repository. |
+| Census | `https://www.census.gov/data/developers/guidance/api-user-guide.html` | Demographic and economic data acquisition. | `CENSUS_SECRET_ALIAS` | source alias `census`; JSON path `/root/secrets/census.json`; JSON key `api_key` | Secret value lives in `/root/secrets/census.json` and must not be copied into this repository. |
+| BEA | `https://apps.bea.gov/API/docs/index.htm` | Economic accounts and macroeconomic data acquisition. | `BEA_SECRET_ALIAS` | source alias `bea`; JSON path `/root/secrets/bea.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bea.json` and must not be copied into this repository. |
+| BLS | `https://www.bls.gov/developers/api_signature_v2.htm` | Labor and economic data acquisition. | `BLS_SECRET_ALIAS` | source alias `bls`; JSON path `/root/secrets/bls.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bls.json` and must not be copied into this repository. |
 
-`trading-main` owns the registry rows for this source-level alias, registered JSON key names, and non-secret metadata. `trading-data` may use the alias once implementation has a connector boundary and default tests do not require live credentials.
+`trading-main` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-data` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
 
 ## Provider Inventory Template
 

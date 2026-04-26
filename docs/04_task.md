@@ -33,6 +33,7 @@
 
 ## Recently Accepted
 
+- Added provider documentation URLs to data-source planning docs, matching registry provider term paths.
 - Recorded FRED, Census, BEA, and BLS as registered economic/macro provider config surfaces using source-level secret aliases.
 - Recorded ThetaData as registered provider terminology for option data, with connector/JAR/credential layout deferred.
 - Recorded Alpaca as first registered stock/ETF data provider config surface using source-level secret alias `alpaca`.

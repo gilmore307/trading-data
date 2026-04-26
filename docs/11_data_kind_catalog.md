@@ -1,22 +1,24 @@
 # Data Kind Catalog
 
-This catalog tracks concrete data kinds that `trading-data` can request, clean,
-or produce. It is deliberately **not** a bundle list: bundles are execution
-boundaries, while data kinds are the actual data categories available to tasks,
-validation, routing, and future storage mapping.
+This catalog tracks concrete data kinds that `trading-data` will actually use or save as final outputs. It is deliberately **not** a bundle list: bundles are execution
+boundaries, while cataloged data kinds here are the final/persisted categories available to tasks, validation, routing, and future storage mapping.
+
+## Scope
+
+Only final used/saved data kinds belong as top-level entries here. High-volume raw provider rows such as raw trades and raw quotes should be documented only as transient source inputs under the final derived data kind that consumes them. Do not create top-level catalog entries for raw/transient data unless the user explicitly accepts that data kind as a saved output.
 
 ## Catalog Fields
 
-For each data kind, record:
+For each final data kind, record:
 
 - **Data kind** — registered canonical payload/key, e.g. `equity_bar`.
 - **Source** — provider or official source.
 - **Bundle** — execution bundle that fetches or produces it.
 - **Status** — `live-confirmed`, `implemented`, `derived-implemented`, `entitlement-blocked`, `adapter-needed`, or `planned`.
-- **Persistence policy** — whether rows are persisted, aggregated first, transient-only, or debug-only.
+- **Persistence policy** — how the final data is saved; raw/transient inputs are source notes, not catalog entries.
 - **Earliest available range** — earliest confirmed provider availability or earliest smoke-confirmed sample. Use `unknown` until tested.
 - **Default timestamp semantics** — all normalized outputs should expose `America/New_York` timestamps for research workflows; source timestamps may be preserved only when useful and explicitly named.
-- **Natural grain** — row granularity such as one bar, one trade, one quote, one article, one contract/day, one interval aggregate.
+- **Natural grain** — row granularity such as one saved bar, one article, one contract/day, or one interval aggregate.
 - **Request parameters** — required and important optional params.
 - **Pagination/range behavior** — pagination token, date segmentation, symbol segmentation, or source-specific range limits.
 - **Preview** — tiny sanitized sample row or shape from live smoke/implementation.
@@ -43,43 +45,14 @@ For each data kind, record:
 
 - **Known caveats:** Provider timestamp is UTC; normalized output uses ET. Feed entitlement and full range limits still need broader testing.
 
-### `equity_trade`
+## Alpaca transient raw inputs
 
-- **Source:** Alpaca Market Data API.
-- **Bundle:** `alpaca_quotes_trades`.
-- **Status:** `live-confirmed` as source input; not a default persisted output.
-- **Persistence policy:** Transient input only by default. Raw trade rows can be streamed/segmented during aggregation and discarded. Persist `equity_trade_bar_derived` instead.
-- **Earliest available range:** `unknown`; live smoke confirmed AAPL trades on 2024-01-02 09:30 ET.
-- **Default timestamp semantics:** Source trade timestamp converted to ET only in derived outputs/diagnostics.
-- **Natural grain:** One trade print.
-- **Request parameters:** `symbol`, `start`, `end`; optional `limit`, `max_pages`, `feed`.
-- **Pagination/range behavior:** Alpaca `next_page_token`; high row volume requires segmentation.
-- **Preview:**
+Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **not** final saved data kinds for this project. They are high-volume transient inputs consumed by `alpaca_quotes_trades` to produce the final derived data kinds below.
 
-```json
-{"t":"2024-01-02T14:30:00.011509342Z","p":187.18,"s":2,"x":"P","i":14920,"c":["@","F","T","I"],"z":"C"}
-```
-
-- **Known caveats:** Potentially hundreds/thousands of rows per minute; raw persistence is disabled by policy.
-
-### `equity_quote`
-
-- **Source:** Alpaca Market Data API.
-- **Bundle:** `alpaca_quotes_trades`.
-- **Status:** `live-confirmed` as source input; not a default persisted output.
-- **Persistence policy:** Transient input only by default. Raw quote rows can be streamed/segmented during aggregation and discarded. Persist `equity_quote_bar_derived` and/or `equity_microstructure_bar_derived` instead.
-- **Earliest available range:** `unknown`; live smoke confirmed AAPL quotes on 2024-01-02 09:30 ET.
-- **Default timestamp semantics:** Source quote timestamp converted to ET only in derived outputs/diagnostics.
-- **Natural grain:** One quote/NBBO update.
-- **Request parameters:** `symbol`, `start`, `end`; optional `limit`, `max_pages`, `feed`.
-- **Pagination/range behavior:** Alpaca `next_page_token`; high row volume requires segmentation.
-- **Preview:**
-
-```json
-{"t":"2024-01-02T14:30:00.004605455Z","bp":187.1,"bs":30,"bx":"P","ap":187.19,"as":1,"ax":"P","c":["R"],"z":"C"}
-```
-
-- **Known caveats:** Raw quote storage explodes quickly. Some live samples can show crossed/odd spread states; aggregation should preserve enough diagnostics such as min/max spread.
+- Raw trades preview shape: `t`, `p`, `s`, `x`, `i`, `c`, `z`.
+- Raw quotes preview shape: `t`, `bp`, `bs`, `bx`, `ap`, `as`, `ax`, `c`, `z`.
+- Persistence rule: stream or segment during aggregation, then discard by default.
+- Reason: raw trade/quote rows can reach hundreds or thousands of rows per minute and would overwhelm storage over longer histories.
 
 ### `equity_trade_bar_derived`
 
@@ -138,24 +111,9 @@ For each data kind, record:
 
 - **Known caveats:** Current implementation is interval-level alignment, not tick-level previous-quote matching. Effective/realized spread and trade-sign rules need separate explicit design.
 
-### `equity_snapshot`
+## Alpaca non-final snapshot
 
-- **Source:** Alpaca Market Data API.
-- **Bundle:** `alpaca_quotes_trades` currently catalogs it; no persistence bundle implemented yet.
-- **Status:** `live-confirmed`.
-- **Persistence policy:** Not yet accepted as a default persisted output. Snapshot should be normalized only when a use case is defined.
-- **Earliest available range:** Snapshot/current endpoint only; historical range not applicable.
-- **Default timestamp semantics:** Any nested timestamps should be normalized to `America/New_York` when persisted.
-- **Natural grain:** One current symbol snapshot containing latest trade, latest quote, minute bar, daily bar, and previous daily bar.
-- **Request parameters:** `symbol`.
-- **Pagination/range behavior:** No historical pagination for the single-symbol snapshot smoke.
-- **Preview shape:**
-
-```json
-{"symbol":"AAPL","latestTrade":{},"latestQuote":{},"minuteBar":{},"dailyBar":{},"prevDailyBar":{}}
-```
-
-- **Known caveats:** Nested provider shape needs expansion before persistence.
+`equity_snapshot` is live-confirmed but is not currently accepted as a final saved data kind. If a concrete use case appears, it should be normalized into an explicit final data kind before being added as a top-level catalog entry.
 
 ### `equity_news`
 

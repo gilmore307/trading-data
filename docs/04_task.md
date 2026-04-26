@@ -40,6 +40,7 @@
 
 ## Recently Accepted
 
+- Refined `docs/11_data_kind_catalog.md` scope so top-level entries cover only final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
 - Added `docs/11_data_kind_catalog.md` as the concrete data-kind catalog separate from bundle docs; populated Alpaca bars, trades, quotes, derived aggregates, snapshot, and news with source/bundle/status/persistence/range/timestamp/preview details.
 - Implemented `alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` JSONL/CSV without full raw payload persistence.
 - Implemented `alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` JSONL/CSV without full raw payload persistence.

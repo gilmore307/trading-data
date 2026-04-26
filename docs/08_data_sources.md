@@ -94,15 +94,15 @@ Every obtainable data category accepted after source/API availability review sho
 
 `data_kind` rows are for concrete data categories such as bars, quotes, option Greeks, SEC company facts, CPI, GDP, or Treasury datasets. They are separate from `data_bundle` rows: bundles choose the runner boundary, while data kinds identify what data can be requested, validated, routed, and eventually mapped to storage.
 
-High-volume raw trade and quote kinds are requestable source inputs, not default persisted outputs. For Alpaca quotes/trades, production persistence should target the ET-aligned aggregate data kind `equity_liquidity_bar`. Raw `equity_trade` and `equity_quote` rows may be streamed or temporarily segmented during a run for aggregation and validation, then discarded unless a bounded debug fixture/incident artifact is explicitly approved.
+High-volume raw trade and quote kinds are requestable source inputs, not default persisted outputs. For Alpaca liquidity, production persistence should target the ET-aligned aggregate data kind `equity_liquidity_bar`. Raw `equity_trade` and `equity_quote` rows may be streamed or temporarily segmented during a run for aggregation and validation, then discarded unless a bounded debug fixture/incident artifact is explicitly approved.
 
 ## Acquisition Script Boundary
 
 Source connector scripts should be split by historical data type and usage bundle so `trading-manager` can freely compose data tasks through task key files. Accepted bundle keys are registered in `trading-main` as `kind=data_bundle`. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
 
 - Alpaca bars: one bars-only script/bundle.
-- Alpaca quotes/trades: one bundle for quotes and trades, excluding news.
-- Alpaca news: one standalone bundle for stock/ETF news because request shape, cadence, text/article metadata, and downstream usage differ from quotes/trades.
+- Alpaca liquidity: one bundle for liquidity bars, excluding news.
+- Alpaca news: one standalone bundle for stock/ETF news because request shape, cadence, text/article metadata, and downstream usage differ from liquidity.
 - ThetaData option 1-minute bundle: one bundle for `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, and `open_interest_1m`.
 - ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
 - OKX bars: one bars-only script/bundle.
@@ -134,12 +134,12 @@ Bundle design must document:
 
 ## Alpaca News Bundle Rule
 
-News is intentionally separated from Alpaca quote/trade market events.
+News is intentionally separated from Alpaca liquidity market events.
 
 Accepted Alpaca bundle keys are:
 
 - `alpaca_bars` for bars;
-- `alpaca_quotes_trades` for quotes and trades;
+- `alpaca_liquidity` for liquidity bars;
 - `alpaca_news` for news.
 
 `alpaca_news` must document article timestamps in America/New_York for research workflow metadata, provider publication timestamp semantics, symbols/entities covered, source/publisher fields, pagination, and rate-limit behavior. Task/run IDs should use `alpaca_news_task_...` and `alpaca_news_run_...` prefixes. Development should persist only final cleaned news outputs; tiny sanitized provider response fixtures are allowed only during development and should be replaced before production hardening.

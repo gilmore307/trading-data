@@ -49,17 +49,9 @@ Each final data kind should have a small CSV preview file beside this README. Th
 
 - **Known caveats:** Provider timestamp is UTC; normalized output uses ET. Feed entitlement and full range limits still need broader testing.
 
-## Preview Files
-
-Each final data kind should have a small CSV preview file beside this README. The preview is a template/sample of the final saved format, not a raw provider dump. Current previews:
-
-- `equity_bar.preview.csv`
-- `equity_liquidity_bar.preview.csv`
-- `equity_news.preview.csv`
-
 ## Alpaca transient raw inputs
 
-Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **not** final saved data kinds for this project. They are high-volume transient inputs consumed by `alpaca_quotes_trades` to produce the final derived data kinds below.
+Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **not** final saved data kinds for this project. They are high-volume transient inputs consumed by `alpaca_liquidity` to produce the final derived data kinds below.
 
 - Raw trades preview shape: `t`, `p`, `s`, `x`, `i`, `c`, `z`.
 - Raw quotes preview shape: `t`, `bp`, `bs`, `bx`, `ap`, `as`, `ax`, `c`, `z`.
@@ -69,7 +61,7 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 ### `equity_liquidity_bar`
 
 - **Source:** Derived from transient Alpaca trades and quotes.
-- **Bundle:** `alpaca_quotes_trades`.
+- **Bundle:** `alpaca_liquidity`.
 - **Status:** `derived-implemented`.
 - **Persistence policy:** Persisted default output for trade/quote liquidity information. Raw trade and quote rows are discarded by default after aggregation.
 - **Earliest available range:** Same as Alpaca trades/quotes; implementation live-confirmed AAPL 2024-01-02 09:30 ET.
@@ -80,14 +72,6 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 - **Preview file:** see `equity_liquidity_bar.preview.csv`.
 
 - **Known caveats:** Current implementation is interval-level trade/quote aggregation, not tick-level previous-quote matching. Effective/realized spread, trade-sign rules, and time-weighted quote features need separate explicit design.
-
-## Preview Files
-
-Each final data kind should have a small CSV preview file beside this README. The preview is a template/sample of the final saved format, not a raw provider dump. Current previews:
-
-- `equity_bar.preview.csv`
-- `equity_liquidity_bar.preview.csv`
-- `equity_news.preview.csv`
 
 ## Alpaca non-final snapshot
 

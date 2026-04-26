@@ -1,4 +1,4 @@
-"""CLI runner for alpaca_quotes_trades."""
+"""CLI runner for alpaca_liquidity."""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,7 @@ from .pipeline import run
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m trading_data.data_sources.alpaca_quotes_trades")
+    parser = argparse.ArgumentParser(prog="python -m trading_data.data_sources.alpaca_liquidity")
     parser.add_argument("task_key", type=Path)
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)

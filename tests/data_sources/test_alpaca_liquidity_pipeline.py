@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.alpaca_quotes_trades.pipeline import aggregate_liquidity_bars, aggregate_quotes, aggregate_trades, run
+from trading_data.data_sources.alpaca_liquidity.pipeline import aggregate_liquidity_bars, aggregate_quotes, aggregate_trades, run
 from trading_data.source_availability.http import HttpResult
 
 
@@ -30,7 +30,7 @@ class FakeAlpacaClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
-class AlpacaQuotesTradesPipelineTests(unittest.TestCase):
+class AlpacaLiquidityPipelineTests(unittest.TestCase):
     def test_trade_aggregation_uses_et_buckets(self):
         rows = aggregate_trades('AAPL', [
             {'t': '2024-01-02T14:30:00Z', 'p': 10, 's': 2},
@@ -59,23 +59,23 @@ class AlpacaQuotesTradesPipelineTests(unittest.TestCase):
     def test_pipeline_saves_only_derived_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                'task_id': 'alpaca_quotes_trades_task_test',
-                'bundle': 'alpaca_quotes_trades',
+                'task_id': 'alpaca_liquidity_task_test',
+                'bundle': 'alpaca_liquidity',
                 'params': {'symbol': 'AAPL', 'start': '2024-01-02T14:30:00Z', 'end': '2024-01-02T14:32:00Z', 'timeframe': '1Min'},
-                'output_root': str(Path(tmp) / 'alpaca_quotes_trades_task_test'),
+                'output_root': str(Path(tmp) / 'alpaca_liquidity_task_test'),
             }
             # Patch secrets by monkeypatching module loader.
-            import trading_data.data_sources.alpaca_quotes_trades.pipeline as pipeline
+            import trading_data.data_sources.alpaca_liquidity.pipeline as pipeline
             class Secret:
                 alias='alpaca'; path=Path('/root/secrets/alpaca.json'); present=True; keys_present=('api_key','secret_key'); values={'api_key':'k','secret_key':'s','data_endpoint':'https://data.alpaca.markets'}
             old = pipeline.load_secret_alias
             pipeline.load_secret_alias = lambda alias: Secret()
             try:
-                result = run(task_key, run_id='alpaca_quotes_trades_run_test', client=FakeAlpacaClient())
+                result = run(task_key, run_id='alpaca_liquidity_run_test', client=FakeAlpacaClient())
             finally:
                 pipeline.load_secret_alias = old
             self.assertEqual(result.status, 'succeeded')
-            saved = Path(task_key['output_root']) / 'runs' / 'alpaca_quotes_trades_run_test' / 'saved'
+            saved = Path(task_key['output_root']) / 'runs' / 'alpaca_liquidity_run_test' / 'saved'
             self.assertTrue((saved / 'equity_liquidity_bar.csv').exists())
             self.assertFalse((saved / 'equity_liquidity_bar.jsonl').exists())
             self.assertFalse((saved / 'equity_trade_bar_derived.jsonl').exists())

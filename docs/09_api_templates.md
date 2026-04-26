@@ -80,7 +80,7 @@ Every bundle design should answer:
 Initial bundle planning names remain:
 
 - `alpaca_bars`
-- `alpaca_quotes_trades`
+- `alpaca_liquidity`
 - `alpaca_news`
 - `thetadata_option_1m_bundle`
 - `thetadata_option_snapshot_bundle`
@@ -97,5 +97,5 @@ Initial bundle planning names remain:
 ## Implemented bundle CLIs
 
 - `trading-data-alpaca-bars` / `python -m trading_data.data_sources.alpaca_bars` runs the Alpaca bars pipeline.
-- `trading-data-alpaca-quotes-trades` / `python -m trading_data.data_sources.alpaca_quotes_trades` runs the aggregate-only Alpaca quotes/trades pipeline.
+- `trading-data-alpaca-liquidity` / `python -m trading_data.data_sources.alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
 - `trading-data-alpaca-news` / `python -m trading_data.data_sources.alpaca_news` runs the Alpaca news pipeline.

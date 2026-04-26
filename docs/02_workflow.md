@@ -137,7 +137,7 @@ Initial script boundaries should be organized around data-type bundles:
 | Script / bundle | Source | Intended contents | Notes |
 |---|---|---|---|
 | `alpaca_bars` | Alpaca | Historical stock/ETF bars. | Keep separate because bar retrieval has distinct parameters and table shape. |
-| `alpaca_quotes_trades` | Alpaca | Quotes and trades. | News is intentionally split out because request shape, cadence, and downstream usage differ from market microstructure events. |
+| `alpaca_liquidity` | Alpaca | Liquidity bars. | News is intentionally split out because request shape, cadence, and downstream usage differ from market microstructure events. |
 | `alpaca_news` | Alpaca | Stock/ETF news. | Standalone bundle for news retrieval, article metadata, source/timestamp handling, and final cleaned news outputs. |
 | `thetadata_option_1m_bundle` | ThetaData | `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, `open_interest_1m`. | One bundle because these option 1-minute datasets are normally consumed together. |
 | `thetadata_option_snapshot_bundle` | ThetaData | Snapshot, open interest, and Greeks at a specified timestamp. | Separate from the 1-minute bundle because request shape and use case differ. |

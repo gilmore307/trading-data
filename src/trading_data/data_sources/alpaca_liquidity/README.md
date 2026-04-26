@@ -1,4 +1,4 @@
-# alpaca_quotes_trades bundle
+# alpaca_liquidity bundle
 
 Fetches Alpaca raw trades/quotes only as transient run inputs and persists
 America/New_York time-bucketed derived aggregate outputs.

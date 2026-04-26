@@ -30,15 +30,15 @@ INTERFACES: dict[str, DataKindInterface] = {
         "https://docs.alpaca.markets/reference/stockbars", "api-key", {"symbol": "AAPL"},
     ),
     "equity_trade": DataKindInterface(
-        "equity_trade", "alpaca", "alpaca_quotes_trades", "GET /v2/stocks/{symbol}/trades",
+        "equity_trade", "alpaca", "alpaca_liquidity", "GET /v2/stocks/{symbol}/trades",
         "https://docs.alpaca.markets/reference/stocktrades", "api-key", {"symbol": "AAPL"},
     ),
     "equity_quote": DataKindInterface(
-        "equity_quote", "alpaca", "alpaca_quotes_trades", "GET /v2/stocks/{symbol}/quotes",
+        "equity_quote", "alpaca", "alpaca_liquidity", "GET /v2/stocks/{symbol}/quotes",
         "https://docs.alpaca.markets/reference/stockquotes-1", "api-key", {"symbol": "AAPL"},
     ),
     "equity_snapshot": DataKindInterface(
-        "equity_snapshot", "alpaca", "alpaca_quotes_trades", "GET /v2/stocks/{symbol}/snapshot",
+        "equity_snapshot", "alpaca", "alpaca_liquidity", "GET /v2/stocks/{symbol}/snapshot",
         "https://docs.alpaca.markets/reference/stocksnapshots-1", "api-key", {"symbol": "AAPL"},
     ),
     "equity_news": DataKindInterface(

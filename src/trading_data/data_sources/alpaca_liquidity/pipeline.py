@@ -1,4 +1,4 @@
-"""Alpaca quote/trade aggregate-only acquisition bundle."""
+"""Alpaca liquidity aggregate-only acquisition bundle."""
 
 from __future__ import annotations
 
@@ -49,8 +49,8 @@ class FetchedPayload:
     secret_alias: dict[str, Any] | None = None
 
 
-class AlpacaQuotesTradesError(ValueError):
-    """Raised for invalid Alpaca quote/trade aggregate tasks."""
+class AlpacaLiquidityError(ValueError):
+    """Raised for invalid Alpaca liquidity aggregate tasks."""
 
 
 def _now_utc() -> str:
@@ -60,7 +60,7 @@ def _now_utc() -> str:
 def _required(mapping: dict[str, Any], key: str) -> Any:
     value = mapping.get(key)
     if value in (None, "", []):
-        raise AlpacaQuotesTradesError(f"alpaca_quotes_trades.params.{key} is required")
+        raise AlpacaLiquidityError(f"alpaca_liquidity.params.{key} is required")
     return value
 
 
@@ -85,16 +85,16 @@ def _bucket_start_et(dt_utc: datetime, timeframe: str) -> datetime:
 
 def _json_response(result: HttpResult) -> Any:
     if result.status is None:
-        raise AlpacaQuotesTradesError(f"request failed before HTTP response: {result.error_type}: {result.error_message}")
+        raise AlpacaLiquidityError(f"request failed before HTTP response: {result.error_type}: {result.error_message}")
     if result.status < 200 or result.status >= 300:
-        raise AlpacaQuotesTradesError(f"request returned HTTP {result.status}: {result.error_message or result.text()[:240]}")
+        raise AlpacaLiquidityError(f"request returned HTTP {result.status}: {result.error_message or result.text()[:240]}")
     return result.json()
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
-    if task_key.get("bundle") != "alpaca_quotes_trades":
-        raise AlpacaQuotesTradesError("task_key.bundle must be alpaca_quotes_trades")
-    output_root = Path(str(task_key.get("output_root") or f"data/storage/{task_key.get('task_id', 'alpaca_quotes_trades_task')}"))
+    if task_key.get("bundle") != "alpaca_liquidity":
+        raise AlpacaLiquidityError("task_key.bundle must be alpaca_liquidity")
+    output_root = Path(str(task_key.get("output_root") or f"data/storage/{task_key.get('task_id', 'alpaca_liquidity_task')}"))
     run_dir = output_root / "runs" / run_id
     return BundleContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
@@ -112,7 +112,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     api_key = secret.values.get("api_key")
     secret_key = secret.values.get("secret_key")
     if not api_key or not secret_key:
-        raise AlpacaQuotesTradesError("Alpaca requires api_key and secret_key in /root/secrets/alpaca.json or ALPACA_SECRET_ALIAS override")
+        raise AlpacaLiquidityError("Alpaca requires api_key and secret_key in /root/secrets/alpaca.json or ALPACA_SECRET_ALIAS override")
     base = str(secret.values.get("data_endpoint") or "https://data.alpaca.markets").rstrip("/")
     headers = {"APCA-API-KEY-ID": str(api_key), "APCA-API-SECRET-KEY": str(secret_key)}
     common = {"start": start, "end": end, "limit": limit}
@@ -146,7 +146,7 @@ def _fetch_paginated(client: HttpClient, url: str, row_key: str, params: dict[st
         payload = _json_response(result)
         batch = payload.get(row_key, []) if isinstance(payload, dict) else []
         if not isinstance(batch, list):
-            raise AlpacaQuotesTradesError(f"Alpaca response field {row_key!r} was not a list")
+            raise AlpacaLiquidityError(f"Alpaca response field {row_key!r} was not a list")
         rows.extend(batch)
         page_token = payload.get("next_page_token") if isinstance(payload, dict) else None
         evidence.append({"endpoint": sanitize_url(result.url), "http_status": result.status, "row_count": len(batch), "has_next_page": bool(page_token)})
@@ -161,7 +161,7 @@ def clean(context: BundleContext, fetched: FetchedPayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
     timeframe = str(params.get("timeframe", "1Min"))
     if timeframe not in SUPPORTED_TIMEFRAMES:
-        raise AlpacaQuotesTradesError(f"unsupported timeframe {timeframe!r}; supported={sorted(SUPPORTED_TIMEFRAMES)}")
+        raise AlpacaLiquidityError(f"unsupported timeframe {timeframe!r}; supported={sorted(SUPPORTED_TIMEFRAMES)}")
     liquidity_rows = aggregate_liquidity_bars(fetched.symbol, fetched.trades, fetched.quotes, timeframe)
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     output = context.cleaned_dir / "equity_liquidity_bar.jsonl"
@@ -294,7 +294,7 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
 
 def write_receipt(context: BundleContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
     context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    existing = {"task_id": context.task_key.get("task_id"), "bundle": "alpaca_quotes_trades", "runs": []}
+    existing = {"task_id": context.task_key.get("task_id"), "bundle": "alpaca_liquidity", "runs": []}
     if context.receipt_path.exists():
         try:
             existing = json.loads(context.receipt_path.read_text(encoding="utf-8"))
@@ -302,7 +302,7 @@ def write_receipt(context: BundleContext, *, status: str, fetch_result: StepResu
             pass
     entry = {"run_id": context.metadata["run_id"], "status": status, "started_at": context.metadata.get("started_at"), "completed_at": _now_utc(), "output_dir": str(context.run_dir), "outputs": save_result.references if save_result else [], "row_counts": save_result.row_counts if save_result else clean_result.row_counts if clean_result else {}, "steps": {"fetch": asdict(fetch_result) if fetch_result else None, "clean": asdict(clean_result) if clean_result else None, "save": asdict(save_result) if save_result else None}, "error": None if error is None else {"type": type(error).__name__, "message": str(error)}}
     existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != context.metadata["run_id"]] + [entry]
-    existing.update({"task_id": context.task_key.get("task_id"), "bundle": "alpaca_quotes_trades"})
+    existing.update({"task_id": context.task_key.get("task_id"), "bundle": "alpaca_liquidity"})
     context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult(status, [str(context.receipt_path), *entry["outputs"]], entry["row_counts"], details={"run_id": context.metadata["run_id"], "error": entry["error"]})
 

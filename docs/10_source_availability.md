@@ -120,9 +120,9 @@ Initial `data_kind` rows are registered in `trading-main` for:
 
 Exact source-specific parameter dictionaries remain open work. They should be defined before the first connector implementation for each source.
 
-## Alpaca quotes/trades implementation
+## Alpaca liquidity implementation
 
-`src/trading_data/data_sources/alpaca_quotes_trades/` now contains the first aggregate-only implementation. It requests Alpaca trades and quotes with bounded pagination, treats raw rows as transient run inputs, aligns intervals in `America/New_York`, and persists only derived aggregate outputs:
+`src/trading_data/data_sources/alpaca_liquidity/` now contains the first aggregate-only implementation. It requests Alpaca trades and quotes with bounded pagination, treats raw rows as transient run inputs, aligns intervals in `America/New_York`, and persists only derived aggregate outputs:
 
 - `equity_liquidity_bar` — one ET-aligned interval row combining trade count/volume/VWAP/OHLC, quote count/spread/mid/depth summaries, and trade-vs-quote liquidity features such as VWAP minus average mid.
 

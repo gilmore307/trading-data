@@ -41,8 +41,8 @@
 ## Recently Accepted
 
 - Standardized final saved bundle outputs on CSV only; JSONL may remain a transient cleaned/run-local format but is no longer duplicated into saved outputs.
-- Refined `templates/data_kinds/README.md` scope so top-level entries cover only final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
-- Added `templates/data_kinds/README.md` as the concrete data-kind catalog separate from bundle docs; populated Alpaca bars, trades, quotes, derived aggregates, snapshot, and news with source/bundle/status/persistence/range/timestamp/preview details.
+- Refined `templates/data_kinds/` scope so the top-level README indexes data sources while source-specific READMEs cover final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
+- Added `templates/data_kinds/` as the concrete source-organized data-kind catalog separate from bundle docs; populated `templates/data_kinds/alpaca/` with Alpaca final data-kind details and preview CSV files.
 - Implemented `alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` CSV without full raw payload persistence.
 - Implemented `alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` CSV without full raw payload persistence.
 - Implemented `alpaca_liquidity` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` CSV, and writes completion receipts without raw trade/quote persistence.

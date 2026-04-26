@@ -90,7 +90,7 @@ Current registered provider config and source-of-truth surfaces:
 
 ## Acquisition Script Boundary
 
-Source connector scripts should be split by historical data type and usage bundle so `trading-manager` can freely compose data tasks through task key files. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
+Source connector scripts should be split by historical data type and usage bundle so `trading-manager` can freely compose data tasks through task key files. Accepted bundle keys are registered in `trading-main` as `kind=data_bundle`. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
 
 - Alpaca bars: one bars-only script/bundle.
 - Alpaca quotes/trades: one bundle for quotes and trades, excluding news.

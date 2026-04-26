@@ -149,11 +149,11 @@ These names are planning names until accepted through registry/contract review.
 
 ## Macro Release Bundle Rule
 
-Macro data should not use one catch-all bundle across FRED, Census, BEA, BLS, Treasury, and official agency pages. Macro releases should be split by release event and publication time because they are usually consumed independently. U.S. Treasury Fiscal Data also has its own source bundle, `treasury_fiscal_data`, when the task is about Treasury's official dataset API rather than a scheduled macro release event.
+Macro data should not use one catch-all bundle across FRED, Census, BEA, BLS, and official agency pages. Macro releases should be split by release event and publication time because they are usually consumed independently. U.S. Treasury Fiscal Data has its own source bundle, `treasury_fiscal_data`, when the task is about Treasury's official dataset API rather than a scheduled release-event bundle.
 
 A macro release bundle may group data only when the records are published together or intentionally consumed as one release package. The task key should identify the release key, source agency, expected publication timestamp or release window, covered period, revision/vintage expectations, development file destination, and future target SQL table/partition when durable contracts exist.
 
-Examples of acceptable bundle granularity include one bundle per official release family or release event, such as an employment release, inflation release, GDP/account release, Treasury dataset publication, or other agency-specific release package. Exact release keys remain pending provider/source inventory work.
+Examples of acceptable bundle granularity include one bundle per official release family or release event, such as an employment release, inflation release, GDP/account release, retail-sales release, or other agency-specific release package. Exact release keys remain pending provider/source inventory work.
 
 ## Completion Receipt Requirements
 

@@ -147,7 +147,7 @@ Do not fold Treasury Fiscal Data into a broad macro bundle merely because it is 
 
 ## Macro Release Bundle Rule
 
-Macro data from FRED, Census, BEA, BLS, Treasury, and official agency pages should not be fetched through one broad `macro_release_bundle`. Different agencies and release families publish at different times, and the data is usually consumed independently.
+Macro data from FRED, Census, BEA, BLS, and official agency pages should not be fetched through one broad `macro_release_bundle`. Different agencies and release families publish at different times, and the data is usually consumed independently. Treasury Fiscal Data is handled separately by `treasury_fiscal_data` unless a future task explicitly defines a Treasury scheduled release-event bundle.
 
 Macro source connector work should define one bundle per release event or release family, using a planning shape like:
 

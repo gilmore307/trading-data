@@ -11,14 +11,15 @@ This repository exists to make data production explicit, testable, and reusable 
 ## In Scope
 
 - Define component-local data ingestion workflows.
-- Connect to approved market data, macro data, calendar, and related data sources once providers are chosen.
-- Normalize provider responses into documented data shapes.
+- Connect to approved market data, macro data, calendar, options, and related data sources once providers are chosen.
+- Normalize provider responses into documented data shapes for market board data, instrument data, and option data.
 - Validate data completeness, schema expectations, timestamps, market calendars, and known provider quirks.
 - Produce data artifacts for downstream repositories.
 - Produce run manifests and ready signals using `trading-main` contracts once concrete schemas are accepted.
 - Coordinate with `trading-storage` for durable output placement and retention rules.
 - Expose component-local tests for data parsing, validation, and fixture-based provider behavior.
 - Track data-provider limitations, quotas, and quality caveats that affect this repository.
+- Build provider/source connector layer boundaries before domain pipelines depend on live APIs.
 
 ## Out of Scope
 
@@ -45,7 +46,7 @@ The repository should prefer explicit provider boundaries, deterministic normali
 - Durable storage layout and retention belong in `trading-storage`.
 - Scheduling, retries, and lifecycle routing belong in `trading-manager`.
 - Generated data and provider responses are runtime artifacts, not source files.
-- Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository.
+- Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.
 - Shared helpers, templates, and registrable fields discovered here must be recorded through `trading-main` before other repositories depend on them.
 - Data features emitted here must be market/data-source based. Strategy returns or strategy performance must not feed upstream data production.
 

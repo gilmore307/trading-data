@@ -9,14 +9,15 @@ It describes how approved data requests become validated data artifacts, manifes
 ## Data Production Flow
 
 ```text
-request -> plan -> fetch -> normalize -> validate -> write artifact -> emit manifest -> emit ready signal
+manager request -> classify data domain -> plan sources -> fetch -> normalize -> validate -> write cleaned artifact -> emit manifest -> emit ready signal
 ```
 
 Where:
 
-- **request** describes the required dataset, symbols, time range, granularity, and expected outputs;
-- **plan** resolves provider choice, quota/rate-limit strategy, cache/retry behavior, and expected storage target;
-- **fetch** calls external providers or approved local sources;
+- **manager request** describes the required dataset, symbols, time range, granularity, and expected outputs;
+- **classify data domain** maps the request to market board data, instrument data, option data, or a rejected/re-scoped request;
+- **plan sources** resolves provider choice, source composition, quota/rate-limit strategy, cache/retry behavior, and expected storage target;
+- **fetch** calls external providers or approved local sources through documented source connectors;
 - **normalize** converts provider-specific responses into accepted data shapes;
 - **validate** checks schema, timestamps, completeness, calendars, duplicates, and provider caveats;
 - **write artifact** stores durable outputs according to `trading-storage` contracts;
@@ -27,18 +28,19 @@ Where:
 
 ```mermaid
 flowchart TD
-  A[trading-manager / Human / Agent Request] --> B[trading-data Request Intake]
-  B --> C[Provider and Range Plan]
-  C --> D[Fetch Provider Data]
-  D --> E[Normalize Rows]
-  E --> F[Validate Dataset]
-  F --> G[Write Data Artifact via trading-storage Contract]
-  G --> H[Emit Manifest]
-  H --> I[Emit Ready Signal]
-  I --> J[trading-manager Lifecycle]
-  I --> K[trading-strategy]
-  I --> L[trading-model]
-  I --> M[trading-dashboard]
+  A[trading-manager Task Instruction] --> B[trading-data Request Intake]
+  B --> C[Classify Data Domain]
+  C --> D[Provider and Range Plan]
+  D --> E[Fetch Provider Data]
+  E --> F[Normalize Rows]
+  F --> G[Validate Dataset]
+  G --> H[Write Cleaned Data Artifact via trading-storage Contract]
+  H --> I[Emit Manifest]
+  I --> J[Emit Ready Signal]
+  J --> K[trading-manager Lifecycle]
+  J --> L[trading-strategy]
+  J --> M[trading-model]
+  J --> N[trading-dashboard]
 ```
 
 ## Operating Principles
@@ -84,10 +86,12 @@ Exact validation schemas are not yet accepted.
 The following workflow details must be defined before implementation depends on them:
 
 - exact request schema for data work;
+- request domain classification;
 - exact artifact reference format;
 - exact manifest schema;
 - exact ready-signal schema;
 - provider selection and priority rules;
+- data-source connector layout and credential alias convention;
 - raw vs normalized artifact policy;
 - data partitioning strategy;
 - fixture storage policy;

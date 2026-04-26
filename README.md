@@ -9,12 +9,12 @@ It does not own shared storage policy, strategy logic, model research, execution
 ## Top-Level Structure
 
 ```text
-docs/        Repository scope, context, workflow, acceptance, task, decisions, and local memory.
+docs/        Required docs spine plus component-specific guides for data domains and data sources.
 ```
 
 Source, tests, and package layout are intentionally not created yet. They should be added only after the data contracts, provider choices, and storage handoff expectations are explicit.
 
-## Docs Spine
+## Docs Set
 
 ```text
 docs/
@@ -25,7 +25,27 @@ docs/
   04_task.md
   05_decision.md
   06_memory.md
+  07_data_domains.md
+  08_data_sources.md
 ```
+
+## Input And Output
+
+Input: task instructions from `trading-manager`.
+
+Output: cleaned data artifacts, with manifests and ready signals once cross-repository contracts are accepted.
+
+`trading-data` fetches and cleans data; it does not store generated datasets in Git.
+
+## Data Domains
+
+`trading-data` currently plans three data domains by research purpose:
+
+- market board data / 盘面数据;
+- instrument data / 标的数据;
+- option data / 期权数据.
+
+See `docs/07_data_domains.md`.
 
 ## Platform Dependencies
 

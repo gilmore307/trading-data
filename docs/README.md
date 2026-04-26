@@ -1,6 +1,6 @@
 # Docs
 
-This directory is the authoritative documentation spine for `trading-data`.
+This directory is the authoritative documentation set for `trading-data`: the required docs spine plus optional component-specific guides.
 
 ## Files
 
@@ -11,5 +11,7 @@ This directory is the authoritative documentation spine for `trading-data`.
 - `04_task.md` — current task state, queued work, blockers, and recently accepted work.
 - `05_decision.md` — ratified repository decisions.
 - `06_memory.md` — durable local continuity that does not fit narrower docs.
+- `07_data_domains.md` — optional guide for the three data domains: market board, instrument, and option data.
+- `08_data_sources.md` — optional guide for data-source connectors, provider credentials, and API/token boundaries.
 
-Do not place generated data, notebooks, logs, credentials, or implementation artifacts in this directory.
+Optional docs are allowed when they have a clear component-specific boundary and do not duplicate the required spine. Do not place generated data, notebooks, logs, credentials, or implementation artifacts in this directory.

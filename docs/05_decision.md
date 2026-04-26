@@ -132,3 +132,69 @@ One shared environment reduces cross-repository drift during early platform deve
 - Do not create a component-local `.venv/` as normal project structure.
 - `.venv/` remains ignored if it appears locally.
 - Dependency policy remains an open gap until the shared environment contract is defined.
+
+## D007 - Optional component docs may document local planning surfaces
+
+Date: 2026-04-25
+
+### Context
+
+The required docs spine covers scope, context, workflow, acceptance, tasks, decisions, and memory. `trading-data` also needs component-specific guides for data domains and data-source boundaries.
+
+### Decision
+
+Allow optional docs after `06_memory.md` when they own a clear component-specific planning surface and do not duplicate the required spine.
+
+### Rationale
+
+Provider and data-domain planning is too important to bury inside broad files, but it should remain docs-only until implementation contracts are accepted.
+
+### Consequences
+
+- `docs/07_data_domains.md` owns the market board, instrument, and option data-domain planning surface.
+- `docs/08_data_sources.md` owns provider/source connector, API, token, and secret-alias planning boundaries.
+- Optional docs must be listed in `docs/README.md`.
+
+## D008 - Data work is organized into three purpose-driven domains
+
+Date: 2026-04-25
+
+### Context
+
+The data repository will collect different data depending on downstream research purpose. The user identified three categories: market board data, instrument data, and option data. These correspond to later model lanes.
+
+### Decision
+
+Use three local planning domains: market board data / 盘面数据, instrument data / 标的数据, and option data / 期权数据.
+
+### Rationale
+
+Organizing by research purpose keeps provider composition and cleaning requirements explicit without mixing model training or strategy interpretation into data production.
+
+### Consequences
+
+- `trading-data` owns acquisition, cleaning, validation, and output production for these domains.
+- `trading-model` owns later model training, labels, inference, and model evaluation.
+- Exact domain keys are not cross-repository contract values until registered through `trading-main` if needed.
+
+## D009 - Source connectors come before domain pipelines
+
+Date: 2026-04-25
+
+### Context
+
+Each data domain is a composition of data from one or more providers. Implementation should first establish source connector boundaries, authentication, quotas, and provider capabilities before domain pipelines depend on live APIs.
+
+### Decision
+
+Treat data-source connection as the first implementation layer. Provider tokens, API keys, and credentials must live outside Git under `/root/secrets/` and be referenced by secret aliases. Shared/durable provider aliases should be registered as `config` rows in `trading-main` when providers are selected.
+
+### Rationale
+
+Provider connections are a boundary risk: secrets, quotas, timestamp semantics, and data-quality caveats must be explicit before cleaned outputs can be trusted.
+
+### Consequences
+
+- `docs/08_data_sources.md` owns provider/source connector planning.
+- Default tests must not require live provider credentials.
+- Provider choices and secret aliases remain open gaps until selected and reviewed.

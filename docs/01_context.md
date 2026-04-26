@@ -17,18 +17,32 @@ The trading system depends on reliable upstream data. Data collection and normal
 | `trading-model` | Consumes market/data artifacts for market-state research and later evaluation flows. |
 | `trading-dashboard` | Displays already-produced data outputs and metadata; it should not become a data source of truth. |
 
+
+## Data Domains
+
+`trading-data` currently organizes data requests into three purpose-driven domains:
+
+- market board data / 盘面数据: data collected to study broad market-board or market-regime conditions;
+- instrument data / 标的数据: data collected to study a specific tradable symbol or instrument;
+- option data / 期权数据: data collected to study options conditions for a specific underlying.
+
+These domains correspond to later model lanes, but `trading-data` only owns data acquisition, cleaning, and output production. Model design, labels, training, and inference belong in `trading-model`.
+
+See `docs/07_data_domains.md`.
+
 ## Expected External Interfaces
 
 Potential external interfaces include:
 
 - market data APIs;
+- instrument/reference data APIs;
 - options data APIs;
 - macroeconomic data APIs;
 - market calendars and holiday schedules;
 - symbol/reference-data providers;
 - local or shared storage through `trading-storage` contracts.
 
-Specific provider choices, credentials, quotas, retry expectations, and commercial limits are not settled yet.
+Specific provider choices, secret aliases, credentials, quotas, retry expectations, and commercial limits are not settled yet. See `docs/08_data_sources.md` for the source-connection boundary.
 
 ## Environment
 

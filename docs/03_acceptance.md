@@ -8,7 +8,8 @@ Acceptance focuses on:
 
 - repository boundary clarity;
 - workflow clarity;
-- provider boundary clarity;
+- provider/source boundary clarity;
+- data-domain boundary clarity;
 - contract compatibility with `trading-main`;
 - storage compatibility with `trading-storage`;
 - absence of committed data, logs, notebooks, and secrets;
@@ -24,6 +25,7 @@ Documentation changes are acceptable when they:
 - preserve separation between scope, context, workflow, acceptance, task, decision, and memory;
 - route global helper, template, field, status, type, and shared vocabulary changes to `trading-main`;
 - mark unresolved provider/contract/storage questions as open gaps;
+- preserve the distinction between market board, instrument, and option data domains;
 - avoid pretending that implementation or provider choices are settled before evidence exists.
 
 ### For Data Implementation Changes
@@ -37,13 +39,15 @@ Implementation changes are acceptable only when they:
 - respect provider rate limits and retry/backoff expectations;
 - produce or preserve manifest/ready-signal evidence once those contracts are accepted;
 - use `trading-storage` contracts for durable output placement once storage contracts exist;
-- route new shared names through `trading-main/registry/`.
+- route new shared names through `trading-main/registry/`;
+- document every provider/source connector before domain pipelines depend on it.
 
 ### For Provider Integrations
 
 Provider integrations are acceptable when they document:
 
 - authentication method using secret aliases, not secret values;
+- the local secret-store alias shape and any `trading-main` config registration needed before shared use;
 - supported instruments, markets, date ranges, and granularities;
 - rate limits, quota risks, and retry behavior;
 - timestamp/timezone semantics;

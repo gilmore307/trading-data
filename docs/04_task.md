@@ -13,6 +13,7 @@
 - Define storage SQL table/partition contract for data-task outputs.
 - Define source connector layout and provider inventory format.
 - Finalize historical acquisition script bundle names and invocation contract.
+- Define macro release event inventory, release-key naming, and per-release bundle boundaries.
 - Define any additional provider secret alias names through `trading-main` once providers are selected.
 - Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
 - Define raw vs normalized artifact policy.
@@ -38,6 +39,7 @@
 
 ## Recently Accepted
 
+- Re-scoped macro acquisition from one broad bundle into per-release-event bundles based on publication time/cadence.
 - Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, SQL output target written, storage-resident completion receipt produced.
 - Recorded FOMC calendar, official macro release calendar discovery, and ETF issuer holdings source-of-truth rules.
 - Recorded U.S. Treasury Fiscal Data as an open/no-key provider term with documentation path.

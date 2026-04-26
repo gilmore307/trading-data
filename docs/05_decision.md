@@ -376,3 +376,26 @@ This keeps orchestration in `trading-manager`, historical data acquisition in `t
 - Script boundaries are organized by data type / usage bundle.
 - The exact task key schema, SQL table contract, and completion receipt schema remain pending cross-repository contract work.
 - Default tests must use fixtures/mocks and must not require live provider calls.
+
+## D018 - Macro release acquisition is split by release event
+
+Date: 2026-04-26
+
+### Context
+
+The initial acquisition bundle plan included a broad macro release bundle across FRED, Census, BEA, BLS, Treasury, and official agency pages. The user clarified that macro data from different institutions has different publication times and is usually not consumed simultaneously.
+
+### Decision
+
+Do not use one catch-all macro release bundle. Split macro acquisition into release-event or release-family bundles based on publication time, source agency, cadence, and intended joint usage. A planning name shape is `macro_release_<release_key>` until exact release keys are accepted.
+
+### Rationale
+
+Release-time alignment matters for historical market context and avoids accidental lookahead or stale-data mixing. Separate bundles also make manager task keys more precise and easier to replay.
+
+### Consequences
+
+- Macro task keys must identify the release key or release family.
+- Connector work must preserve release timestamp/window, covered period, revision/vintage evidence, and source URL.
+- Macro datasets may be grouped only when they are published together or intentionally consumed together.
+- A macro release event inventory remains open work before implementation.

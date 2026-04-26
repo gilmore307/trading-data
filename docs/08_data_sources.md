@@ -96,11 +96,35 @@ Source connector scripts should be split by historical data type and usage bundl
 - ThetaData option 1-minute bundle: one bundle for `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, and `open_interest_1m`.
 - ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
 - OKX bars: one bars-only script/bundle.
-- Macro releases: grouped by release/publication set when data is released or consumed together.
+- Macro releases: split into release-event bundles by publication time/cadence; group only records released together or intentionally consumed as one release package.
 - Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
 
 These are historical acquisition boundaries. Realtime streaming and execution-time feeds remain out of scope for `trading-data`.
+
+
+## Macro Release Bundle Rule
+
+Macro data from FRED, Census, BEA, BLS, Treasury, and official agency pages should not be fetched through one broad `macro_release_bundle`. Different agencies and release families publish at different times, and the data is usually consumed independently.
+
+Macro source connector work should define one bundle per release event or release family, using a planning shape like:
+
+```text
+macro_release_<release_key>
+```
+
+Each release-event bundle should document:
+
+- source agency or official page;
+- release key/name;
+- publication timestamp or expected release window;
+- covered period;
+- revision/vintage behavior;
+- source URL;
+- target SQL table/partition;
+- whether the values are used together as one release package.
+
+Do not group macro data merely because it is macro data. Group only by shared publication event, shared release cadence, and downstream usage together.
 
 ## Web-Discovered And Issuer-Sourced Inputs
 
@@ -156,6 +180,7 @@ A provider/source connector is acceptable only when:
 - ThetaData connector/JAR/credential layout for the option data domain.
 - Which additional source-level secret aliases should be registered in `trading-main`?
 - U.S. Treasury Fiscal Data dataset and endpoint coverage for federal finance context.
+- Macro release event inventory, release-key naming, and per-release bundle boundaries.
 - FOMC and official macro release calendar discovery/update cadence.
 - ETF issuer holdings source coverage, issuer priority, file formats, and as-of-date handling.
 - What live-call guardrail is acceptable for manual provider smoke tests?

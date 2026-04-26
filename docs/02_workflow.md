@@ -91,11 +91,19 @@ Initial script boundaries should be organized around data-type bundles:
 | `thetadata_option_1m_bundle` | ThetaData | `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, `open_interest_1m`. | One bundle because these option 1-minute datasets are normally consumed together. |
 | `thetadata_option_snapshot_bundle` | ThetaData | Snapshot, open interest, and Greeks at a specified timestamp. | Separate from the 1-minute bundle because request shape and use case differ. |
 | `okx_bars` | OKX | Historical crypto bars. | Current OKX scope is bars only. |
-| `macro_release_bundle` | FRED, Census, BEA, BLS, Treasury, official agency pages | Macro datasets that are published or consumed together. | Preserve release/revision/vintage evidence where available. |
+| `macro_release_<release_key>` | FRED, Census, BEA, BLS, Treasury, official agency pages | One official macro release event or publication set sharing a release time/cadence. | Do not combine unrelated agencies or release times into one macro bundle. Preserve release time, period, revision/vintage evidence, and source URL. |
 | `calendar_discovery` | Official web sources discovered by search | FOMC and official macro release calendars. | Confirm official source domains before accepting results. |
 | `etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |
 
 These names are planning names until accepted through registry/contract review.
+
+## Macro Release Bundle Rule
+
+Macro data should not use one catch-all bundle across FRED, Census, BEA, BLS, Treasury, and official agency pages. Macro releases should be split by release event and publication time because they are usually consumed independently.
+
+A macro release bundle may group data only when the records are published together or intentionally consumed as one release package. The task key should identify the release key, source agency, expected publication timestamp or release window, covered period, revision/vintage expectations, and target SQL table/partition.
+
+Examples of acceptable bundle granularity include one bundle per official release family or release event, such as an employment release, inflation release, GDP/account release, Treasury dataset publication, or other agency-specific release package. Exact release keys remain pending provider/source inventory work.
 
 ## Completion Receipt Requirements
 
@@ -146,12 +154,13 @@ Exact validation schemas are not yet accepted.
 
 The following workflow details must be defined before implementation depends on them:
 
-- exact task key file/request schema for data work;
+- exact task key file/request schema for data work, including release-event keys for macro tasks;
 - request domain classification;
 - exact artifact reference format;
 - exact manifest schema;
 - exact ready-signal schema;
 - provider selection and priority rules;
+- macro release event inventory and bundle naming rules;
 - data-source connector layout and credential alias convention;
 - raw vs normalized artifact policy;
 - data partitioning strategy;

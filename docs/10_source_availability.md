@@ -10,10 +10,42 @@ The inventory exists to support two decisions before connector implementation:
 ## Availability Rules
 
 - Verify source availability from official documentation or source pages before implementation depends on a data category.
+- Use `python -m trading_data.source_availability` for bounded smoke probes after documentation review; default tests for this probe package must not require network access or secrets.
 - Register accepted obtainable categories as `kind=data_kind` in `trading-main`.
 - Keep `data_bundle` and `data_kind` separate: bundles route execution; data kinds name requested/produced data categories.
 - Use one canonical source per economic measure. FRED is limited to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups.
 - Do not store provider credentials, full raw responses, or generated datasets in this repository.
+
+## Probe Workflow
+
+A small stdlib Python probe package now lives under `src/trading_data/source_availability/`.
+
+Common commands:
+
+```bash
+PYTHONPATH=src python3 -m trading_data.source_availability --list
+PYTHONPATH=src python3 -m trading_data.source_availability --dry-run
+PYTHONPATH=src python3 -m trading_data.source_availability --source bls --source us_treasury_fiscal_data
+```
+
+Live probe reports are written under `data/storage/source_availability/`, which is ignored by Git. Reports contain probe status fields, HTTP status when available, response shape keys, and tiny sanitized sample rows only. They must not contain request headers, credential values, or full raw provider dumps.
+
+Optional provider secrets are loaded only by local alias from `/root/secrets/<alias>.json`, with registered environment-variable overrides such as `FRED_SECRET_ALIAS`, `BEA_SECRET_ALIAS`, and `ALPACA_SECRET_ALIAS`. Reports may show alias metadata and key names present, but never secret values.
+
+
+## API-Level Confirmation
+
+Documentation availability is not sufficient for implementation acceptance. The first API-backed acquisition code now lives under `src/trading_data/data_sources/macro_data/` and makes real bounded requests for `bls`, `census`, `bea`, `us_treasury_fiscal_data`, and `fred`.
+
+The macro bundle writes sanitized request evidence, normalized rows, CSV/JSONL development outputs, and a completion receipt under ignored `data/storage/`. It does not persist full raw provider responses by default. The first live smoke runs confirmed these actual response shapes:
+
+- BLS CPI sample (`CUUR0000SA0`) normalizes `year`, `period`, `periodName`, `value`, `footnotes`, and `series_id`.
+- Census MARTS sample normalizes array responses using the provider header row, including `data_type_code`, `seasonally_adj`, `category_code`, `cell_value`, `error_data`, `time`, and geography columns.
+- BEA NIPA sample normalizes `BEAAPI.Results.Data` rows, including `TableName`, `LineNumber`, `LineDescription`, `SeriesCode`, `TimePeriod`, `DataValue`, units, and metadata fields.
+- U.S. Treasury Fiscal Data debt sample normalizes `data[]` rows with record-date/calendar/fiscal fields and amount fields as provider strings.
+- FRED native sample normalizes `observations[]` rows with `date`, `value`, and real-time vintage bounds.
+
+Use this implementation path to discover actual source formats before accepting source-specific `macro_data.params` contracts or SQL storage mappings.
 
 ## Macro Sources
 
@@ -32,7 +64,7 @@ The inventory exists to support two decisions before connector implementation:
 | Source | Available categories | Access expectation | Notes |
 |---|---|---|---|
 | Alpaca | Equity bars, trades, quotes, snapshots, news. | `ALPACA_SECRET_ALIAS`; entitlement/feed availability must be checked at runtime. | News is its own bundle. |
-| ThetaData | Option contracts, trades, quotes/NBBO, OHLC, EOD, open interest, implied volatility, Greeks, trade Greeks, snapshots. | `THETADATA_SECRET_ALIAS`; local terminal/runtime placement still pending. | Option Data Standard coverage needs a controlled smoke test after connector design. |
+| ThetaData | Option contracts, trades, quotes/NBBO, OHLC, EOD, open interest, implied volatility, Greeks, trade Greeks, snapshots. | `THETADATA_SECRET_ALIAS`; local terminal/runtime placement still pending. | ThetaData entitlement coverage needs a controlled smoke test after connector design. |
 | OKX | Crypto bars; trades, quotes/tickers, and order book are available if later accepted. | Public market endpoints for market data; private endpoints need credentials. | Current accepted bundle remains bars-focused. |
 | SEC EDGAR | Submissions, company facts, company concepts, frames, filing document references. | No key; identifying User-Agent and fair-access behavior required. | Use official SEC endpoints only by default. |
 | ETF issuers | Holdings rows/snapshots, fund metadata, constituent weights. | Usually public web/file downloads. | No universal API; implement issuer-specific adapters and source URL/as-of tracking. |

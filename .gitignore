@@ -38,3 +38,6 @@ credentials/
 .DS_Store
 .vscode/
 .idea/
+
+# Local coding-agent metadata
+.codex

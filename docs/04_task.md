@@ -16,7 +16,6 @@
 - Define storage-resident data task completion receipt schema with `trading-main` and `trading-storage`.
 - Define storage SQL table/partition contract for data-task outputs before durable/production mode.
 - Define provider quota/rate-limit/retry policy per source before automation loops are introduced.
-- Define first implementation skeleton and unit/fixture test harness after source layout is accepted.
 - Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
 - Define any additional provider secret alias names through `trading-main` once providers are selected.
 
@@ -42,6 +41,8 @@
 
 ## Recently Accepted
 
+- Added the first API-backed `macro_data` acquisition bundle under `src/trading_data/data_sources/macro_data/`; it runs real bounded requests for BLS, Census, BEA, U.S. Treasury Fiscal Data, and FRED, normalizes rows, saves cleaned JSONL/CSV development outputs, and writes completion receipts without persisting full raw provider payloads by default.
+- Added `src/trading_data/source_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `data/storage/source_availability/` and default tests use mocks/fixtures only.
 - Registered the initial source-availability `data_kind` inventory in `trading-main` and documented it in `docs/10_source_availability.md`.
 - Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.
 - Consolidated macro acquisition into one accepted `macro_data` bundle with source/dataset/release/series selection in task params.

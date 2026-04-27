@@ -677,9 +677,9 @@ Unified event rows must identify whether the event primarily affects the broad m
 
 Macroeconomic publications such as CPI, payrolls, PCE, GDP, and rate decisions are not only indicator values. They are market-impact events because the publication moment can move broad markets, rates, FX, sectors, and securities immediately.
 
-Keep two layers:
+Keep source evidence and final saved outputs separate:
 
-- `macro_release` stores the observed metric fact, release timestamp, validity interval, and value.
-- `macro_release_event` stores the event-layer object with `event_type=macro_release_event`, `source_type=official_macro_release`, impact scope/universe, source reference, and report/factor linkage.
+- `macro_release` is transient cleaned source evidence for observed values and release-time validity. It is not a final saved/model-facing alpha table.
+- `macro_release_event` is the final saved event-layer object with `event_type=macro_release_event`, `source_type=official_macro_release`, impact scope/universe, source reference, actual value attributes, and report/factor linkage.
 
-The `macro_data` bundle should emit both rows. Event studies and reaction labels should use `macro_release_event`; slow-moving feature matrices can still use `macro_release` validity intervals. Official macro APIs usually provide actual values but not consensus expectations, so surprise fields remain pending until an approved consensus source is accepted.
+The `macro_data` bundle should save `macro_release_event.csv` as the final output and keep `macro_release.jsonl` only under `cleaned/` as run-local evidence. Event studies and reaction labels should use `macro_release_event`. Market-state models should use pure market/index/ETF data for state classification rather than macro reason labels. Official macro APIs usually provide actual values but not consensus expectations, so surprise fields remain pending until an approved consensus source is accepted.

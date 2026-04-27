@@ -47,9 +47,10 @@ class MacroDataPipelineTests(unittest.TestCase):
             result = run(task_key, run_id="macro_data_run_test", client=FakeMacroClient(payload))
             self.assertEqual(result.status, "succeeded")
             saved = Path(task_key["output_root"]) / "runs" / "macro_data_run_test" / "saved" / "macro_release.csv"
-            self.assertTrue(saved.exists())
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            self.assertFalse(saved.exists())
+            evidence = Path(task_key["output_root"]) / "runs" / "macro_data_run_test" / "cleaned" / "macro_release.jsonl"
+            self.assertTrue(evidence.exists())
+            row = json.loads(evidence.read_text().splitlines()[0])
             self.assertEqual(row["metric"], "CUUR0000SA0")
             self.assertEqual(row["release_time"], "2024-02-13T08:30:00-05:00")
             self.assertEqual(row["effective_until"], "2024-03-12T08:30:00-04:00")
@@ -63,7 +64,7 @@ class MacroDataPipelineTests(unittest.TestCase):
             self.assertEqual(event_row["effective_time_et"], "2024-02-13T08:30:00-05:00")
             self.assertEqual(event_row["metric"], "CUUR0000SA0")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
-            self.assertEqual(receipt["runs"][0]["row_counts"]["macro_release"], 1)
+            self.assertNotIn("macro_release", receipt["runs"][0]["row_counts"])
             self.assertEqual(receipt["runs"][0]["row_counts"]["macro_release_event"], 1)
 
     def test_census_array_shape_normalizes(self):
@@ -77,7 +78,7 @@ class MacroDataPipelineTests(unittest.TestCase):
             }
             result = run(task_key, run_id="macro_data_run_census", client=FakeMacroClient(payload))
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["macro_release"], 1)
+            self.assertEqual(result.row_counts["macro_release_event"], 1)
 
     def test_data_kind_defaults_resolve_to_provider_params(self):
         payload = {"Results": {"series": [{"seriesID": "CUUR0000SA0", "data": [{"value": "309.685"}]}]}}
@@ -90,7 +91,7 @@ class MacroDataPipelineTests(unittest.TestCase):
             }
             result = run(task_key, run_id="macro_data_run_kind_default", client=FakeMacroClient(payload))
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["macro_release"], 1)
+            self.assertEqual(result.row_counts["macro_release_event"], 1)
 
     def test_all_macro_interfaces_have_source_and_release_defaults_or_adapter_note(self):
         for key, interface in MACRO_INTERFACES.items():

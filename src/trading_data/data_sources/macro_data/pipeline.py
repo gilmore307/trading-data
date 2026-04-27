@@ -24,7 +24,7 @@ from trading_data.data_sources.macro_data.interfaces import MACRO_INTERFACES, pa
 
 SUPPORTED_SOURCES = {"bls", "census", "bea", "us_treasury_fiscal_data", "fred"}
 DEFAULT_TIMEOUT_SECONDS = 20
-MACRO_RELEASE_FIELDS = ["metric", "release_time", "effective_until", "value"]
+MACRO_RELEASE_FIELDS = ["metric", "release_time", "effective_until", "value"]  # transient cleaned evidence only; final saved output is macro_release_event.csv
 MACRO_RELEASE_EVENT_FIELDS = [
     "event_id",
     "canonical_event_id",
@@ -310,7 +310,7 @@ def clean(context: BundleContext, fetched: FetchedPayload) -> StepResult:
     return StepResult(
         status="succeeded",
         references=[str(output), str(event_output), str(schema_path)],
-        row_counts={"macro_release": len(rows), "macro_release_event": len(event_rows)},
+        row_counts={"macro_release_evidence": len(rows), "macro_release_event": len(event_rows)},
         details={"macro_release_columns": MACRO_RELEASE_FIELDS, "macro_release_event_columns": MACRO_RELEASE_EVENT_FIELDS, "source": fetched.source},
     )
 
@@ -371,13 +371,7 @@ def _normalize_release_rows(params: dict[str, Any], raw_rows: list[dict[str, Any
 
 def save(context: BundleContext, clean_result: StepResult) -> StepResult:
     context.saved_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = context.saved_dir / "macro_release.csv"
     event_csv_path = context.saved_dir / "macro_release_event.csv"
-    rows = [json.loads(line) for line in (context.cleaned_dir / "macro_release.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    with csv_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=MACRO_RELEASE_FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
     event_rows = [json.loads(line) for line in (context.cleaned_dir / "macro_release_event.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     with event_csv_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=MACRO_RELEASE_EVENT_FIELDS, extrasaction="ignore")
@@ -385,9 +379,9 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
         writer.writerows(event_rows)
     return StepResult(
         status="succeeded",
-        references=[str(csv_path), str(event_csv_path)],
-        row_counts=dict(clean_result.row_counts),
-        details={"format": "csv", "macro_release_columns": MACRO_RELEASE_FIELDS, "macro_release_event_columns": MACRO_RELEASE_EVENT_FIELDS},
+        references=[str(event_csv_path)],
+        row_counts={"macro_release_event": clean_result.row_counts["macro_release_event"]},
+        details={"format": "csv", "macro_release_event_columns": MACRO_RELEASE_EVENT_FIELDS, "transient_evidence": "cleaned/macro_release.jsonl"},
     )
 
 

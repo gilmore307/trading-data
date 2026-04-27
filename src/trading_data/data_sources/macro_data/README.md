@@ -2,7 +2,7 @@
 
 `macro_data` is the parameterized macro acquisition bundle. Unlike the earlier
 source-availability probes, this package performs real provider requests,
-normalizes rows, and writes SQL-shaped macro release outputs.
+normalizes rows, and writes final event-layer macro release outputs.
 
 Run a task key with:
 
@@ -24,8 +24,9 @@ You may also pass a registered `params.data_kind` such as `macro_bls_cpi`, `macr
 Outputs are written under `output_root/runs/<run-id>/`:
 
 - `request_manifest.json` — sanitized endpoint/request evidence; no full raw response.
-- `cleaned/macro_release.jsonl` and `cleaned/schema.json` — normalized sparse release rows/schema.
-- `saved/macro_release.csv` — SQL-shaped long-term output with `metric,release_time,effective_until,value`.
+- `cleaned/macro_release.jsonl` and `cleaned/schema.json` — transient normalized source-evidence rows/schema; not final saved/model-facing outputs.
+- `cleaned/macro_release_event.jsonl` — transient event-layer rows before CSV save.
+- `saved/macro_release_event.csv` — final event-layer output; includes the macro actual value as an event attribute and impact scope/universe fields.
 - `completion_receipt.json` at task root — per-run status, row counts, output references, and errors.
 
 The bundle intentionally does not persist full raw/intermediate provider payloads

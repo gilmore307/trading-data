@@ -22,11 +22,11 @@ Final output:
 
 ### `thetadata_option_event_timeline`
 
-Reports only option-activity events. It may use transient 30Min window state and periodic option-chain snapshots for IV context, but final output contains only triggered events. Event text is a human-facing headline, not a machine-readable explanation.
+Reports only option-activity events. It may use transient 30Min window state and periodic option-chain snapshots for IV context, but final output contains only triggered events. `headline` is a human-facing news-style title; `summary` carries only triggered abnormal indicator details.
 
 Final output:
 
-- `option_activity_event` — CSV artifact; see `option_activity_event.preview.csv`.
+- `option_activity_event` — CSV artifact using the same timeline/news fields as `equity_news`; see `option_activity_event.preview.csv`.
 
 ## Template notes
 
@@ -70,9 +70,9 @@ Final output:
 - **Status:** `preview-designed`.
 - **Persistence policy:** Persist triggered event rows only as CSV. Do not persist process data, transient trade_quote rows, or periodic chain snapshots in this bundle.
 - **Earliest available range:** `unknown`; trade_quote live preview confirmed AAPL 2026-05-15 270 CALL on 2026-04-24.
-- **Default timestamp semantics:** `event_time_et`, `detection_time_et`, and window bounds in `America/New_York`.
+- **Default timestamp semantics:** `created_at_et` is the event source time and `updated_at_et` is the detection/report time, both in `America/New_York`. Window bounds may be encoded in `summary` when relevant.
 - **Natural grain:** One detected option-activity event.
 - **Request parameters:** `underlying`, optional contract fields, `start_date`, `end_date`, `timeframe` default `30Min`, event threshold params.
 - **Pagination/range behavior:** Process trade_quote rows within rolling/window state; periodic option_chain_snapshot every `timeframe` can provide IV cross-section context. Emit immediately when thresholds are met; do not wait for the full bar/window to close.
 - **Preview file:** see `option_activity_event.preview.csv`.
-- **Known caveats:** `event_text` is a human headline only and should mention only triggered abnormal indicators; numeric/model inputs live in structured columns.
+- **Known caveats:** This output intentionally reuses the news/timeline schema. `headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries abnormal indicator details and compact nested metric/context text; normal metrics are omitted. Event scoring is not produced in this data layer and belongs to downstream models.

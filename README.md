@@ -10,10 +10,13 @@ It does not own shared storage policy, strategy logic, model research, execution
 
 ```text
 docs/        Required docs spine plus component-specific guides for data domains and data sources.
+src/         Importable data-source, source-interface, and template-generator implementation packages.
+tests/       First-party tests for data-source pipelines, interface probes, and generated templates.
+templates/   Generated final data-kind templates and source-organized template documentation.
 data/        Local runtime data area; only README files are tracked. `data/storage/` is the development output root.
 ```
 
-Source, tests, and package layout are intentionally not created yet. They should be added only after the data contracts, provider choices, and storage handoff expectations are explicit.
+Executable CLIs are package entrypoints that call `src/`. If future operational wrappers are needed, place them under `scripts/`; `src/` must not import `scripts/`.
 
 ## Docs Set
 

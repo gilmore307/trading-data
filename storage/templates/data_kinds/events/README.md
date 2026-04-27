@@ -80,6 +80,8 @@ Typical `event_type` values include:
 
 SEC event classification should use `taxonomy_context` for source-specific details such as `sec_form`, `sec_items`, accession number context, and filing document references.
 
+Macro releases are event-layer objects as well as metric facts. `macro_release` owns the actual observed value and sparse validity interval; `macro_release_event` owns the market-impact moment, impact scope, event timing, and later reaction/factor linkage. Official macro APIs usually provide actual values but not stable consensus expectations, so `surprise_score` should remain blank/pending until an approved consensus source exists.
+
 ## `event_analysis_report`
 
 Index row for agent/model-generated analysis artifacts.

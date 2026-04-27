@@ -34,7 +34,7 @@ storage/templates/data_kinds/
 
 | Source | Folder | Final saved data kinds | Notes |
 |---|---|---|---|
-| Official macro providers | `macro/` | `macro_release` | Sparse release-event storage; training jobs expand to daily Parquet feature matrices. |
+| Official macro providers | `macro/` + `events/` | `macro_release`, `macro_release_event` | `macro_release` stores observed metric facts/validity intervals; `macro_release_event` stores the market-impact event for event studies and reaction labels. |
 | Alpaca Market Data API | `alpaca/` | `equity_bar`, `equity_liquidity_bar`, `equity_news` | Raw trades/quotes are transient inputs for `equity_liquidity_bar`; snapshots are non-final until accepted. |
 | OKX Market Data API | `okx/` | `crypto_bar`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; raw trades are transient inputs to liquidity bars and quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
 | ThetaData Terminal v3 | `thetadata/` | `option_chain_snapshot`, `option_bar`, `option_activity_event`, `option_activity_event_detail` | Option outputs are split by use case: selection snapshot, specified-contract tracking, and event timeline. Nested contexts are stored as JSON text columns inside CSV previews until SQL JSONB storage exists. |

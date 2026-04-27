@@ -9,6 +9,7 @@ full raw provider responses by default.
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -24,6 +25,31 @@ from trading_data.data_sources.macro_data.interfaces import MACRO_INTERFACES, pa
 SUPPORTED_SOURCES = {"bls", "census", "bea", "us_treasury_fiscal_data", "fred"}
 DEFAULT_TIMEOUT_SECONDS = 20
 MACRO_RELEASE_FIELDS = ["metric", "release_time", "effective_until", "value"]
+MACRO_RELEASE_EVENT_FIELDS = [
+    "event_id",
+    "canonical_event_id",
+    "dedup_status",
+    "source_priority",
+    "impact_scope",
+    "impacted_universe",
+    "primary_impact_target",
+    "security_id",
+    "symbol",
+    "event_time_et",
+    "effective_time_et",
+    "event_type",
+    "source_type",
+    "source_ref",
+    "source_url",
+    "title",
+    "summary",
+    "metric",
+    "value",
+    "analysis_report_url",
+    "analysis_status",
+    "coverage_reason",
+    "taxonomy_context",
+]
 
 
 @dataclass(frozen=True)
@@ -210,24 +236,82 @@ def _fetch_by_source(source: str, params: dict[str, Any], client: HttpClient) ->
     raise AssertionError(source)
 
 
+def _stable_macro_event_id(row: dict[str, Any], source: str) -> str:
+    seed = f"{source}|{row.get('metric')}|{row.get('release_time')}|{row.get('value')}"
+    return "macro_evt_" + hashlib.sha1(seed.encode("utf-8")).hexdigest()[:10].upper()
+
+
+def _macro_release_event_rows(params: dict[str, Any], rows: list[dict[str, Any]], fetched: FetchedPayload) -> list[dict[str, Any]]:
+    impact_scope = str(params.get("impact_scope") or "market")
+    impacted_universe = str(params.get("impacted_universe") or "US_MARKET;rates;USD;equities")
+    primary_impact_target = str(params.get("primary_impact_target") or "US_MARKET")
+    source_url = str(params.get("source_url") or sanitize_url(fetched.endpoint) or "")
+    source_ref_prefix = str(params.get("source_ref") or fetched.source)
+    events: list[dict[str, Any]] = []
+    for row in rows:
+        event_id = _stable_macro_event_id(row, fetched.source)
+        metric = str(row.get("metric") or "macro_release")
+        value = row.get("value", "")
+        taxonomy_context = {
+            "provider": fetched.source,
+            "metric": metric,
+            "actual_value": value,
+            "consensus_value": params.get("consensus_value"),
+            "previous_value": params.get("previous_value"),
+            "revision_value": params.get("revision_value"),
+            "surprise_status": "pending_consensus_source" if params.get("consensus_value") in (None, "") else "available",
+        }
+        events.append({
+            "event_id": event_id,
+            "canonical_event_id": event_id,
+            "dedup_status": "canonical",
+            "source_priority": 100,
+            "impact_scope": impact_scope,
+            "impacted_universe": impacted_universe,
+            "primary_impact_target": primary_impact_target,
+            "security_id": "",
+            "symbol": "",
+            "event_time_et": row["release_time"],
+            "effective_time_et": str(params.get("effective_time") or row["release_time"]),
+            "event_type": "macro_release_event",
+            "source_type": "official_macro_release",
+            "source_ref": f"{source_ref_prefix}:{metric}",
+            "source_url": source_url,
+            "title": str(params.get("event_title") or f"{metric} macro release"),
+            "summary": str(params.get("event_summary") or f"Official macro release for {metric}; actual value={value}."),
+            "metric": metric,
+            "value": value,
+            "analysis_report_url": str(params.get("analysis_report_url") or ""),
+            "analysis_status": str(params.get("analysis_status") or "not_requested"),
+            "coverage_reason": "official macro release is source of truth",
+            "taxonomy_context": json.dumps(taxonomy_context, sort_keys=True),
+        })
+    return events
+
+
 def clean(context: BundleContext, fetched: FetchedPayload) -> StepResult:
     params = _resolve_params(dict(context.task_key.get("params") or {}))
     raw_rows = _normalize_rows(fetched.source, fetched.payload)
     if not raw_rows:
         raise MacroDataError(f"{fetched.source} response produced zero normalized rows")
     rows = _normalize_release_rows(params, raw_rows)
+    event_rows = _macro_release_event_rows(params, rows, fetched)
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     output = context.cleaned_dir / "macro_release.jsonl"
     with output.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
+    event_output = context.cleaned_dir / "macro_release_event.jsonl"
+    with event_output.open("w", encoding="utf-8") as handle:
+        for row in event_rows:
+            handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
     schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({"columns": MACRO_RELEASE_FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    schema_path.write_text(json.dumps({"macro_release": MACRO_RELEASE_FIELDS, "macro_release_event": MACRO_RELEASE_EVENT_FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult(
         status="succeeded",
-        references=[str(output), str(schema_path)],
-        row_counts={"macro_release": len(rows)},
-        details={"columns": MACRO_RELEASE_FIELDS, "source": fetched.source},
+        references=[str(output), str(event_output), str(schema_path)],
+        row_counts={"macro_release": len(rows), "macro_release_event": len(event_rows)},
+        details={"macro_release_columns": MACRO_RELEASE_FIELDS, "macro_release_event_columns": MACRO_RELEASE_EVENT_FIELDS, "source": fetched.source},
     )
 
 
@@ -288,16 +372,22 @@ def _normalize_release_rows(params: dict[str, Any], raw_rows: list[dict[str, Any
 def save(context: BundleContext, clean_result: StepResult) -> StepResult:
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     csv_path = context.saved_dir / "macro_release.csv"
+    event_csv_path = context.saved_dir / "macro_release_event.csv"
     rows = [json.loads(line) for line in (context.cleaned_dir / "macro_release.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=MACRO_RELEASE_FIELDS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+    event_rows = [json.loads(line) for line in (context.cleaned_dir / "macro_release_event.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    with event_csv_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=MACRO_RELEASE_EVENT_FIELDS, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(event_rows)
     return StepResult(
         status="succeeded",
-        references=[str(csv_path)],
+        references=[str(csv_path), str(event_csv_path)],
         row_counts=dict(clean_result.row_counts),
-        details={"format": "csv", "columns": MACRO_RELEASE_FIELDS},
+        details={"format": "csv", "macro_release_columns": MACRO_RELEASE_FIELDS, "macro_release_event_columns": MACRO_RELEASE_EVENT_FIELDS},
     )
 
 

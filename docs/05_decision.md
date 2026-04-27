@@ -672,3 +672,14 @@ Use `canonical_event_id`, `dedup_status`, `source_priority`, and `coverage_reaso
 Unified event rows must identify whether the event primarily affects the broad market, a sector, an industry, a theme, one security, multiple securities, macro conditions, or an unresolved target. Use `impact_scope`, `impacted_universe`, and `primary_impact_target` so broad events are not accidentally scored as single-stock events and single-name events are not wrongly propagated to an entire sector.
 
 `security_id`/`symbol` remains the primary tradable identifier when one exists, but it is not enough to describe impact. For example, a company 10-K is normally `impact_scope=security`, while a CPI release may be `impact_scope=market` with `impacted_universe=US_MARKET;rates;USD`.
+
+## D045 - Macro releases are event-layer objects
+
+Macroeconomic publications such as CPI, payrolls, PCE, GDP, and rate decisions are not only indicator values. They are market-impact events because the publication moment can move broad markets, rates, FX, sectors, and securities immediately.
+
+Keep two layers:
+
+- `macro_release` stores the observed metric fact, release timestamp, validity interval, and value.
+- `macro_release_event` stores the event-layer object with `event_type=macro_release_event`, `source_type=official_macro_release`, impact scope/universe, source reference, and report/factor linkage.
+
+The `macro_data` bundle should emit both rows. Event studies and reaction labels should use `macro_release_event`; slow-moving feature matrices can still use `macro_release` validity intervals. Official macro APIs usually provide actual values but not consensus expectations, so surprise fields remain pending until an approved consensus source is accepted.

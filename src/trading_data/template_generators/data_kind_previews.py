@@ -230,6 +230,7 @@ OPTION_ACTIVITY_EVENT_DETAIL = data_kind("dki_OPDET01")
 OPTION_BAR = data_kind("dki_OPBAR001")
 OPTION_CHAIN_SNAPSHOT = data_kind("dki_OPCHAIN1")
 MACRO_RELEASE = data_kind("dki_MACREL01")
+MACRO_RELEASE_EVENT = data_kind("dki_MACREVT1")
 TRADING_EVENT = data_kind("dki_TREVT001")
 EVENT_FACTOR = data_kind("dki_TREVT002")
 EVENT_ANALYSIS_REPORT = data_kind("dki_TREVT003")
@@ -278,6 +279,11 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
         "macro/macro_release.preview.csv",
         [MACRO_METRIC, MACRO_RELEASE_TIME, MACRO_EFFECTIVE_UNTIL, OBSERVED_VALUE],
         ["cpi_yoy", "2026-04-10T08:30:00-04:00", "2026-05-12T08:30:00-04:00", 3.2],
+    ),
+    csv_template(
+        "events/macro_release_event.preview.csv",
+        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TIME_ET, EVENT_EFFECTIVE_TIME_ET, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, MACRO_METRIC, OBSERVED_VALUE, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
+        ["macro_evt_P8Q4W6R2", "macro_evt_P8Q4W6R2", "canonical", 100, "market", "US_MARKET;rates;USD;equities", "US_MARKET", "", "", "2026-04-10T08:30:00-04:00", "2026-04-10T08:30:00-04:00", "macro_release_event", "official_macro_release", "cpi_yoy", "https://www.bls.gov/news.release/cpi.htm", "CPI YoY macro release", "Official CPI release became observable at 08:30 ET and may affect broad market, rates, USD, and equity risk appetite.", "cpi_yoy", 3.2, "", "not_requested", "official macro release is source of truth", '{"provider":"bls","consensus_source":"not_available","surprise_status":"pending_consensus_source"}'],
     ),
     csv_template(
         "alpaca/equity_bar.preview.csv",

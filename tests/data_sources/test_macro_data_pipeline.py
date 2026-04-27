@@ -54,8 +54,17 @@ class MacroDataPipelineTests(unittest.TestCase):
             self.assertEqual(row["release_time"], "2024-02-13T08:30:00-05:00")
             self.assertEqual(row["effective_until"], "2024-03-12T08:30:00-04:00")
             self.assertEqual(row["value"], "309.685")
+            event_saved = Path(task_key["output_root"]) / "runs" / "macro_data_run_test" / "saved" / "macro_release_event.csv"
+            self.assertTrue(event_saved.exists())
+            with event_saved.open(newline="") as handle:
+                event_row = next(csv.DictReader(handle))
+            self.assertEqual(event_row["event_type"], "macro_release_event")
+            self.assertEqual(event_row["impact_scope"], "market")
+            self.assertEqual(event_row["effective_time_et"], "2024-02-13T08:30:00-05:00")
+            self.assertEqual(event_row["metric"], "CUUR0000SA0")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["row_counts"]["macro_release"], 1)
+            self.assertEqual(receipt["runs"][0]["row_counts"]["macro_release_event"], 1)
 
     def test_census_array_shape_normalizes(self):
         payload = [["time", "cell_value"], ["2024", "12345"]]

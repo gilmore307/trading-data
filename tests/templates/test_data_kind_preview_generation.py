@@ -37,6 +37,12 @@ class DataKindPreviewGenerationTests(unittest.TestCase):
                 macro_release.read_text(encoding="utf-8"),
             )
 
+            macro_release_event = root / "events" / "macro_release_event.preview.csv"
+            macro_event_text = macro_release_event.read_text(encoding="utf-8")
+            self.assertIn("event_type", macro_event_text)
+            self.assertIn("macro_release_event", macro_event_text)
+            self.assertIn("impact_scope", macro_event_text)
+
             option_detail = root / "thetadata" / "option_activity_event_detail.preview.csv"
             text = option_detail.read_text(encoding="utf-8")
             self.assertIn("triggered_indicators", text)

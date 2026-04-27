@@ -17,6 +17,9 @@ templates/data_kinds/
   okx/
     README.md            OKX crypto data-kind details.
     *.preview.csv        Small final-output CSV previews.
+  thetadata/
+    README.md            ThetaData option data-kind details.
+    *.preview.csv/json   Small final-output previews.
 ```
 
 ## Sources
@@ -25,6 +28,7 @@ templates/data_kinds/
 |---|---|---|---|
 | Alpaca Market Data API | `alpaca/` | `equity_bar`, `equity_liquidity_bar`, `equity_news` | Raw trades/quotes are transient inputs for `equity_liquidity_bar`; snapshots are non-final until accepted. |
 | OKX Market Data API | `okx/` | `crypto_bar`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; raw trades are transient inputs to liquidity bars and quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
+| ThetaData Terminal v3 | `thetadata/` | `option_chain_snapshot`, `option_bar`, `option_activity_event` | Option outputs are split by use case: selection snapshot, specified-contract tracking, and event timeline. |
 
 ## Source README Fields
 

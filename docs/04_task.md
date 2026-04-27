@@ -16,13 +16,15 @@
 - Define storage SQL table/partition contract for data-task outputs before durable/production mode.
 - Define provider quota/rate-limit/retry policy per source before automation loops are introduced.
 - Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
+- Implement `thetadata_option_primary_tracking` for specified-contract option bars.
+- Implement `thetadata_option_event_timeline` for triggered option-activity events.
 - Define any additional provider secret alias names through `trading-main` once providers are selected.
 
 ## Open Gaps
 
 - Exact manager task key file/request schema beyond the current minimal template.
-- Exact source connector package layout.
-- Exact bundle invocation contract and runner interface.
+- Exact source connector package layout beyond the implemented bundle slices.
+- Exact bundle invocation contract and runner interface beyond current CLIs.
 - Exact development output subdirectory/file layout under `data/storage/` beyond task/run grouping.
 - Exact segment naming/checkpoint/resume evidence format.
 - Exact data artifact schema and reference format.
@@ -32,7 +34,6 @@
 - Shared storage root and partition layout.
 - Timestamp normalization contract for payload fields that must remain America/New_York versus any required UTC/database fields.
 - Provider quota/rate-limit policy and live-call guardrails.
-- First supported implementation bundle, market/instrument/granularity, and acceptance path.
 - Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
 - ETF issuer priority list, source-file formats, and as-of-date handling.
 - ThetaData connector/JAR/credential layout.
@@ -40,6 +41,7 @@
 
 ## Recently Accepted
 
+- Implemented `thetadata_option_selection_snapshot` as the first ThetaData option final-output bundle: explicit `underlying` + `snapshot_time_et` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
 - Standardized final saved bundle outputs on CSV only; JSONL may remain a transient cleaned/run-local format but is no longer duplicated into saved outputs.
 - Refined `templates/data_kinds/` scope so the top-level README indexes data sources while source-specific READMEs cover final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
 - Added `templates/data_kinds/` as the concrete source-organized data-kind catalog separate from bundle docs; populated `templates/data_kinds/alpaca/` with Alpaca final data-kind details and preview CSV files.

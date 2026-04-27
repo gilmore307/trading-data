@@ -17,6 +17,7 @@ trading-data-okx-crypto-market-data = "trading_data.data_sources.okx_crypto_mark
 trading-data-source-interfaces = "trading_data.source_interfaces.__main__:main"
 trading-data-alpaca-bars = "trading_data.data_sources.alpaca_bars.__main__:main"
 trading-data-alpaca-news = "trading_data.data_sources.alpaca_news.__main__:main"
+trading-data-thetadata-option-selection-snapshot = "trading_data.data_sources.thetadata_option_selection_snapshot.__main__:main"
 trading-data-generate-data-kind-templates = "trading_data.template_generators.data_kind_previews:main"
 
 [tool.setuptools.packages.find]

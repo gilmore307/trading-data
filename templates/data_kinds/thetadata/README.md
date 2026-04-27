@@ -58,8 +58,8 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Earliest available range:** `unknown`; live preview confirmed AAPL chain snapshot with 3120 contracts for 2026-04-24 latest-visible timestamps.
 - **Default timestamp semantics:** `snapshot_time_et` records requested/receipt context when available; contract quote/IV/Greeks timestamps remain per-contract ET timestamps.
 - **Natural grain:** One snapshot artifact per underlying/snapshot request, containing many contracts.
-- **Request parameters:** `underlying`, `snapshot_time` or provider-supported latest snapshot context; optional expiration filters only if explicitly requested.
-- **Pagination/range behavior:** Source returns full visible chain response for requested underlying/expiration scope; no contract filtering in this template.
+- **Request parameters:** `underlying`, `snapshot_time_et`. The caller must provide an explicit `America/New_York` snapshot datetime; no implicit latest/current mode is supported.
+- **Pagination/range behavior:** Source returns full visible chain response for requested underlying/expiration scope; no contract filtering in this template. Development output is one final JSON file; durable production storage should use a SQL JSONB row body.
 - **Preview file:** see `option_chain_snapshot.preview.json`.
 - **Known caveats:** ThetaData snapshot rows carry per-contract latest timestamps, not one guaranteed identical timestamp across all contracts.
 

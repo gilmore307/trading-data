@@ -13,8 +13,13 @@ PYTHONPATH=src python3 -m trading_data.data_sources.calendar_discovery path/to/t
 Supported params:
 
 - `calendar_source` — e.g. `fomc_calendar`, `bls_release_calendar`, or a custom source label.
-- `url` — optional for known sources, required for custom official calendars.
+- `url` — optional for known sources, required for custom official calendars unless search mode is enabled.
+- `search` — optional boolean; when true, discover an official URL with the shared `trading_web_search` Brave helper.
+- `search_query` — optional explicit search query; otherwise known source defaults are used.
+- `search_count` — optional result count, default 5.
 - `format` — optional `auto`, `ics`, `json`, `fomc_html`, or `bls_html`.
+
+Search mode is discovery only. Fetched URLs must still be on an approved official domain: BLS, Census, BEA, Treasury Fiscal Data, FRED/St. Louis Fed, or Federal Reserve.
 
 Outputs:
 

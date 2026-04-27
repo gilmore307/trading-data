@@ -17,6 +17,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, time, timezone
 from html import unescape
 from pathlib import Path
+from urllib.parse import urlparse
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -30,6 +31,21 @@ DEFAULT_TIMEOUT_SECONDS = 20
 DEFAULT_URLS = {
     "fomc_calendar": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
     "bls_release_calendar": "https://www.bls.gov/schedule/news_release/",
+}
+OFFICIAL_DOMAIN_SUFFIXES = (
+    "bls.gov",
+    "census.gov",
+    "bea.gov",
+    "fiscaldata.treasury.gov",
+    "fred.stlouisfed.org",
+    "federalreserve.gov",
+)
+DEFAULT_SEARCH_QUERIES = {
+    "bls_release_calendar": "site:bls.gov schedule economic news release calendar",
+    "census_release_calendar": "site:census.gov economic indicators release calendar",
+    "bea_release_calendar": "site:bea.gov release schedule full",
+    "fred_release_calendar": "site:fred.stlouisfed.org releases calendar",
+    "fomc_calendar": "site:federalreserve.gov FOMC calendar",
 }
 CALENDAR_FIELDS = [
     "event_id",
@@ -69,6 +85,7 @@ class FetchedCalendar:
     content_type: str
     body: str
     http_status: int | None
+    discovered_candidates: list[dict[str, str]] = field(default_factory=list)
 
 
 class CalendarDiscoveryError(ValueError):
@@ -102,10 +119,57 @@ def _json_response(result: HttpResult) -> Any:
     return result
 
 
+
+def _is_official_url(url: str, allowed_domains: tuple[str, ...] = OFFICIAL_DOMAIN_SUFFIXES) -> bool:
+    host = urlparse(url).netloc.lower().split(":", 1)[0]
+    return any(host == domain or host.endswith("." + domain) for domain in allowed_domains)
+
+
+def _load_brave_search():
+    try:
+        from trading_web_search import brave_search
+    except ImportError as exc:
+        raise CalendarDiscoveryError(
+            "calendar_discovery search mode requires trading-main helper package on PYTHONPATH: trading_web_search"
+        ) from exc
+    return brave_search
+
+
+def discover_official_calendar_url(
+    *,
+    calendar_source: str,
+    query: str | None = None,
+    count: int = 5,
+    allowed_domains: tuple[str, ...] = OFFICIAL_DOMAIN_SUFFIXES,
+) -> tuple[str, list[dict[str, str]]]:
+    search = _load_brave_search()
+    search_query = query or DEFAULT_SEARCH_QUERIES.get(calendar_source)
+    if not search_query:
+        raise CalendarDiscoveryError(f"calendar_discovery search mode needs params.search_query for {calendar_source!r}")
+    results = search(search_query, count=count)
+    candidates: list[dict[str, str]] = []
+    for result in results:
+        candidates.append({"title": result.title, "url": result.url, "official": str(_is_official_url(result.url, allowed_domains)).lower()})
+        if _is_official_url(result.url, allowed_domains):
+            return result.url, candidates
+    raise CalendarDiscoveryError(f"web search found no official calendar URL for query: {search_query}")
+
 def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[StepResult, FetchedCalendar]:
     params = dict(context.task_key.get("params") or {})
     calendar_source = str(params.get("calendar_source") or params.get("data_kind") or "macro_release_calendar")
-    source_url = str(params.get("url") or DEFAULT_URLS.get(calendar_source) or _required(params, "url"))
+    discovered_candidates: list[dict[str, str]] = []
+    if params.get("url"):
+        source_url = str(params["url"])
+    elif params.get("search") or params.get("search_query"):
+        source_url, discovered_candidates = discover_official_calendar_url(
+            calendar_source=calendar_source,
+            query=str(params.get("search_query") or "") or None,
+            count=int(params.get("search_count", 5)),
+        )
+    else:
+        source_url = str(DEFAULT_URLS.get(calendar_source) or _required(params, "url"))
+    if not _is_official_url(source_url):
+        raise CalendarDiscoveryError(f"calendar source URL is not on an approved official domain: {source_url}")
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     result = _json_response(client.get(source_url, headers={"User-Agent": "trading-data-calendar-discovery/0.1"}))
     content_type = result.headers.get("Content-Type", "")
@@ -118,6 +182,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
                 "source_url": sanitize_url(result.url),
                 "http_status": result.status,
                 "content_type": content_type,
+                "discovered_candidates": discovered_candidates,
                 "params": sanitize_value(params),
                 "fetched_at_utc": _now_utc(),
                 "raw_persistence": "not_persisted_by_default",
@@ -128,7 +193,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
         + "\n",
         encoding="utf-8",
     )
-    return StepResult("succeeded", [str(manifest_path)], {"raw_calendar_payloads": 1}, details={"calendar_source": calendar_source, "source_url": sanitize_url(result.url)}), FetchedCalendar(calendar_source, result.url, content_type, result.text(), result.status)
+    return StepResult("succeeded", [str(manifest_path)], {"raw_calendar_payloads": 1}, details={"calendar_source": calendar_source, "source_url": sanitize_url(result.url), "discovered_candidates": len(discovered_candidates)}), FetchedCalendar(calendar_source, result.url, content_type, result.text(), result.status, discovered_candidates)
 
 
 def _event_id(calendar_source: str, name: str, release_time: str, source_url: str) -> str:

@@ -25,7 +25,7 @@
 - Exact manager task key file/request schema beyond the current minimal template.
 - Exact source connector package layout beyond the implemented bundle slices.
 - Exact bundle invocation contract and runner interface beyond current CLIs.
-- Exact development output subdirectory/file layout under `data/storage/` beyond task/run grouping.
+- Exact development output subdirectory/file layout under `storage/` beyond task/run grouping.
 - Exact segment naming/checkpoint/resume evidence format.
 - Exact data artifact schema and reference format.
 - Exact manifest and ready-signal schema.
@@ -43,15 +43,15 @@
 
 - Implemented `thetadata_option_selection_snapshot` as the first ThetaData option final-output bundle: explicit `underlying` + `snapshot_time_et` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
 - Standardized final saved bundle outputs on CSV only; JSONL may remain a transient cleaned/run-local format but is no longer duplicated into saved outputs.
-- Refined `templates/data_kinds/` scope so the top-level README indexes data sources while source-specific READMEs cover final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
-- Added `templates/data_kinds/` as the concrete source-organized data-kind catalog separate from bundle docs; populated `templates/data_kinds/alpaca/` with Alpaca final data-kind details and preview CSV files.
+- Refined `storage/templates/data_kinds/` scope so the top-level README indexes data sources while source-specific READMEs cover final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.
+- Added `storage/templates/data_kinds/` as the concrete source-organized data-kind catalog separate from bundle docs; populated `storage/templates/data_kinds/alpaca/` with Alpaca final data-kind details and preview CSV files.
 - Implemented `alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` CSV without full raw payload persistence.
 - Implemented `alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` CSV without full raw payload persistence.
 - Implemented `alpaca_liquidity` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` CSV, and writes completion receipts without raw trade/quote persistence.
 - Decided raw high-volume Alpaca trade/quote rows must not be persisted by default; `alpaca_liquidity` should save ET-aligned aggregate/derived outputs and discard transient raw segments after aggregation unless a bounded debug artifact is explicitly approved.
 - Added provider/data-kind source interface catalog and smoke runner under `src/trading_data/source_interfaces/`; live checks now confirm Alpaca equity bars/trades/quotes/snapshots/news, OKX crypto bars/trades/tickers/books, and SEC submissions/companyfacts/companyconcept/frames; ThetaData option endpoint families are cataloged but blocked until local Theta Terminal is reachable.
 - Added the first API-backed `macro_data` acquisition bundle under `src/trading_data/data_sources/macro_data/`; it runs real bounded requests for BLS, Census, BEA, U.S. Treasury Fiscal Data, and FRED, normalizes rows, saves cleaned CSV development outputs, and writes completion receipts without persisting full raw provider payloads by default.
-- Added `src/trading_data/source_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `data/storage/source_availability/` and default tests use mocks/fixtures only.
+- Added `src/trading_data/source_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `storage/source_availability/` and default tests use mocks/fixtures only.
 - Registered the initial source-availability `data_kind` inventory in `trading-main` and documented it in `docs/10_source_availability.md`.
 - Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.
 - Consolidated macro acquisition into one accepted `macro_data` bundle with source/dataset/release/series selection in task params.
@@ -67,8 +67,8 @@
 - Recorded runtime JSON minimalism for task key and completion receipt templates.
 - Updated bundle implementation guidance to default to one `pipeline.py` file with four internal step functions and bundle-specific README details.
 - Added API template application guide for data source bundles and linked `trading-main/templates/data_tasks/`.
-- Changed development-stage task outputs from SQL writes to ignored local files under `data/storage/`.
-- Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, development output/receipt files are written under `data/storage/`, and durable SQL/storage receipts remain future contract work.
+- Changed development-stage task outputs from SQL writes to ignored local files under `storage/`.
+- Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, development output/receipt files are written under `storage/`, and durable SQL/storage receipts remain future contract work.
 - Recorded FOMC calendar, official macro release calendar discovery, and ETF issuer holdings source-of-truth rules.
 - Recorded U.S. Treasury Fiscal Data as an open/no-key provider term with documentation path.
 - Added provider documentation URLs to data-source planning docs, matching registry provider term paths.

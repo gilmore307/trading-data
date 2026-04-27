@@ -8,7 +8,7 @@ python -m trading_data.source_availability --dry-run
 python -m trading_data.source_availability --source bls --source us_treasury_fiscal_data
 ```
 
-Live reports are written under `data/storage/source_availability/`, which is
+Live reports are written under `storage/source_availability/`, which is
 ignored by Git. Reports include response shape keys and tiny sanitized sample
 rows only. They do not write request headers, credential values, or full raw
 provider payloads.

@@ -204,7 +204,7 @@ def _response_rows(payload: Any, endpoint_name: str) -> list[dict[str, Any]]:
 def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
     if task_key.get("bundle") != BUNDLE:
         raise ThetaDataOptionSelectionSnapshotError(f"task_key.bundle must be {BUNDLE}")
-    root = Path(str(task_key.get("output_root") or f"data/storage/{task_key.get('task_id', BUNDLE + '_task')}"))
+    root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', BUNDLE + '_task')}"))
     run_dir = root / "runs" / run_id
     registry_csv = Path(str((task_key.get("params") or {}).get("registry_csv") or DEFAULT_REGISTRY_CSV))
     return BundleContext(

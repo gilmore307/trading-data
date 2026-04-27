@@ -15,7 +15,7 @@ Required:
 
 Optional development/runtime params:
 
-- `output_root` at task-key top level — development output root. Defaults to `data/storage/<task_id>`.
+- `output_root` at task-key top level — development output root. Defaults to `storage/<task_id>`.
 - `thetadata_base_url` — local ThetaData Terminal base URL. Defaults to `http://127.0.0.1:25503`.
 - `timeout_seconds` — request timeout. Defaults to `30`.
 - `registry_csv` — registry snapshot used to resolve stable field/data-kind ids. Defaults to `/root/projects/trading-main/registry/current.csv`.
@@ -48,7 +48,7 @@ Only the normalized final JSON is saved. Full raw provider responses are not per
 
 ## Final JSON shape
 
-The output follows `templates/data_kinds/thetadata/option_chain_snapshot.preview.json` and is generated with field names resolved from stable `trading-main` registry ids.
+The output follows `storage/templates/data_kinds/thetadata/option_chain_snapshot.preview.json` and is generated with field names resolved from stable `trading-main` registry ids.
 
 Top-level fields include:
 

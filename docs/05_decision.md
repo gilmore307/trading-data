@@ -364,7 +364,7 @@ The user clarified that current data acquisition work is historical data only. R
 
 ### Decision
 
-`trading-data` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the output destination. During development, `trading-data` writes cleaned data and a task completion receipt under `data/storage/`; durable storage SQL destinations and storage-resident receipts wait for accepted `trading-storage` contracts.
+`trading-data` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the output destination. During development, `trading-data` writes cleaned data and a task completion receipt under `storage/`; durable storage SQL destinations and storage-resident receipts wait for accepted `trading-storage` contracts.
 
 ### Rationale
 
@@ -399,7 +399,7 @@ Release-time alignment matters for historical market context and avoids accident
 - Connector work must still preserve release timestamp/window, covered period, revision/vintage evidence, and source URL in task params and receipts.
 - Macro source/release inventory remains useful as parameter vocabulary, not as bundle inventory.
 
-## D019 - Development data outputs use local data/storage instead of SQL
+## D019 - Development data outputs use local storage instead of SQL
 
 Date: 2026-04-26
 
@@ -409,7 +409,7 @@ The previous workflow described writing cleaned historical data rows to storage 
 
 ### Decision
 
-During development, `trading-data` task outputs and development completion receipts should be written as ignored local files under `data/storage/`. SQL writes are deferred until a durable `trading-storage` contract is accepted or an explicitly guarded integration path is approved.
+During development, `trading-data` task outputs and development completion receipts should be written as ignored local files under `storage/`. SQL writes are deferred until a durable `trading-storage` contract is accepted or an explicitly guarded integration path is approved.
 
 ### Rationale
 
@@ -417,8 +417,8 @@ Local files are easier to inspect, delete, and regenerate while schemas, task ke
 
 ### Consequences
 
-- Registered config `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT` points to `data/storage`.
-- `.gitignore` keeps generated contents under `data/storage/` out of Git.
+- Registered config `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT` points to `storage`.
+- `.gitignore` keeps generated contents under `storage/` out of Git.
 - Implementation should group outputs by task/run under the development storage root.
 - Future SQL table/partition contracts remain `trading-storage` work.
 
@@ -507,7 +507,7 @@ This keeps the task definition stable and lets manager compare or inspect runs w
 ### Consequences
 
 - `task_key.json` uses `output_root`.
-- Run outputs live under `data/storage/<task-id>/runs/<run-id>/`.
+- Run outputs live under `storage/<task-id>/runs/<run-id>/`.
 - `completion_receipt.json` lives at task level and contains `runs[]`.
 - `pipeline.py` receives `run_id` separately from the task key.
 
@@ -568,7 +568,7 @@ The final data-kind CSV/JSON preview files define the output shapes consumed by 
 
 ### Decision
 
-Treat `templates/data_kinds/**/*.preview.csv` and `*.preview.json` as generated materialized output templates. Generate them from `src/trading_data/template_generators/data_kind_previews.py`, where template specs refer to stable `trading-main` registry ids and resolve current payload field names from `registry/current.csv`.
+Treat `storage/templates/data_kinds/**/*.preview.csv` and `*.preview.json` as generated materialized output templates. Generate them from `src/trading_data/template_generators/data_kind_previews.py`, where template specs refer to stable `trading-main` registry ids and resolve current payload field names from `registry/current.csv`.
 
 ### Rationale
 
@@ -587,7 +587,7 @@ Date: 2026-04-27
 
 ### Context
 
-`option_chain_snapshot` is a nested final artifact: one snapshot contains a complete option-chain structure with many contracts and nested quote, IV, Greeks, derived, and underlying context. During development, `trading-data` still writes local ignored files under `data/storage/`, while production durability will move to SQL contracts owned by `trading-storage`.
+`option_chain_snapshot` is a nested final artifact: one snapshot contains a complete option-chain structure with many contracts and nested quote, IV, Greeks, derived, and underlying context. During development, `trading-data` still writes local ignored files under `storage/`, while production durability will move to SQL contracts owned by `trading-storage`.
 
 ### Decision
 

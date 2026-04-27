@@ -94,7 +94,7 @@ def _json_response(result: HttpResult) -> Any:
 def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
     if task_key.get("bundle") != "alpaca_liquidity":
         raise AlpacaLiquidityError("task_key.bundle must be alpaca_liquidity")
-    output_root = Path(str(task_key.get("output_root") or f"data/storage/{task_key.get('task_id', 'alpaca_liquidity_task')}"))
+    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', 'alpaca_liquidity_task')}"))
     run_dir = output_root / "runs" / run_id
     return BundleContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 

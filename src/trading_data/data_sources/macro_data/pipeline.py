@@ -2,7 +2,7 @@
 
 This bundle intentionally starts narrow but real: each supported source builds
 an actual provider request, parses the provider response shape, normalizes rows,
-and writes cleaned development output under ``data/storage``. It does not persist
+and writes cleaned development output under ``storage``. It does not persist
 full raw provider responses by default.
 """
 
@@ -87,7 +87,7 @@ def _json_response(result: HttpResult) -> Any:
 def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
     if task_key.get("bundle") != "macro_data":
         raise MacroDataError("task_key.bundle must be macro_data")
-    output_root = Path(str(task_key.get("output_root") or f"data/storage/{task_key.get('task_id', 'macro_data_task')}"))
+    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', 'macro_data_task')}"))
     run_dir = output_root / "runs" / run_id
     return BundleContext(
         task_key=task_key,

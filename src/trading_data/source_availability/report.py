@@ -11,7 +11,7 @@ from typing import Any
 from .registry import SourceCandidate
 
 
-DEFAULT_REPORT_ROOT = Path("data/storage/source_availability")
+DEFAULT_REPORT_ROOT = Path("storage/source_availability")
 
 
 @dataclass

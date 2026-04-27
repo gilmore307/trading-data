@@ -13,13 +13,12 @@ htmlcov/
 .env.*
 !.env.example
 
-# Local/generated data and artifacts
-data/*
-!data/
-!data/README.md
-!data/storage/
-data/storage/*
-!data/storage/README.md
+# Local/generated storage and artifacts
+storage/*
+!storage/
+!storage/README.md
+!storage/templates/
+!storage/templates/**
 artifacts/
 outputs/
 runs/

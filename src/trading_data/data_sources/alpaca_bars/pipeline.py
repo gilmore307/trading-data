@@ -29,7 +29,7 @@ def _json_response(r:HttpResult):
     return r.json()
 def build_context(task_key,run_id):
     if task_key.get('bundle')!='alpaca_bars': raise AlpacaBarsError('task_key.bundle must be alpaca_bars')
-    root=Path(str(task_key.get('output_root') or f"data/storage/{task_key.get('task_id','alpaca_bars_task')}")); run=root/'runs'/run_id
+    root=Path(str(task_key.get('output_root') or f"storage/{task_key.get('task_id','alpaca_bars_task')}")); run=root/'runs'/run_id
     return BundleContext(task_key,run,run/'cleaned',run/'saved',root/'completion_receipt.json',{'run_id':run_id,'started_at':_now_utc()})
 def _fetch_paginated(client,url,row_key,params,headers,max_pages):
     rows=[]; evidence=[]; token=None

@@ -22,7 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--source", help="Filter by source, e.g. alpaca, okx, thetadata, sec_company_financials.")
     parser.add_argument("--data-kind", action="append", choices=sorted(INTERFACES), help="Probe one data_kind; repeatable.")
     parser.add_argument("--timeout-seconds", type=int, default=8)
-    parser.add_argument("--report-root", type=Path, default=Path("data/storage/source_interfaces"))
+    parser.add_argument("--report-root", type=Path, default=Path("storage/source_interfaces"))
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--sec-user-agent", default=os.environ.get("SEC_EDGAR_USER_AGENT", DEFAULT_SEC_USER_AGENT))
     return parser

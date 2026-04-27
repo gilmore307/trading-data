@@ -11,7 +11,7 @@ Acceptance focuses on:
 - provider/source boundary clarity;
 - data-domain boundary clarity;
 - contract compatibility with `trading-main`;
-- development storage compatibility through ignored local `data/storage/`, and future `trading-storage` compatibility for SQL output destinations and durable completion receipts once contracts are accepted;
+- development storage compatibility through ignored local `storage/`, and future `trading-storage` compatibility for SQL output destinations and durable completion receipts once contracts are accepted;
 - absence of committed data, logs, notebooks, and secrets;
 - evidence-backed parsing, normalization, validation, and artifact writing once code exists.
 
@@ -38,9 +38,9 @@ Implementation changes are acceptable only when they:
 - avoid live provider calls in default tests unless explicitly documented and guarded;
 - respect provider rate limits and retry/backoff expectations;
 - execute only from a self-contained manager task key file once that contract is accepted;
-- produce development completion receipts under `data/storage/` until durable receipt contracts are accepted;
+- produce development completion receipts under `storage/` until durable receipt contracts are accepted;
 - produce or preserve durable completion receipt, manifest, and ready-signal evidence once those contracts are accepted;
-- use ignored local `data/storage/` for development outputs and `trading-storage` contracts for durable SQL output placement only once storage contracts exist;
+- use ignored local `storage/` for development outputs and `trading-storage` contracts for durable SQL output placement only once storage contracts exist;
 - route new shared names through `trading-main/registry/`;
 - document every provider/source connector before domain pipelines depend on it.
 
@@ -61,7 +61,7 @@ Provider integrations are acceptable when they document:
 Artifact-producing changes are acceptable when they:
 
 - write outputs outside Git-tracked source paths;
-- write development outputs under ignored `data/storage/` rather than SQL by default;
+- write development outputs under ignored `storage/` rather than SQL by default;
 - target storage SQL tables/partitions only through accepted `trading-storage` contracts or explicitly guarded integration paths;
 - produce deterministic or explainably variable outputs;
 - document schema and partition assumptions;
@@ -111,7 +111,7 @@ A change must be rejected or returned if it:
 - makes live provider calls in default tests without guardrails;
 - ignores provider rate limits;
 - writes artifacts or SQL rows to undocumented destinations;
-- writes to SQL during normal development/default tests instead of ignored local `data/storage/`;
+- writes to SQL during normal development/default tests instead of ignored local `storage/`;
 - claims acceptance without test or inspection evidence;
 - duplicates global contract definitions locally instead of referencing `trading-main`;
 - introduces realtime feed/execution behavior into `trading-data`.

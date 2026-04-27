@@ -30,7 +30,7 @@ def _json_response(r:HttpResult):
     return r.json()
 def build_context(task_key,run_id):
     if task_key.get('bundle')!='alpaca_news': raise AlpacaNewsError('task_key.bundle must be alpaca_news')
-    root=Path(str(task_key.get('output_root') or f"data/storage/{task_key.get('task_id','alpaca_news_task')}")); run=root/'runs'/run_id
+    root=Path(str(task_key.get('output_root') or f"storage/{task_key.get('task_id','alpaca_news_task')}")); run=root/'runs'/run_id
     return BundleContext(task_key,run,run/'cleaned',run/'saved',root/'completion_receipt.json',{'run_id':run_id,'started_at':_now_utc()})
 def _symbols(v):
     if isinstance(v,str): return [x.strip().upper() for x in v.split(',') if x.strip()]

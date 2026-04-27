@@ -20,4 +20,4 @@ Optional docs are allowed when they have a clear component-specific boundary and
 
 ## Related Templates
 
-- `../templates/data_kinds/README.md` — source-organized final saved data-kind catalog and per-kind CSV preview templates.
+- `../storage/templates/data_kinds/README.md` — source-organized final saved data-kind catalog and per-kind CSV preview templates.

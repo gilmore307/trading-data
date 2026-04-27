@@ -11,7 +11,7 @@ Only final used/saved data kinds get preview CSV/JSON files. Raw or transient pr
 ## Layout
 
 ```text
-templates/data_kinds/
+storage/templates/data_kinds/
   README.md              Source index and catalog rules.
   alpaca/
     README.md            Alpaca final data-kind details.

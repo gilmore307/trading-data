@@ -28,7 +28,7 @@ PYTHONPATH=src python3 -m trading_data.source_availability --dry-run
 PYTHONPATH=src python3 -m trading_data.source_availability --source bls --source us_treasury_fiscal_data
 ```
 
-Live probe reports are written under `data/storage/source_availability/`, which is ignored by Git. Reports contain probe status fields, HTTP status when available, response shape keys, and tiny sanitized sample rows only. They must not contain request headers, credential values, or full raw provider dumps.
+Live probe reports are written under `storage/source_availability/`, which is ignored by Git. Reports contain probe status fields, HTTP status when available, response shape keys, and tiny sanitized sample rows only. They must not contain request headers, credential values, or full raw provider dumps.
 
 Optional provider secrets are loaded only by local alias from `/root/secrets/<alias>.json`, with registered environment-variable overrides such as `FRED_SECRET_ALIAS`, `BEA_SECRET_ALIAS`, and `ALPACA_SECRET_ALIAS`. Reports may show alias metadata and key names present, but never secret values.
 
@@ -37,7 +37,7 @@ Optional provider secrets are loaded only by local alias from `/root/secrets/<al
 
 Documentation availability is not sufficient for implementation acceptance. The first API-backed acquisition code now lives under `src/trading_data/data_sources/macro_data/` and makes real bounded requests for `bls`, `census`, `bea`, `us_treasury_fiscal_data`, and `fred`.
 
-The macro bundle writes sanitized request evidence, normalized rows, CSV/JSONL development outputs, and a completion receipt under ignored `data/storage/`. It does not persist full raw provider responses by default. The first live smoke runs confirmed these actual response shapes:
+The macro bundle writes sanitized request evidence, normalized rows, CSV/JSONL development outputs, and a completion receipt under ignored `storage/`. It does not persist full raw provider responses by default. The first live smoke runs confirmed these actual response shapes:
 
 - BLS CPI sample (`CUUR0000SA0`) normalizes `year`, `period`, `periodName`, `value`, `footnotes`, and `series_id`.
 - Census MARTS sample normalizes array responses using the provider header row, including `data_type_code`, `seasonally_adj`, `category_code`, `cell_value`, `error_data`, `time`, and geography columns.
@@ -85,7 +85,7 @@ PYTHONPATH=src python3 -m trading_data.source_interfaces --source sec_company_fi
 PYTHONPATH=src python3 -m trading_data.source_interfaces --source thetadata
 ```
 
-Live interface reports write under ignored `data/storage/source_interfaces/` and contain sanitized endpoint/status/shape/sample evidence only.
+Live interface reports write under ignored `storage/source_interfaces/` and contain sanitized endpoint/status/shape/sample evidence only.
 
 Current API-level findings:
 

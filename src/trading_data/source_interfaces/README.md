@@ -15,7 +15,7 @@ PYTHONPATH=src python3 -m trading_data.source_interfaces --source sec_company_fi
 PYTHONPATH=src python3 -m trading_data.source_interfaces --source thetadata
 ```
 
-Reports write to ignored `data/storage/source_interfaces/` unless `--no-write`
+Reports write to ignored `storage/source_interfaces/` unless `--no-write`
 is used. Reports include sanitized endpoints, HTTP status, response shape keys,
 and tiny samples only. They must not contain credential values or full raw data.
 

@@ -36,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--report-root",
         type=Path,
-        default=Path("data/storage/source_availability"),
+        default=Path("storage/source_availability"),
         help="Directory for JSON reports.",
     )
     parser.add_argument(
@@ -53,7 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-write",
         action="store_true",
-        help="Print JSON to stdout instead of writing data/storage/source_availability.",
+        help="Print JSON to stdout instead of writing storage/source_availability.",
     )
     return parser
 

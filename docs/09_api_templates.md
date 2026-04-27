@@ -53,7 +53,7 @@ src/trading_data/data_sources/<bundle>/
 
 - `fetch(...)` retrieves source data and writes raw development files.
 - `clean(...)` normalizes raw files into cleaned outputs.
-- `save(...)` writes development outputs under `data/storage/`; durable SQL waits for storage contracts.
+- `save(...)` writes development outputs under `storage/`; durable SQL waits for storage contracts.
 - `write_receipt(...)` emits success/failure completion receipts.
 
 A shared runner should call bundle `run(...)` from a task key so `trading-manager` does not need to know bundle internals. Split the step functions into separate modules only when a bundle becomes too large for one file.
@@ -71,7 +71,7 @@ Every bundle design should answer:
 - What historical range limits or snapshot semantics apply?
 - What raw files are produced transiently, if any? High-volume trade/quote raw rows should normally be stream/segment inputs only, not saved outputs.
 - What cleaned/aggregated outputs are produced? For high-volume market microstructure data, default persisted outputs should be ET-aligned aggregates rather than raw rows.
-- What files are saved under `data/storage/<task-id>/runs/<run-id>/`?
+- What files are saved under `storage/<task-id>/runs/<run-id>/`?
 - What run receipt fields prove success or failure?
 - Which fixtures cover expected and edge-case responses?
 

@@ -626,3 +626,27 @@ The specified contract is an input, so selection remains outside the data bundle
 - Cleaned JSONL may exist only as run-local development evidence.
 - Final saved flat output is `option_bar.csv`.
 - VWAP is calculated from active 1Sec close × volume because the source OHLC `vwap` field is not treated as a per-second trade VWAP.
+
+## D029 - Option event timeline carries task/model current standards
+
+Date: 2026-04-27
+
+### Context
+
+`option_activity_event` is a news-like final output and should contain only triggered event rows. The triggering standard is model/run-specific and must not become a hidden global constant inside `trading-data`.
+
+### Decision
+
+Require `thetadata_option_event_timeline` task params to include a `current_standard` object with the indicator standards used for that run. The bundle fetches transient ThetaData trade/quote rows, evaluates supplied standards over `America/New_York` evidence windows, emits final `option_activity_event.csv` rows only when an indicator triggers, and writes one compact `<event_id>.json` detail artifact per event containing objective statistics, current standards, and standard context.
+
+### Rationale
+
+The data bundle can preserve event-time evidence without pretending to own the model standard. Keeping `summary` abnormal-type-only and pushing metrics/current-standard values into the detail artifact preserves the simplified timeline shape while keeping audit context available.
+
+### Consequences
+
+- `current_standard` values are task/model inputs, not global `trading-data` constants.
+- `summary` contains only triggered abnormal indicator type names.
+- Raw trade/quote rows and window process state remain transient.
+- Event ids and standard ids use semantic prefixes with random suffixes only; they do not encode timestamp, contract, or trigger semantics.
+- Model-standard identity/versioning remains future `trading-model` work.

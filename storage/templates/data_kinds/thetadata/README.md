@@ -81,15 +81,15 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 
 - **Source:** ThetaData Terminal v3, primarily `/v3/option/history/trade_quote`, with optional transient chain snapshot context for IV anomaly metrics.
 - **Bundle:** `thetadata_option_event_timeline`.
-- **Status:** `preview-designed`.
+- **Status:** `implemented`.
 - **Persistence policy:** Persist triggered event rows as CSV plus one compact detail JSON per event. Do not persist process data, transient trade_quote rows, or periodic chain snapshots in this bundle.
 - **Earliest available range:** `unknown`; trade_quote live preview confirmed AAPL 2026-05-15 270 CALL on 2026-04-24.
 - **Default timestamp semantics:** `created_at_et` is the event source time and `updated_at_et` is the detection/report time, both in `America/New_York`.
 - **Natural grain:** One detected option-activity event using the shared model-facing timeline fields: `data_kind`, `id`, `headline`, `created_at_et`, `updated_at_et`, `symbols`, `summary`, `url`.
-- **Request parameters:** `underlying`, optional contract fields, `start_date`, `end_date`, `timeframe` default `30Min`, event standard/model params.
-- **Pagination/range behavior:** Process trade_quote rows within rolling/window state; periodic option_chain_snapshot every `timeframe` can provide IV cross-section context. Emit immediately when the event-time `current_standard` is satisfied; do not wait for the full bar/window to close.
+- **Request parameters:** `underlying`, `expiration`, `right`, `strike`, `start_date`, `end_date`, `timeframe`, and task/model `current_standard` params.
+- **Pagination/range behavior:** Process trade_quote rows within event-window state; optional `iv_context` can provide IV cross-section context. Emit a final row only when the supplied event-time `current_standard` is satisfied.
 - **Preview file:** see `option_activity_event.preview.csv`.
-- **Known caveats:** This output intentionally reuses the simplified news/timeline schema. `id` is a stable random event id, not a semantic timestamp/contract id. `headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries only abnormal indicator type names such as `trade_at_ask;opening_activity`; normal metrics and event scoring are omitted and belong to downstream models. `url` is `<id>.json` and links to the event detail artifact rather than to an external article.
+- **Known caveats:** This output intentionally reuses the simplified news/timeline schema. `id` is a stable random event id, not a semantic timestamp/contract id. `headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries only abnormal indicator type names such as `trade_at_ask;opening_activity`; normal metrics and event scoring are omitted and belong to downstream models. `url` is `<id>.json` and links to the event detail artifact rather than to an external article. Current implementation evaluates supplied `trade_at_ask`, `opening_activity`, and optional `iv_high_cross_section` standards; model-standard identity/versioning remains downstream `trading-model` work.
 
 ## `option_activity_event_detail`
 

@@ -17,6 +17,8 @@ Optional params:
 - `start_date`, `end_date` — `YYYY-MM-DD` partition date bounds.
 - `lookback_days` — used when `start_date` is omitted; defaults to `1`.
 - `max_rows` — 1 to 1000; defaults to `100`.
+- `maximum_bytes_billed` — optional BigQuery per-query cap. Omit for normal day-window fetches within the free/credit budget.
+- `dry_run` — optional BigQuery dry-run estimate mode.
 - `query_terms` — optional string or list of strings searched against GDELT GKG URL/theme/name/entity fields; overrides default category terms when supplied.
 - `topic_categories` — defaults to `politics,economy,war,technology`; supported values are `politics`, `economy`, `war`, and `technology`.
 - `search_fields` — `themes_text`, `url_only`, or `all_text`; defaults to `themes_text`.

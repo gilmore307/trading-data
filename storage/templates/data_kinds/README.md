@@ -22,6 +22,12 @@ storage/templates/data_kinds/
   gdelt/
     README.md            GDELT global news source-evidence details.
     *.preview.csv        Generated GDELT article source-evidence preview.
+  trading_economics/
+    README.md            Trading Economics visible calendar interface details.
+    *.preview.csv        Generated macro consensus/forecast evidence preview.
+  etf/
+    README.md            ETF issuer holdings source details.
+    *.preview.csv        Generated ETF holdings snapshot preview.
   events/
     README.md            Unified event database template details.
     *.preview.csv        Generated trading_event, event_factor, and report-index previews.
@@ -40,6 +46,8 @@ storage/templates/data_kinds/
 | Official macro providers | `macro/` + `events/` | `macro_release_event` | `macro_release` is transient cleaned source evidence only; `macro_release_event` is the final market-impact event for event studies and reaction labels. |
 | Alpaca Market Data API | `alpaca/` | `equity_bar`, `equity_liquidity_bar`, `equity_news` | Raw trades/quotes are transient inputs for `equity_liquidity_bar`; snapshots are non-final until accepted. Alpaca news is secondary/single-name focused after GDELT is primary broad news source. |
 | GDELT BigQuery | `gdelt/` | `gdelt_article` | Primary broad news/event discovery source for U.S. and U.S.-market politics, economy, war/geopolitics, and technology event candidates; queries pre-filter in BigQuery. |
+| Trading Economics visible calendar | `trading_economics/` | `trading_economics_calendar_event` | Conservative webpage-visible interface for U.S. high-impact actual/previous/consensus/forecast macro rows; no API/download/export endpoints and no bulk backfill yet. |
+| ETF issuer holdings | `etf/` | `etf_holding_snapshot` | Official issuer holdings snapshots for ETF constituents and portfolio weights; source-specific raw pages/files remain run-local evidence. |
 | OKX Market Data API | `okx/` | `crypto_bar`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; raw trades are transient inputs to liquidity bars and quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
 | ThetaData Terminal v3 | `thetadata/` | `option_chain_snapshot`, `option_bar`, `option_activity_event`, `option_activity_event_detail` | Option outputs are split by use case: selection snapshot, specified-contract tracking, and event timeline. Nested contexts are stored as JSON text columns inside CSV previews until SQL JSONB storage exists. |
 | Unified event database | `events/` | `trading_event`, `event_factor`, `event_analysis_report` | Source-neutral event research layer for financial reports, SEC corporate events, news, option activity, macro releases, and market anomalies. Raw source acquisition remains in source-specific bundles. |

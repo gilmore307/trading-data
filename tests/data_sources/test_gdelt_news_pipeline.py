@@ -19,8 +19,8 @@ class FakeBigQueryClient:
         self.rows = rows
         self.requests = []
 
-    def query(self, sql, *, max_results=None):
-        self.requests.append((sql, max_results))
+    def query(self, sql, *, max_results=None, maximum_bytes_billed=None, dry_run=False):
+        self.requests.append((sql, max_results, maximum_bytes_billed, dry_run))
         return FakeBigQueryResult(self.rows)
 
 
@@ -51,11 +51,13 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             result = run(task_key, run_id="gdelt_news_run_test", client=client)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["gdelt_article"], 1)
-            sql, max_results = client.requests[0]
+            sql, max_results, maximum_bytes_billed, dry_run = client.requests[0]
             self.assertIn("gdelt-bq.gdeltv2.gkg_partitioned", sql)
             self.assertIn("united states", sql.lower())
             self.assertIn("reuters.com", sql.lower())
             self.assertEqual(max_results, 10)
+            self.assertIsNone(maximum_bytes_billed)
+            self.assertFalse(dry_run)
             saved = Path(task_key["output_root"]) / "runs" / "gdelt_news_run_test" / "saved" / "gdelt_article.csv"
             with saved.open(newline="") as handle:
                 row = next(csv.DictReader(handle))

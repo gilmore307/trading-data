@@ -24,7 +24,7 @@ class FakeClient:
 
 class SourceInterfaceTests(unittest.TestCase):
     def test_catalog_has_required_provider_kinds(self):
-        for key in ["equity_bar", "equity_trade", "equity_quote", "equity_news", "gdelt_article", "crypto_bar", "crypto_trade", "crypto_quote", "crypto_order_book", "option_trade", "option_quote", "sec_submission"]:
+        for key in ["equity_bar", "equity_trade", "equity_quote", "equity_news", "gdelt_article", "trading_economics_calendar_event", "etf_holding_snapshot", "crypto_bar", "crypto_trade", "crypto_quote", "crypto_order_book", "option_trade", "option_quote", "sec_submission"]:
             self.assertIn(key, INTERFACES)
 
     def test_catalog_has_all_macro_interfaces(self):

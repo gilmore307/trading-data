@@ -69,7 +69,7 @@ ARTICLE_FIELDS = [
 
 
 class QueryClient(Protocol):
-    def query(self, sql: str, *, max_results: int | None = None) -> Any: ...
+    def query(self, sql: str, *, max_results: int | None = None, maximum_bytes_billed: int | None = None, dry_run: bool = False) -> Any: ...
 
 
 @dataclass(frozen=True)
@@ -261,12 +261,15 @@ def fetch(context: BundleContext, *, client: QueryClient | None = None) -> tuple
     params = dict(context.task_key.get("params") or {})
     sql, max_rows = build_sql(params)
     client = client or _default_client()
-    result = client.query(sql, max_results=max_rows)
+    maximum_bytes_billed = params.get("maximum_bytes_billed")
+    maximum_bytes_billed_int = int(maximum_bytes_billed) if maximum_bytes_billed not in (None, "") else None
+    dry_run = bool(params.get("dry_run", False))
+    result = client.query(sql, max_results=max_rows, maximum_bytes_billed=maximum_bytes_billed_int, dry_run=dry_run)
     rows = list(getattr(result, "rows", []))
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = context.run_dir / "request_manifest.json"
-    manifest_path.write_text(json.dumps({"query_terms": sanitize_value(_terms(params)), "topic_categories": sanitize_value(_topic_categories(params)), "focus": str(params.get("focus") or DEFAULT_FOCUS), "source_domain_allowlist": sanitize_value(_string_list_param(params, "source_domain_allowlist", DEFAULT_US_MARKET_DOMAINS)), "max_rows": max_rows, "sql": sql, "source": "gdelt_bigquery", "table": "gdelt-bq.gdeltv2.gkg_partitioned", "fetched_at_utc": _now_utc(), "raw_persistence": "not_persisted_by_default"}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest_path)], {"bigquery_rows": len(rows)}, details={"table": "gdelt-bq.gdeltv2.gkg_partitioned"}), FetchedGdeltRows(sql, rows)
+    manifest_path.write_text(json.dumps({"query_terms": sanitize_value(_terms(params)), "topic_categories": sanitize_value(_topic_categories(params)), "focus": str(params.get("focus") or DEFAULT_FOCUS), "source_domain_allowlist": sanitize_value(_string_list_param(params, "source_domain_allowlist", DEFAULT_US_MARKET_DOMAINS)), "max_rows": max_rows, "maximum_bytes_billed": maximum_bytes_billed_int, "dry_run": dry_run, "estimated_total_bytes_processed": getattr(result, "total_bytes_processed", None), "sql": sql, "source": "gdelt_bigquery", "table": "gdelt-bq.gdeltv2.gkg_partitioned", "fetched_at_utc": _now_utc(), "raw_persistence": "not_persisted_by_default"}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(manifest_path)], {"bigquery_rows": len(rows)}, details={"table": "gdelt-bq.gdeltv2.gkg_partitioned", "maximum_bytes_billed": maximum_bytes_billed_int, "dry_run": dry_run, "estimated_total_bytes_processed": getattr(result, "total_bytes_processed", None)}), FetchedGdeltRows(sql, rows)
 
 
 def _seen_at_utc(row: Mapping[str, Any]) -> str:

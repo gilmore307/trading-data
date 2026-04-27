@@ -15,8 +15,9 @@ trading-data-macro-data = "trading_data.data_sources.macro_data.__main__:main"
 trading-data-alpaca-liquidity = "trading_data.data_sources.alpaca_liquidity.__main__:main"
 trading-data-okx-crypto-market-data = "trading_data.data_sources.okx_crypto_market_data.__main__:main"
 trading-data-source-interfaces = "trading_data.source_interfaces.__main__:main"
+trading-data-alpaca-bars = "trading_data.data_sources.alpaca_bars.__main__:main"
+trading-data-alpaca-news = "trading_data.data_sources.alpaca_news.__main__:main"
+trading-data-generate-data-kind-templates = "trading_data.template_generators.data_kind_previews:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-trading-data-alpaca-bars = "trading_data.data_sources.alpaca_bars.__main__:main"
-trading-data-alpaca-news = "trading_data.data_sources.alpaca_news.__main__:main"

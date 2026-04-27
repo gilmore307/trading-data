@@ -1,0 +1,41 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+from trading_data.template_generators.data_kind_previews import (
+    DEFAULT_REGISTRY_CSV,
+    DEFAULT_TEMPLATE_ROOT,
+    all_template_paths,
+    check_templates,
+    generate_templates,
+)
+
+
+class DataKindPreviewGenerationTests(unittest.TestCase):
+    def test_committed_preview_templates_are_generated_from_registry_ids(self):
+        changed = check_templates(
+            registry_csv=DEFAULT_REGISTRY_CSV,
+            template_root=DEFAULT_TEMPLATE_ROOT,
+        )
+        self.assertEqual(changed, [])
+
+    def test_generator_writes_all_expected_preview_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            written = generate_templates(registry_csv=DEFAULT_REGISTRY_CSV, template_root=root)
+            self.assertEqual(sorted(path.relative_to(root) for path in written), sorted(all_template_paths()))
+
+            option_event = root / "thetadata" / "option_activity_event.preview.csv"
+            self.assertIn(
+                "data_kind,id,headline,created_at_et,updated_at_et,symbols,summary,url",
+                option_event.read_text(encoding="utf-8"),
+            )
+
+            option_detail = root / "thetadata" / "option_activity_event_detail.preview.json"
+            text = option_detail.read_text(encoding="utf-8")
+            self.assertIn('"triggered_indicators"', text)
+            self.assertIn('"current_standard"', text)
+
+
+if __name__ == "__main__":
+    unittest.main()

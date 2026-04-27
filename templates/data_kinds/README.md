@@ -1,6 +1,8 @@
 # Data Kind Templates
 
-This directory is the source-organized catalog for final saved `trading-data` data kinds. The top level describes data sources and routing; each source folder owns the detailed README and preview CSV files for data kinds produced from that source.
+This directory is the source-organized catalog for final saved `trading-data` data kinds. The top level describes data sources and routing; each source folder owns the detailed README and generated preview CSV/JSON files for data kinds produced from that source.
+
+Preview files are the materialized output templates. They are generated from stable registry ids by `src/trading_data/template_generators/data_kind_previews.py`; do not hand-edit preview CSV/JSON files directly.
 
 ## Scope
 
@@ -13,13 +15,13 @@ templates/data_kinds/
   README.md              Source index and catalog rules.
   alpaca/
     README.md            Alpaca final data-kind details.
-    *.preview.csv        Small final-output CSV previews.
+    *.preview.csv        Generated small final-output CSV templates/previews.
   okx/
     README.md            OKX crypto data-kind details.
-    *.preview.csv        Small final-output CSV previews.
+    *.preview.csv        Generated small final-output CSV templates/previews.
   thetadata/
     README.md            ThetaData option data-kind details.
-    *.preview.csv/json   Small final-output previews.
+    *.preview.csv/json   Generated small final-output templates/previews.
 ```
 
 ## Sources
@@ -44,5 +46,5 @@ Each source folder README should record these fields for every final saved data 
 - **Natural grain** — row granularity such as one saved bar, one article, one contract/day, or one interval aggregate.
 - **Request parameters** — required and important optional params.
 - **Pagination/range behavior** — pagination token, date segmentation, symbol segmentation, or source-specific range limits.
-- **Preview file** — small CSV/JSON sample file in the same source folder for the final saved format.
+- **Preview file** — generated small CSV/JSON template file in the same source folder for the final saved format.
 - **Known caveats** — entitlements, exchange conditions, source quirks, large-volume risks, or production-hardening notes.

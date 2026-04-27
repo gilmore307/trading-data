@@ -1,2 +1,2 @@
 data_kind,id,headline,created_at_et,updated_at_et,symbols,summary,url
-option_activity_event,opt_evt_N7Q4K2M9,"AAPL May 15 270C draws opening ask-side activity with elevated IV",2026-04-24T09:30:02.267000-04:00,2026-04-24T09:30:02.500000-04:00,"AAPL;AAPL 2026-05-15 270C","trade_at_ask;opening_activity;iv_high_cross_section",opt_evt_N7Q4K2M9.json
+option_activity_event,opt_evt_N7Q4K2M9,AAPL May 15 270C draws opening ask-side activity with elevated IV,2026-04-24T09:30:02.267000-04:00,2026-04-24T09:30:02.500000-04:00,AAPL;AAPL 2026-05-15 270C,trade_at_ask;opening_activity;iv_high_cross_section,opt_evt_N7Q4K2M9.json

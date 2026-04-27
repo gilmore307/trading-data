@@ -650,3 +650,13 @@ The data bundle can preserve event-time evidence without pretending to own the m
 - Raw trade/quote rows and window process state remain transient.
 - Event ids and standard ids use semantic prefixes with random suffixes only; they do not encode timestamp, contract, or trigger semantics.
 - Model-standard identity/versioning remains future `trading-model` work.
+
+## D042 - Unified event database layer
+
+Financial reports, SEC corporate filings, news, option activity, macro releases, and market anomalies should be studied through a shared event database layer rather than as isolated source-specific tables.
+
+Raw acquisition remains source-specific. Source bundles such as `sec_company_financials`, `alpaca_news`, and `thetadata_option_event_timeline` own official/provider fetches and source-local normalization. Event builders project those outputs into source-neutral `trading_event` rows.
+
+Long-form agent/model interpretation belongs in artifact files, with `event_analysis_report` indexing the Markdown report and structured JSON sidecar. `trading_event` rows store facts, timing, source references, short summaries, and report URLs only. `event_factor` rows store numeric model-facing scores such as direction, magnitude, surprise, novelty, relevance, credibility, price-in, and observable reaction.
+
+`event_time_et` is the source publication/detection timestamp. `effective_time_et` is the earliest trading timestamp when the event can safely be observed by a strategy. This distinction is mandatory to prevent look-ahead leakage, especially for after-hours filings and news.

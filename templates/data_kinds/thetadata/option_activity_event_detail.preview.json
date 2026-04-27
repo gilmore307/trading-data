@@ -19,11 +19,11 @@
     "trade_at_ask": {
       "statistics": {
         "trade_price": 1.25,
-        "quote_bid": 1.15,
-        "quote_ask": 1.25,
-        "quote_mid": 1.2,
         "price_vs_ask": 0.0,
-        "ask_touch_ratio": 1.0
+        "ask_touch_ratio": 1.0,
+        "bid": 1.15,
+        "ask": 1.25,
+        "mid": 1.2
       },
       "current_standard": {
         "max_price_vs_ask": 0.01,
@@ -71,11 +71,11 @@
     "trade_size": 80
   },
   "quote_context": {
-    "quote_timestamp_et": "2026-04-24T09:30:02.260000-04:00",
-    "quote_bid": 1.15,
-    "quote_ask": 1.25,
-    "quote_mid": 1.2,
-    "quote_spread": 0.1
+    "timestamp_et": "2026-04-24T09:30:02.260000-04:00",
+    "bid": 1.15,
+    "ask": 1.25,
+    "mid": 1.2,
+    "spread": 0.1
   },
   "iv_context": {
     "implied_vol": 0.64,

@@ -19,6 +19,25 @@ The event database layer owns common research rows:
 
 Long text belongs in report artifacts, not inside event CSV rows. Event rows store short titles/summaries and `analysis_report_url` / sidecar references.
 
+## Source priority and news coverage filtering
+
+Do not delete raw news just because the same event is covered by SEC or another official source. Preserve raw source data in the source bundle, but prevent duplicate event alpha in the unified event layer.
+
+Canonical event priority should generally be:
+
+1. Official regulatory/exchange/company filings and releases, e.g. SEC filings.
+2. Direct company press releases or investor relations material.
+3. High-quality news articles that add genuinely new information.
+4. Syndicated/reposted/derivative news coverage.
+
+When a news article covers an already-known SEC event, the news-derived `trading_event` should either not be emitted as an independent event, or should be emitted with:
+
+- `canonical_event_id` pointing to the SEC canonical event.
+- `dedup_status = covered_by_official_source`.
+- `coverage_reason` explaining the match, e.g. same CIK/accession/form, same company/event type/time window, or high text similarity to an official disclosure.
+
+Covered news may still be useful for propagation, attention, or human-readable explanation, but it must not create a second independent `event_factor` row unless the article adds new non-SEC information that is safely observable at its own `effective_time_et`.
+
 ## `trading_event`
 
 Canonical source-neutral event row. It stores what happened, when it became observable, where the evidence lives, and where any analysis artifact lives.

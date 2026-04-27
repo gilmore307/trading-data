@@ -130,6 +130,10 @@ EVENT_REPORT_JSON_URL = field("fld_EVT035")
 EVENT_ANALYSIS_MODEL = field("fld_EVT036")
 EVENT_ANALYSIS_GENERATED_AT_ET = field("fld_EVT037")
 EVENT_TAXONOMY_CONTEXT = field("fld_EVT038")
+EVENT_CANONICAL_EVENT_ID = field("fld_EVT039")
+EVENT_DEDUP_STATUS = field("fld_EVT040")
+EVENT_SOURCE_PRIORITY = field("fld_EVT041")
+EVENT_COVERAGE_REASON = field("fld_EVT042")
 
 OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
@@ -289,18 +293,18 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "events/trading_event.preview.csv",
-        [EVENT_ID, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TIME_ET, EVENT_EFFECTIVE_TIME_ET, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_TAXONOMY_CONTEXT],
-        ["evt_Q7M4N2PX", "AAPL", "AAPL", "2026-01-30T16:05:00-05:00", "2026-02-02T09:30:00-05:00", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "AAPL files 10-K annual report", "Apple filed a 10-K annual report after market close.", "reports/evt_Q7M4N2PX.md", "succeeded", '{"sec_form":"10-K","sec_items":[]}'],
+        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TIME_ET, EVENT_EFFECTIVE_TIME_ET, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
+        ["evt_Q7M4N2PX", "evt_Q7M4N2PX", "canonical", 100, "AAPL", "AAPL", "2026-01-30T16:05:00-05:00", "2026-02-02T09:30:00-05:00", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "AAPL files 10-K annual report", "Apple filed a 10-K annual report after market close.", "reports/evt_Q7M4N2PX.md", "succeeded", "official SEC filing is source of truth", '{"sec_form":"10-K","sec_items":[]}'],
     ),
     csv_template(
         "events/event_factor.preview.csv",
-        [EVENT_ID, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TYPE, EVENT_EFFECTIVE_TIME_ET, EVENT_FACTOR_AS_OF_ET, EVENT_DIRECTION_SCORE, EVENT_MAGNITUDE_SCORE, EVENT_SURPRISE_SCORE, EVENT_NOVELTY_SCORE, EVENT_RELEVANCE_SCORE, EVENT_CREDIBILITY_SCORE, EVENT_PRICE_IN_SCORE, EVENT_REACTION_SCORE, EVENT_FACTOR_VERSION, EVENT_ANALYSIS_REPORT_URL],
-        ["evt_Q7M4N2PX", "AAPL", "AAPL", "equity_financial_report_event", "2026-02-02T09:30:00-05:00", "2026-02-02T09:31:00-05:00", 0.2, 0.7, -0.1, 0.8, 1.0, 1.0, 0.3, "", "event_factor_v0", "reports/evt_Q7M4N2PX.md"],
+        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TYPE, EVENT_EFFECTIVE_TIME_ET, EVENT_FACTOR_AS_OF_ET, EVENT_DIRECTION_SCORE, EVENT_MAGNITUDE_SCORE, EVENT_SURPRISE_SCORE, EVENT_NOVELTY_SCORE, EVENT_RELEVANCE_SCORE, EVENT_CREDIBILITY_SCORE, EVENT_PRICE_IN_SCORE, EVENT_REACTION_SCORE, EVENT_FACTOR_VERSION, EVENT_ANALYSIS_REPORT_URL],
+        ["evt_Q7M4N2PX", "evt_Q7M4N2PX", "AAPL", "AAPL", "equity_financial_report_event", "2026-02-02T09:30:00-05:00", "2026-02-02T09:31:00-05:00", 0.2, 0.7, -0.1, 0.8, 1.0, 1.0, 0.3, "", "event_factor_v0", "reports/evt_Q7M4N2PX.md"],
     ),
     csv_template(
         "events/event_analysis_report.preview.csv",
-        [EVENT_REPORT_ID, EVENT_ID, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_REPORT_URL, EVENT_REPORT_JSON_URL, EVENT_ANALYSIS_STATUS, EVENT_ANALYSIS_MODEL, EVENT_ANALYSIS_GENERATED_AT_ET, EVENT_TITLE, EVENT_SUMMARY, EVENT_TAXONOMY_CONTEXT],
-        ["rpt_H4D8K2QA", "evt_Q7M4N2PX", "AAPL", "AAPL", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "reports/evt_Q7M4N2PX.md", "reports/evt_Q7M4N2PX.analysis.json", "succeeded", "financial_report_agent_v0", "2026-02-02T09:31:00-05:00", "AAPL 10-K analysis", "Agent-generated report artifact index for an SEC financial report event.", '{"sec_form":"10-K","report_kind":"markdown_plus_json_sidecar"}'],
+        [EVENT_REPORT_ID, EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_REPORT_URL, EVENT_REPORT_JSON_URL, EVENT_ANALYSIS_STATUS, EVENT_ANALYSIS_MODEL, EVENT_ANALYSIS_GENERATED_AT_ET, EVENT_TITLE, EVENT_SUMMARY, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
+        ["rpt_H4D8K2QA", "evt_Q7M4N2PX", "evt_Q7M4N2PX", "canonical", "AAPL", "AAPL", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "reports/evt_Q7M4N2PX.md", "reports/evt_Q7M4N2PX.analysis.json", "succeeded", "financial_report_agent_v0", "2026-02-02T09:31:00-05:00", "AAPL 10-K analysis", "Agent-generated report artifact index for an SEC financial report event.", "official SEC filing is source of truth", '{"sec_form":"10-K","report_kind":"markdown_plus_json_sidecar"}'],
     ),
     csv_template(
         "okx/crypto_bar.preview.csv",

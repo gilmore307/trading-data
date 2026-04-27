@@ -660,3 +660,9 @@ Raw acquisition remains source-specific. Source bundles such as `sec_company_fin
 Long-form agent/model interpretation belongs in artifact files, with `event_analysis_report` indexing the Markdown report and structured JSON sidecar. `trading_event` rows store facts, timing, source references, short summaries, and report URLs only. `event_factor` rows store numeric model-facing scores such as direction, magnitude, surprise, novelty, relevance, credibility, price-in, and observable reaction.
 
 `event_time_et` is the source publication/detection timestamp. `effective_time_et` is the earliest trading timestamp when the event can safely be observed by a strategy. This distinction is mandatory to prevent look-ahead leakage, especially for after-hours filings and news.
+
+## D043 - News covered by official SEC events is not an independent alpha event
+
+News articles that merely report or summarize an official SEC filing should not create separate independent event alpha when the SEC filing is already represented as the canonical event. Raw news remains preserved in the source-specific acquisition layer, but the unified event layer must either suppress the duplicate news event or mark it as covered by the canonical official event.
+
+Use `canonical_event_id`, `dedup_status`, `source_priority`, and `coverage_reason` to record this boundary. Official SEC/exchange/company/regulatory disclosures outrank derivative news coverage. Covered news can still contribute to propagation, attention, or report context, but it should not create an extra `event_factor` row unless it contains genuinely new information not already present in the official source and that information is observable at its own `effective_time_et`.

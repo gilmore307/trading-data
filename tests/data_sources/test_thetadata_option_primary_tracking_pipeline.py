@@ -99,8 +99,8 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             with saved_path.open(newline="") as handle:
                 rows = list(csv.DictReader(handle))
             self.assertEqual(len(rows), 2)
-            self.assertEqual(rows[0]["data_kind"], "option_bar")
-            self.assertEqual(rows[0]["source"], "thetadata")
+            self.assertNotIn("data_kind", rows[0])
+            self.assertNotIn("source", rows[0])
             self.assertEqual(rows[0]["underlying"], "AAPL")
             self.assertEqual(rows[0]["expiration"], "2026-05-15")
             self.assertEqual(rows[0]["right"], "CALL")

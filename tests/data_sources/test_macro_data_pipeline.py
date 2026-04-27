@@ -40,19 +40,21 @@ class MacroDataPipelineTests(unittest.TestCase):
             task_key = {
                 "task_id": "macro_data_task_test",
                 "bundle": "macro_data",
-                "params": {"source": "bls", "series_ids": ["CUUR0000SA0"], "startyear": "2024", "endyear": "2024"},
+                "params": {"source": "bls", "series_ids": ["CUUR0000SA0"], "startyear": "2024", "endyear": "2024", "release_time": "2024-02-13T08:30:00-05:00", "effective_until": "2024-03-12T08:30:00-04:00"},
                 "output_root": str(Path(tmp) / "macro_data_task_test"),
             }
             result = run(task_key, run_id="macro_data_run_test", client=FakeMacroClient(payload))
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "macro_data_run_test" / "saved" / "macro_data_rows.csv"
+            saved = Path(task_key["output_root"]) / "runs" / "macro_data_run_test" / "saved" / "macro_release.csv"
             self.assertTrue(saved.exists())
             with saved.open(newline="") as handle:
                 row = next(csv.DictReader(handle))
-            self.assertEqual(row["source"], "bls")
-            self.assertEqual(row["series_id"], "CUUR0000SA0")
+            self.assertEqual(row["metric"], "CUUR0000SA0")
+            self.assertEqual(row["release_time"], "2024-02-13T08:30:00-05:00")
+            self.assertEqual(row["effective_until"], "2024-03-12T08:30:00-04:00")
+            self.assertEqual(row["value"], "309.685")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
-            self.assertEqual(receipt["runs"][0]["row_counts"]["macro_data_rows"], 1)
+            self.assertEqual(receipt["runs"][0]["row_counts"]["macro_release"], 1)
 
     def test_census_array_shape_normalizes(self):
         payload = [["time", "cell_value"], ["2024", "12345"]]
@@ -60,12 +62,12 @@ class MacroDataPipelineTests(unittest.TestCase):
             task_key = {
                 "task_id": "macro_data_task_census",
                 "bundle": "macro_data",
-                "params": {"source": "census", "dataset": "timeseries/eits/marts", "get": "time,cell_value", "for": "us:*", "time": "2024"},
+                "params": {"source": "census", "dataset": "timeseries/eits/marts", "get": "time,cell_value", "for": "us:*", "time": "2024", "metric": "retail_sales", "release_time": "2024-02-15T08:30:00-05:00"},
                 "output_root": str(Path(tmp) / "macro_data_task_census"),
             }
             result = run(task_key, run_id="macro_data_run_census", client=FakeMacroClient(payload))
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["macro_data_rows"], 1)
+            self.assertEqual(result.row_counts["macro_release"], 1)
 
     def test_unsupported_source_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

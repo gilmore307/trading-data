@@ -56,8 +56,6 @@ The output follows `storage/templates/data_kinds/thetadata/option_bar.preview.cs
 
 Fields include:
 
-- `data_kind`
-- `source`
 - `underlying`
 - `expiration`
 - `right`

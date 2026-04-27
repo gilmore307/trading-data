@@ -38,7 +38,8 @@ class FakeOkxClient:
 class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
     def test_normalizers_use_alpaca_like_output_shapes(self):
         bars = normalize_bars('BTC-USDT', [['1777241580000', '1', '2', '0.5', '1.5', '3', '3', '4.5', '1']], '1Min')
-        self.assertEqual(bars[0]['data_kind'], 'crypto_bar')
+        self.assertNotIn('data_kind', bars[0])
+        self.assertNotIn('source', bars[0])
         self.assertEqual(bars[0]['timestamp_et'], '2026-04-26T18:13:00-04:00')
 
         trades = normalize_trades('BTC-USDT', [{'side': 'buy', 'sz': '0.1', 'px': '10', 'tradeId': 'abc', 'ts': '1777241590242'}])
@@ -52,7 +53,8 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
             {'side': 'sell', 'sz': '0.2', 'px': '20', 'tradeId': 'b', 'ts': '1777241591242'},
         ])
         rows = aggregate_liquidity_bars('BTC-USDT', trades, '1Min')
-        self.assertEqual(rows[0]['data_kind'], 'crypto_liquidity_bar')
+        self.assertNotIn('data_kind', rows[0])
+        self.assertNotIn('source', rows[0])
         self.assertIsNone(rows[0]['avg_bid'])
         self.assertEqual(rows[0]['trade_count'], 2)
 

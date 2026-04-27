@@ -2,7 +2,7 @@
 
 `macro_data` is the parameterized macro acquisition bundle. Unlike the earlier
 source-availability probes, this package performs real provider requests,
-normalizes rows, and writes cleaned development outputs.
+normalizes rows, and writes SQL-shaped macro release outputs.
 
 Run a task key with:
 
@@ -10,7 +10,8 @@ Run a task key with:
 PYTHONPATH=src python3 -m trading_data.data_sources.macro_data path/to/task_key.json --run-id macro_data_run_<id>
 ```
 
-Supported `params.source` values now wired to actual API requests:
+Supported `params.source` values now wired to actual API requests. Every task must also provide `release_time`; `effective_until` is optional and blank means latest known value. Use `metric` when the source response does not carry a suitable series id.
+
 
 - `bls` — `series_ids`, optional `startyear`, `endyear`.
 - `census` — `dataset`, `get`, optional `for`, `in`, `time`, `ucgid`, `predicates`.
@@ -21,8 +22,8 @@ Supported `params.source` values now wired to actual API requests:
 Outputs are written under `output_root/runs/<run-id>/`:
 
 - `request_manifest.json` — sanitized endpoint/request evidence; no full raw response.
-- `cleaned/macro_data_rows.jsonl` and `cleaned/schema.json` — normalized transient cleaned rows/schema.
-- `saved/macro_data_rows.csv` — development final output.
+- `cleaned/macro_release.jsonl` and `cleaned/schema.json` — normalized sparse release rows/schema.
+- `saved/macro_release.csv` — SQL-shaped long-term output with `metric,release_time,effective_until,value`.
 - `completion_receipt.json` at task root — per-run status, row counts, output references, and errors.
 
 The bundle intentionally does not persist full raw/intermediate provider payloads

@@ -52,7 +52,7 @@ class FakeThetaDataClient:
 
 
 class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
-    def test_run_saves_event_csv_and_detail_json(self):
+    def test_run_saves_event_csv_and_detail_csv(self):
         with tempfile.TemporaryDirectory() as tmp:
             output_root = Path(tmp) / "thetadata_option_event_timeline_task_test"
             task_key = {
@@ -98,28 +98,29 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             self.assertEqual(len(rows), 1)
             event_id = rows[0]["id"]
             self.assertTrue(event_id.startswith("opt_evt_"))
-            self.assertEqual(rows[0]["data_kind"], "option_activity_event")
+            self.assertNotIn("data_kind", rows[0])
             self.assertIn("AAPL 2026-05-15 270C", rows[0]["headline"])
             self.assertEqual(rows[0]["created_at_et"], "2026-04-24T09:30:02.267000-04:00")
             self.assertEqual(rows[0]["updated_at_et"], "2026-04-24T09:30:02.500000-04:00")
             self.assertEqual(rows[0]["symbols"], "AAPL;AAPL 2026-05-15 270C")
             self.assertEqual(rows[0]["summary"], "trade_at_ask;opening_activity")
-            self.assertEqual(rows[0]["url"], f"{event_id}.json")
+            self.assertEqual(rows[0]["url"], f"{event_id}.csv")
 
-            detail_path = saved_dir / f"{event_id}.json"
+            detail_path = saved_dir / f"{event_id}.csv"
             self.assertTrue(detail_path.exists())
-            self.assertFalse((saved_dir / f"{event_id}.json.tmp").exists())
-            detail = json.loads(detail_path.read_text())
-            self.assertEqual(detail["data_kind"], "option_activity_event_detail")
+            self.assertFalse((saved_dir / f"{event_id}.csv.tmp").exists())
+            with detail_path.open(newline="") as handle:
+                detail = next(csv.DictReader(handle))
+            self.assertNotIn("data_kind", detail)
             self.assertEqual(detail["event_id"], event_id)
-            self.assertEqual(detail["standard_context"]["standard_id"], "opt_evt_std_TEST1234")
-            self.assertEqual(detail["contract"]["contract_symbol"], "AAPL 2026-05-15 270C")
-            self.assertEqual(set(detail["triggered_indicators"]), {"trade_at_ask", "opening_activity"})
-            self.assertEqual(detail["triggered_indicators"]["trade_at_ask"]["statistics"]["trade_price"], 1.25)
-            self.assertEqual(detail["triggered_indicators"]["opening_activity"]["statistics"]["window_volume"], 120)
-            self.assertEqual(detail["triggering_trade"]["trade_size"], 80)
-            self.assertEqual(detail["quote_context"]["ask"], 1.25)
-            self.assertEqual(detail["source_refs"]["raw_persistence"], "not_persisted_by_default")
+            self.assertEqual(detail["contract_symbol"], "AAPL 2026-05-15 270C")
+            triggered = json.loads(detail["triggered_indicators"])
+            self.assertEqual(set(triggered), {"trade_at_ask", "opening_activity"})
+            self.assertEqual(triggered["trade_at_ask"]["statistics"]["trade_price"], 1.25)
+            self.assertEqual(triggered["opening_activity"]["statistics"]["window_volume"], 120)
+            self.assertEqual(json.loads(detail["triggering_trade"])["trade_size"], 80)
+            self.assertEqual(json.loads(detail["quote_context"])["ask"], 1.25)
+            self.assertEqual(json.loads(detail["source_refs"])["raw_persistence"], "not_persisted_by_default")
 
             self.assertTrue((output_root / "runs" / "thetadata_option_event_timeline_run_test" / "cleaned" / "option_activity_event.jsonl").exists())
             self.assertFalse((saved_dir / "option_activity_event.jsonl").exists())

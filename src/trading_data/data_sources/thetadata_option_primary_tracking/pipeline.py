@@ -127,8 +127,6 @@ OPTION_BAR = data_kind("dki_OPBAR001")
 
 
 CSV_FIELD_REFS = [
-    DATA_KIND,
-    SOURCE,
     OPTION_UNDERLYING,
     OPTION_EXPIRATION,
     OPTION_RIGHT,
@@ -398,8 +396,6 @@ def _aggregate_rows(names: RegistryNames, fetched: FetchedOhlc) -> tuple[list[di
         bucket = buckets.setdefault(
             bucket_timestamp,
             {
-                f(DATA_KIND): f(OPTION_BAR),
-                f(SOURCE): "thetadata",
                 f(OPTION_UNDERLYING): fetched.underlying,
                 f(OPTION_EXPIRATION): fetched.expiration,
                 f(OPTION_RIGHT): fetched.right,

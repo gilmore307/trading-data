@@ -1,3 +1,4 @@
+import csv
 import json
 import tempfile
 import unittest
@@ -90,7 +91,7 @@ class FakeThetaDataClient:
 
 
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
-    def test_run_saves_final_json_only_with_et_timestamps(self):
+    def test_run_saves_final_csv_only_with_et_timestamps(self):
         with tempfile.TemporaryDirectory() as tmp:
             output_root = Path(tmp) / "thetadata_option_selection_snapshot_task_test"
             task_key = {
@@ -106,19 +107,20 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             result = run(task_key, run_id="thetadata_option_selection_snapshot_run_test", client=FakeThetaDataClient())
 
             self.assertEqual(result.status, "succeeded")
-            saved_path = output_root / "runs" / "thetadata_option_selection_snapshot_run_test" / "saved" / "option_chain_snapshot.json"
+            saved_path = output_root / "runs" / "thetadata_option_selection_snapshot_run_test" / "saved" / "option_chain_snapshot.csv"
             self.assertTrue(saved_path.exists())
-            self.assertFalse((saved_path.parent / "option_chain_snapshot.json.tmp").exists())
+            self.assertFalse((saved_path.parent / "option_chain_snapshot.csv.tmp").exists())
             self.assertFalse((saved_path.parent / "option_chain_snapshot.jsonl").exists())
 
-            snapshot = json.loads(saved_path.read_text())
-            self.assertEqual(snapshot["data_kind"], "option_chain_snapshot")
-            self.assertEqual(snapshot["source"], "thetadata")
+            with saved_path.open(newline="") as handle:
+                snapshot = next(csv.DictReader(handle))
+            self.assertNotIn("data_kind", snapshot)
+            self.assertNotIn("source", snapshot)
             self.assertEqual(snapshot["underlying"], "AAPL")
             self.assertEqual(snapshot["snapshot_time_et"], "2026-04-24T09:30:02.500000-04:00")
-            self.assertEqual(snapshot["contract_count"], 1)
+            self.assertEqual(snapshot["contract_count"], "1")
 
-            contract = snapshot["contracts"][0]
+            contract = json.loads(snapshot["contracts"])[0]
             self.assertEqual(contract["right"], "CALL")
             self.assertEqual(contract["quote"]["timestamp_et"], "2026-04-24T09:30:02.260000-04:00")
             self.assertEqual(contract["quote"]["mid"], 1.2)

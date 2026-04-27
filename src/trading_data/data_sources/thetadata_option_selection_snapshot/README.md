@@ -4,7 +4,7 @@ ThetaData option-chain selection snapshot bundle.
 
 ## Purpose
 
-Produce a point-in-time `option_chain_snapshot` final JSON artifact for a specified underlying and explicit ET snapshot time. The output is used as future option-selection model input. This bundle does not select contracts and does not filter by liquidity, spread, bid/ask availability, IV, or Greeks availability.
+Produce a point-in-time `option_chain_snapshot` final CSV artifact for a specified underlying and explicit ET snapshot time. The output is used as future option-selection model input. This bundle does not select contracts and does not filter by liquidity, spread, bid/ask availability, IV, or Greeks availability.
 
 ## Input task params
 
@@ -40,20 +40,18 @@ For each run:
 <output_root>/runs/<run_id>/
   request_manifest.json
   saved/
-    option_chain_snapshot.json
+    option_chain_snapshot.csv
 <output_root>/completion_receipt.json
 ```
 
-Only the normalized final JSON is saved. Full raw provider responses are not persisted by default.
+Only the normalized final CSV is saved. Full raw provider responses are not persisted by default.
 
 ## Final JSON shape
 
-The output follows `storage/templates/data_kinds/thetadata/option_chain_snapshot.preview.json` and is generated with field names resolved from stable `trading-main` registry ids.
+The output follows `storage/templates/data_kinds/thetadata/option_chain_snapshot.preview.csv` and is generated with field names resolved from stable `trading-main` registry ids.
 
 Top-level fields include:
 
-- `data_kind`
-- `source`
 - `underlying`
 - `snapshot_time_et`
 - `contract_count`
@@ -63,6 +61,6 @@ Each contract includes expiration/right/strike plus nested quote, IV, Greeks, de
 
 ## Failure and retry
 
-Development-stage save is atomic: the bundle writes a temporary JSON file and renames it to `option_chain_snapshot.json` only after serialization succeeds. If the run fails, rerun the task; no partial final JSON is considered valid.
+Development-stage save is atomic: the bundle writes a temporary CSV file and renames it to `option_chain_snapshot.csv` only after serialization succeeds. If the run fails, rerun the task; no partial final CSV is considered valid.
 
 Durable SQL storage is future `trading-storage` work. The accepted direction is to store this nested final artifact in a PostgreSQL `jsonb` column, not as an external JSON file path.

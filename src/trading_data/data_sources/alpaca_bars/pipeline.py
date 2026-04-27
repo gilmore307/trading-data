@@ -10,6 +10,7 @@ from trading_data.source_availability.http import HttpClient, HttpResult
 from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
+EQUITY_BAR_FIELDS=['symbol','timeframe','timestamp_et','open','high','low','close','volume','vwap','trade_count']
 @dataclass(frozen=True)
 class BundleContext: task_key:dict[str,Any]; run_dir:Path; cleaned_dir:Path; saved_dir:Path; receipt_path:Path; metadata:dict[str,Any]=field(default_factory=dict)
 @dataclass(frozen=True)
@@ -59,15 +60,15 @@ def fetch(context,*,client=None):
 def clean(context,fetched):
     timeframe=str((context.task_key.get('params') or {}).get('timeframe','1Day')); rows=[]
     for b in fetched.bars:
-        rows.append({'data_kind':'equity_bar','symbol':fetched.symbol,'timeframe':timeframe,'timestamp_et':_et_iso(b['t']),'open':b.get('o'),'high':b.get('h'),'low':b.get('l'),'close':b.get('c'),'volume':b.get('v'),'vwap':b.get('vw'),'trade_count':b.get('n')})
+        rows.append({'symbol':fetched.symbol,'timeframe':timeframe,'timestamp_et':_et_iso(b['t']),'open':b.get('o'),'high':b.get('h'),'low':b.get('l'),'close':b.get('c'),'volume':b.get('v'),'vwap':b.get('vw'),'trade_count':b.get('n')})
     context.cleaned_dir.mkdir(parents=True,exist_ok=True); path=context.cleaned_dir/'equity_bar.jsonl'
     with path.open('w') as h:
         for r in rows: h.write(json.dumps(r,sort_keys=True)+'\n')
-    (context.cleaned_dir/'schema.json').write_text(json.dumps({'equity_bar':sorted({k for r in rows for k in r})},indent=2,sort_keys=True)+'\n')
+    (context.cleaned_dir/'schema.json').write_text(json.dumps({'equity_bar':EQUITY_BAR_FIELDS},indent=2,sort_keys=True)+'\n')
     return StepResult('succeeded',[str(path),str(context.cleaned_dir/'schema.json')],{'equity_bar':len(rows)},details={'timezone':'America/New_York'})
 def save(context,clean_result):
     context.saved_dir.mkdir(parents=True,exist_ok=True); refs=[]; src=context.cleaned_dir/'equity_bar.jsonl'
-    rows=[json.loads(l) for l in src.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_bar.csv'; cols=sorted({k for r in rows for k in r})
+    rows=[json.loads(l) for l in src.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_bar.csv'; cols=EQUITY_BAR_FIELDS
     with csvp.open('w',newline='') as h:
         w=csv.DictWriter(h,fieldnames=cols); w.writeheader(); w.writerows(rows)
     refs.append(str(csvp)); return StepResult('succeeded',refs,dict(clean_result.row_counts),details={'format':'csv'})

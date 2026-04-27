@@ -17,6 +17,7 @@ from trading_data.source_availability.secrets import load_secret_alias, public_s
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
+EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "trade_volume", "trade_vwap", "trade_open", "trade_high", "trade_low", "trade_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
 DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
 
@@ -248,7 +249,6 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
         trade_vwap = t.get("trade_vwap")
         avg_mid = q.get("avg_mid")
         rows.append({
-            "data_kind": "equity_liquidity_bar",
             "symbol": symbol,
             "timeframe": timeframe,
             "interval_start_et": key,
@@ -283,7 +283,7 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
     for src in context.cleaned_dir.glob("*.jsonl"):
         rows = [json.loads(line) for line in src.read_text(encoding="utf-8").splitlines() if line.strip()]
         csv_path = context.saved_dir / (src.stem + ".csv")
-        columns = sorted({key for row in rows for key in row.keys()})
+        columns = EQUITY_LIQUIDITY_BAR_FIELDS if src.stem == "equity_liquidity_bar" else sorted({key for row in rows for key in row.keys()})
         with csv_path.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
             writer.writeheader()

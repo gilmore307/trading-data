@@ -1,11 +1,12 @@
 """ThetaData option-chain selection snapshot acquisition bundle.
 
-Development-stage output is a single final ``option_chain_snapshot.json`` file.
+Development-stage output is a single final ``option_chain_snapshot.csv`` file.
 Raw provider responses are fetched and normalized in memory, then discarded.
 """
 
 from __future__ import annotations
 
+import csv
 import json
 import os
 from collections.abc import Mapping, Sequence
@@ -466,8 +467,6 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
         raise ThetaDataOptionSelectionSnapshotError("ThetaData snapshot returned no contracts after normalization")
 
     snapshot = {
-        f(DATA_KIND): f(OPTION_CHAIN_SNAPSHOT),
-        f(SOURCE): "thetadata",
         f(OPTION_UNDERLYING): fetched.underlying,
         f(SNAPSHOT_TIME_ET): fetched.snapshot_time_et.isoformat(),
         f(OPTION_CONTRACT_COUNT): len(contracts),
@@ -478,21 +477,33 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
         [],
         {"option_chain_snapshot": 1, "option_chain_snapshot_contracts": len(contracts)},
         warnings=warnings,
-        details={"contract_count": len(contracts), "format": "json"},
+        details={"contract_count": len(contracts), "format": "csv"},
     ), snapshot
 
 
 def save(context: BundleContext, clean_result: StepResult, snapshot: dict[str, Any]) -> StepResult:
+    names = RegistryNames(context.registry_csv)
+    fields = [
+        names.payload(OPTION_UNDERLYING),
+        names.payload(SNAPSHOT_TIME_ET),
+        names.payload(OPTION_CONTRACT_COUNT),
+        names.payload(OPTION_CONTRACTS),
+    ]
+    row = dict(snapshot)
+    row[names.payload(OPTION_CONTRACTS)] = json.dumps(row.get(names.payload(OPTION_CONTRACTS), []), separators=(",", ":"))
     context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / "option_chain_snapshot.json"
+    path = context.saved_dir / "option_chain_snapshot.csv"
     tmp_path = path.with_suffix(path.suffix + ".tmp")
-    tmp_path.write_text(json.dumps(snapshot, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+    with tmp_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerow(row)
     os.replace(tmp_path, path)
     return StepResult(
         "succeeded",
         [str(path)],
         dict(clean_result.row_counts),
-        details={"format": "json", "atomic_write": True},
+        details={"format": "csv", "atomic_write": True},
     )
 
 

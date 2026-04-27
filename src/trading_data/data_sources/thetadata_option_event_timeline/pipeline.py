@@ -184,7 +184,6 @@ OPTION_ACTIVITY_EVENT = data_kind("dki_OPEVENT1")
 OPTION_ACTIVITY_EVENT_DETAIL = data_kind("dki_OPDET01")
 
 CSV_FIELD_REFS = [
-    DATA_KIND,
     TIMELINE_ID,
     TIMELINE_HEADLINE,
     TIMELINE_CREATED_AT_ET,
@@ -635,7 +634,7 @@ def _build_event(
     event_id = _new_id("opt_evt")
     created_at = _iso(trade_ts) or window_start.isoformat()
     updated_at = fetched.standard_context.get("standard_generated_at_et") or created_at
-    detail_filename = f"{event_id}.json"
+    detail_filename = f"{event_id}.csv"
     window_end = window_start + timedelta(seconds=SUPPORTED_TIMEFRAMES[fetched.timeframe])
     standard_context = {
         f(OPTION_EVENT_DETAIL_STANDARD_SOURCE): fetched.standard_context.get("standard_source"),
@@ -643,7 +642,6 @@ def _build_event(
         f(OPTION_EVENT_DETAIL_STANDARD_GENERATED_AT_ET): fetched.standard_context.get("standard_generated_at_et"),
     }
     detail: dict[str, Any] = {
-        f(DATA_KIND): f(OPTION_ACTIVITY_EVENT_DETAIL),
         f(OPTION_EVENT_DETAIL_EVENT_ID): event_id,
         f(TIMELINE_CREATED_AT_ET): created_at,
         f(TIMELINE_UPDATED_AT_ET): updated_at,
@@ -686,7 +684,6 @@ def _build_event(
             f(IV_ZSCORE_BY_EXPIRATION): _float(fetched.iv_context.get("iv_zscore_by_expiration")),
         }
     row = {
-        f(DATA_KIND): f(OPTION_ACTIVITY_EVENT),
         f(TIMELINE_ID): event_id,
         f(TIMELINE_HEADLINE): _event_headline(contract_symbol, order),
         f(TIMELINE_CREATED_AT_ET): created_at,
@@ -777,10 +774,48 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
 
     references = [str(csv_path)]
     url_field = names.payload(TIMELINE_URL)
+    detail_fields = [
+        names.payload(OPTION_EVENT_DETAIL_EVENT_ID),
+        names.payload(TIMELINE_CREATED_AT_ET),
+        names.payload(TIMELINE_UPDATED_AT_ET),
+        names.payload(OPTION_UNDERLYING),
+        names.payload(OPTION_EXPIRATION),
+        names.payload(OPTION_RIGHT),
+        names.payload(OPTION_STRIKE),
+        names.payload(OPTION_CONTRACT_SYMBOL),
+        names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS),
+        names.payload(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW),
+        names.payload(OPTION_EVENT_DETAIL_TRIGGERING_TRADE),
+        names.payload(OPTION_EVENT_DETAIL_QUOTE_CONTEXT),
+        names.payload(OPTION_EVENT_DETAIL_IV_CONTEXT),
+        names.payload(OPTION_EVENT_DETAIL_SOURCE_REFS),
+    ]
+    contract_field = names.payload(OPTION_EVENT_DETAIL_CONTRACT)
     for event in events:
         detail_path = context.saved_dir / event.row[url_field]
         tmp_detail = detail_path.with_suffix(detail_path.suffix + ".tmp")
-        tmp_detail.write_text(json.dumps(event.detail, indent=2, sort_keys=False) + "\n", encoding="utf-8")
+        detail = event.detail
+        contract = detail.get(contract_field, {})
+        detail_row = {
+            names.payload(OPTION_EVENT_DETAIL_EVENT_ID): detail.get(names.payload(OPTION_EVENT_DETAIL_EVENT_ID)),
+            names.payload(TIMELINE_CREATED_AT_ET): detail.get(names.payload(TIMELINE_CREATED_AT_ET)),
+            names.payload(TIMELINE_UPDATED_AT_ET): detail.get(names.payload(TIMELINE_UPDATED_AT_ET)),
+            names.payload(OPTION_UNDERLYING): detail.get(names.payload(OPTION_UNDERLYING)),
+            names.payload(OPTION_EXPIRATION): contract.get(names.payload(OPTION_EXPIRATION)),
+            names.payload(OPTION_RIGHT): contract.get(names.payload(OPTION_RIGHT)),
+            names.payload(OPTION_STRIKE): contract.get(names.payload(OPTION_STRIKE)),
+            names.payload(OPTION_CONTRACT_SYMBOL): contract.get(names.payload(OPTION_CONTRACT_SYMBOL)),
+            names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS), {}), separators=(",", ":")),
+            names.payload(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW), {}), separators=(",", ":")),
+            names.payload(OPTION_EVENT_DETAIL_TRIGGERING_TRADE): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_TRIGGERING_TRADE), {}), separators=(",", ":")),
+            names.payload(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_QUOTE_CONTEXT), {}), separators=(",", ":")),
+            names.payload(OPTION_EVENT_DETAIL_IV_CONTEXT): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_IV_CONTEXT), {}), separators=(",", ":")),
+            names.payload(OPTION_EVENT_DETAIL_SOURCE_REFS): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_SOURCE_REFS), {}), separators=(",", ":")),
+        }
+        with tmp_detail.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=detail_fields, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerow(detail_row)
         os.replace(tmp_detail, detail_path)
         references.append(str(detail_path))
     return StepResult(
@@ -788,7 +823,7 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
         references,
         dict(clean_result.row_counts),
         warnings=list(clean_result.warnings),
-        details={"format": "csv+json", "atomic_write": True},
+        details={"format": "csv", "atomic_write": True},
     )
 
 

@@ -36,7 +36,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 self.assertEqual(r.status,'succeeded')
                 with (Path(tk['output_root'])/'runs/alpaca_news_run_test/saved/equity_news.csv').open(newline='') as handle:
                     reader=csv.DictReader(handle); row=next(reader)
-                self.assertEqual(reader.fieldnames,['data_kind','id','headline','created_at_et','updated_at_et','symbols','summary','url'])
+                self.assertEqual(reader.fieldnames,['id','headline','created_at_et','updated_at_et','symbols','summary','url'])
                 self.assertEqual(row['created_at_et'],'2024-01-09T14:46:19-05:00')
                 self.assertFalse((Path(tk['output_root'])/'runs/alpaca_news_run_test/saved/equity_news.jsonl').exists())
         finally: p.load_secret_alias=old

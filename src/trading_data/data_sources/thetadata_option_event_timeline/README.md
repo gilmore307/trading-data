@@ -4,7 +4,7 @@ ThetaData option activity event timeline bundle.
 
 ## Purpose
 
-Produce news-like `option_activity_event.csv` rows and one compact `<id>.json` detail artifact for each triggered option activity event. This bundle reports events only; it does not save rolling-window process state, raw trade/quote rows, or periodic chain snapshots by default.
+Produce news-like `option_activity_event.csv` rows and one compact `<id>.csv` detail artifact for each triggered option activity event. This bundle reports events only; it does not save rolling-window process state, raw trade/quote rows, or periodic chain snapshots by default.
 
 ## Input task params
 
@@ -80,7 +80,7 @@ Only `saved/option_activity_event.csv` and `saved/<event_id>.json` are final sav
 
 ## Final shapes
 
-The CSV output follows `storage/templates/data_kinds/thetadata/option_activity_event.preview.csv`. Detail artifacts follow `storage/templates/data_kinds/thetadata/option_activity_event_detail.preview.json`. Field names are resolved from stable `trading-main` registry ids.
+The CSV output follows `storage/templates/data_kinds/thetadata/option_activity_event.preview.csv`. Detail artifacts follow `storage/templates/data_kinds/thetadata/option_activity_event_detail.preview.csv`. Field names are resolved from stable `trading-main` registry ids.
 
 ## Failure and retry
 

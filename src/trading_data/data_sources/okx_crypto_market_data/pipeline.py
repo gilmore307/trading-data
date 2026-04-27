@@ -19,9 +19,9 @@ DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
 OKX_BAR_MAP = {"1Min": "1m", "5Min": "5m", "15Min": "15m", "1Hour": "1H", "1Day": "1D"}
 
-CRYPTO_BAR_FIELDS = ["data_kind", "source", "symbol", "timeframe", "timestamp_et", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
+CRYPTO_BAR_FIELDS = ["symbol", "timeframe", "timestamp_et", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
 CRYPTO_TRADE_FIELDS = ["data_kind", "source", "symbol", "timestamp_utc", "timestamp_et", "trade_id", "side", "price", "size", "notional"]
-CRYPTO_LIQUIDITY_FIELDS = ["data_kind", "source", "symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "trade_volume", "trade_vwap", "trade_open", "trade_high", "trade_low", "trade_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
+CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "trade_volume", "trade_vwap", "trade_open", "trade_high", "trade_low", "trade_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
 
 
 @dataclass(frozen=True)
@@ -148,7 +148,7 @@ def normalize_bars(symbol: str, candles: list[list[Any]], timeframe: str) -> lis
             raise OkxCryptoMarketDataError(f"OKX candle row must have at least 9 fields: {candle!r}")
         ts = _ms_to_utc(candle[0])
         rows.append({
-            "data_kind": "crypto_bar", "source": "okx", "symbol": symbol, "timeframe": timeframe,
+            "symbol": symbol, "timeframe": timeframe,
             "timestamp_et": _et_iso(ts),
             "open": float(candle[1]), "high": float(candle[2]), "low": float(candle[3]), "close": float(candle[4]),
             "volume": float(candle[5]), "vwap": None, "trade_count": None,
@@ -179,7 +179,7 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], timefram
         price = float(trade["price"])
         size = float(trade["size"])
         row = buckets.setdefault(key, {
-            "data_kind": "crypto_liquidity_bar", "source": "okx", "symbol": symbol, "timeframe": timeframe,
+            "symbol": symbol, "timeframe": timeframe,
             "interval_start_et": key, "trade_count": 0, "trade_volume": 0.0, "trade_notional": 0.0,
             "trade_open": price, "trade_high": price, "trade_low": price, "trade_close": price,
             "quote_count": None, "avg_bid": None, "avg_ask": None, "avg_mid": None, "avg_spread": None,

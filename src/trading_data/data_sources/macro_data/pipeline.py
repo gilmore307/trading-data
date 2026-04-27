@@ -22,6 +22,7 @@ from trading_data.source_availability.secrets import load_secret_alias, public_s
 
 SUPPORTED_SOURCES = {"bls", "census", "bea", "us_treasury_fiscal_data", "fred"}
 DEFAULT_TIMEOUT_SECONDS = 20
+MACRO_RELEASE_FIELDS = ["metric", "release_time", "effective_until", "value"]
 
 
 @dataclass(frozen=True)
@@ -198,22 +199,22 @@ def _fetch_by_source(source: str, params: dict[str, Any], client: HttpClient) ->
 
 
 def clean(context: BundleContext, fetched: FetchedPayload) -> StepResult:
-    rows = _normalize_rows(fetched.source, fetched.payload)
-    if not rows:
+    raw_rows = _normalize_rows(fetched.source, fetched.payload)
+    if not raw_rows:
         raise MacroDataError(f"{fetched.source} response produced zero normalized rows")
+    rows = _normalize_release_rows(dict(context.task_key.get("params") or {}), raw_rows)
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    output = context.cleaned_dir / "macro_data_rows.jsonl"
+    output = context.cleaned_dir / "macro_release.jsonl"
     with output.open("w", encoding="utf-8") as handle:
         for row in rows:
             handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
-    schema = sorted({key for row in rows if isinstance(row, dict) for key in row.keys()})
     schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({"columns": schema, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    schema_path.write_text(json.dumps({"columns": MACRO_RELEASE_FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult(
         status="succeeded",
         references=[str(output), str(schema_path)],
-        row_counts={"macro_data_rows": len(rows)},
-        details={"columns": schema, "source": fetched.source},
+        row_counts={"macro_release": len(rows)},
+        details={"columns": MACRO_RELEASE_FIELDS, "source": fetched.source},
     )
 
 
@@ -251,20 +252,39 @@ def _normalize_rows(source: str, payload: Any) -> list[dict[str, Any]]:
     return []
 
 
+
+def _normalize_release_rows(params: dict[str, Any], raw_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    release_time = str(_required(params, "release_time"))
+    effective_until = params.get("effective_until", "")
+    metric_override = params.get("metric")
+    rows: list[dict[str, Any]] = []
+    for raw in raw_rows:
+        metric = str(metric_override or raw.get("series_id") or raw.get("seriesID") or raw.get("metric") or raw.get("field") or params.get("series_id") or params.get("source"))
+        value = raw.get("value")
+        if value is None:
+            value = raw.get("cell_value")
+        if value is None:
+            value = raw.get("DataValue")
+        if value is None:
+            continue
+        rows.append({"metric": metric, "release_time": release_time, "effective_until": effective_until, "value": value})
+    if not rows:
+        raise MacroDataError("macro_data response produced no rows with a usable value field")
+    return rows
+
 def save(context: BundleContext, clean_result: StepResult) -> StepResult:
     context.saved_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = context.saved_dir / "macro_data_rows.csv"
-    rows = [json.loads(line) for line in (context.cleaned_dir / "macro_data_rows.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    columns = sorted({key for row in rows for key in row.keys()})
+    csv_path = context.saved_dir / "macro_release.csv"
+    rows = [json.loads(line) for line in (context.cleaned_dir / "macro_release.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     with csv_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
+        writer = csv.DictWriter(handle, fieldnames=MACRO_RELEASE_FIELDS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
     return StepResult(
         status="succeeded",
         references=[str(csv_path)],
         row_counts=dict(clean_result.row_counts),
-        details={"format": "csv", "columns": columns},
+        details={"format": "csv", "columns": MACRO_RELEASE_FIELDS},
     )
 
 

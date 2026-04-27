@@ -18,6 +18,7 @@ from typing import Any
 from trading_data.source_availability.http import HttpClient, HttpResult
 from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
+from trading_data.data_sources.macro_data.interfaces import MACRO_INTERFACES, params_for_data_kind
 
 
 SUPPORTED_SOURCES = {"bls", "census", "bea", "us_treasury_fiscal_data", "fred"}
@@ -100,8 +101,19 @@ def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
     )
 
 
+def _resolve_params(params: dict[str, Any]) -> dict[str, Any]:
+    data_kind = params.get("data_kind")
+    if data_kind:
+        if data_kind not in MACRO_INTERFACES:
+            raise MacroDataError(f"unsupported macro_data data_kind {data_kind!r}; supported={sorted(MACRO_INTERFACES)}")
+        resolved = params_for_data_kind(str(data_kind))
+        resolved.update(params)
+        return resolved
+    return params
+
+
 def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[StepResult, FetchedPayload]:
-    params = dict(context.task_key.get("params") or {})
+    params = _resolve_params(dict(context.task_key.get("params") or {}))
     source = str(_required(params, "source"))
     if source not in SUPPORTED_SOURCES:
         raise MacroDataError(f"unsupported macro_data source {source!r}; supported={sorted(SUPPORTED_SOURCES)}")
@@ -199,10 +211,11 @@ def _fetch_by_source(source: str, params: dict[str, Any], client: HttpClient) ->
 
 
 def clean(context: BundleContext, fetched: FetchedPayload) -> StepResult:
+    params = _resolve_params(dict(context.task_key.get("params") or {}))
     raw_rows = _normalize_rows(fetched.source, fetched.payload)
     if not raw_rows:
         raise MacroDataError(f"{fetched.source} response produced zero normalized rows")
-    rows = _normalize_release_rows(dict(context.task_key.get("params") or {}), raw_rows)
+    rows = _normalize_release_rows(params, raw_rows)
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     output = context.cleaned_dir / "macro_release.jsonl"
     with output.open("w", encoding="utf-8") as handle:

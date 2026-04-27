@@ -12,6 +12,8 @@ PYTHONPATH=src python3 -m trading_data.data_sources.macro_data path/to/task_key.
 
 Supported `params.source` values now wired to actual API requests. Every task must also provide `release_time`; `effective_until` is optional and blank means latest known value. Use `metric` when the source response does not carry a suitable series id.
 
+You may also pass a registered `params.data_kind` such as `macro_bls_cpi`, `macro_bea_nipa`, `macro_treasury_debt`, or `macro_fred_native`. Defaults for registered macro interfaces live in `interfaces.py`; explicit task params override those defaults.
+
 
 - `bls` — `series_ids`, optional `startyear`, `endyear`.
 - `census` — `dataset`, `get`, optional `for`, `in`, `time`, `ucgid`, `predicates`.

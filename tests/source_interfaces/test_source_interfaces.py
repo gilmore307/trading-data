@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from trading_data.source_availability.http import HttpResult
 from trading_data.source_interfaces.__main__ import main
+from trading_data.data_sources.macro_data.interfaces import MACRO_INTERFACES
 from trading_data.source_interfaces.catalog import INTERFACES
 from trading_data.source_interfaces.probes import probe_interface
 
@@ -25,6 +26,12 @@ class SourceInterfaceTests(unittest.TestCase):
     def test_catalog_has_required_provider_kinds(self):
         for key in ["equity_bar", "equity_trade", "equity_quote", "equity_news", "crypto_bar", "crypto_trade", "crypto_quote", "crypto_order_book", "option_trade", "option_quote", "sec_submission"]:
             self.assertIn(key, INTERFACES)
+
+    def test_catalog_has_all_macro_interfaces(self):
+        self.assertGreaterEqual(len(MACRO_INTERFACES), 30)
+        for key in MACRO_INTERFACES:
+            self.assertIn(key, INTERFACES)
+            self.assertEqual(INTERFACES[key].bundle, "macro_data")
 
     def test_cli_list_no_network(self):
         stdout = io.StringIO()

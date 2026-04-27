@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from trading_data.data_sources.macro_data.interfaces import MACRO_INTERFACES
 from trading_data.data_sources.macro_data.pipeline import run
 from trading_data.source_availability.http import HttpResult
 
@@ -68,6 +69,25 @@ class MacroDataPipelineTests(unittest.TestCase):
             result = run(task_key, run_id="macro_data_run_census", client=FakeMacroClient(payload))
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["macro_release"], 1)
+
+    def test_data_kind_defaults_resolve_to_provider_params(self):
+        payload = {"Results": {"series": [{"seriesID": "CUUR0000SA0", "data": [{"value": "309.685"}]}]}}
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "macro_data_task_kind_default",
+                "bundle": "macro_data",
+                "params": {"data_kind": "macro_bls_cpi"},
+                "output_root": str(Path(tmp) / "macro_data_task_kind_default"),
+            }
+            result = run(task_key, run_id="macro_data_run_kind_default", client=FakeMacroClient(payload))
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["macro_release"], 1)
+
+    def test_all_macro_interfaces_have_source_and_release_defaults_or_adapter_note(self):
+        for key, interface in MACRO_INTERFACES.items():
+            self.assertTrue(interface.source)
+            if interface.source != "official_macro_release_calendar":
+                self.assertIn("release_time", interface.default_params, key)
 
     def test_unsupported_source_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from trading_data.data_sources.macro_data.interfaces import MACRO_INTERFACES
+
 
 @dataclass(frozen=True)
 class DataKindInterface:
@@ -147,6 +149,25 @@ INTERFACES: dict[str, DataKindInterface] = {
         ("Requires issuer-specific adapters; no universal ETF holdings API assumed.",),
     ),
 }
+
+
+def _macro_interfaces() -> dict[str, DataKindInterface]:
+    items: dict[str, DataKindInterface] = {}
+    for data_kind, interface in MACRO_INTERFACES.items():
+        items[data_kind] = DataKindInterface(
+            data_kind=data_kind,
+            source=interface.source,
+            bundle="macro_data",
+            endpoint_kind=interface.endpoint_kind,
+            docs_url=interface.docs_url or None,
+            access="adapter-needed" if interface.source == "official_macro_release_calendar" else ("open/no-key" if interface.source == "us_treasury_fiscal_data" else "api-key"),
+            smoke_params=dict(interface.default_params),
+            notes=interface.notes,
+        )
+    return items
+
+
+INTERFACES.update(_macro_interfaces())
 
 
 def list_interfaces(source: str | None = None) -> list[DataKindInterface]:

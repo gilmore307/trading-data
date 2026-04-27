@@ -37,6 +37,18 @@ Final output:
 - Raw `option_trade`, `option_quote`, and `option_nbbo` rows are source inputs unless explicitly accepted as final outputs later.
 - Professional-only second/third-order Greeks and trade Greeks remain excluded under the current STANDARD entitlement.
 
+## Reusable nested field groups
+
+The option templates reuse common nested leaf names where their semantics match:
+
+- Quote context: `bid`, `ask`, `mid`, `spread`, `bid_size`, `ask_size`, `spread_pct`, `bid_exchange`, `ask_exchange`, `bid_condition`, `ask_condition`.
+- IV context: `implied_vol`, `iv_error`, `iv_percentile_by_expiration`, `iv_rank_in_expiration`, `iv_zscore_by_expiration`.
+- Greeks context: `delta`, `theta`, `vega`, `rho`, `epsilon`, `lambda`.
+- Underlying context: `underlying_price`, `underlying_timestamp_et`.
+- Window context: `window_start_et`, `window_end_et`, `window_trade_count`, `window_volume`, `window_notional`.
+
+Scenario-specific event-detail metrics keep explicit event names, such as `price_vs_ask` and `ask_touch_ratio`.
+
 ## `option_chain_snapshot`
 
 - **Source:** ThetaData Terminal v3.

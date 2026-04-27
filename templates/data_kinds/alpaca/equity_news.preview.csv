@@ -1,2 +1,2 @@
-data_kind,id,headline,source,author,created_at_et,updated_at_et,symbols,summary,url,image_count
-equity_news,36564250,"Bank Of America Predicts 10 2024 Market Surprises: From Booming IPOs To Japanese Equity Surge",benzinga,Piero Cingari,2024-01-09T14:46:19-05:00,2024-01-09T14:46:19-05:00,"AAPL;EWJ;IHE;KBE;NVDA","Bank of America lists 10 market surprises...",https://www.benzinga.com/...,3
+data_kind,id,headline,created_at_et,updated_at_et,symbols,summary,url
+equity_news,36564250,"Bank Of America Predicts 10 2024 Market Surprises: From Booming IPOs To Japanese Equity Surge",2024-01-09T14:46:19-05:00,2024-01-09T14:46:19-05:00,"AAPL;EWJ;IHE;KBE;NVDA","Bank of America lists 10 market surprises...",https://www.benzinga.com/...

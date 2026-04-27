@@ -1,0 +1,44 @@
+{
+  "data_kind": "option_activity_event_detail",
+  "event_id": "opt_evt_AAPL_20260424_093002_270C",
+  "created_at_et": "2026-04-24T09:30:02.267000-04:00",
+  "updated_at_et": "2026-04-24T09:30:02.500000-04:00",
+  "underlying": "AAPL",
+  "contract": {
+    "symbol": "AAPL 2026-05-15 270C",
+    "expiration": "2026-05-15",
+    "right": "CALL",
+    "strike": 270.0
+  },
+  "triggered_indicators": [
+    "trade_at_ask",
+    "opening_activity",
+    "iv_high_cross_section"
+  ],
+  "evidence_window": {
+    "timeframe": "30Min",
+    "window_start_et": "2026-04-24T09:30:00-04:00",
+    "window_end_et": "2026-04-24T10:00:00-04:00"
+  },
+  "triggering_trade": {
+    "timestamp_et": "2026-04-24T09:30:02.267000-04:00",
+    "price": 1.25,
+    "size": 80,
+    "side_hint": "ask_side"
+  },
+  "quote_context": {
+    "timestamp_et": "2026-04-24T09:30:02.260000-04:00",
+    "bid": 1.15,
+    "ask": 1.25,
+    "mid": 1.20,
+    "spread": 0.10
+  },
+  "iv_context": {
+    "implied_vol": 0.64,
+    "iv_percentile_by_expiration": 0.97
+  },
+  "source_refs": {
+    "provider": "ThetaData Terminal v3",
+    "raw_persistence": "not_persisted_by_default"
+  }
+}

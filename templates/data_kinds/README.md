@@ -4,7 +4,7 @@ This directory is the source-organized catalog for final saved `trading-data` da
 
 ## Scope
 
-Only final used/saved data kinds get preview CSV files. Raw or transient provider rows belong as notes in the owning source README, not as top-level preview files, unless explicitly accepted as saved outputs.
+Only final used/saved data kinds get preview CSV/JSON files. Raw or transient provider rows belong as notes in the owning source README, not as top-level preview files, unless explicitly accepted as saved outputs.
 
 ## Layout
 
@@ -28,7 +28,7 @@ templates/data_kinds/
 |---|---|---|---|
 | Alpaca Market Data API | `alpaca/` | `equity_bar`, `equity_liquidity_bar`, `equity_news` | Raw trades/quotes are transient inputs for `equity_liquidity_bar`; snapshots are non-final until accepted. |
 | OKX Market Data API | `okx/` | `crypto_bar`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; raw trades are transient inputs to liquidity bars and quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
-| ThetaData Terminal v3 | `thetadata/` | `option_chain_snapshot`, `option_bar`, `option_activity_event` | Option outputs are split by use case: selection snapshot, specified-contract tracking, and event timeline. |
+| ThetaData Terminal v3 | `thetadata/` | `option_chain_snapshot`, `option_bar`, `option_activity_event`, `option_activity_event_detail` | Option outputs are split by use case: selection snapshot, specified-contract tracking, and event timeline. Event rows link to detail JSON artifacts through `url`. |
 
 ## Source README Fields
 
@@ -44,5 +44,5 @@ Each source folder README should record these fields for every final saved data 
 - **Natural grain** — row granularity such as one saved bar, one article, one contract/day, or one interval aggregate.
 - **Request parameters** — required and important optional params.
 - **Pagination/range behavior** — pagination token, date segmentation, symbol segmentation, or source-specific range limits.
-- **Preview file** — small CSV sample file in the same source folder for the final saved format.
+- **Preview file** — small CSV/JSON sample file in the same source folder for the final saved format.
 - **Known caveats** — entitlements, exchange conditions, source quirks, large-volume risks, or production-hardening notes.

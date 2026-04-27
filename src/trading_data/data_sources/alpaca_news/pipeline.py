@@ -10,6 +10,7 @@ from trading_data.source_availability.http import HttpClient, HttpResult
 from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
+NEWS_FIELDS=['data_kind','id','headline','created_at_et','updated_at_et','symbols','summary','url']
 @dataclass(frozen=True)
 class BundleContext: task_key:dict[str,Any]; run_dir:Path; cleaned_dir:Path; saved_dir:Path; receipt_path:Path; metadata:dict[str,Any]=field(default_factory=dict)
 @dataclass(frozen=True)
@@ -61,18 +62,18 @@ def fetch(context,*,client=None):
 def clean(context,fetched):
     rows=[]
     for i in fetched.news:
-        rows.append({'data_kind':'equity_news','id':i.get('id'),'headline':i.get('headline'),'source':i.get('source'),'author':i.get('author'),'created_at_et':_et_iso(i.get('created_at')),'updated_at_et':_et_iso(i.get('updated_at')),'symbols':i.get('symbols') or [],'summary':i.get('summary'),'content':i.get('content'),'url':i.get('url'),'image_count':len(i.get('images') or [])})
+        rows.append({'data_kind':'equity_news','id':i.get('id'),'headline':i.get('headline'),'created_at_et':_et_iso(i.get('created_at')),'updated_at_et':_et_iso(i.get('updated_at')),'symbols':i.get('symbols') or [],'summary':i.get('summary'),'url':i.get('url')})
     context.cleaned_dir.mkdir(parents=True,exist_ok=True); path=context.cleaned_dir/'equity_news.jsonl'
     with path.open('w') as h:
         for r in rows: h.write(json.dumps(sanitize_value(r),sort_keys=True)+'\n')
-    (context.cleaned_dir/'schema.json').write_text(json.dumps({'equity_news':sorted({k for r in rows for k in r})},indent=2,sort_keys=True)+'\n')
+    (context.cleaned_dir/'schema.json').write_text(json.dumps({'equity_news':NEWS_FIELDS},indent=2,sort_keys=True)+'\n')
     return StepResult('succeeded',[str(path),str(context.cleaned_dir/'schema.json')],{'equity_news':len(rows)},details={'timezone':'America/New_York'})
 def save(context,clean_result):
     context.saved_dir.mkdir(parents=True,exist_ok=True); refs=[]; src=context.cleaned_dir/'equity_news.jsonl'
-    rows=[json.loads(l) for l in src.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_news.csv'; cols=sorted({k for r in rows for k in r})
+    rows=[json.loads(l) for l in src.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_news.csv'; cols=NEWS_FIELDS
     with csvp.open('w',newline='') as h:
         w=csv.DictWriter(h,fieldnames=cols); w.writeheader(); w.writerows(rows)
-    refs.append(str(csvp)); return StepResult('succeeded',refs,dict(clean_result.row_counts),details={'format':'csv'})
+    refs.append(str(csvp)); return StepResult('succeeded',refs,dict(clean_result.row_counts),details={'format':'csv','field_order':cols})
 def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_result=None,error=None):
     context.receipt_path.parent.mkdir(parents=True,exist_ok=True); existing={'task_id':context.task_key.get('task_id'),'bundle':'alpaca_news','runs':[]}
     if context.receipt_path.exists():

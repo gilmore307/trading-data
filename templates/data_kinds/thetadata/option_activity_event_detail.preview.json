@@ -3,6 +3,11 @@
   "event_id": "opt_evt_N7Q4K2M9",
   "created_at_et": "2026-04-24T09:30:02.267000-04:00",
   "updated_at_et": "2026-04-24T09:30:02.500000-04:00",
+  "standard_context": {
+    "standard_source": "event_detection_model",
+    "standard_id": "opt_evt_std_Q5M8T2K1",
+    "standard_generated_at_et": "2026-04-24T09:30:02.500000-04:00"
+  },
   "underlying": "AAPL",
   "contract": {
     "symbol": "AAPL 2026-05-15 270C",
@@ -19,6 +24,10 @@
         "quote_mid": 1.20,
         "price_vs_ask": 0.00,
         "ask_touch_ratio": 1.00
+      },
+      "current_standard": {
+        "max_price_vs_ask": 0.01,
+        "min_ask_touch_ratio": 0.95
       }
     },
     "opening_activity": {
@@ -30,6 +39,10 @@
         "contract_prior_window_volume": 0,
         "volume_vs_prior_window_ratio": null,
         "volume_percentile_20d_same_time": 0.98
+      },
+      "current_standard": {
+        "min_window_volume": 100,
+        "min_volume_percentile_20d_same_time": 0.95
       }
     },
     "iv_high_cross_section": {
@@ -39,6 +52,10 @@
         "iv_rank_in_expiration": 144,
         "iv_percentile_by_expiration": 0.97,
         "iv_zscore_by_expiration": 2.14
+      },
+      "current_standard": {
+        "min_iv_percentile_by_expiration": 0.95,
+        "min_iv_zscore_by_expiration": 2.00
       }
     }
   },

@@ -157,7 +157,7 @@ def _macro_interfaces() -> dict[str, DataKindInterface]:
         items[data_kind] = DataKindInterface(
             data_kind=data_kind,
             source=interface.source,
-            bundle="calendar_discovery" if data_kind == "macro_release_calendar" else "macro_data",
+            bundle="trading-execution/calendar_discovery" if data_kind == "macro_release_calendar" else "macro_data",
             endpoint_kind=interface.endpoint_kind,
             docs_url=interface.docs_url or None,
             access="adapter-needed" if interface.source == "official_macro_release_calendar" else ("open/no-key" if interface.source == "us_treasury_fiscal_data" else "api-key"),

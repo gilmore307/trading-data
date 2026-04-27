@@ -31,7 +31,7 @@ class SourceInterfaceTests(unittest.TestCase):
         self.assertGreaterEqual(len(MACRO_INTERFACES), 30)
         for key in MACRO_INTERFACES:
             self.assertIn(key, INTERFACES)
-            expected_bundle = "calendar_discovery" if key == "macro_release_calendar" else "macro_data"
+            expected_bundle = "trading-execution/calendar_discovery" if key == "macro_release_calendar" else "macro_data"
             self.assertEqual(INTERFACES[key].bundle, expected_bundle)
 
     def test_cli_list_no_network(self):

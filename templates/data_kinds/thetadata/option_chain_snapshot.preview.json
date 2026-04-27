@@ -14,7 +14,7 @@
         "bid": 3.35,
         "ask": 3.55,
         "mid": 3.45,
-        "spread": 0.20,
+        "spread": 0.2,
         "spread_pct": 0.057971,
         "bid_size": 22,
         "ask_size": 24,
@@ -37,12 +37,12 @@
         "epsilon": -10.5,
         "lambda": 14.1
       },
-      "underlying": {
-        "price": 271.95,
-        "timestamp_et": "2026-04-24T16:00:00.235000-04:00"
-      },
       "derived": {
         "days_to_expiration": 3
+      },
+      "underlying_context": {
+        "underlying_price": 271.95,
+        "underlying_timestamp_et": "2026-04-24T16:00:00.235000-04:00"
       }
     }
   ]

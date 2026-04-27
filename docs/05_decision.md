@@ -666,3 +666,9 @@ Long-form agent/model interpretation belongs in artifact files, with `event_anal
 News articles that merely report or summarize an official SEC filing should not create separate independent event alpha when the SEC filing is already represented as the canonical event. Raw news remains preserved in the source-specific acquisition layer, but the unified event layer must either suppress the duplicate news event or mark it as covered by the canonical official event.
 
 Use `canonical_event_id`, `dedup_status`, `source_priority`, and `coverage_reason` to record this boundary. Official SEC/exchange/company/regulatory disclosures outrank derivative news coverage. Covered news can still contribute to propagation, attention, or report context, but it should not create an extra `event_factor` row unless it contains genuinely new information not already present in the official source and that information is observable at its own `effective_time_et`.
+
+## D044 - Event impact scope is explicit
+
+Unified event rows must identify whether the event primarily affects the broad market, a sector, an industry, a theme, one security, multiple securities, macro conditions, or an unresolved target. Use `impact_scope`, `impacted_universe`, and `primary_impact_target` so broad events are not accidentally scored as single-stock events and single-name events are not wrongly propagated to an entire sector.
+
+`security_id`/`symbol` remains the primary tradable identifier when one exists, but it is not enough to describe impact. For example, a company 10-K is normally `impact_scope=security`, while a CPI release may be `impact_scope=market` with `impacted_universe=US_MARKET;rates;USD`.

@@ -23,6 +23,21 @@ Long text belongs in report artifacts, not inside event CSV rows. Event rows sto
 
 Do not delete raw news just because the same event is covered by SEC or another official source. Preserve raw source data in the source bundle, but prevent duplicate event alpha in the unified event layer.
 
+## Impact scope
+
+Every event should identify the layer it primarily affects:
+
+- `market` — broad market event, e.g. Fed decision affecting `US_MARKET`.
+- `sector` — sector-level event, e.g. banking regulation affecting `financials`.
+- `industry` — narrower industry event, e.g. export controls affecting `semiconductors`.
+- `theme` — cross-sector theme, e.g. AI infrastructure or GLP-1 beneficiaries.
+- `security` — single-name event, e.g. one company's 10-K filing.
+- `multi_security` — specific basket/peer group event.
+- `macro` — macroeconomic release or policy event whose target universe is defined separately.
+- `unknown` — unresolved during extraction; should be reviewed before model training.
+
+Use `impact_scope`, `impacted_universe`, and `primary_impact_target` together. For example, a CPI release might use `impact_scope=market`, `impacted_universe=US_MARKET;rates;USD`, and `primary_impact_target=US_MARKET`; an Apple 10-K would usually use `impact_scope=security`, `impacted_universe=AAPL`, and `primary_impact_target=AAPL`.
+
 Canonical event priority should generally be:
 
 1. Official regulatory/exchange/company filings and releases, e.g. SEC filings.

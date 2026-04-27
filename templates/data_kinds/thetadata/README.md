@@ -22,7 +22,7 @@ Final output:
 
 ### `thetadata_option_event_timeline`
 
-Reports only option-activity events. It may use transient 30Min window state and periodic option-chain snapshots for IV context, but final timeline output contains only triggered events. `headline` is a human-facing news-style title; `summary` carries only triggered abnormal indicator details. Each event row has a stable `id` and links through `url` to a compact detail JSON artifact for the full event context.
+Reports only option-activity events. It may use transient 30Min window state and periodic option-chain snapshots for IV context, but final timeline output contains only triggered events. `headline` is a human-facing news-style title; `summary` carries only triggered abnormal indicator type names. Each event row has a stable random `id` and links through `url` to `<id>.json`, a compact detail JSON artifact for the full event context.
 
 Final output:
 
@@ -77,7 +77,7 @@ Final output:
 - **Request parameters:** `underlying`, optional contract fields, `start_date`, `end_date`, `timeframe` default `30Min`, event threshold params.
 - **Pagination/range behavior:** Process trade_quote rows within rolling/window state; periodic option_chain_snapshot every `timeframe` can provide IV cross-section context. Emit immediately when thresholds are met; do not wait for the full bar/window to close.
 - **Preview file:** see `option_activity_event.preview.csv`.
-- **Known caveats:** This output intentionally reuses the simplified news/timeline schema. `headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries only triggered abnormal indicator names/details; normal metrics and event scoring are omitted and belong to downstream models. `url` links to the event detail artifact rather than to an external article.
+- **Known caveats:** This output intentionally reuses the simplified news/timeline schema. `id` is a stable random event id, not a semantic timestamp/contract id. `headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries only abnormal indicator type names such as `trade_at_ask;opening_activity`; normal metrics and event scoring are omitted and belong to downstream models. `url` is `<id>.json` and links to the event detail artifact rather than to an external article.
 
 ## `option_activity_event_detail`
 
@@ -87,8 +87,8 @@ Final output:
 - **Persistence policy:** Persist compact nested JSON only for emitted option activity events. Do not persist full rolling-window raw rows or periodic chain snapshots by default.
 - **Earliest available range:** Same as `option_activity_event`.
 - **Default timestamp semantics:** `created_at_et`, `updated_at_et`, and nested timestamps use `America/New_York`.
-- **Natural grain:** One detail JSON document per detected option-activity event, keyed by `event_id` matching the CSV row `id`.
+- **Natural grain:** One detail JSON document per detected option-activity event, keyed by `event_id` matching the CSV row stable random `id`.
 - **Request parameters:** Same as `option_activity_event`.
-- **Pagination/range behavior:** Written only when an event is emitted; the CSV row `url` points to the detail document path/URI.
+- **Pagination/range behavior:** Written only when an event is emitted; the CSV row `url` points to the detail document as `<id>.json`.
 - **Preview file:** see `option_activity_event_detail.preview.json`.
-- **Known caveats:** Detail JSON is an evidence/context artifact, not a dump of all transient provider rows. It should be enough to audit why the event fired while keeping high-volume source rows transient.
+- **Known caveats:** Detail JSON is an evidence/context artifact, not a dump of all transient provider rows. `triggered_indicators` is an object keyed by abnormal indicator type; each child object owns the specific trigger metrics and thresholds for that type. It should be enough to audit why the event fired while keeping high-volume source rows transient.

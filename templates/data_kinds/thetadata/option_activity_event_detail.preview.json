@@ -1,6 +1,6 @@
 {
   "data_kind": "option_activity_event_detail",
-  "event_id": "opt_evt_AAPL_20260424_093002_270C",
+  "event_id": "opt_evt_N7Q4K2M9",
   "created_at_et": "2026-04-24T09:30:02.267000-04:00",
   "updated_at_et": "2026-04-24T09:30:02.500000-04:00",
   "underlying": "AAPL",
@@ -10,11 +10,40 @@
     "right": "CALL",
     "strike": 270.0
   },
-  "triggered_indicators": [
-    "trade_at_ask",
-    "opening_activity",
-    "iv_high_cross_section"
-  ],
+  "triggered_indicators": {
+    "trade_at_ask": {
+      "trigger_metrics": {
+        "trade_price": 1.25,
+        "quote_bid": 1.15,
+        "quote_ask": 1.25,
+        "quote_mid": 1.20,
+        "price_vs_ask": 0.00
+      },
+      "thresholds": {
+        "max_price_vs_ask": 0.01
+      }
+    },
+    "opening_activity": {
+      "trigger_metrics": {
+        "window_trade_count": 4,
+        "window_volume": 320,
+        "window_notional": 40000.0,
+        "first_seen_in_window": true
+      },
+      "thresholds": {
+        "min_window_volume": 100
+      }
+    },
+    "iv_high_cross_section": {
+      "trigger_metrics": {
+        "implied_vol": 0.64,
+        "iv_percentile_by_expiration": 0.97
+      },
+      "thresholds": {
+        "min_iv_percentile_by_expiration": 0.95
+      }
+    }
+  },
   "evidence_window": {
     "timeframe": "30Min",
     "window_start_et": "2026-04-24T09:30:00-04:00",

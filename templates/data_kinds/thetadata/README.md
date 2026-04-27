@@ -74,8 +74,8 @@ Final output:
 - **Earliest available range:** `unknown`; trade_quote live preview confirmed AAPL 2026-05-15 270 CALL on 2026-04-24.
 - **Default timestamp semantics:** `created_at_et` is the event source time and `updated_at_et` is the detection/report time, both in `America/New_York`.
 - **Natural grain:** One detected option-activity event using the shared model-facing timeline fields: `data_kind`, `id`, `headline`, `created_at_et`, `updated_at_et`, `symbols`, `summary`, `url`.
-- **Request parameters:** `underlying`, optional contract fields, `start_date`, `end_date`, `timeframe` default `30Min`, event threshold params.
-- **Pagination/range behavior:** Process trade_quote rows within rolling/window state; periodic option_chain_snapshot every `timeframe` can provide IV cross-section context. Emit immediately when thresholds are met; do not wait for the full bar/window to close.
+- **Request parameters:** `underlying`, optional contract fields, `start_date`, `end_date`, `timeframe` default `30Min`, event standard/model params.
+- **Pagination/range behavior:** Process trade_quote rows within rolling/window state; periodic option_chain_snapshot every `timeframe` can provide IV cross-section context. Emit immediately when the event-time `current_standard` is satisfied; do not wait for the full bar/window to close.
 - **Preview file:** see `option_activity_event.preview.csv`.
 - **Known caveats:** This output intentionally reuses the simplified news/timeline schema. `id` is a stable random event id, not a semantic timestamp/contract id. `headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries only abnormal indicator type names such as `trade_at_ask;opening_activity`; normal metrics and event scoring are omitted and belong to downstream models. `url` is `<id>.json` and links to the event detail artifact rather than to an external article.
 
@@ -91,4 +91,4 @@ Final output:
 - **Request parameters:** Same as `option_activity_event`.
 - **Pagination/range behavior:** Written only when an event is emitted; the CSV row `url` points to the detail document as `<id>.json`.
 - **Preview file:** see `option_activity_event_detail.preview.json`.
-- **Known caveats:** Detail JSON is an evidence/context artifact, not a dump of all transient provider rows. `triggered_indicators` is an object keyed by abnormal indicator type; each child object owns objective observed `statistics` and the event-time `current_standard` produced by the detection model. `current_standard` is not a global fixed threshold; it is the standard used by the model for this event and may change across model versions/runs. It should be enough to audit why the event fired while keeping high-volume source rows transient.
+- **Known caveats:** Detail JSON is an evidence/context artifact, not a dump of all transient provider rows. `triggered_indicators` is an object keyed by abnormal indicator type; each child object owns objective observed `statistics` and the event-time `current_standard` produced by the detection model. `current_standard` is not a global fixed rule value; it is the standard used by the model for this event and may change across model versions/runs. It should be enough to audit why the event fired while keeping high-volume source rows transient.

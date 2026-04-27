@@ -1,6 +1,6 @@
 # gdelt_news bundle
 
-`gdelt_news` acquires global source article evidence from GDELT BigQuery. It is the primary broad news source for political, economic, technology, geopolitical, sector, and broad-market event discovery.
+`gdelt_news` acquires pre-filtered source article evidence from GDELT BigQuery. It is the primary broad news source for U.S. and U.S.-market political, economic, technology, geopolitical, sector, and broad-market event discovery.
 
 Run:
 
@@ -18,6 +18,9 @@ Optional params:
 - `lookback_days` — used when `start_date` is omitted; defaults to `1`.
 - `max_rows` — 1 to 1000; defaults to `100`.
 - `search_fields` — `themes_text`, `url_only`, or `all_text`; defaults to `themes_text`.
+- `focus` — defaults to `us_market`; use `none` only for explicit broader research.
+- `source_domain_allowlist` — optional string/list of domains; defaults to a curated U.S./U.S.-market news-domain allowlist used together with U.S. location and U.S.-market text filters.
+- `source_domain_contains` — optional extra domain substring filter.
 - `impact_scope_hint` — default hint for event extraction, defaults to `market;sector;industry;theme`.
 
 Outputs:
@@ -29,6 +32,7 @@ Outputs:
 
 Boundary:
 
+- This bundle pre-filters at the BigQuery query layer; do not fetch global all-news rows and filter them locally by default.
 - This bundle saves GDELT article/source evidence, not final canonical events.
 - Later event extraction/clustering projects `gdelt_article` into `trading_event` / `event_factor`.
 - SEC/company official disclosures still outrank derivative news coverage for canonical event identity.

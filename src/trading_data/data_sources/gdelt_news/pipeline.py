@@ -20,6 +20,28 @@ from trading_data.source_availability.sanitize import sanitize_value
 
 BUNDLE = "gdelt_news"
 DEFAULT_MAX_ROWS = 100
+DEFAULT_FOCUS = "us_market"
+DEFAULT_US_MARKET_DOMAINS = (
+    "apnews.com",
+    "barrons.com",
+    "bloomberg.com",
+    "cnbc.com",
+    "cnn.com",
+    "finance.yahoo.com",
+    "forbes.com",
+    "fortune.com",
+    "foxbusiness.com",
+    "marketwatch.com",
+    "nytimes.com",
+    "politico.com",
+    "reuters.com",
+    "techcrunch.com",
+    "thehill.com",
+    "theverge.com",
+    "washingtonpost.com",
+    "wired.com",
+    "wsj.com",
+)
 ARTICLE_FIELDS = [
     "article_id",
     "seen_at_utc",
@@ -107,6 +129,45 @@ def _terms(params: Mapping[str, Any]) -> list[str]:
     return [item.strip() for item in value]
 
 
+def _string_list_param(params: Mapping[str, Any], key: str, default: tuple[str, ...] = ()) -> list[str]:
+    value = params.get(key)
+    if value in (None, ""):
+        return list(default)
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
+        raise GdeltNewsError(f"params.{key} must be a string or list of strings")
+    return [item.strip() for item in value]
+
+
+def _safe_like(value: str) -> str:
+    return value.lower().replace("%", "").replace("\\", "").replace("'", "")
+
+
+def _domain_filter(domains: list[str]) -> str:
+    cleaned = [_safe_like(domain).lstrip(".") for domain in domains if domain.strip()]
+    if not cleaned:
+        return ""
+    clauses = [f"LOWER(IFNULL(SourceCommonName,'')) = '{domain}' OR LOWER(IFNULL(DocumentIdentifier,'')) LIKE '%://%{domain}/%'" for domain in cleaned]
+    return "(" + " OR ".join(clauses) + ")"
+
+
+def _us_market_focus_filter(params: Mapping[str, Any]) -> str:
+    focus = str(params.get("focus") or DEFAULT_FOCUS)
+    if focus not in {"us_market", "none"}:
+        raise GdeltNewsError("params.focus must be us_market or none")
+    if focus == "none":
+        return ""
+    domains = _string_list_param(params, "source_domain_allowlist", DEFAULT_US_MARKET_DOMAINS)
+    domain_clause = _domain_filter(domains)
+    us_location_clause = "LOWER(CONCAT(IFNULL(V2Locations,''), ' ', IFNULL(Locations,''))) LIKE '%united states%' OR LOWER(CONCAT(IFNULL(V2Locations,''), ' ', IFNULL(Locations,''))) LIKE '%#us#%'"
+    us_market_clause = "LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(DocumentIdentifier,''))) LIKE '%federal reserve%' OR LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(DocumentIdentifier,''))) LIKE '%wall street%' OR LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(DocumentIdentifier,''))) LIKE '%nasdaq%' OR LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(DocumentIdentifier,''))) LIKE '%s&p 500%' OR LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(DocumentIdentifier,''))) LIKE '%dow jones%' OR LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(DocumentIdentifier,''))) LIKE '%u.s. stock%'"
+    pieces = [us_location_clause, us_market_clause]
+    if domain_clause:
+        pieces.append(domain_clause)
+    return "(" + " OR ".join(pieces) + ")"
+
+
 def build_sql(params: Mapping[str, Any]) -> tuple[str, int]:
     today = datetime.now(UTC).date()
     lookback_days = int(params.get("lookback_days", 1))
@@ -125,9 +186,15 @@ def build_sql(params: Mapping[str, Any]) -> tuple[str, int]:
         "url_only": "LOWER(IFNULL(DocumentIdentifier,''))",
         "all_text": "LOWER(CONCAT(IFNULL(DocumentIdentifier,''), ' ', IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(Persons,''), ' ', IFNULL(Locations,'')))",
     }[fields]
-    clauses = [f"{search_expr} LIKE '%{term.lower().replace('%', '').replace("'", "")}%'" for term in _terms(params)]
-    source_country = params.get("source_country")
-    country_clause = f"\n  AND LOWER(IFNULL(SourceCommonName,'')) LIKE '%{str(source_country).lower().replace('%', '').replace("'", "")}%'" if params.get("source_domain_contains") else ""
+    clauses = [f"{search_expr} LIKE '%{_safe_like(term)}%'" for term in _terms(params)]
+    extra_filters: list[str] = []
+    focus_filter = _us_market_focus_filter(params)
+    if focus_filter:
+        extra_filters.append(focus_filter)
+    source_domain_contains = params.get("source_domain_contains")
+    if source_domain_contains:
+        extra_filters.append(f"LOWER(IFNULL(SourceCommonName,'')) LIKE '%{_safe_like(str(source_domain_contains))}%'")
+    extra_clause = "" if not extra_filters else "\n  AND " + "\n  AND ".join(extra_filters)
     sql = f"""
 SELECT
   GKGRECORDID AS article_id,
@@ -143,7 +210,7 @@ SELECT
   TranslationInfo AS translation_info
 FROM `gdelt-bq.gdeltv2.gkg_partitioned`
 WHERE DATE(_PARTITIONTIME) BETWEEN DATE({_sql_string(start.isoformat())}) AND DATE({_sql_string(end.isoformat())})
-  AND ({' OR '.join(clauses)}){country_clause}
+  AND ({' OR '.join(clauses)}){extra_clause}
 ORDER BY DATE DESC
 LIMIT {max_rows}
 """.strip()
@@ -166,7 +233,7 @@ def fetch(context: BundleContext, *, client: QueryClient | None = None) -> tuple
     rows = list(getattr(result, "rows", []))
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = context.run_dir / "request_manifest.json"
-    manifest_path.write_text(json.dumps({"query_terms": sanitize_value(_terms(params)), "max_rows": max_rows, "sql": sql, "source": "gdelt_bigquery", "table": "gdelt-bq.gdeltv2.gkg_partitioned", "fetched_at_utc": _now_utc(), "raw_persistence": "not_persisted_by_default"}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps({"query_terms": sanitize_value(_terms(params)), "focus": str(params.get("focus") or DEFAULT_FOCUS), "source_domain_allowlist": sanitize_value(_string_list_param(params, "source_domain_allowlist", DEFAULT_US_MARKET_DOMAINS)), "max_rows": max_rows, "sql": sql, "source": "gdelt_bigquery", "table": "gdelt-bq.gdeltv2.gkg_partitioned", "fetched_at_utc": _now_utc(), "raw_persistence": "not_persisted_by_default"}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(manifest_path)], {"bigquery_rows": len(rows)}, details={"table": "gdelt-bq.gdeltv2.gkg_partitioned"}), FetchedGdeltRows(sql, rows)
 
 

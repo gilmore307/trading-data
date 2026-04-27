@@ -53,6 +53,8 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             self.assertEqual(result.row_counts["gdelt_article"], 1)
             sql, max_results = client.requests[0]
             self.assertIn("gdelt-bq.gdeltv2.gkg_partitioned", sql)
+            self.assertIn("united states", sql.lower())
+            self.assertIn("reuters.com", sql.lower())
             self.assertEqual(max_results, 10)
             saved = Path(task_key["output_root"]) / "runs" / "gdelt_news_run_test" / "saved" / "gdelt_article.csv"
             with saved.open(newline="") as handle:

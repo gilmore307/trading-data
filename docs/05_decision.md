@@ -689,3 +689,7 @@ The `macro_data` bundle should save `macro_release_event.csv` as the final outpu
 Alpaca news remains useful for stock-specific provider coverage, but GDELT is the primary broad news/event discovery source for political, economic, technology, geopolitical, sector, industry, theme, and market-impact event candidates.
 
 `gdelt_news` saves `gdelt_article` source-evidence rows from GDELT BigQuery. These rows are not canonical event identity by themselves. Downstream event extraction/clustering must merge GDELT articles into `trading_event` / `event_factor`, respect official-source priority, and avoid duplicate alpha counting when SEC/company/regulatory disclosures already cover the same event.
+
+## D047 - GDELT acquisition is U.S./U.S.-market focused by default
+
+The system does not need all global GDELT news. `gdelt_news` should pre-filter in BigQuery for U.S. and U.S.-market relevance by default, using `focus=us_market`, U.S. location/market terms, and a curated U.S./U.S.-market source-domain allowlist. Broader global queries require an explicit `focus=none` task parameter and should be treated as exceptional research, not the production default.

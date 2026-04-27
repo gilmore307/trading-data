@@ -580,3 +580,26 @@ Registry ids are durable while display keys and field payload text can be rename
 - Edit the generator/spec and registry entries, then regenerate previews.
 - CI/local validation should run the generator in `--check` mode to catch stale previews.
 - Static README prose remains hand-written, but fields changed under `artifact_sync_policy=sync_artifact` must be synchronized with the generated previews and relevant docs.
+
+## D027 - Nested final artifacts use local JSON in development and SQL JSONB durably
+
+Date: 2026-04-27
+
+### Context
+
+`option_chain_snapshot` is a nested final artifact: one snapshot contains a complete option-chain structure with many contracts and nested quote, IV, Greeks, derived, and underlying context. During development, `trading-data` still writes local ignored files under `data/storage/`, while production durability will move to SQL contracts owned by `trading-storage`.
+
+### Decision
+
+For development-stage bundle implementation, save `option_chain_snapshot` as a final JSON file. For the final durable SQL contract, store the complete normalized nested artifact in a PostgreSQL `jsonb` column inside the SQL row, not as an external JSON file path.
+
+### Rationale
+
+A JSON file keeps development simple and reviewable while the durable storage contract is still being shaped. SQL JSONB later preserves the same nested final artifact shape inside transactional, queryable, backupable storage without prematurely splitting contract rows into many child tables.
+
+### Consequences
+
+- Development output remains a local ignored JSON file.
+- Production storage should treat the JSONB row body as the canonical durable final artifact for `option_chain_snapshot`.
+- Contract-level projection tables or materialized views may be added later for query acceleration, but they should be derived from the canonical JSONB artifact unless a later storage decision supersedes this.
+- The bundle does not need file-level partial resume for the final artifact; a failed durable SQL transaction should leave no partial final snapshot.

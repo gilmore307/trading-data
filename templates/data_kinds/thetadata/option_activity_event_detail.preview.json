@@ -12,35 +12,33 @@
   },
   "triggered_indicators": {
     "trade_at_ask": {
-      "trigger_metrics": {
+      "statistics": {
         "trade_price": 1.25,
         "quote_bid": 1.15,
         "quote_ask": 1.25,
         "quote_mid": 1.20,
-        "price_vs_ask": 0.00
-      },
-      "thresholds": {
-        "max_price_vs_ask": 0.01
+        "price_vs_ask": 0.00,
+        "ask_touch_ratio": 1.00
       }
     },
     "opening_activity": {
-      "trigger_metrics": {
+      "statistics": {
         "window_trade_count": 4,
         "window_volume": 320,
         "window_notional": 40000.0,
-        "first_seen_in_window": true
-      },
-      "thresholds": {
-        "min_window_volume": 100
+        "first_seen_in_window": true,
+        "contract_prior_window_volume": 0,
+        "volume_vs_prior_window_ratio": null,
+        "volume_percentile_20d_same_time": 0.98
       }
     },
     "iv_high_cross_section": {
-      "trigger_metrics": {
+      "statistics": {
         "implied_vol": 0.64,
-        "iv_percentile_by_expiration": 0.97
-      },
-      "thresholds": {
-        "min_iv_percentile_by_expiration": 0.95
+        "expiration_chain_contract_count": 148,
+        "iv_rank_in_expiration": 144,
+        "iv_percentile_by_expiration": 0.97,
+        "iv_zscore_by_expiration": 2.14
       }
     }
   },
@@ -64,7 +62,8 @@
   },
   "iv_context": {
     "implied_vol": 0.64,
-    "iv_percentile_by_expiration": 0.97
+    "iv_percentile_by_expiration": 0.97,
+    "iv_zscore_by_expiration": 2.14
   },
   "source_refs": {
     "provider": "ThetaData Terminal v3",

@@ -91,4 +91,4 @@ Final output:
 - **Request parameters:** Same as `option_activity_event`.
 - **Pagination/range behavior:** Written only when an event is emitted; the CSV row `url` points to the detail document as `<id>.json`.
 - **Preview file:** see `option_activity_event_detail.preview.json`.
-- **Known caveats:** Detail JSON is an evidence/context artifact, not a dump of all transient provider rows. `triggered_indicators` is an object keyed by abnormal indicator type; each child object owns the specific trigger metrics and thresholds for that type. It should be enough to audit why the event fired while keeping high-volume source rows transient.
+- **Known caveats:** Detail JSON is an evidence/context artifact, not a dump of all transient provider rows. `triggered_indicators` is an object keyed by abnormal indicator type; each child object owns objective observed `statistics` for that type. Preset trigger thresholds/configuration should not be persisted in the final artifact. It should be enough to audit why the event fired while keeping high-volume source rows transient.

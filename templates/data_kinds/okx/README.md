@@ -4,7 +4,7 @@ OKX is the canonical crypto market-data source for this project because crypto e
 
 ## Normalization rule
 
-Normalize OKX crypto rows toward the Alpaca-like market-data shape where practical so downstream models can share feature code across asset/source families. Missing quote-derived fields are expected and meaningful: models must tolerate partial feature availability instead of assuming every source has historical quote rows.
+Normalize OKX crypto rows to the same model-facing market-data shape used by Alpaca. Avoid OKX-specific final columns unless they are necessary; source-specific raw fields remain transient. Missing quote-derived fields are expected and meaningful: models must tolerate partial feature availability instead of assuming every source has historical quote rows.
 
 ### `crypto_bar`
 

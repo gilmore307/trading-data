@@ -53,7 +53,6 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
         ])
         rows = aggregate_liquidity_bars('BTC-USDT', trades, '1Min')
         self.assertEqual(rows[0]['data_kind'], 'crypto_liquidity_bar')
-        self.assertEqual(rows[0]['quote_features_available'], 'false')
         self.assertIsNone(rows[0]['avg_bid'])
         self.assertEqual(rows[0]['trade_count'], 2)
 

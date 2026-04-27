@@ -1,2 +1,2 @@
-data_kind,source,symbol,timeframe,interval_start_et,trade_count,trade_volume,trade_notional,trade_vwap,trade_open,trade_high,trade_low,trade_close,quote_count,avg_bid,avg_ask,avg_mid,avg_spread,min_spread,max_spread,avg_bid_size,avg_ask_size,last_bid,last_ask,last_mid,vwap_minus_avg_mid,quote_features_available
-crypto_liquidity_bar,okx,BTC-USDT,1Min,2026-04-26T18:13:00-04:00,1,0.0013739,107.89386989,78535.1,78535.1,78535.1,78535.1,78535.1,,,,,,,,,,,,,,false
+data_kind,source,symbol,timeframe,interval_start_et,trade_count,quote_count,trade_volume,trade_vwap,trade_open,trade_high,trade_low,trade_close,avg_bid,avg_ask,avg_mid,avg_spread,last_bid,last_ask,last_mid,vwap_minus_avg_mid
+crypto_liquidity_bar,okx,BTC-USDT,1Min,2026-04-26T18:13:00-04:00,1,,0.0013739,78535.1,78535.1,78535.1,78535.1,78535.1,,,,,,,,

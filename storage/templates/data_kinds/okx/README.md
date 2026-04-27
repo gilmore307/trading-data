@@ -25,7 +25,7 @@ Normalize OKX crypto rows to the same model-facing market-data shape used by Alp
 Raw OKX `crypto_trade` source rows are live-confirmed but are **not** final saved data kinds for this project. They are normalized transiently toward an Alpaca-like trade shape, consumed by `okx_crypto_market_data`, and aggregated into `crypto_liquidity_bar`.
 
 - Raw trade preview shape: `instId`, `side`, `sz`, `px`, `source`, `tradeId`, `ts`.
-- Transient normalized shape: `data_kind`, `source`, `symbol`, `timestamp_utc`, `timestamp_et`, `trade_id`, `side`, `price`, `size`, `notional`.
+- Transient normalized shape may include provider/debug context such as `source`, but final SQL-shaped saved templates omit fixed table/source discriminator columns.
 - Persistence rule: keep only run-local cleaned transient JSONL while building liquidity bars; do not save standalone `crypto_trade.csv` by default.
 - Reason: `crypto_liquidity_bar` contains the accepted trade-derived final features, so saving both duplicates storage.
 

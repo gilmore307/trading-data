@@ -1,2 +1,2 @@
-data_kind,symbol,timeframe,timestamp_et,open,high,low,close,volume,vwap,trade_count
-equity_bar,AAPL,1Day,2024-01-02T00:00:00-05:00,187.15,188.44,183.885,185.64,82496943,185.846233,1009074
+symbol,timeframe,timestamp_et,open,high,low,close,volume,vwap,trade_count
+AAPL,1Day,2024-01-02T00:00:00-05:00,187.15,188.44,183.885,185.64,82496943,185.846233,1009074

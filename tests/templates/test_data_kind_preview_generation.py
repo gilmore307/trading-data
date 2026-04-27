@@ -27,14 +27,20 @@ class DataKindPreviewGenerationTests(unittest.TestCase):
 
             option_event = root / "thetadata" / "option_activity_event.preview.csv"
             self.assertIn(
-                "data_kind,id,headline,created_at_et,updated_at_et,symbols,summary,url",
+                "id,headline,created_at_et,updated_at_et,symbols,summary,url",
                 option_event.read_text(encoding="utf-8"),
             )
 
-            option_detail = root / "thetadata" / "option_activity_event_detail.preview.json"
+            macro_release = root / "macro" / "macro_release.preview.csv"
+            self.assertIn(
+                "metric,release_time,effective_until,value",
+                macro_release.read_text(encoding="utf-8"),
+            )
+
+            option_detail = root / "thetadata" / "option_activity_event_detail.preview.csv"
             text = option_detail.read_text(encoding="utf-8")
-            self.assertIn('"triggered_indicators"', text)
-            self.assertIn('"current_standard"', text)
+            self.assertIn("triggered_indicators", text)
+            self.assertIn("current_standard", text)
 
 
 if __name__ == "__main__":

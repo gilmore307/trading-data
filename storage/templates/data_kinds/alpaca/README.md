@@ -5,7 +5,7 @@
 - **Source:** Alpaca Market Data API.
 - **Bundle:** `alpaca_bars`.
 - **Status:** `implemented`.
-- **Persistence policy:** Persist cleaned final `equity_bar` outputs. Do not persist full raw provider payloads by default.
+- **Persistence policy:** Persist cleaned final `equity_bar` outputs as SQL-shaped CSV rows. Do not persist full raw provider payloads by default.
 - **Earliest available range:** `unknown`; live implementation confirmed AAPL daily bars for 2024-01-02 through 2024-01-03. Full historical entitlement/range should be tested by feed/timeframe later.
 - **Default timestamp semantics:** `timestamp_et` normalized to `America/New_York`.
 - **Natural grain:** One OHLCV bar per symbol/timeframe/timestamp.
@@ -51,7 +51,7 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 - **Persistence policy:** Persist cleaned final event/news timeline rows only. Do not persist full raw provider payloads by default.
 - **Earliest available range:** `unknown`; live implementation confirmed AAPL news around 2024-01-09.
 - **Default timestamp semantics:** `created_at_et` and `updated_at_et` in `America/New_York`.
-- **Natural grain:** One news article/item using the shared model-facing timeline fields: `data_kind`, `id`, `headline`, `created_at_et`, `updated_at_et`, `symbols`, `summary`, `url`.
+- **Natural grain:** One news article/item using the shared model-facing timeline fields: `id`, `headline`, `created_at_et`, `updated_at_et`, `symbols`, `summary`, `url`.
 - **Request parameters:** `symbols`, `start`, `end`; optional `limit`, `max_pages`.
 - **Pagination/range behavior:** Alpaca `next_page_token`; implementation uses bounded `max_pages`.
 - **Preview file:** see `equity_news.preview.csv`.

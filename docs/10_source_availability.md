@@ -135,3 +135,9 @@ Current implementation supports `1Min`, `5Min`, `15Min`, `1Hour`, and `1Day` buc
 `src/trading_data/data_sources/alpaca_news/` now fetches Alpaca news, normalizes `created_at`/`updated_at` to `America/New_York`, and saves cleaned `equity_news` CSV outputs.
 
 Both bundles use bounded pagination, sanitized request manifests, completion receipts, and no default full raw provider payload persistence.
+
+## ThetaData option primary tracking implementation
+
+`src/trading_data/data_sources/thetadata_option_primary_tracking/` now fetches specified-contract ThetaData option OHLC rows from the local Terminal v3 `/v3/option/history/ohlc` endpoint. It requires the caller to pass the contract (`underlying`, `expiration`, `right`, `strike`), `start_date`, `end_date`, and `timeframe`; it does not choose contracts.
+
+The bundle treats raw 1Sec OHLC rows as transient, skips zero-volume/count placeholders, aggregates active rows to the requested `America/New_York` timeframe, and persists only final `option_bar.csv` rows under `saved/`.

@@ -16,7 +16,6 @@
 - Define storage SQL table/partition contract for data-task outputs before durable/production mode.
 - Define provider quota/rate-limit/retry policy per source before automation loops are introduced.
 - Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
-- Implement `thetadata_option_primary_tracking` for specified-contract option bars.
 - Implement `thetadata_option_event_timeline` for triggered option-activity events.
 - Define any additional provider secret alias names through `trading-main` once providers are selected.
 
@@ -41,6 +40,7 @@
 
 ## Recently Accepted
 
+- Implemented `thetadata_option_primary_tracking` for specified-contract option bars: explicit contract + date range + `timeframe` input, local ThetaData Terminal OHLC endpoint, zero-volume placeholder filtering, requested-timeframe aggregation, final `option_bar.csv` save, and completion receipt without raw provider response persistence.
 - Implemented `thetadata_option_selection_snapshot` as the first ThetaData option final-output bundle: explicit `underlying` + `snapshot_time_et` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
 - Standardized final saved bundle outputs on CSV only; JSONL may remain a transient cleaned/run-local format but is no longer duplicated into saved outputs.
 - Refined `storage/templates/data_kinds/` scope so the top-level README indexes data sources while source-specific READMEs cover final used/saved data kinds; raw Alpaca trades/quotes are documented only as transient inputs to derived aggregate outputs.

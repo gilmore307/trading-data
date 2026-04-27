@@ -67,7 +67,7 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 
 - **Source:** ThetaData Terminal v3 `/v3/option/history/ohlc`.
 - **Bundle:** `thetadata_option_primary_tracking`.
-- **Status:** `preview-confirmed`.
+- **Status:** `implemented`.
 - **Persistence policy:** Persist final aggregated contract bars as CSV. Raw 1Sec source rows are transient.
 - **Earliest available range:** `unknown`; live preview confirmed AAPL 2026-05-15 270 CALL on 2026-04-24.
 - **Default timestamp semantics:** `timestamp_et` in `America/New_York`.
@@ -75,7 +75,7 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Request parameters:** `underlying`, `expiration`, `right`, `strike`, `start_date`, `end_date`, `timeframe`.
 - **Pagination/range behavior:** Segment by contract and date range; `timeframe` is an input parameter and final rows should aggregate transient 1Sec OHLC to requested grain.
 - **Preview file:** see `option_bar.preview.csv`.
-- **Known caveats:** ThetaData 1Sec OHLC may include zero-volume placeholder rows; final aggregation must not treat zero-volume placeholders as real trades.
+- **Known caveats:** ThetaData 1Sec OHLC may include zero-volume placeholder rows; final aggregation skips rows whose `volume` and `count` are both zero. VWAP is calculated from active 1Sec close × volume because the source OHLC `vwap` field is not treated as a per-second trade VWAP.
 
 ## `option_activity_event`
 

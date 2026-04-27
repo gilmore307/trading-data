@@ -603,3 +603,26 @@ A JSON file keeps development simple and reviewable while the durable storage co
 - Production storage should treat the JSONB row body as the canonical durable final artifact for `option_chain_snapshot`.
 - Contract-level projection tables or materialized views may be added later for query acceleration, but they should be derived from the canonical JSONB artifact unless a later storage decision supersedes this.
 - The bundle does not need file-level partial resume for the final artifact; a failed durable SQL transaction should leave no partial final snapshot.
+
+## D028 - Option primary tracking aggregates active ThetaData OHLC rows
+
+Date: 2026-04-27
+
+### Context
+
+ThetaData `/v3/option/history/ohlc` returns specified-contract 1-second OHLC rows and may include zero-volume placeholder rows. The `thetadata_option_primary_tracking` bundle must track a contract supplied by the task key without becoming a contract-selection model.
+
+### Decision
+
+Require task params to provide `underlying`, `expiration`, `right`, `strike`, `start_date`, `end_date`, and `timeframe`. Fetch ThetaData option OHLC rows, keep provider rows transient, skip rows whose `volume` and `count` are both zero, aggregate active rows to the requested `America/New_York` timeframe, and save final `option_bar.csv` only under `saved/`.
+
+### Rationale
+
+The specified contract is an input, so selection remains outside the data bundle. Filtering zero placeholders prevents no-trade seconds from becoming false bars. Aggregating to a task-key `timeframe` keeps option bars aligned with equity/crypto bar conventions and downstream research inputs.
+
+### Consequences
+
+- `thetadata_option_primary_tracking` does not select contracts.
+- Cleaned JSONL may exist only as run-local development evidence.
+- Final saved flat output is `option_bar.csv`.
+- VWAP is calculated from active 1Sec close × volume because the source OHLC `vwap` field is not treated as a per-second trade VWAP.

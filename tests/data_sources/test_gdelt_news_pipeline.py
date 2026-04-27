@@ -65,9 +65,22 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["row_counts"]["gdelt_article"], 1)
 
-    def test_empty_query_terms_writes_failed_receipt(self):
+    def test_default_topics_allow_omitting_query_terms(self):
+        rows = [{"article_id": "a", "gdelt_date": "20260427123000", "source_domain": "reuters.com", "url": "https://reuters.com/a"}]
         with tempfile.TemporaryDirectory() as tmp:
-            task_key = {"task_id": "gdelt_news_task_bad", "bundle": "gdelt_news", "params": {"query_terms": []}, "output_root": str(Path(tmp) / "task")}
+            task_key = {"task_id": "gdelt_news_task_default", "bundle": "gdelt_news", "params": {"max_rows": 1}, "output_root": str(Path(tmp) / "task")}
+            client = FakeBigQueryClient(rows)
+            result = run(task_key, run_id="run", client=client)
+            self.assertEqual(result.status, "succeeded")
+            sql = client.requests[0][0].lower()
+            self.assertIn("government", sql)
+            self.assertIn("inflation", sql)
+            self.assertIn("war", sql)
+            self.assertIn("semiconductor", sql)
+
+    def test_bad_topic_category_writes_failed_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {"task_id": "gdelt_news_task_bad", "bundle": "gdelt_news", "params": {"topic_categories": ["sports"]}, "output_root": str(Path(tmp) / "task")}
             result = run(task_key, run_id="run", client=FakeBigQueryClient([]))
             self.assertEqual(result.status, "failed")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())

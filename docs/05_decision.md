@@ -693,3 +693,7 @@ Alpaca news remains useful for stock-specific provider coverage, but GDELT is th
 ## D047 - GDELT acquisition is U.S./U.S.-market focused by default
 
 The system does not need all global GDELT news. `gdelt_news` should pre-filter in BigQuery for U.S. and U.S.-market relevance by default, using `focus=us_market`, U.S. location/market terms, and a curated U.S./U.S.-market source-domain allowlist. Broader global queries require an explicit `focus=none` task parameter and should be treated as exceptional research, not the production default.
+
+## D048 - GDELT default topics are politics, economy, war, and technology
+
+`gdelt_news` should not be an open-ended news firehose. Its default query scope is U.S./U.S.-market news in four market-impact categories: politics, economy, war/geopolitics, and technology. If a task omits `query_terms`, the bundle expands those categories into a bounded default term set. Other categories require explicit task parameters and should be reviewed before becoming production defaults.

@@ -21,6 +21,13 @@ from trading_data.source_availability.sanitize import sanitize_value
 BUNDLE = "gdelt_news"
 DEFAULT_MAX_ROWS = 100
 DEFAULT_FOCUS = "us_market"
+DEFAULT_TOPIC_CATEGORIES = ("politics", "economy", "war", "technology")
+TOPIC_CATEGORY_TERMS = {
+    "politics": ("government", "congress", "white house", "election", "regulation", "policy", "tariff", "sanction", "supreme court", "federal reserve"),
+    "economy": ("inflation", "cpi", "ppi", "jobs", "payrolls", "unemployment", "gdp", "recession", "consumer spending", "retail sales", "interest rates", "treasury yields"),
+    "war": ("war", "military", "missile", "conflict", "invasion", "geopolitical", "defense", "terrorism", "ceasefire", "shipping route"),
+    "technology": ("technology", "semiconductor", "chip", "artificial intelligence", "ai", "cybersecurity", "cloud", "export controls", "data center", "software"),
+}
 DEFAULT_US_MARKET_DOMAINS = (
     "apnews.com",
     "barrons.com",
@@ -120,8 +127,30 @@ def _date_param(params: Mapping[str, Any], key: str, default: date) -> date:
         raise GdeltNewsError(f"params.{key} must be YYYY-MM-DD") from exc
 
 
+def _topic_categories(params: Mapping[str, Any]) -> list[str]:
+    value = params.get("topic_categories")
+    if value in (None, ""):
+        value = list(DEFAULT_TOPIC_CATEGORIES)
+    if isinstance(value, tuple):
+        value = list(value)
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
+        raise GdeltNewsError("params.topic_categories must be a string or list of strings")
+    categories = [item.strip().lower() for item in value]
+    unknown = sorted(set(categories) - set(TOPIC_CATEGORY_TERMS))
+    if unknown:
+        raise GdeltNewsError(f"unsupported topic_categories: {unknown}; supported={sorted(TOPIC_CATEGORY_TERMS)}")
+    return categories
+
+
 def _terms(params: Mapping[str, Any]) -> list[str]:
-    value = params.get("query_terms") or params.get("terms") or []
+    value = params.get("query_terms") or params.get("terms")
+    if value in (None, "", []):
+        terms: list[str] = []
+        for category in _topic_categories(params):
+            terms.extend(TOPIC_CATEGORY_TERMS[category])
+        return sorted(set(terms))
     if isinstance(value, str):
         value = [value]
     if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
@@ -148,7 +177,7 @@ def _domain_filter(domains: list[str]) -> str:
     cleaned = [_safe_like(domain).lstrip(".") for domain in domains if domain.strip()]
     if not cleaned:
         return ""
-    clauses = [f"LOWER(IFNULL(SourceCommonName,'')) = '{domain}' OR LOWER(IFNULL(DocumentIdentifier,'')) LIKE '%://%{domain}/%'" for domain in cleaned]
+    clauses = [f"LOWER(IFNULL(SourceCommonName,'')) LIKE '%{domain.replace('.com', '')}%' OR LOWER(IFNULL(DocumentIdentifier,'')) LIKE '%{domain}%'" for domain in cleaned]
     return "(" + " OR ".join(clauses) + ")"
 
 
@@ -186,7 +215,10 @@ def build_sql(params: Mapping[str, Any]) -> tuple[str, int]:
         "url_only": "LOWER(IFNULL(DocumentIdentifier,''))",
         "all_text": "LOWER(CONCAT(IFNULL(DocumentIdentifier,''), ' ', IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(Persons,''), ' ', IFNULL(Locations,'')))",
     }[fields]
-    clauses = [f"{search_expr} LIKE '%{_safe_like(term)}%'" for term in _terms(params)]
+    topic_pattern = "|".join(re.escape(_safe_like(term)) for term in _terms(params) if _safe_like(term))
+    if not topic_pattern:
+        raise GdeltNewsError("topic/category terms resolved to an empty query pattern")
+    topic_clause = f"REGEXP_CONTAINS({search_expr}, r'({topic_pattern})')"
     extra_filters: list[str] = []
     focus_filter = _us_market_focus_filter(params)
     if focus_filter:
@@ -210,7 +242,7 @@ SELECT
   TranslationInfo AS translation_info
 FROM `gdelt-bq.gdeltv2.gkg_partitioned`
 WHERE DATE(_PARTITIONTIME) BETWEEN DATE({_sql_string(start.isoformat())}) AND DATE({_sql_string(end.isoformat())})
-  AND ({' OR '.join(clauses)}){extra_clause}
+  AND {topic_clause}{extra_clause}
 ORDER BY DATE DESC
 LIMIT {max_rows}
 """.strip()
@@ -233,7 +265,7 @@ def fetch(context: BundleContext, *, client: QueryClient | None = None) -> tuple
     rows = list(getattr(result, "rows", []))
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = context.run_dir / "request_manifest.json"
-    manifest_path.write_text(json.dumps({"query_terms": sanitize_value(_terms(params)), "focus": str(params.get("focus") or DEFAULT_FOCUS), "source_domain_allowlist": sanitize_value(_string_list_param(params, "source_domain_allowlist", DEFAULT_US_MARKET_DOMAINS)), "max_rows": max_rows, "sql": sql, "source": "gdelt_bigquery", "table": "gdelt-bq.gdeltv2.gkg_partitioned", "fetched_at_utc": _now_utc(), "raw_persistence": "not_persisted_by_default"}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps({"query_terms": sanitize_value(_terms(params)), "topic_categories": sanitize_value(_topic_categories(params)), "focus": str(params.get("focus") or DEFAULT_FOCUS), "source_domain_allowlist": sanitize_value(_string_list_param(params, "source_domain_allowlist", DEFAULT_US_MARKET_DOMAINS)), "max_rows": max_rows, "sql": sql, "source": "gdelt_bigquery", "table": "gdelt-bq.gdeltv2.gkg_partitioned", "fetched_at_utc": _now_utc(), "raw_persistence": "not_persisted_by_default"}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(manifest_path)], {"bigquery_rows": len(rows)}, details={"table": "gdelt-bq.gdeltv2.gkg_partitioned"}), FetchedGdeltRows(sql, rows)
 
 

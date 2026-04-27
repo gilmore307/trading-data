@@ -683,3 +683,9 @@ Keep source evidence and final saved outputs separate:
 - `macro_release_event` is the final saved event-layer object with `event_type=macro_release_event`, `source_type=official_macro_release`, impact scope/universe, source reference, actual value attributes, and report/factor linkage.
 
 The `macro_data` bundle should save `macro_release_event.csv` as the final output and keep `macro_release.jsonl` only under `cleaned/` as run-local evidence. Event studies and reaction labels should use `macro_release_event`. Market-state models should use pure market/index/ETF data for state classification rather than macro reason labels. Official macro APIs usually provide actual values but not consensus expectations, so surprise fields remain pending until an approved consensus source is accepted.
+
+## D046 - GDELT is the primary broad news source
+
+Alpaca news remains useful for stock-specific provider coverage, but GDELT is the primary broad news/event discovery source for political, economic, technology, geopolitical, sector, industry, theme, and market-impact event candidates.
+
+`gdelt_news` saves `gdelt_article` source-evidence rows from GDELT BigQuery. These rows are not canonical event identity by themselves. Downstream event extraction/clustering must merge GDELT articles into `trading_event` / `event_factor`, respect official-source priority, and avoid duplicate alpha counting when SEC/company/regulatory disclosures already cover the same event.

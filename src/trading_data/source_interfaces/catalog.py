@@ -47,6 +47,12 @@ INTERFACES: dict[str, DataKindInterface] = {
         "equity_news", "alpaca", "alpaca_news", "GET /v1beta1/news",
         "https://docs.alpaca.markets/reference/news-3", "api-key", {"symbols": "AAPL"},
     ),
+    # GDELT global news/event discovery.
+    "gdelt_article": DataKindInterface(
+        "gdelt_article", "gdelt", "gdelt_news", "BigQuery gdelt-bq.gdeltv2.gkg_partitioned",
+        "https://www.gdeltproject.org/data.html", "service-account", {"query_terms": ["inflation", "semiconductor"], "lookback_days": 1, "max_rows": 5},
+        ("Primary broad political/economic/technology news source evidence; downstream event clustering chooses canonical events.",),
+    ),
     # OKX public market data.
     "crypto_bar": DataKindInterface(
         "crypto_bar", "okx", "okx_crypto_market_data", "GET /api/v5/market/candles",

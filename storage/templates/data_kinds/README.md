@@ -19,6 +19,9 @@ storage/templates/data_kinds/
   alpaca/
     README.md            Alpaca final data-kind details.
     *.preview.csv        Generated small final-output CSV templates/previews.
+  gdelt/
+    README.md            GDELT global news source-evidence details.
+    *.preview.csv        Generated GDELT article source-evidence preview.
   events/
     README.md            Unified event database template details.
     *.preview.csv        Generated trading_event, event_factor, and report-index previews.
@@ -35,7 +38,8 @@ storage/templates/data_kinds/
 | Source | Folder | Final saved data kinds | Notes |
 |---|---|---|---|
 | Official macro providers | `macro/` + `events/` | `macro_release_event` | `macro_release` is transient cleaned source evidence only; `macro_release_event` is the final market-impact event for event studies and reaction labels. |
-| Alpaca Market Data API | `alpaca/` | `equity_bar`, `equity_liquidity_bar`, `equity_news` | Raw trades/quotes are transient inputs for `equity_liquidity_bar`; snapshots are non-final until accepted. |
+| Alpaca Market Data API | `alpaca/` | `equity_bar`, `equity_liquidity_bar`, `equity_news` | Raw trades/quotes are transient inputs for `equity_liquidity_bar`; snapshots are non-final until accepted. Alpaca news is secondary/single-name focused after GDELT is primary broad news source. |
+| GDELT BigQuery | `gdelt/` | `gdelt_article` | Primary broad news/event discovery source for political, economic, technology, geopolitical, sector, industry, theme, and market-impact event candidates. |
 | OKX Market Data API | `okx/` | `crypto_bar`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; raw trades are transient inputs to liquidity bars and quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
 | ThetaData Terminal v3 | `thetadata/` | `option_chain_snapshot`, `option_bar`, `option_activity_event`, `option_activity_event_detail` | Option outputs are split by use case: selection snapshot, specified-contract tracking, and event timeline. Nested contexts are stored as JSON text columns inside CSV previews until SQL JSONB storage exists. |
 | Unified event database | `events/` | `trading_event`, `event_factor`, `event_analysis_report` | Source-neutral event research layer for financial reports, SEC corporate events, news, option activity, macro releases, and market anomalies. Raw source acquisition remains in source-specific bundles. |

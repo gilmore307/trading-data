@@ -137,6 +137,21 @@ EVENT_COVERAGE_REASON = field("fld_EVT042")
 EVENT_IMPACT_SCOPE = field("fld_EVT043")
 EVENT_IMPACTED_UNIVERSE = field("fld_EVT044")
 EVENT_PRIMARY_IMPACT_TARGET = field("fld_EVT045")
+GDELT_ARTICLE_ID = field("fld_GDLT001")
+GDELT_ARTICLE_SEEN_AT_UTC = field("fld_GDLT002")
+GDELT_SOURCE_DOMAIN = field("fld_GDLT003")
+GDELT_ARTICLE_URL = field("fld_GDLT004")
+GDELT_ARTICLE_LANGUAGE = field("fld_GDLT005")
+GDELT_SOURCE_COUNTRY = field("fld_GDLT006")
+GDELT_ARTICLE_TITLE = field("fld_GDLT007")
+GDELT_THEMES = field("fld_GDLT008")
+GDELT_PERSONS = field("fld_GDLT009")
+GDELT_ORGANIZATIONS = field("fld_GDLT010")
+GDELT_LOCATIONS = field("fld_GDLT011")
+GDELT_TONE = field("fld_GDLT012")
+GDELT_SHARING_IMAGE = field("fld_GDLT013")
+GDELT_IMPACT_SCOPE_HINT = field("fld_GDLT014")
+GDELT_SOURCE_TYPE = field("fld_GDLT015")
 
 OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
@@ -231,6 +246,7 @@ OPTION_BAR = data_kind("dki_OPBAR001")
 OPTION_CHAIN_SNAPSHOT = data_kind("dki_OPCHAIN1")
 MACRO_RELEASE = data_kind("dki_MACREL01")
 MACRO_RELEASE_EVENT = data_kind("dki_MACREVT1")
+GDELT_ARTICLE = data_kind("dki_GDELTART")
 TRADING_EVENT = data_kind("dki_TREVT001")
 EVENT_FACTOR = data_kind("dki_TREVT002")
 EVENT_ANALYSIS_REPORT = data_kind("dki_TREVT003")
@@ -279,6 +295,11 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
         "macro/macro_release.preview.csv",
         [MACRO_METRIC, MACRO_RELEASE_TIME, MACRO_EFFECTIVE_UNTIL, OBSERVED_VALUE],
         ["cpi_yoy", "2026-04-10T08:30:00-04:00", "2026-05-12T08:30:00-04:00", 3.2],
+    ),
+    csv_template(
+        "gdelt/gdelt_article.preview.csv",
+        [GDELT_ARTICLE_ID, GDELT_ARTICLE_SEEN_AT_UTC, GDELT_SOURCE_DOMAIN, GDELT_ARTICLE_URL, GDELT_ARTICLE_LANGUAGE, GDELT_SOURCE_COUNTRY, GDELT_ARTICLE_TITLE, GDELT_THEMES, GDELT_PERSONS, GDELT_ORGANIZATIONS, GDELT_LOCATIONS, GDELT_TONE, GDELT_SHARING_IMAGE, GDELT_IMPACT_SCOPE_HINT, GDELT_SOURCE_TYPE],
+        ["20260427123000-1", "2026-04-27T12:30:00Z", "example.com", "https://example.com/politics-economy-tech", "", "", "", "ECON_STOCKMARKET;TAX_FNCACT", "", "Federal Reserve", "US#United States#US", -1.2, "https://example.com/image.jpg", "market;sector;industry;theme", "gdelt_gkg_article"],
     ),
     csv_template(
         "events/macro_release_event.preview.csv",

@@ -78,7 +78,7 @@ MACRO_INTERFACES: dict[str, MacroDataInterface] = {
     "macro_treasury_mts": MacroDataInterface("macro_treasury_mts", "us_treasury_fiscal_data", "GET /v1/accounting/mts/mts_table_1", TREASURY_DOCS, {**_release_stub("treasury_mts"), "endpoint": "v1/accounting/mts/mts_table_1", "api_params": {"sort": "-record_date"}, "page_size": 1}),
 
     # Release calendars are intentionally marked adapter-needed until official page adapters are chosen.
-    "macro_release_calendar": MacroDataInterface("macro_release_calendar", "official_macro_release_calendar", "official agency calendar page/API", "", {}, ("Adapter-specific; no universal API assumed.",)),
+    "macro_release_calendar": MacroDataInterface("macro_release_calendar", "official_macro_release_calendar", "official agency calendar page/API", "", {"calendar_source": "fomc_calendar"}, ("Calendar acquisition is handled by calendar_discovery; no universal API assumed.",)),
 }
 
 

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "description": "Default input contract for layer05_option_expression_model_inputs. Task keys provide input_paths and as_of_et.",
+  "model_id": "option_expression_model",
+  "inputs": [
+    {
+      "role": "option_chain_snapshot",
+      "data_kind": "option_chain_snapshot",
+      "required": true,
+      "notes": "Point-in-time option chain visible at expression decision"
+    },
+    {
+      "role": "option_bars",
+      "data_kind": "option_bar",
+      "required": false,
+      "notes": "Specified contract tracking rows"
+    },
+    {
+      "role": "trade_quality_candidates",
+      "data_kind": "trade_quality_model_inputs",
+      "required": true,
+      "notes": "Approved equity direction/quality candidates"
+    },
+    {
+      "role": "option_activity_events",
+      "data_kind": "option_activity_event",
+      "required": false,
+      "notes": "Option abnormal activity context; V1 still ranks long call/long put only"
+    }
+  ]
+}

@@ -10,13 +10,13 @@ Boundary:
 
 Current model-input/data-product bundles:
 
-- `market_regime_model_inputs` — point-in-time MarketRegimeModel input manifest.
-- `security_selection_model_inputs` — point-in-time SecuritySelectionModel input manifest.
-- `strategy_selection_model_inputs` — point-in-time StrategySelectionModel input manifest.
-- `trade_quality_model_inputs` — point-in-time TradeQualityModel input manifest.
-- `option_expression_model_inputs` — point-in-time OptionExpressionModel input manifest.
-- `event_overlay_model_inputs` — point-in-time EventOverlayModel input manifest.
-- `portfolio_risk_model_inputs` — point-in-time PortfolioRiskModel input manifest.
+- `layer01_market_regime_model_inputs` — point-in-time MarketRegimeModel input manifest.
+- `layer02_security_selection_model_inputs` — point-in-time SecuritySelectionModel input manifest.
+- `layer03_strategy_selection_model_inputs` — point-in-time StrategySelectionModel input manifest.
+- `layer04_trade_quality_model_inputs` — point-in-time TradeQualityModel input manifest.
+- `layer05_option_expression_model_inputs` — point-in-time OptionExpressionModel input manifest.
+- `layer06_event_overlay_model_inputs` — point-in-time EventOverlayModel input manifest.
+- `layer07_portfolio_risk_model_inputs` — point-in-time PortfolioRiskModel input manifest.
 - `stock_etf_exposure` — ETF holdings snapshots + `stock_etf_exposure/config.json` ETF universe / issuer / score defaults -> `stock_etf_exposure.csv`.
 - `equity_abnormal_activity` — equity bars + optional benchmark/liquidity inputs + `equity_abnormal_activity/config.json` detector defaults -> `equity_abnormal_activity_event.csv`.
 

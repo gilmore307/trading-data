@@ -16,17 +16,17 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 | Model layer | Input bundle | Core data products | Notes |
 |---|---|---|---|
-| `MarketRegimeModel` | `market_regime_model_inputs` | ETF/broad-market `equity_bar`; cross-asset ETF basket bars; ratios and market-only features derived later | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model, except as explanatory metadata. |
-| `SecuritySelectionModel` | `security_selection_model_inputs` | `etf_holding_snapshot`, `stock_etf_exposure`, equity bars/liquidity, optionability summaries, event exclusions | Bridges sector/style strength to tradable stocks. Uses both ETF holdings-driven universe and full-market scan universe. |
-| `StrategySelectionModel` | `strategy_selection_model_inputs` | equity bars/liquidity from Alpaca, crypto bars/liquidity from OKX, selected candidate pools from Layer 2 | Chooses strategy family/variant for candidate symbols. |
-| `TradeQualityModel` | `trade_quality_model_inputs` | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require a new raw provider; mostly consumes model-generated signals and source-market features. |
-| `OptionExpressionModel` | `option_expression_model_inputs` | option chain snapshot, option bars/contract tracking, IV/Greeks/liquidity, upstream signal forecast | V1 supports long call / long put only; no multi-leg option structures. |
-| `EventOverlayModel` | `event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. Trading Economics is the accepted macro calendar/value surface. |
-| `PortfolioRiskModel` | `portfolio_risk_model_inputs` | option contract data, positions, fills, PnL, cash/margin, exposures, risk limits, kill-switch state | Portfolio/account state is likely execution/account-owned, not pure `trading-data`. Historical simulation outputs may fill this during research. |
+| `MarketRegimeModel` | `layer01_market_regime_model_inputs` | ETF/broad-market `equity_bar`; cross-asset ETF basket bars; ratios and market-only features derived later | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model, except as explanatory metadata. |
+| `SecuritySelectionModel` | `layer02_security_selection_model_inputs` | `etf_holding_snapshot`, `stock_etf_exposure`, equity bars/liquidity, optionability summaries, event exclusions | Bridges sector/style strength to tradable stocks. Uses both ETF holdings-driven universe and full-market scan universe. |
+| `StrategySelectionModel` | `layer03_strategy_selection_model_inputs` | equity bars/liquidity from Alpaca, crypto bars/liquidity from OKX, selected candidate pools from Layer 2 | Chooses strategy family/variant for candidate symbols. |
+| `TradeQualityModel` | `layer04_trade_quality_model_inputs` | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require a new raw provider; mostly consumes model-generated signals and source-market features. |
+| `OptionExpressionModel` | `layer05_option_expression_model_inputs` | option chain snapshot, option bars/contract tracking, IV/Greeks/liquidity, upstream signal forecast | V1 supports long call / long put only; no multi-leg option structures. |
+| `EventOverlayModel` | `layer06_event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. Trading Economics is the accepted macro calendar/value surface. |
+| `PortfolioRiskModel` | `layer07_portfolio_risk_model_inputs` | option contract data, positions, fills, PnL, cash/margin, exposures, risk limits, kill-switch state | Portfolio/account state is likely execution/account-owned, not pure `trading-data`. Historical simulation outputs may fill this during research. |
 
 ## Implemented Model Input Bundle Manifests
 
-Each accepted model layer now has a manager-facing bundle under `src/trading_data/data_bundles/<model_id>_inputs/`. These bundles load their bundle-local `config.json`, accept a manager task key with `params.as_of_et` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
+Each accepted model layer now has a manager-facing bundle under `src/trading_data/data_bundles/layerNN_<model_id>_inputs/`. These bundles load their bundle-local `config.json`, accept a manager task key with `params.as_of_et` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
 
 The manifest bundles do not fetch raw provider data. They compose saved source/derived artifacts into a model-layer input contract.
 

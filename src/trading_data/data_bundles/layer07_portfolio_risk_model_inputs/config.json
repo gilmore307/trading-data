@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "description": "Default input contract for layer07_portfolio_risk_model_inputs. Task keys provide input_paths and as_of_et.",
+  "model_id": "portfolio_risk_model",
+  "inputs": [
+    {
+      "role": "option_expression_candidates",
+      "data_kind": "option_expression_model_inputs",
+      "required": true,
+      "notes": "Candidate option expressions before final risk gate"
+    },
+    {
+      "role": "positions",
+      "data_kind": "portfolio_position_snapshot",
+      "required": false,
+      "notes": "Execution/account-owned position state"
+    },
+    {
+      "role": "cash_buying_power",
+      "data_kind": "account_snapshot",
+      "required": false,
+      "notes": "Execution/account-owned account state"
+    },
+    {
+      "role": "open_orders",
+      "data_kind": "open_order_snapshot",
+      "required": false,
+      "notes": "Execution/account-owned order state"
+    },
+    {
+      "role": "risk_limits",
+      "data_kind": "risk_limit_config",
+      "required": false,
+      "notes": "Kill-switch and exposure limits"
+    }
+  ]
+}

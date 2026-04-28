@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "description": "Default input contract for layer04_trade_quality_model_inputs. Task keys provide input_paths and as_of_et.",
+  "model_id": "trade_quality_model",
+  "inputs": [
+    {
+      "role": "strategy_candidates",
+      "data_kind": "strategy_selection_model_inputs",
+      "required": true,
+      "notes": "Candidate strategies/signals emitted by upstream layer"
+    },
+    {
+      "role": "market_context",
+      "data_kind": "market_regime_model_inputs",
+      "required": true,
+      "notes": "Regime context visible at decision time"
+    },
+    {
+      "role": "security_context",
+      "data_kind": "security_selection_model_inputs",
+      "required": true,
+      "notes": "Symbol selection and liquidity context"
+    },
+    {
+      "role": "outcome_labels",
+      "data_kind": "trade_quality_label",
+      "required": false,
+      "notes": "Training-only labels such as MFE/MAE/triple-barrier"
+    }
+  ]
+}

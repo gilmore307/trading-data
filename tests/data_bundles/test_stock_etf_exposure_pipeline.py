@@ -16,34 +16,34 @@ class FakeSqlWriter:
 
 
 class StockEtfExposurePipelineTests(unittest.TestCase):
-    def test_security_selection_bundle_derives_stock_exposure_from_holdings(self):
+    def test_security_selection_bundle_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
-            holdings = Path(tmp) / "etf_holding_snapshot.csv"
+            universe = Path(tmp) / "market_etf_universe.csv"
+            universe.write_text(
+                "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
+                "SMH,sector_observation_etf,industry_chain,1d,VanEck Semiconductor ETF,VanEck\n",
+                encoding="utf-8",
+            )
+            holdings = Path(tmp) / "smh_holdings.csv"
             with holdings.open("w", newline="", encoding="utf-8") as handle:
-                writer = csv.DictWriter(handle, fieldnames=["etf_symbol", "issuer_name", "as_of_date", "holding_symbol", "holding_name", "weight", "shares", "market_value", "cusip", "sedol", "asset_class", "sector_type", "source_url"])
+                writer = csv.DictWriter(handle, fieldnames=["Ticker", "Name", "Weight", "Shares", "Market Value", "Asset Class", "Sector"])
                 writer.writeheader()
                 writer.writerows([
-                    {"etf_symbol": "SMH", "issuer_name": "vaneck", "as_of_date": "2026-04-24", "holding_symbol": "NVDA", "holding_name": "NVIDIA Corp", "weight": "20", "sector_type": "Information Technology"},
-                    {"etf_symbol": "SOXX", "issuer_name": "ishares", "as_of_date": "2026-04-24", "holding_symbol": "NVDA", "holding_name": "NVIDIA Corp", "weight": "10", "sector_type": "Information Technology"},
-                    {"etf_symbol": "XLK", "issuer_name": "spdr", "as_of_date": "2026-04-24", "holding_symbol": "AAPL", "holding_name": "Apple Inc", "weight": "15", "sector_type": "Information Technology"},
+                    {"Ticker": "NVDA", "Name": "NVIDIA Corp", "Weight": "20", "Shares": "100", "Market Value": "1000", "Asset Class": "Equity", "Sector": "Information Technology"},
+                    {"Ticker": "CASH", "Name": "Cash Collateral", "Weight": "2", "Asset Class": "Cash", "Sector": "Cash"},
+                    {"Ticker": "SAP", "Name": "SAP SE", "Weight": "1", "Asset Class": "Equity", "Sector": "Technology"},
                 ])
-            equity_bars = Path(tmp) / "equity_bar.csv"
-            equity_bars.write_text("symbol,timestamp,close\nNVDA,2026-04-24T16:00:00-04:00,100\n", encoding="utf-8")
+            config = Path(tmp) / "config.json"
+            config.write_text(json.dumps({"market_etf_universe_path": str(universe), "storage_target": {"driver": "postgresql", "secret_alias": "trading_storage_postgres", "schema": "model_inputs"}}), encoding="utf-8")
             task_key = {
                 "task_id": "02_security_selection_model_inputs_task_test",
                 "bundle": "02_security_selection_model_inputs",
                 "params": {
-                    "as_of": "2026-04-25T09:30:00-04:00",
-                    "input_paths": {"equity_bars": str(equity_bars)},
-                    "stock_etf_exposure": {
-                        "holdings_csv_paths": [str(holdings)],
-                        "available_time": "2026-04-25T09:30:00-04:00",
-                        "etf_scores": {
-                            "SMH": {"sector_score": 0.9, "theme_score": 0.8, "exposure_tags": ["semiconductor", "AI"]},
-                            "SOXX": {"sector_score": 0.7, "theme_score": 0.6, "exposure_tags": "semiconductor"},
-                            "XLK": {"sector_score": 0.5, "theme_score": 0.4, "exposure_tags": "large_cap_growth"},
-                        },
-                    },
+                    "start": "2026-04-24",
+                    "end": "2026-04-25",
+                    "config_path": str(config),
+                    "available_time": "2026-04-25T09:30:00-04:00",
+                    "holding_source_payloads": {"SMH": {"csv_path": str(holdings), "as_of_date": "2026-04-24"}},
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
@@ -51,19 +51,23 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
             sql_writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=sql_writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertGreaterEqual(result.row_counts["model_input_artifact_reference"], 2)
-            exposure = Path(task_key["output_root"]) / "runs" / "run" / "derived" / "stock_etf_exposure" / "saved" / "stock_etf_exposure.csv"
-            with exposure.open(newline="", encoding="utf-8") as handle:
-                rows = {row["symbol"]: row for row in csv.DictReader(handle)}
-            self.assertEqual(rows["NVDA"]["exposed_etfs"], "SMH;SOXX")
-            self.assertEqual(rows["NVDA"]["top_exposure_etf"], "SMH")
-            self.assertEqual(rows["NVDA"]["total_etf_exposure_score"], "0.3")
-            self.assertEqual(rows["NVDA"]["weighted_sector_score"], "0.25")
-            self.assertIn("semiconductor", rows["NVDA"]["exposure_tags"])
-            self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "02_security_selection_model_inputs.csv").exists())
+            self.assertEqual(result.row_counts["security_selection_us_equity_etf_holding"], 1)
             self.assertEqual(len(sql_writer.calls), 1)
-            manifest_rows = {row["input_role"]: row for row in sql_writer.calls[0]["rows"]}
-            self.assertEqual(manifest_rows["stock_etf_exposure"]["artifact_reference"], str(exposure))
+            call = sql_writer.calls[0]
+            self.assertEqual(call["table"], "security_selection_us_equity_etf_holding")
+            self.assertEqual(call["key_columns"], ["run_id", "etf_symbol", "as_of_date", "holding_symbol"])
+            self.assertEqual(call["columns"], ["run_id", "task_id", "etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
+            rows = call["rows"]
+            self.assertEqual(rows[0]["holding_symbol"], "NVDA")
+            self.assertEqual(rows[0]["etf_symbol"], "SMH")
+            self.assertEqual(rows[0]["universe_type"], "sector_observation_etf")
+            self.assertEqual(rows[0]["exposure_type"], "industry_chain")
+            self.assertEqual(rows[0]["available_time"], "2026-04-25T09:30:00-04:00")
+            self.assertNotIn("created_at", rows[0])
+            self.assertNotIn("cusip", rows[0])
+            self.assertNotIn("sedol", rows[0])
+            self.assertNotIn("asset_class", rows[0])
+            self.assertNotIn("source_url", rows[0])
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 

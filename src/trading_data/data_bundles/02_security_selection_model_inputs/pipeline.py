@@ -1,169 +1,283 @@
-"""Manager-facing 02 SecuritySelectionModel input bundle."""
+"""Manager-facing 02 SecuritySelectionModel ETF holdings input bundle."""
 from __future__ import annotations
 
 import csv
 import json
-from copy import deepcopy
+import re
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from trading_data.data_bundles.config import config_section, load_bundle_config
-from trading_data.data_bundles.model_input_bundle import BundleSpec, run_bundle
-from trading_data.storage.sql import SqlTableWriter
+from trading_data.data_bundles.config import load_bundle_config
+from trading_data.data_sources.etf_holdings.pipeline import clean as clean_holding_source
+from trading_data.data_sources.etf_holdings.pipeline import fetch as fetch_holding_source
+from trading_data.data_sources.etf_holdings.pipeline import build_context as build_holding_context
+from trading_data.data_sources.etf_holdings.pipeline import FIELDS as RAW_HOLDING_FIELDS
+from trading_data.source_availability.sanitize import sanitize_value
+from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SPEC = BundleSpec(bundle="02_security_selection_model_inputs", model_id="security_selection_model", output_name="02_security_selection_model_inputs")
-
-STOCK_ETF_EXPOSURE_FIELDS = [
+BUNDLE = "02_security_selection_model_inputs"
+MODEL_ID = "security_selection_model"
+OUTPUT_TABLE = "security_selection_us_equity_etf_holding"
+SQL_FIELDS = [
+    "run_id",
+    "task_id",
+    "etf_symbol",
+    "issuer_name",
+    "universe_type",
+    "exposure_type",
     "as_of_date",
-    "symbol",
-    "exposed_etfs",
-    "top_exposure_etf",
-    "total_etf_exposure_score",
-    "weighted_sector_score",
-    "weighted_theme_score",
-    "exposure_tags",
-    "source_etf_count",
-    "source_snapshot_references",
     "available_time",
+    "holding_symbol",
+    "holding_name",
+    "weight",
+    "shares",
+    "market_value",
+    "sector_type",
 ]
+KEY_COLUMNS = ["run_id", "etf_symbol", "as_of_date", "holding_symbol"]
+EXCLUDED_ASSET_PATTERNS = re.compile(r"\b(cash|money market|treasury|bond|fixed income|future|futures|swap|option|warrant|fund|etf|preferred)\b", re.I)
+NON_US_MARKER = re.compile(r"\b(adr|gdr|foreign|depositary|ltd|plc|s\.a\.|ag|nv|oyj|asa|spa|se|kk|co ltd|limited)\b", re.I)
+
+
+@dataclass(frozen=True)
+class BundleContext:
+    task_key: dict[str, Any]
+    run_dir: Path
+    receipt_path: Path
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class StepResult:
+    status: str
+    references: list[str] = field(default_factory=list)
+    row_counts: dict[str, int] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class SourcePayload:
+    config: dict[str, Any]
+    universe_rows: list[dict[str, str]]
+    raw_rows: list[dict[str, str]]
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    rows: list[dict[str, Any]]
 
 
 class SecuritySelectionInputsError(ValueError):
     """Raised for invalid SecuritySelectionModel input tasks."""
 
 
-def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None):
-    prepared = deepcopy(task_key)
-    params = prepared.setdefault("params", {})
-    if "stock_etf_exposure" in params:
-        output_root = str(prepared.get("output_root") or f"storage/{prepared.get('task_id', SPEC.bundle + '_task')}")
-        derived_dir = Path(output_root) / "runs" / run_id / "derived" / "stock_etf_exposure"
-        stock_path, _row_count = _derive_stock_etf_exposure(params["stock_etf_exposure"], output_dir=derived_dir)
-        input_paths = params.setdefault("input_paths", {})
-        input_paths["stock_etf_exposure"] = str(stock_path)
-    return run_bundle(SPEC, prepared, run_id=run_id, sql_writer=sql_writer)
+def _now_utc() -> str:
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -> tuple[Path, int]:
-    """Build stock_etf_exposure as an internal Layer 02 pipeline step."""
-
-    holding_paths = list(_iter_paths(_require_stock_etf_param(params, "holdings_csv_paths")))
-    available_time = str(_require_stock_etf_param(params, "available_time"))
-    default_as_of_date = str(params.get("as_of_date") or "")
-    config_path = str(params.get("config_path") or "") or None
-    config = load_bundle_config(SPEC.bundle, config_path=config_path)
-    configured_scores = config_section(config, "stock_etf_exposure", "etf_scores")
-    etf_scores = {**configured_scores, **dict(params.get("etf_scores") or {})}
-    if not isinstance(etf_scores, Mapping):
-        raise SecuritySelectionInputsError("params.stock_etf_exposure.etf_scores must be an object keyed by ETF symbol")
-
-    holdings: list[dict[str, str]] = []
-    for path in holding_paths:
-        holdings.extend(_read_csv_rows(path))
-    if not holdings:
-        raise SecuritySelectionInputsError("params.stock_etf_exposure.holdings_csv_paths produced zero rows")
-    normalized_scores = {str(k).upper(): dict(v) for k, v in etf_scores.items() if isinstance(v, Mapping)}
-
-    grouped: dict[str, dict[str, Any]] = {}
-    for holding in holdings:
-        symbol = str(holding.get("holding_symbol") or holding.get("holding_ticker") or holding.get("symbol") or holding.get("ticker") or "").strip().upper()
-        etf = str(holding.get("etf_symbol") or holding.get("etf_ticker") or "").strip().upper()
-        if not symbol or not etf:
-            continue
-        weight = _float(holding.get("weight")) / 100.0
-        score = normalized_scores.get(etf, {})
-        sector_score = _float(score.get("sector_score"), 1.0)
-        theme_score = _float(score.get("theme_score"), 1.0)
-        row = grouped.setdefault(symbol, {"symbol": symbol, "as_of_dates": [], "etfs": [], "weighted_total": 0.0, "weighted_sector": 0.0, "weighted_theme": 0.0, "top": ("", -1.0), "tags": [], "refs": []})
-        row["as_of_dates"].append(str(holding.get("as_of_date") or default_as_of_date))
-        row["etfs"].append(etf)
-        row["weighted_total"] += weight
-        row["weighted_sector"] += weight * sector_score
-        row["weighted_theme"] += weight * theme_score
-        if weight > row["top"][1]:
-            row["top"] = (etf, weight)
-        row["tags"].extend(_exposure_tags(score, str(holding.get("sector_type") or "")))
-        as_of = str(holding.get("as_of_date") or default_as_of_date)
-        row["refs"].append(f"{etf}:{as_of}" if as_of else etf)
-
-    rows: list[dict[str, str]] = []
-    for symbol in sorted(grouped):
-        item = grouped[symbol]
-        as_ofs = sorted({date for date in item["as_of_dates"] if date})
-        rows.append({
-            "as_of_date": as_ofs[-1] if as_ofs else default_as_of_date,
-            "symbol": symbol,
-            "exposed_etfs": ";".join(sorted(set(item["etfs"]))),
-            "top_exposure_etf": item["top"][0],
-            "total_etf_exposure_score": _fmt(float(item["weighted_total"])),
-            "weighted_sector_score": _fmt(float(item["weighted_sector"])),
-            "weighted_theme_score": _fmt(float(item["weighted_theme"])),
-            "exposure_tags": ";".join(sorted(set(item["tags"]))),
-            "source_etf_count": str(len(set(item["etfs"]))),
-            "source_snapshot_references": ";".join(sorted(set(item["refs"]))),
-            "available_time": available_time,
-        })
-    if not rows:
-        raise SecuritySelectionInputsError("zero stock_etf_exposure rows after cleaning")
-
-    cleaned_dir = output_dir / "cleaned"
-    saved_dir = output_dir / "saved"
-    cleaned_dir.mkdir(parents=True, exist_ok=True)
-    saved_dir.mkdir(parents=True, exist_ok=True)
-    jsonl_path = cleaned_dir / "stock_etf_exposure.jsonl"
-    with jsonl_path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
-    (cleaned_dir / "schema.json").write_text(json.dumps({"stock_etf_exposure": STOCK_ETF_EXPOSURE_FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    csv_path = saved_dir / "stock_etf_exposure.csv"
-    with csv_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=STOCK_ETF_EXPOSURE_FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return csv_path, len(rows)
+def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
+    if task_key.get("bundle") != BUNDLE:
+        raise SecuritySelectionInputsError(f"task_key.bundle must be {BUNDLE}")
+    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', BUNDLE + '_task')}"))
+    return BundleContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
-def _require_stock_etf_param(params: Mapping[str, Any], key: str) -> Any:
-    value = params.get(key)
-    if value in (None, "", []):
-        raise SecuritySelectionInputsError(f"params.stock_etf_exposure.{key} is required")
+def _required(params: Mapping[str, Any], key: str) -> str:
+    value = str(params.get(key) or "").strip()
+    if not value:
+        raise SecuritySelectionInputsError(f"params.{key} is required")
     return value
 
 
-def _iter_paths(value: Any) -> Iterable[Path]:
-    if isinstance(value, str):
-        yield Path(value)
-        return
-    for item in value or []:
-        yield Path(str(item))
-
-
-def _read_csv_rows(path: Path) -> list[dict[str, str]]:
+def _read_universe(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
-        return [{str(k): str(v or "") for k, v in row.items()} for row in csv.DictReader(handle)]
+        rows = [{str(k): str(v or "").strip() for k, v in row.items()} for row in csv.DictReader(handle)]
+    rows = [row for row in rows if row.get("symbol") and row.get("issuer_name")]
+    if not rows:
+        raise SecuritySelectionInputsError(f"market ETF universe produced zero rows: {path}")
+    return rows
 
 
-def _float(value: Any, default: float = 0.0) -> float:
-    text = str(value or "").replace("%", "").replace(",", "").strip()
+def _resolve_path(value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else Path("/root/projects/trading-main") / path
+
+
+def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
+    params = dict(context.task_key.get("params") or {})
+    config_path = str(params.get("config_path") or "") or None
+    config = load_bundle_config(BUNDLE, config_path=config_path)
+    start = _required(params, "start")
+    end = _required(params, "end")
+    universe_path = _resolve_path(str(config.get("market_etf_universe_path") or "storage/shared/market_etf_universe.csv"))
+    universe_rows = _read_universe(universe_path)
+    selected = _selected_symbols(universe_rows, params.get("symbols"))
+    source_payloads = params.get("holding_source_payloads") or {}
+    if not isinstance(source_payloads, Mapping):
+        raise SecuritySelectionInputsError("params.holding_source_payloads must map ETF symbol to source payload params")
+
+    raw_rows: list[dict[str, str]] = []
+    evidence: list[dict[str, Any]] = []
+    for row in universe_rows:
+        symbol = row["symbol"].upper()
+        if symbol not in selected:
+            continue
+        payload_params = dict(source_payloads.get(symbol) or {})
+        if not payload_params:
+            raise SecuritySelectionInputsError(f"missing params.holding_source_payloads.{symbol}")
+        raw_rows.extend(_fetch_one_holding_source(context, row, payload_params, start=start, end=end, evidence=evidence))
+
+    context.run_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "bundle": BUNDLE,
+        "model_id": MODEL_ID,
+        "start": start,
+        "end": end,
+        "market_etf_universe_path": str(universe_path),
+        "symbols": sorted(selected),
+        "holding_sources": evidence,
+        "raw_persistence": "run-local source evidence only; final output is SQL",
+        "fetched_at_utc": _now_utc(),
+    }
+    path = context.run_dir / "request_manifest.json"
+    path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(path)], {"raw_etf_holding_rows": len(raw_rows)}, details=manifest), SourcePayload(config, universe_rows, raw_rows)
+
+
+def _selected_symbols(universe_rows: list[dict[str, str]], value: Any) -> set[str]:
+    symbols = {row["symbol"].upper() for row in universe_rows}
+    if not value:
+        return symbols
+    requested = {str(item).strip().upper() for item in (value if isinstance(value, list) else str(value).split(",")) if str(item).strip()}
+    selected = symbols & requested
+    if not selected:
+        raise SecuritySelectionInputsError("no ETF symbols selected")
+    return selected
+
+
+def _fetch_one_holding_source(context: BundleContext, universe_row: Mapping[str, str], payload_params: Mapping[str, Any], *, start: str, end: str, evidence: list[dict[str, Any]]) -> list[dict[str, str]]:
+    symbol = str(universe_row["symbol"]).upper()
+    issuer = str(universe_row["issuer_name"])
+    params = {**dict(payload_params), "etf_symbol": symbol, "issuer_name": issuer}
+    params.setdefault("as_of_date", start[:10])
+    source_task = {"task_id": f"{context.task_key.get('task_id')}_{symbol}_holdings", "bundle": "etf_holdings", "params": params, "output_root": str(context.run_dir / "source" / symbol)}
+    source_context = build_holding_context(source_task, str(context.metadata["run_id"]))
+    fetch_result, source_payload = fetch_holding_source(source_context)
+    clean_result = clean_holding_source(source_context, source_payload)
+    rows = [json.loads(line) for line in (source_context.cleaned_dir / "etf_holding_snapshot.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    evidence.append({"etf_symbol": symbol, "issuer_name": issuer, "start": start, "end": end, "fetch": asdict(fetch_result), "clean": asdict(clean_result), "raw_rows": len(rows)})
+    return [{field: str(row.get(field) or "") for field in RAW_HOLDING_FIELDS} for row in rows]
+
+
+def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
+    params = dict(context.task_key.get("params") or {})
+    start = _required(params, "start")
+    end = _required(params, "end")
+    universe_by_symbol = {row["symbol"].upper(): row for row in payload.universe_rows}
+    rows: list[dict[str, Any]] = []
+    skipped = {"non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0}
+    for raw in payload.raw_rows:
+        symbol = str(raw.get("etf_symbol") or "").upper()
+        holding_symbol = str(raw.get("holding_symbol") or "").strip().upper()
+        as_of_date = str(raw.get("as_of_date") or "")[:10]
+        if not holding_symbol:
+            skipped["missing_symbol"] += 1
+            continue
+        if as_of_date and (as_of_date < start[:10] or as_of_date > end[:10]):
+            skipped["outside_window"] += 1
+            continue
+        if not _is_us_equity_holding(raw):
+            skipped["non_us_or_non_equity"] += 1
+            continue
+        universe = universe_by_symbol.get(symbol, {})
+        rows.append({
+            "run_id": str(context.metadata["run_id"]),
+            "task_id": str(context.task_key.get("task_id") or ""),
+            "etf_symbol": symbol,
+            "issuer_name": str(universe.get("issuer_name") or raw.get("issuer_name") or ""),
+            "universe_type": str(universe.get("universe_type") or ""),
+            "exposure_type": str(universe.get("exposure_type") or ""),
+            "as_of_date": as_of_date,
+            "available_time": _available_time(params, raw, as_of_date),
+            "holding_symbol": holding_symbol,
+            "holding_name": str(raw.get("holding_name") or ""),
+            "weight": _num(raw.get("weight")),
+            "shares": _num(raw.get("shares")),
+            "market_value": _num(raw.get("market_value")),
+            "sector_type": str(raw.get("sector_type") or ""),
+        })
+    rows.sort(key=lambda row: (row["etf_symbol"], row["as_of_date"], row["holding_symbol"]))
+    result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"columns": SQL_FIELDS, "table": OUTPUT_TABLE, "natural_key": KEY_COLUMNS, "skipped": skipped, "filter": "US-listed common equity holdings only"})
+    return result, CleanedPayload(rows)
+
+
+def _is_us_equity_holding(row: Mapping[str, str]) -> bool:
+    symbol = str(row.get("holding_symbol") or "").strip().upper()
+    name = str(row.get("holding_name") or "")
+    asset_class = str(row.get("asset_class") or "")
+    if not re.fullmatch(r"[A-Z][A-Z0-9.\-]{0,9}", symbol):
+        return False
+    text = f"{asset_class} {name}"
+    if EXCLUDED_ASSET_PATTERNS.search(text):
+        return False
+    if NON_US_MARKER.search(name):
+        return False
+    if asset_class and not re.search(r"equity|stock|common", asset_class, re.I):
+        return False
+    return True
+
+
+def _available_time(params: Mapping[str, Any], row: Mapping[str, str], as_of_date: str) -> str:
+    explicit = str(params.get("available_time") or row.get("available_time") or "").strip()
+    if explicit:
+        return explicit
+    return f"{as_of_date}T09:30:00-04:00" if as_of_date else ""
+
+
+def _num(value: Any) -> float | None:
+    text = str(value or "").replace("$", "").replace(",", "").replace("%", "").strip()
     if not text:
-        return default
+        return None
     try:
         return float(text)
     except ValueError:
-        return default
+        return None
 
 
-def _fmt(value: float) -> str:
-    return f"{value:.6f}".rstrip("0").rstrip(".")
+def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    writer = sql_writer or PostgresSqlTableWriter.from_config(config)
+    metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=payload.rows, key_columns=KEY_COLUMNS)
+    reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
+    return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
 
 
-def _exposure_tags(score: Mapping[str, Any], sector_type: str) -> list[str]:
-    tags: list[str] = []
-    raw = score.get("exposure_tags") or []
-    if isinstance(raw, str):
-        tags.extend([part.strip() for part in raw.replace(",", ";").split(";") if part.strip()])
-    elif isinstance(raw, Iterable):
-        tags.extend([str(part).strip() for part in raw if str(part).strip()])
-    if sector_type:
-        tags.append(sector_type.lower().replace(" ", "_"))
-    return tags
+def write_receipt(context: BundleContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
+    context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    existing: dict[str, Any] = {"task_id": context.task_key.get("task_id"), "bundle": BUNDLE, "runs": []}
+    if context.receipt_path.exists():
+        try:
+            existing = json.loads(context.receipt_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
+    row_counts = save_result.row_counts if save_result else clean_result.row_counts if clean_result else fetch_result.row_counts if fetch_result else {}
+    outputs = save_result.references if save_result else []
+    entry = {"run_id": str(context.metadata["run_id"]), "status": status, "started_at": context.metadata.get("started_at"), "completed_at": _now_utc(), "output_dir": str(context.run_dir), "outputs": outputs, "row_counts": row_counts, "steps": {"fetch": asdict(fetch_result) if fetch_result else None, "clean": asdict(clean_result) if clean_result else None, "save": asdict(save_result) if save_result else None}, "error": None if error is None else {"type": type(error).__name__, "message": str(error)}}
+    existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != entry["run_id"]] + [entry]
+    existing.update({"task_id": context.task_key.get("task_id"), "bundle": BUNDLE})
+    context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
+
+
+def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None):
+    context = build_context(task_key, run_id)
+    fetch_result = clean_result = save_result = None
+    try:
+        fetch_result, source_payload = fetch(context)
+        clean_result, cleaned_payload = clean(context, source_payload)
+        save_result = save(context, clean_result, cleaned_payload, source_payload.config, sql_writer=sql_writer)
+        return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
+    except BaseException as exc:
+        return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

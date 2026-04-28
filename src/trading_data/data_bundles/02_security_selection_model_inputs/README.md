@@ -1,8 +1,8 @@
 # 02_security_selection_model_inputs
 
-Manager-facing SecuritySelectionModel input bundle.
+Manager-facing SecuritySelectionModel ETF holdings input bundle.
 
-This bundle accepts a manager task key, loads bundle-local `config.json`, derives SecuritySelectionModel inputs such as `stock_etf_exposure` when requested, then writes artifact references, and saves the final bundle manifest to SQL table `model_inputs.model_input_artifact_reference`. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
+This bundle reads the configured ETF universe, collects issuer holdings snapshots for the selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the final model input to SQL.
 
 ## Input parameters
 
@@ -10,41 +10,71 @@ Required task key fields:
 
 - `bundle`: `02_security_selection_model_inputs`
 - `task_id`: stable task identifier
-- `params.as_of`: point-in-time timestamp for the model input view
-- `params.input_paths`: object mapping configured input roles to one artifact reference or a list of artifact references
+- `params.start`: inclusive holdings/as-of window start date or timestamp
+- `params.end`: inclusive holdings/as-of window end date or timestamp
+- `params.holding_source_payloads`: object keyed by ETF symbol. Each value is an `etf_holdings` source payload parameter object such as `csv_path`, `csv_text`, `html_path`, `html`, `json_path`, or `json_text`.
 
 Optional task key fields:
 
+- `params.symbols`: comma string or list selecting a reviewed ETF subset from the configured universe
+- `params.available_time`: explicit model-availability timestamp for all output rows. If omitted, the bundle derives a conservative session-open timestamp from `as_of_date`.
 - `params.config_path`: reviewed config override
 - `output_root`: local receipt/request-manifest root
+
+## Config
+
+`config.json` owns:
+
+- `market_etf_universe_path`: canonical ETF universe CSV, currently `/root/projects/trading-main/storage/shared/market_etf_universe.csv`
+- `holding_filter`: US-listed equity-only filtering policy
+- `storage_target`: PostgreSQL model-input target
+- `output`: SQL table contract
+
+The universe CSV supplies `symbol`, `issuer_name`, `universe_type`, and `exposure_type`. The holdings source supplies constituent rows.
+
+## Filtering rule
+
+Keep only ETF holdings that represent US-listed stock constituents accepted by the model universe.
+
+Exclude:
+
+- cash and money-market positions
+- bonds, treasuries, and fixed income
+- futures, swaps, options, warrants, and preferreds
+- funds/ETFs inside ETF holdings
+- non-US local listings and other non-equity assets unless explicitly reviewed later
+
+`cusip`, `sedol`, raw `asset_class`, and `source_url` are source evidence fields and are not part of the final model-input table.
 
 ## Output
 
 Final saved output is SQL-only:
 
 ```text
-model_inputs.model_input_artifact_reference
+model_inputs.security_selection_us_equity_etf_holding
 ```
 
 Natural key:
 
 ```text
-run_id + bundle + input_role + data_kind + artifact_reference
+run_id + etf_symbol + as_of_date + holding_symbol
 ```
 
 Columns:
 
 - `run_id`
 - `task_id`
-- `bundle`
-- `model_id`
-- `as_of`
-- `input_role`
-- `data_kind`
-- `artifact_reference`
-- `required`
-- `point_in_time`
-- `notes`
-- `created_at`
+- `etf_symbol`
+- `issuer_name`
+- `universe_type`
+- `exposure_type`
+- `as_of_date`
+- `available_time`
+- `holding_symbol`
+- `holding_name`
+- `weight`
+- `shares`
+- `market_value`
+- `sector_type`
 
-No saved bundle CSV is written.
+`available_time` is the time the holdings row is allowed to become visible to model logic. Task write/audit time belongs in the completion receipt, not in this business table.

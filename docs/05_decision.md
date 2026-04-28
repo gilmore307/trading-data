@@ -819,3 +819,24 @@ The shared manifest table stores point-in-time artifact references keyed by `run
 - Use the shared PostgreSQL storage target configured by each bundle's `storage_target`.
 - Tests inject fake SQL writers; production uses the PostgreSQL writer.
 - Artifact-producing internal steps, such as `stock_etf_exposure` derivation inside Layer 2, remain separate implementation details until their own final SQL contracts are accepted.
+
+## D054 - Security selection bundle writes filtered ETF holdings
+
+Date: 2026-04-28
+
+### Context
+
+Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `01_market_regime_model_inputs`; `02_security_selection_model_inputs` should produce ETF holdings for security selection.
+
+### Decision
+
+`02_security_selection_model_inputs` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
+
+The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
+
+### Consequences
+
+- Layer 2 no longer writes the shared `model_input_artifact_reference` manifest as its final output.
+- Layer 2 does not write bars; Layer 1 owns bars.
+- Filter out cash, money-market, fixed income, futures, swaps, options, funds, non-US local listings, and other non-equity assets unless explicitly reviewed later.
+- Primary key: `run_id + etf_symbol + as_of_date + holding_symbol`.

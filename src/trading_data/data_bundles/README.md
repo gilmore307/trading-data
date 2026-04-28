@@ -11,7 +11,7 @@ Boundary:
 Current model-input/data-product bundles:
 
 - `01_market_regime_model_inputs` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_etf_universe.csv`.
-- `02_security_selection_model_inputs` — point-in-time SecuritySelectionModel input manifest; internally derives `stock_etf_exposure.csv` from ETF holdings snapshots when `params.stock_etf_exposure` is provided.
+- `02_security_selection_model_inputs` — SQL-only filtered US-listed equity ETF holdings table for SecuritySelectionModel; ETF universe comes from `market_etf_universe.csv`.
 - `03_strategy_selection_model_inputs` — point-in-time StrategySelectionModel input manifest.
 - `04_trade_quality_model_inputs` — point-in-time TradeQualityModel input manifest.
 - `05_option_expression_model_inputs` — point-in-time OptionExpressionModel input manifest.

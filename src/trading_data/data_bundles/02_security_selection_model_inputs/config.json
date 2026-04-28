@@ -1,126 +1,12 @@
 {
-  "version": 2,
-  "description": "Default input contract for 02_security_selection_model_inputs. Task keys provide input_paths and as_of; optional params.stock_etf_exposure derives stock_etf_exposure internally from ETF holdings snapshots.",
+  "version": 3,
+  "description": "SecuritySelectionModel ETF holdings input contract. Task keys provide start/end and reviewed holding source payloads; market_etf_universe_path supplies the ETF universe and exposure labels; final output is filtered US-listed equity ETF holdings in SQL.",
   "model_id": "security_selection_model",
-  "inputs": [
-    {
-      "role": "stock_etf_exposure",
-      "data_kind": "stock_etf_exposure",
-      "required": true,
-      "notes": "ETF/sector/theme exposure bridge to candidate stocks"
-    },
-    {
-      "role": "equity_bars",
-      "data_kind": "equity_bar",
-      "required": true,
-      "notes": "Candidate stock and ETF bars"
-    },
-    {
-      "role": "equity_liquidity",
-      "data_kind": "equity_liquidity_bar",
-      "required": false,
-      "notes": "Liquidity filters for candidate tradability"
-    },
-    {
-      "role": "event_exclusions",
-      "data_kind": "trading_event",
-      "required": false,
-      "notes": "Events that exclude or down-rank symbols"
-    }
-  ],
-  "stock_etf_exposure": {
-    "etf_universe": {
-      "broad_market": {
-        "SPY": {
-          "issuer_name": "state_street",
-          "grain": "1Day",
-          "exposure_tags": [
-            "large_cap",
-            "broad_market"
-          ]
-        },
-        "QQQ": {
-          "issuer_name": "invesco",
-          "grain": "1Day",
-          "exposure_tags": [
-            "nasdaq",
-            "growth",
-            "technology"
-          ]
-        },
-        "IWM": {
-          "issuer_name": "blackrock",
-          "grain": "1Day",
-          "exposure_tags": [
-            "small_cap"
-          ]
-        }
-      },
-      "sector": {
-        "XLK": {
-          "issuer_name": "state_street",
-          "grain": "1Day",
-          "exposure_tags": [
-            "technology"
-          ]
-        },
-        "XLF": {
-          "issuer_name": "state_street",
-          "grain": "1Day",
-          "exposure_tags": [
-            "financials"
-          ]
-        },
-        "XLE": {
-          "issuer_name": "state_street",
-          "grain": "1Day",
-          "exposure_tags": [
-            "energy"
-          ]
-        },
-        "XLV": {
-          "issuer_name": "state_street",
-          "grain": "1Day",
-          "exposure_tags": [
-            "healthcare"
-          ]
-        }
-      },
-      "theme": {
-        "SMH": {
-          "issuer_name": "vaneck",
-          "grain": "1Day",
-          "exposure_tags": [
-            "semiconductor",
-            "AI"
-          ]
-        },
-        "SOXX": {
-          "issuer_name": "blackrock",
-          "grain": "1Day",
-          "exposure_tags": [
-            "semiconductor"
-          ]
-        },
-        "BOTZ": {
-          "issuer_name": "global_x",
-          "grain": "1Day",
-          "exposure_tags": [
-            "robotics",
-            "AI"
-          ]
-        },
-        "CIBR": {
-          "issuer_name": "first_trust",
-          "grain": "1Day",
-          "exposure_tags": [
-            "cybersecurity"
-          ]
-        }
-      }
-    },
-    "default_available_lag": "next_regular_session_open",
-    "etf_scores": {}
+  "market_etf_universe_path": "/root/projects/trading-main/storage/shared/market_etf_universe.csv",
+  "holding_filter": {
+    "scope": "us_listed_common_equity_only",
+    "exclude": ["cash", "money_market", "bonds", "treasuries", "futures", "swaps", "options", "funds", "non_us_local_listings", "other_assets"],
+    "notes": "Final rows keep only ETF constituents accepted as US-listed stock holdings. CUSIP, SEDOL, raw asset_class, and source_url are source evidence, not model-input output fields. created_at belongs to task receipts/run metadata, not this table."
   },
   "storage_target": {
     "id": "trading_data_model_inputs_postgres",
@@ -131,28 +17,9 @@
     "batch_size": 5000
   },
   "output": {
-    "table": "model_input_artifact_reference",
+    "table": "security_selection_us_equity_etf_holding",
     "format": "sql_table",
-    "natural_key": [
-      "run_id",
-      "bundle",
-      "input_role",
-      "data_kind",
-      "artifact_reference"
-    ],
-    "columns": [
-      "run_id",
-      "task_id",
-      "bundle",
-      "model_id",
-      "as_of",
-      "input_role",
-      "data_kind",
-      "artifact_reference",
-      "required",
-      "point_in_time",
-      "notes",
-      "created_at"
-    ]
+    "natural_key": ["run_id", "etf_symbol", "as_of_date", "holding_symbol"],
+    "columns": ["run_id", "task_id", "etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"]
   }
 }

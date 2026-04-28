@@ -142,6 +142,8 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _market_regime_table_ddl(qualified_table)
     if table == "model_input_artifact_reference":
         return _model_input_artifact_reference_ddl(qualified_table)
+    if table == "security_selection_us_equity_etf_holding":
+        return _security_selection_us_equity_etf_holding_ddl(qualified_table)
     return None
 
 
@@ -182,5 +184,27 @@ def _model_input_artifact_reference_ddl(qualified_table: str) -> str:
         notes TEXT,
         created_at TIMESTAMPTZ NOT NULL,
         PRIMARY KEY (run_id, bundle, input_role, data_kind, artifact_reference)
+    )
+    """
+
+
+def _security_selection_us_equity_etf_holding_ddl(qualified_table: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        run_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        etf_symbol TEXT NOT NULL,
+        issuer_name TEXT NOT NULL,
+        universe_type TEXT NOT NULL,
+        exposure_type TEXT NOT NULL,
+        as_of_date DATE NOT NULL,
+        available_time TIMESTAMPTZ NOT NULL,
+        holding_symbol TEXT NOT NULL,
+        holding_name TEXT,
+        weight DOUBLE PRECISION,
+        shares DOUBLE PRECISION,
+        market_value DOUBLE PRECISION,
+        sector_type TEXT,
+        PRIMARY KEY (run_id, etf_symbol, as_of_date, holding_symbol)
     )
     """

@@ -28,9 +28,11 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 Each accepted model layer has a manager-facing bundle under `src/trading_data/data_bundles/NN_<model_id>_inputs/`.
 
-Layers 2-7 load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference`.
+Layer 1 accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
 
-Layer 1 is intentionally different: `01_market_regime_model_inputs` accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
+Layer 2 accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
+
+Layers 3-7 currently load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference` until their true data-product contracts are reviewed.
 
 ## Derived Data Products Added for Model Needs
 
@@ -62,7 +64,7 @@ Boundary:
 
 - Derived feature artifact, not a raw provider table.
 - Must preserve `available_time`; do not assume a holdings file is usable before it was visible.
-- Implemented as an internal step of `02_security_selection_model_inputs`, not as a standalone manager-facing bundle. When `params.stock_etf_exposure` is provided, Layer 2 derives `stock_etf_exposure.csv` from saved `etf_holding_snapshot.csv` inputs and caller-supplied ETF/sector/theme scores before writing the Layer 2 input manifest.
+- Superseded as the primary Layer 2 bundle output by `model_inputs.security_selection_us_equity_etf_holding`. Future stock-level exposure features should derive from the SQL holdings table plus reviewed ETF/sector/theme scores.
 
 ### `equity_abnormal_activity_event`
 

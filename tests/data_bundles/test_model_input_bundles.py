@@ -7,7 +7,6 @@ from pathlib import Path
 from trading_data.source_availability.http import HttpResult
 
 BUNDLES = {
-    "02_security_selection_model_inputs": ["stock_etf_exposure", "equity_bars"],
     "03_strategy_selection_model_inputs": ["selected_universe", "equity_bars"],
     "04_trade_quality_model_inputs": ["strategy_candidates", "market_context", "security_context"],
     "05_option_expression_model_inputs": ["option_chain_snapshot", "trade_quality_candidates"],

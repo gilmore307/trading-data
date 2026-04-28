@@ -3,7 +3,7 @@
 The bundle normalizes issuer-published holdings into a single snapshot row shape.
 It intentionally starts as a conservative interface scaffold: users provide an
 official source URL and captured/source text, while issuer-specific live fetch
-adapters can be added after the ETF-to-issuer mapping table is accepted.
+adapters can be added after the ETF-symbol-to-issuer mapping table is accepted.
 """
 
 from __future__ import annotations
@@ -22,10 +22,10 @@ from trading_data.source_availability.sanitize import sanitize_value
 
 BUNDLE = "etf_holdings"
 FIELDS = [
-    "etf_ticker",
+    "etf_symbol",
     "issuer_name",
     "as_of_date",
-    "holding_ticker",
+    "holding_symbol",
     "holding_name",
     "weight",
     "shares",
@@ -102,9 +102,16 @@ def _required(params: Mapping[str, Any], key: str) -> str:
     return value
 
 
+def _etf_symbol_param(params: Mapping[str, Any]) -> str:
+    value = str(params.get("etf_symbol") or params.get("etf_ticker") or "").strip().upper()
+    if not value:
+        raise EtfHoldingsError("params.etf_symbol is required")
+    return value
+
+
 def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
-    etf_ticker = _required(params, "etf_ticker").upper()
+    etf_symbol = _etf_symbol_param(params)
     issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
     source_url = str(params.get("source_url") or "")
     payload: SourcePayload | None = None
@@ -123,7 +130,7 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
         "bundle": BUNDLE,
-        "etf_ticker": etf_ticker,
+        "etf_symbol": etf_symbol,
         "issuer_name": issuer,
         "issuer_pattern": ISSUER_FETCH_PATTERNS.get(issuer, "issuer adapter pending mapping review"),
         "source_url": source_url,
@@ -139,9 +146,9 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
 def _canonical_key(key: str) -> str:
     key = re.sub(r"[^a-z0-9]+", "_", key.lower()).strip("_")
     aliases = {
-        "ticker": "holding_ticker",
-        "symbol": "holding_ticker",
-        "holding_ticker": "holding_ticker",
+        "ticker": "holding_symbol",
+        "symbol": "holding_symbol",
+        "holding_symbol": "holding_symbol",
         "name": "holding_name",
         "holding": "holding_name",
         "holdings": "holding_name",
@@ -172,13 +179,13 @@ def _clean_num(value: Any) -> str:
     return text
 
 
-def _normalize_row(raw: Mapping[str, Any], *, etf_ticker: str, issuer: str, source_url: str, default_as_of: str) -> dict[str, str]:
+def _normalize_row(raw: Mapping[str, Any], *, etf_symbol: str, issuer: str, source_url: str, default_as_of: str) -> dict[str, str]:
     mapped = {_canonical_key(str(key)): str(value or "").strip() for key, value in raw.items()}
     return {
-        "etf_ticker": etf_ticker,
+        "etf_symbol": etf_symbol,
         "issuer_name": issuer,
         "as_of_date": mapped.get("as_of_date") or default_as_of,
-        "holding_ticker": mapped.get("holding_ticker", ""),
+        "holding_symbol": mapped.get("holding_symbol", ""),
         "holding_name": mapped.get("holding_name", ""),
         "weight": _clean_num(mapped.get("weight")),
         "shares": _clean_num(mapped.get("shares")),
@@ -232,7 +239,7 @@ def _iter_json_rows(value: Any) -> Iterable[Mapping[str, Any]]:
 
 def clean(context: BundleContext, payload: SourcePayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
-    etf_ticker = _required(params, "etf_ticker").upper()
+    etf_symbol = _etf_symbol_param(params)
     issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
     as_of_date = str(params.get("as_of_date") or "")
     if payload.kind == "csv":
@@ -243,8 +250,8 @@ def clean(context: BundleContext, payload: SourcePayload) -> StepResult:
         raw_rows = list(_iter_json_rows(json.loads(payload.text)))
     else:
         raise EtfHoldingsError(f"unsupported source payload kind {payload.kind}")
-    rows = [_normalize_row(row, etf_ticker=etf_ticker, issuer=issuer, source_url=payload.source_url, default_as_of=as_of_date) for row in raw_rows]
-    rows = [row for row in rows if row["holding_ticker"] or row["holding_name"]]
+    rows = [_normalize_row(row, etf_symbol=etf_symbol, issuer=issuer, source_url=payload.source_url, default_as_of=as_of_date) for row in raw_rows]
+    rows = [row for row in rows if row["holding_symbol"] or row["holding_name"]]
     if not rows:
         raise EtfHoldingsError("ETF holdings source produced zero parseable holding rows")
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)

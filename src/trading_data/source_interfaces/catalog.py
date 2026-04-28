@@ -154,8 +154,8 @@ INTERFACES: dict[str, DataKindInterface] = {
         ("Visible page only; no Trading Economics API or Download/export endpoint; no bulk backfill until explicitly accepted.",),
     ),
     "etf_holding_snapshot": DataKindInterface(
-        "etf_holding_snapshot", "etf_issuer_holdings", "etf_holdings", "issuer-published holdings file/page", None, "web/file", {"etf_ticker": "VGT", "issuer": "vanguard"},
-        ("Requires issuer-specific adapters and user-owned ETF-to-issuer mapping; no universal ETF holdings API assumed.",),
+        "etf_holding_snapshot", "etf_issuer_holdings", "etf_holdings", "issuer-published holdings file/page", None, "web/file", {"etf_symbol": "VGT", "issuer": "vanguard"},
+        ("Requires issuer-specific adapters and user-owned ETF-symbol-to-issuer mapping; no universal ETF holdings API assumed.",),
     ),
 }
 

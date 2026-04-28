@@ -88,7 +88,7 @@ Boundary:
 
 ## Known Open Data Gaps
 
-- Harden ETF-to-issuer mapping and ETF holdings freshness/available-time rules for production `stock_etf_exposure` runs.
+- Harden ETF-symbol-to-issuer mapping and ETF holdings freshness/available-time rules for production `stock_etf_exposure` runs.
 - Calibrate equity abnormal activity thresholds/model standards against historical distributions before training labels consume them.
 - Define optionability summary shape for SecuritySelectionModel; likely derived from option chain snapshots and liquidity filters.
 - Define portfolio/account-state artifact owner for PortfolioRiskModel; likely outside `trading-data`.

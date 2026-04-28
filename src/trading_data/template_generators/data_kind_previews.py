@@ -93,7 +93,6 @@ TIMELINE_SYMBOLS = field("fld_EVT005")
 TIMELINE_SUMMARY = field("fld_EVT020")
 TIMELINE_URL = field("fld_EVT007")
 EVENT_ID = field("fld_EVT010")
-EVENT_SECURITY_ID = field("fld_EVT011")
 EVENT_SYMBOL = field("fld_MKT001")
 EVENT_TIME = field("fld_EVT013")
 EVENT_EFFECTIVE_TIME = field("fld_EVT014")
@@ -157,10 +156,10 @@ TRADING_ECONOMICS_IMPORTANCE = field("fld_TEC011")
 TRADING_ECONOMICS_SYMBOL = field("fld_MKT001")
 TRADING_ECONOMICS_SOURCE_URL = field("fld_EVT018")
 
-ETF_TICKER = field("fld_ETFH001")
+ETF_SYMBOL = field("fld_ETFH001")
 ETF_ISSUER = field("fld_ETFH002")
 ETF_HOLDINGS_AS_OF_DATE = field("fld_ETFH003")
-ETF_HOLDING_TICKER = field("fld_ETFH004")
+ETF_HOLDING_SYMBOL = field("fld_ETFH004")
 ETF_HOLDING_NAME = field("fld_ETFH005")
 ETF_HOLDING_WEIGHT = field("fld_ETFH006")
 ETF_HOLDING_SHARES = field("fld_ETFH007")
@@ -345,7 +344,7 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "etf/etf_holding_snapshot.preview.csv",
-        [ETF_TICKER, ETF_ISSUER, ETF_HOLDINGS_AS_OF_DATE, ETF_HOLDING_TICKER, ETF_HOLDING_NAME, ETF_HOLDING_WEIGHT, ETF_HOLDING_SHARES, ETF_HOLDING_MARKET_VALUE, ETF_HOLDING_CUSIP, ETF_HOLDING_SEDOL, ETF_HOLDING_ASSET_CLASS, SECTOR_TYPE, ETF_HOLDING_SOURCE_URL],
+        [ETF_SYMBOL, ETF_ISSUER, ETF_HOLDINGS_AS_OF_DATE, ETF_HOLDING_SYMBOL, ETF_HOLDING_NAME, ETF_HOLDING_WEIGHT, ETF_HOLDING_SHARES, ETF_HOLDING_MARKET_VALUE, ETF_HOLDING_CUSIP, ETF_HOLDING_SEDOL, ETF_HOLDING_ASSET_CLASS, SECTOR_TYPE, ETF_HOLDING_SOURCE_URL],
         ["VGT", "vanguard", "2026-04-24", "NVDA", "NVIDIA Corp.", 18.53, 129246346, 22540562742, "67066G104", "2379504", "Equity", "Information Technology", "https://investor.vanguard.com/investment-products/etfs/profile/vgt"],
     ),
     csv_template(
@@ -355,8 +354,8 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "events/macro_release_event.preview.csv",
-        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TIME, EVENT_EFFECTIVE_TIME, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, MACRO_METRIC, OBSERVED_VALUE, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
-        ["macro_evt_P8Q4W6R2", "macro_evt_P8Q4W6R2", "canonical", 100, "market", "US_MARKET;rates;USD;equities", "US_MARKET", "", "", "2026-04-10T08:30:00-04:00", "2026-04-10T08:30:00-04:00", "macro_release_event", "official_macro_release", "cpi_yoy", "https://www.bls.gov/news.release/cpi.htm", "CPI YoY macro release", "Official CPI release became observable at 08:30 ET and may affect broad market, rates, USD, and equity risk appetite.", "cpi_yoy", 3.2, "", "not_requested", "official macro release is source of truth", '{"provider":"bls","consensus_source":"not_available","surprise_status":"pending_consensus_source"}'],
+        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SYMBOL, EVENT_TIME, EVENT_EFFECTIVE_TIME, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, MACRO_METRIC, OBSERVED_VALUE, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
+        ["macro_evt_P8Q4W6R2", "macro_evt_P8Q4W6R2", "canonical", 100, "market", "US_MARKET;rates;USD;equities", "US_MARKET", "", "2026-04-10T08:30:00-04:00", "2026-04-10T08:30:00-04:00", "macro_release_event", "official_macro_release", "cpi_yoy", "https://www.bls.gov/news.release/cpi.htm", "CPI YoY macro release", "Official CPI release became observable at 08:30 ET and may affect broad market, rates, USD, and equity risk appetite.", "cpi_yoy", 3.2, "", "not_requested", "official macro release is source of truth", '{"provider":"bls","consensus_source":"not_available","surprise_status":"pending_consensus_source"}'],
     ),
     csv_template(
         "alpaca/equity_bar.preview.csv",
@@ -375,8 +374,8 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "events/trading_event.preview.csv",
-        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TIME, EVENT_EFFECTIVE_TIME, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
-        ["evt_Q7M4N2PX", "evt_Q7M4N2PX", "canonical", 100, "security", "AAPL", "AAPL", "AAPL", "AAPL", "2026-01-30T16:05:00-05:00", "2026-02-02T09:30:00-05:00", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "AAPL files 10-K annual report", "Apple filed a 10-K annual report after market close.", "reports/evt_Q7M4N2PX.md", "succeeded", "official SEC filing is source of truth", '{"sec_form":"10-K","sec_items":[]}'],
+        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SYMBOL, EVENT_TIME, EVENT_EFFECTIVE_TIME, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
+        ["evt_Q7M4N2PX", "evt_Q7M4N2PX", "canonical", 100, "security", "AAPL", "AAPL", "AAPL", "2026-01-30T16:05:00-05:00", "2026-02-02T09:30:00-05:00", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "AAPL files 10-K annual report", "Apple filed a 10-K annual report after market close.", "reports/evt_Q7M4N2PX.md", "succeeded", "official SEC filing is source of truth", '{"sec_form":"10-K","sec_items":[]}'],
     ),
     csv_template(
         "events/equity_abnormal_activity_event.preview.csv",
@@ -385,13 +384,13 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "events/event_factor.preview.csv",
-        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TYPE, EVENT_EFFECTIVE_TIME, EVENT_FACTOR_AS_OF, EVENT_DIRECTION_SCORE, EVENT_MAGNITUDE_SCORE, EVENT_SURPRISE_SCORE, EVENT_NOVELTY_SCORE, EVENT_RELEVANCE_SCORE, EVENT_CREDIBILITY_SCORE, EVENT_PRICE_IN_SCORE, EVENT_REACTION_SCORE, EVENT_FACTOR_VERSION, EVENT_ANALYSIS_REPORT_URL],
-        ["evt_Q7M4N2PX", "evt_Q7M4N2PX", "security", "AAPL", "AAPL", "AAPL", "AAPL", "equity_financial_report_event", "2026-02-02T09:30:00-05:00", "2026-02-02T09:31:00-05:00", 0.2, 0.7, -0.1, 0.8, 1.0, 1.0, 0.3, "", "event_factor_v0", "reports/evt_Q7M4N2PX.md"],
+        [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SYMBOL, EVENT_TYPE, EVENT_EFFECTIVE_TIME, EVENT_FACTOR_AS_OF, EVENT_DIRECTION_SCORE, EVENT_MAGNITUDE_SCORE, EVENT_SURPRISE_SCORE, EVENT_NOVELTY_SCORE, EVENT_RELEVANCE_SCORE, EVENT_CREDIBILITY_SCORE, EVENT_PRICE_IN_SCORE, EVENT_REACTION_SCORE, EVENT_FACTOR_VERSION, EVENT_ANALYSIS_REPORT_URL],
+        ["evt_Q7M4N2PX", "evt_Q7M4N2PX", "security", "AAPL", "AAPL", "AAPL", "equity_financial_report_event", "2026-02-02T09:30:00-05:00", "2026-02-02T09:31:00-05:00", 0.2, 0.7, -0.1, 0.8, 1.0, 1.0, 0.3, "", "event_factor_v0", "reports/evt_Q7M4N2PX.md"],
     ),
     csv_template(
         "events/event_analysis_report.preview.csv",
-        [EVENT_REPORT_ID, EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_REPORT_URL, EVENT_REPORT_JSON_URL, EVENT_ANALYSIS_STATUS, EVENT_ANALYSIS_MODEL, GENERATED_AT, EVENT_TITLE, EVENT_SUMMARY, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
-        ["rpt_H4D8K2QA", "evt_Q7M4N2PX", "evt_Q7M4N2PX", "canonical", "security", "AAPL", "AAPL", "AAPL", "AAPL", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "reports/evt_Q7M4N2PX.md", "reports/evt_Q7M4N2PX.analysis.json", "succeeded", "financial_report_agent_v0", "2026-02-02T09:31:00-05:00", "AAPL 10-K analysis", "Agent-generated report artifact index for an SEC financial report event.", "official SEC filing is source of truth", '{"sec_form":"10-K","report_kind":"markdown_plus_json_sidecar"}'],
+        [EVENT_REPORT_ID, EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SYMBOL, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_REPORT_URL, EVENT_REPORT_JSON_URL, EVENT_ANALYSIS_STATUS, EVENT_ANALYSIS_MODEL, GENERATED_AT, EVENT_TITLE, EVENT_SUMMARY, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
+        ["rpt_H4D8K2QA", "evt_Q7M4N2PX", "evt_Q7M4N2PX", "canonical", "security", "AAPL", "AAPL", "AAPL", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "reports/evt_Q7M4N2PX.md", "reports/evt_Q7M4N2PX.analysis.json", "succeeded", "financial_report_agent_v0", "2026-02-02T09:31:00-05:00", "AAPL 10-K analysis", "Agent-generated report artifact index for an SEC financial report event.", "official SEC filing is source of truth", '{"sec_form":"10-K","report_kind":"markdown_plus_json_sidecar"}'],
     ),
     csv_template(
         "okx/crypto_bar.preview.csv",

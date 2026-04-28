@@ -54,7 +54,7 @@ def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -
     configured_scores = config_section(config, "stock_etf_exposure", "etf_scores")
     etf_scores = {**configured_scores, **dict(params.get("etf_scores") or {})}
     if not isinstance(etf_scores, Mapping):
-        raise SecuritySelectionInputsError("params.stock_etf_exposure.etf_scores must be an object keyed by ETF ticker")
+        raise SecuritySelectionInputsError("params.stock_etf_exposure.etf_scores must be an object keyed by ETF symbol")
 
     holdings: list[dict[str, str]] = []
     for path in holding_paths:
@@ -65,8 +65,8 @@ def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -
 
     grouped: dict[str, dict[str, Any]] = {}
     for holding in holdings:
-        symbol = str(holding.get("holding_ticker") or holding.get("symbol") or holding.get("ticker") or "").strip().upper()
-        etf = str(holding.get("etf_ticker") or "").strip().upper()
+        symbol = str(holding.get("holding_symbol") or holding.get("holding_ticker") or holding.get("symbol") or holding.get("ticker") or "").strip().upper()
+        etf = str(holding.get("etf_symbol") or holding.get("etf_ticker") or "").strip().upper()
         if not symbol or not etf:
             continue
         weight = _float(holding.get("weight")) / 100.0

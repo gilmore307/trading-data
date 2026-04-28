@@ -18,7 +18,7 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "task_id": "etf_holdings_task_test",
                 "bundle": "etf_holdings",
                 "params": {
-                    "etf_ticker": "VGT",
+                    "etf_symbol": "VGT",
                     "issuer_name": "vanguard",
                     "as_of_date": "2026-04-24",
                     "source_url": "https://investor.vanguard.com/investment-products/etfs/profile/vgt",
@@ -32,8 +32,8 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
             with saved.open(newline="") as handle:
                 rows = list(csv.DictReader(handle))
-            self.assertEqual(rows[0]["etf_ticker"], "VGT")
-            self.assertEqual(rows[0]["holding_ticker"], "NVDA")
+            self.assertEqual(rows[0]["etf_symbol"], "VGT")
+            self.assertEqual(rows[0]["holding_symbol"], "NVDA")
             self.assertEqual(rows[0]["weight"], "18.53")
             self.assertEqual(rows[0]["market_value"], "100000")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
@@ -50,7 +50,7 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             task_key = {
                 "task_id": "etf_holdings_html_test",
                 "bundle": "etf_holdings",
-                "params": {"etf_ticker": "VGT", "issuer_name": "vanguard", "as_of_date": "2026-04-24", "html": html},
+                "params": {"etf_symbol": "VGT", "issuer_name": "vanguard", "as_of_date": "2026-04-24", "html": html},
                 "output_root": str(Path(tmp) / "task"),
             }
             result = run(task_key, run_id="run")

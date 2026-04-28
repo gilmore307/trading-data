@@ -206,8 +206,8 @@ class ModelInputBundleTests(unittest.TestCase):
                             "event_id": "evt_nvda_abnormal_1",
                             "event_time": "2026-04-24T09:35:00-04:00",
                             "available_time": "2026-04-24T09:36:00-04:00",
-                            "information_role": "prior_signal",
-                            "event_category": "equity_abnormal_activity",
+                            "information_role_type": "prior_signal",
+                            "event_category_type": "equity_abnormal_activity",
                             "scope_type": "symbol",
                             "symbol": "NVDA",
                             "title": "NVDA abnormal opening activity",
@@ -219,8 +219,8 @@ class ModelInputBundleTests(unittest.TestCase):
                         {
                             "event_id": "evt_macro_1",
                             "event_time": "2026-04-24T08:30:00-04:00",
-                            "information_role": "lagging_evidence",
-                            "event_category": "macro_data",
+                            "information_role_type": "lagging_evidence",
+                            "event_category_type": "macro_data",
                             "scope_type": "macro",
                             "title": "US durable goods release",
                             "summary": "Macro calendar release overview.",
@@ -240,7 +240,7 @@ class ModelInputBundleTests(unittest.TestCase):
             self.assertEqual(call["table"], "event_overlay_event")
             self.assertEqual(call["key_columns"], ["event_id"])
             self.assertNotIn("run_id", call["columns"])
-            self.assertEqual({row["information_role"] for row in call["rows"]}, {"lagging_evidence", "prior_signal"})
+            self.assertEqual({row["information_role_type"] for row in call["rows"]}, {"lagging_evidence", "prior_signal"})
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

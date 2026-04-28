@@ -23,8 +23,8 @@ SQL_FIELDS = [
     "event_id",
     "event_time",
     "available_time",
-    "information_role",
-    "event_category",
+    "information_role_type",
+    "event_category_type",
     "scope_type",
     "symbol",
     "sector_type",
@@ -138,7 +138,7 @@ def _event_id(row: Mapping[str, Any]) -> str:
     explicit = str(row.get("event_id") or "").strip()
     if explicit:
         return explicit
-    category = str(row.get("event_category") or "event").strip().lower()
+    category = str(row.get("event_category_type") or "event").strip().lower()
     event_time = str(row.get("event_time") or row.get("available_time") or "").strip()
     reference = str(row.get("reference") or row.get("event_link_url") or row.get("source_reference") or "").strip()
     symbol = str(row.get("symbol") or "").strip().upper()
@@ -156,8 +156,8 @@ def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, C
             "event_id": _event_id(source),
             "event_time": _et_iso(_required(source, "event_time")),
             "available_time": _et_iso(source.get("available_time") or source.get("event_time")),
-            "information_role": _enum(source.get("information_role"), INFORMATION_ROLES, "information_role"),
-            "event_category": _enum(source.get("event_category"), EVENT_CATEGORIES, "event_category"),
+            "information_role_type": _enum(source.get("information_role_type"), INFORMATION_ROLES, "information_role_type"),
+            "event_category_type": _enum(source.get("event_category_type"), EVENT_CATEGORIES, "event_category_type"),
             "scope_type": _enum(source.get("scope_type"), SCOPE_TYPES, "scope_type"),
             "symbol": str(source.get("symbol") or "").strip().upper() or None,
             "sector_type": str(source.get("sector_type") or "").strip() or None,

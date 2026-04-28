@@ -27,8 +27,8 @@ Each event row requires:
 - `event_id` or enough fields for a deterministic generated id
 - `event_time`
 - `available_time` or defaults to `event_time`
-- `information_role`: `lagging_evidence` or `prior_signal`
-- `event_category`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `option_abnormal_activity`, or `equity_abnormal_activity`
+- `information_role_type`: `lagging_evidence` or `prior_signal`
+- `event_category_type`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `option_abnormal_activity`, or `equity_abnormal_activity`
 - `scope_type`: `macro`, `sector`, or `symbol`
 - `title` or `headline`
 - `source_name`
@@ -54,8 +54,8 @@ Columns:
 - `event_id`
 - `event_time`
 - `available_time`
-- `information_role`
-- `event_category`
+- `information_role_type`
+- `event_category_type`
 - `scope_type`
 - `symbol`
 - `sector_type`

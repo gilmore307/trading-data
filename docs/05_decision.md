@@ -840,3 +840,24 @@ The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`
 - Layer 2 does not write bars; Layer 1 owns bars.
 - Filter out cash, money-market, fixed income, futures, swaps, options, funds, non-US local listings, and other non-equity assets unless explicitly reviewed later.
 - Primary key: `run_id + etf_symbol + as_of_date + holding_symbol`.
+
+## D055 - Strategy selection bundle writes bar plus liquidity inputs
+
+Date: 2026-04-28
+
+### Context
+
+Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `03_strategy_selection_model_inputs` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
+
+### Decision
+
+`03_strategy_selection_model_inputs` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `model_inputs.strategy_selection_symbol_bar_liquidity`.
+
+The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
+
+### Consequences
+
+- Layer 3 no longer writes the shared `model_input_artifact_reference` manifest as its final output.
+- Raw trades/quotes remain transient and are not persisted by default.
+- Feature engineering for returns/volatility/trend/gaps remains downstream of this data bundle.
+- Primary key: `run_id + symbol + timeframe + timestamp`.

@@ -32,7 +32,9 @@ Layer 1 accepts `params.start` and `params.end`, reads the configured `market_et
 
 Layer 2 accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
 
-Layers 3-7 currently load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference` until their true data-product contracts are reviewed.
+Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `model_inputs.strategy_selection_symbol_bar_liquidity`.
+
+Layers 4-7 currently load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference` until their true data-product contracts are reviewed.
 
 ## Derived Data Products Added for Model Needs
 

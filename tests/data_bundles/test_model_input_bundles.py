@@ -7,7 +7,6 @@ from pathlib import Path
 from trading_data.source_availability.http import HttpResult
 
 BUNDLES = {
-    "03_strategy_selection_model_inputs": ["selected_universe", "equity_bars"],
     "04_trade_quality_model_inputs": ["strategy_candidates", "market_context", "security_context"],
     "05_option_expression_model_inputs": ["option_chain_snapshot", "trade_quality_candidates"],
     "06_event_overlay_model_inputs": ["gdelt_articles", "trading_economics_calendar", "equity_abnormal_activity_events"],
@@ -22,6 +21,19 @@ class FakeBarsClient:
         payload = {"bars": [{"t": "2026-04-24T13:30:00Z", "o": 100, "h": 101, "l": 99, "c": 100.5, "v": 1000, "vw": 100.25, "n": 10}]}
         if timeframe == "30Min":
             payload["bars"][0]["t"] = "2026-04-24T14:00:00Z"
+        return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+
+
+class FakeStrategySelectionClient:
+    def get(self, url, *, params=None, headers=None):
+        if url.endswith("/bars"):
+            payload = {"bars": [{"t": "2026-04-24T13:30:00Z", "o": 100, "h": 101, "l": 99, "c": 100.5, "v": 1000, "vw": 100.25, "n": 10}]}
+        elif url.endswith("/trades"):
+            payload = {"trades": [{"t": "2026-04-24T13:30:10Z", "p": 100.5, "s": 100}, {"t": "2026-04-24T13:30:40Z", "p": 100.7, "s": 200}]}
+        elif url.endswith("/quotes"):
+            payload = {"quotes": [{"t": "2026-04-24T13:30:05Z", "bp": 100.4, "ap": 100.6, "bs": 10, "as": 12}, {"t": "2026-04-24T13:30:45Z", "bp": 100.5, "ap": 100.7, "bs": 20, "as": 22}]}
+        else:
+            payload = {}
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
@@ -82,6 +94,36 @@ class ModelInputBundleTests(unittest.TestCase):
                 self.assertEqual({row["symbol"]: row["timeframe"] for row in rows}, {"BITW": "30Min", "SPY": "1Day"})
                 self.assertEqual({row["run_id"] for row in rows}, {"run"})
                 self.assertEqual(call["columns"], ["run_id", "task_id", "symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count", "created_at"])
+        finally:
+            module.load_secret_alias = old_load_secret
+
+    def test_strategy_selection_bundle_writes_bar_liquidity_sql_rows(self):
+        module = import_module("trading_data.data_bundles.03_strategy_selection_model_inputs.pipeline")
+        old_load_secret = module.load_secret_alias
+        module.load_secret_alias = lambda alias: Secret()
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                task_key = {
+                    "task_id": "03_strategy_selection_model_inputs_task_test",
+                    "bundle": "03_strategy_selection_model_inputs",
+                    "params": {"start": "2026-04-24T13:30:00Z", "end": "2026-04-24T13:31:00Z", "symbols": ["NVDA"]},
+                    "output_root": str(Path(tmp) / "task"),
+                }
+                writer = FakeSqlWriter()
+                result = module.run(task_key, run_id="run", client=FakeStrategySelectionClient(), sql_writer=writer)
+                self.assertEqual(result.status, "succeeded")
+                self.assertEqual(result.row_counts["strategy_selection_symbol_bar_liquidity"], 1)
+                call = writer.calls[0]
+                self.assertEqual(call["table"], "strategy_selection_symbol_bar_liquidity")
+                self.assertEqual(call["key_columns"], ["run_id", "symbol", "timeframe", "timestamp"])
+                row = call["rows"][0]
+                self.assertEqual(row["symbol"], "NVDA")
+                self.assertEqual(row["timeframe"], "1Min")
+                self.assertEqual(row["timestamp"], "2026-04-24T09:30:00-04:00")
+                self.assertEqual(row["dollar_volume"], 100500.0)
+                self.assertAlmostEqual(row["avg_spread"], 0.2)
+                self.assertAlmostEqual(row["spread_bps"], 19.890601690701146)
+                self.assertNotIn("created_at", row)
         finally:
             module.load_secret_alias = old_load_secret
 

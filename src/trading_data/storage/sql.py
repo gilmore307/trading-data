@@ -144,6 +144,8 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _model_input_artifact_reference_ddl(qualified_table)
     if table == "security_selection_us_equity_etf_holding":
         return _security_selection_us_equity_etf_holding_ddl(qualified_table)
+    if table == "strategy_selection_symbol_bar_liquidity":
+        return _strategy_selection_symbol_bar_liquidity_ddl(qualified_table)
     return None
 
 
@@ -206,5 +208,35 @@ def _security_selection_us_equity_etf_holding_ddl(qualified_table: str) -> str:
         market_value DOUBLE PRECISION,
         sector_type TEXT,
         PRIMARY KEY (run_id, etf_symbol, as_of_date, holding_symbol)
+    )
+    """
+
+
+def _strategy_selection_symbol_bar_liquidity_ddl(qualified_table: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        run_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        timeframe TEXT NOT NULL,
+        timestamp TIMESTAMPTZ NOT NULL,
+        open DOUBLE PRECISION,
+        high DOUBLE PRECISION,
+        low DOUBLE PRECISION,
+        close DOUBLE PRECISION,
+        volume DOUBLE PRECISION,
+        vwap DOUBLE PRECISION,
+        trade_count BIGINT,
+        dollar_volume DOUBLE PRECISION,
+        quote_count BIGINT,
+        avg_bid DOUBLE PRECISION,
+        avg_ask DOUBLE PRECISION,
+        avg_bid_size DOUBLE PRECISION,
+        avg_ask_size DOUBLE PRECISION,
+        avg_spread DOUBLE PRECISION,
+        spread_bps DOUBLE PRECISION,
+        last_bid DOUBLE PRECISION,
+        last_ask DOUBLE PRECISION,
+        PRIMARY KEY (run_id, symbol, timeframe, timestamp)
     )
     """

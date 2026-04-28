@@ -1,16 +1,16 @@
-"""CLI runner for the equity_abnormal_activity bundle."""
+"""CLI runner for the stock_etf_exposure bundle."""
 from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
 
-from trading_data.data_sources.equity_abnormal_activity.pipeline import run
+from trading_data.data_bundles.stock_etf_exposure.pipeline import run
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m trading_data.data_sources.equity_abnormal_activity")
-    parser.add_argument("task_key", type=Path, help="Path to an equity_abnormal_activity task key JSON file")
+    parser = argparse.ArgumentParser(prog="python -m trading_data.data_bundles.stock_etf_exposure")
+    parser.add_argument("task_key", type=Path, help="Path to a stock_etf_exposure task key JSON file")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
     result = run(json.loads(args.task_key.read_text(encoding="utf-8")), run_id=args.run_id)

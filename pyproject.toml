@@ -24,6 +24,8 @@ trading-data-etf-holdings = "trading_data.data_sources.etf_holdings.__main__:mai
 trading-data-thetadata-option-selection-snapshot = "trading_data.data_sources.thetadata_option_selection_snapshot.__main__:main"
 trading-data-thetadata-option-primary-tracking = "trading_data.data_sources.thetadata_option_primary_tracking.__main__:main"
 trading-data-thetadata-option-event-timeline = "trading_data.data_sources.thetadata_option_event_timeline.__main__:main"
+trading-data-stock-etf-exposure = "trading_data.data_bundles.stock_etf_exposure.__main__:main"
+trading-data-equity-abnormal-activity = "trading_data.data_bundles.equity_abnormal_activity.__main__:main"
 trading-data-generate-data-kind-templates = "trading_data.template_generators.data_kind_previews:main"
 
 [tool.setuptools.packages.find]

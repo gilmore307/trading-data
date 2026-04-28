@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "description": "Default model-input bundle parameters. Task keys may override these values per run.",
+  "etf_universe": {
+    "broad_market": {
+      "SPY": {"issuer": "state_street", "grain": "1Day", "style_tags": ["large_cap", "broad_market"]},
+      "QQQ": {"issuer": "invesco", "grain": "1Day", "style_tags": ["nasdaq", "growth", "technology"]},
+      "IWM": {"issuer": "blackrock", "grain": "1Day", "style_tags": ["small_cap"]}
+    },
+    "sector": {
+      "XLK": {"issuer": "state_street", "grain": "1Day", "style_tags": ["technology"]},
+      "XLF": {"issuer": "state_street", "grain": "1Day", "style_tags": ["financials"]},
+      "XLE": {"issuer": "state_street", "grain": "1Day", "style_tags": ["energy"]},
+      "XLV": {"issuer": "state_street", "grain": "1Day", "style_tags": ["healthcare"]}
+    },
+    "theme": {
+      "SMH": {"issuer": "vaneck", "grain": "1Day", "style_tags": ["semiconductor", "AI"]},
+      "SOXX": {"issuer": "blackrock", "grain": "1Day", "style_tags": ["semiconductor"]},
+      "BOTZ": {"issuer": "global_x", "grain": "1Day", "style_tags": ["robotics", "AI"]},
+      "CIBR": {"issuer": "first_trust", "grain": "1Day", "style_tags": ["cybersecurity"]}
+    }
+  },
+  "stock_etf_exposure": {
+    "default_available_lag": "next_regular_session_open",
+    "etf_scores": {}
+  },
+  "equity_abnormal_activity": {
+    "bar_grain": "1Min",
+    "lookback_intervals": 20,
+    "min_abs_return_zscore": 3.0,
+    "min_volume_zscore": 3.0,
+    "min_abs_relative_strength_zscore": 3.0,
+    "min_abs_gap_pct": 0.04,
+    "min_liquidity_spread_zscore": 3.0,
+    "model_standard": "equity_abnormal_activity_v0"
+  }
+}

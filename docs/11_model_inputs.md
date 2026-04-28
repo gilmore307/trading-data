@@ -4,7 +4,9 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 ## Principles
 
-- Keep raw/source acquisition in source-specific bundles.
+- Keep raw/source acquisition in smallest-unit modules under `src/trading_data/data_sources/`.
+- Keep manager-facing model-input orchestration under `src/trading_data/data_bundles/`.
+- Keep reusable bundle parameters in config files, e.g. ETF lists, issuer labels, grains, and detector defaults.
 - Keep final model-facing flat outputs as CSV unless an explicit JSON contract is accepted.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
 - Use derived model-input tables only when they clarify layer boundaries or avoid repeated feature construction.
@@ -26,7 +28,9 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 ### `stock_etf_exposure`
 
-Bundle: `src/trading_data/data_sources/stock_etf_exposure/`
+Bundle: `src/trading_data/data_bundles/stock_etf_exposure/`
+
+Config: `src/trading_data/data_bundles/configs/model_inputs.json`
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
@@ -54,7 +58,9 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Bundle: `src/trading_data/data_sources/equity_abnormal_activity/`
+Bundle: `src/trading_data/data_bundles/equity_abnormal_activity/`
+
+Config: `src/trading_data/data_bundles/configs/model_inputs.json`
 
 Purpose: EventOverlayModel evidence row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

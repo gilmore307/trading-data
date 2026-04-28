@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
+from trading_data.data_bundles.config import config_section, load_bundle_config
 from trading_data.source_availability.sanitize import sanitize_value
 
 BUNDLE = "equity_abnormal_activity"
@@ -105,8 +106,10 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     if not bars:
         raise EquityAbnormalActivityError("bars_csv_path produced zero rows")
     context.run_dir.mkdir(parents=True, exist_ok=True)
+    config_name = str(params.get("config") or "model_inputs")
     manifest = {
         "bundle": BUNDLE,
+        "config": config_name,
         "bars_csv_path": str(bars_path),
         "benchmark_bars_csv_path": str(benchmark_path) if benchmark_path else None,
         "liquidity_csv_path": str(liquidity_path) if liquidity_path else None,
@@ -247,17 +250,20 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
 
 def clean(context: BundleContext, payload: SourcePayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
+    config_name = str(params.get("config") or "model_inputs")
+    defaults = config_section(load_bundle_config(config_name), "equity_abnormal_activity")
+    effective = {**defaults, **params}
     rows = detect_events(
         bars=payload.bars,
         benchmark_bars=payload.benchmark_bars,
         liquidity_rows=payload.liquidity_rows,
-        lookback_intervals=int(params.get("lookback_intervals", 20)),
-        min_abs_return_zscore=float(params.get("min_abs_return_zscore", 3.0)),
-        min_volume_zscore=float(params.get("min_volume_zscore", 3.0)),
-        min_abs_relative_strength_zscore=float(params.get("min_abs_relative_strength_zscore", 3.0)),
-        min_abs_gap_pct=float(params.get("min_abs_gap_pct", 0.04)),
-        min_liquidity_spread_zscore=float(params.get("min_liquidity_spread_zscore", 3.0)),
-        model_standard=str(params.get("model_standard", "equity_abnormal_activity_v0")),
+        lookback_intervals=int(effective.get("lookback_intervals", 20)),
+        min_abs_return_zscore=float(effective.get("min_abs_return_zscore", 3.0)),
+        min_volume_zscore=float(effective.get("min_volume_zscore", 3.0)),
+        min_abs_relative_strength_zscore=float(effective.get("min_abs_relative_strength_zscore", 3.0)),
+        min_abs_gap_pct=float(effective.get("min_abs_gap_pct", 0.04)),
+        min_liquidity_spread_zscore=float(effective.get("min_liquidity_spread_zscore", 3.0)),
+        model_standard=str(effective.get("model_standard", "equity_abnormal_activity_v0")),
     )
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     output = context.cleaned_dir / "equity_abnormal_activity_event.jsonl"

@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from trading_data.data_bundles.config import config_section, load_bundle_config
 from trading_data.source_availability.sanitize import sanitize_value
 
 BUNDLE = "stock_etf_exposure"
@@ -95,8 +96,11 @@ def _iter_holding_paths(value: Any) -> Iterable[Path]:
 
 def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
+    config_name = str(params.get("config") or "model_inputs")
+    config = load_bundle_config(config_name)
     holding_paths = list(_iter_holding_paths(_require(params, "holdings_csv_paths")))
-    etf_scores = params.get("etf_scores") or {}
+    configured_scores = config_section(config, "stock_etf_exposure", "etf_scores")
+    etf_scores = {**configured_scores, **dict(params.get("etf_scores") or {})}
     if not isinstance(etf_scores, Mapping):
         raise StockEtfExposureError("params.etf_scores must be an object keyed by ETF ticker")
     holdings: list[dict[str, str]] = []
@@ -110,6 +114,7 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
         "bundle": BUNDLE,
         "holdings_csv_paths": [str(path) for path in holding_paths],
         "holding_rows": len(holdings),
+        "config": config_name,
         "etf_score_count": len(normalized_scores),
         "raw_persistence": "not_applicable; derived from saved etf_holding_snapshot CSV inputs",
         "fetched_at_utc": _now_utc(),

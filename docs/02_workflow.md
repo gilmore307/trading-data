@@ -11,17 +11,17 @@ It describes how approved data requests become validated data artifacts, manifes
 `trading-data` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
 
 ```text
-manager task key file -> validate key -> classify data domain -> select acquisition script -> fetch historical data -> normalize -> validate -> write development files under storage -> write development task receipt under storage
+manager task key file -> validate key -> select data bundle -> load bundle config -> call smallest-unit data sources -> normalize/derive -> validate -> write development files under storage -> write development task receipt under storage
 ```
 
 Where:
 
 - **manager task key file** is the manager-issued request/control file that contains enough information to complete the task without hidden chat context;
 - **validate key** checks task identity, schema version, requested script/bundle, required parameters, destination expectations, idempotency key, and credential/source references;
-- **classify data domain** maps the task to market board data, instrument data, option data, or a rejected/re-scoped request;
-- **select acquisition script** invokes the data-type-specific source script named by the task key;
-- **fetch historical data** calls external providers, official web sources, issuer websites, or approved local sources through documented source connectors;
-- **normalize** converts provider-specific responses into accepted table-oriented data shapes;
+- **select data bundle** invokes the manager-facing bundle named by the task key;
+- **load bundle config** resolves stable project parameters such as ETF lists, issuer labels, grains, and detector defaults;
+- **call smallest-unit data sources** calls external providers, official web sources, issuer websites, or approved local source-output interfaces through documented source connectors;
+- **normalize/derive** converts provider-specific responses and bundle-level joins into accepted table-oriented data shapes;
 - **validate** checks schema, timestamps, completeness, calendars, duplicates, and provider caveats;
 - **write development files under `storage/`** stores cleaned outputs in the registered development local storage root instead of writing to SQL;
 - **write development task receipt under `storage/`** records task status and evidence as a local file so runs remain inspectable and disposable during development.
@@ -33,10 +33,10 @@ The development storage root is registered as `TRADING_DATA_DEVELOPMENT_STORAGE_
 ```mermaid
 flowchart TD
   A[trading-manager Creates Data Task Key File] --> B[trading-data Validates Task Key]
-  B --> C[Select Historical Acquisition Script]
-  C --> D[Resolve Source Metadata and Secret Aliases]
-  D --> E[Fetch Historical Source Data]
-  E --> F[Normalize Rows]
+  B --> C[Select Data Bundle]
+  C --> D[Load Bundle Config and Resolve Source Metadata]
+  D --> E[Call Smallest-Unit Data Sources]
+  E --> F[Normalize or Derive Rows]
   F --> G[Validate Dataset]
   G --> H[Write Cleaned Development Files under storage]
   H --> I[Write Development Task Receipt under storage]
@@ -49,8 +49,9 @@ flowchart TD
 - Data acquisition is historical by default; realtime collection is out of scope for this repository.
 - Data requests originate from `trading-manager`, not ad hoc local script calls.
 - A task key file must be self-contained: no script may depend on missing chat context or implicit operator memory.
-- Acquisition scripts are grouped by data type and repeated usage bundle, not merely by provider.
-- Bundled scripts may fetch multiple related source records in one run, but outputs should remain separable by table/data type.
+- `src/trading_data/data_sources/` owns smallest-unit provider/source access and source-output normalization.
+- `src/trading_data/data_bundles/` owns manager-facing task execution, bundle config, cross-source orchestration, and model-input generation.
+- Bundles may call multiple data sources in one run, but outputs should remain separable by table/data type.
 - Data requests should be idempotent where practical.
 - Provider responses should be normalized before downstream exposure.
 - Validation evidence belongs in completion receipts/manifests, not only logs.
@@ -130,9 +131,9 @@ For high-volume raw market data such as trade prints and quote updates, temporar
 
 SQL writes are future durable-storage behavior and should require an accepted `trading-storage` contract or an explicitly guarded integration/smoke path.
 
-## Historical Acquisition Script Bundles
+## Historical Source Interfaces and Data Bundles
 
-Initial script boundaries should be organized around data-type bundles:
+Initial source interfaces are organized around source-level output types. Manager-facing orchestration should live in `src/trading_data/data_bundles/`; the source entries below are the smallest-unit source modules those bundles can call.
 
 | Script / bundle | Source | Intended contents | Notes |
 |---|---|---|---|

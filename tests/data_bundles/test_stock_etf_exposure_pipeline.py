@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.stock_etf_exposure.pipeline import run
+from trading_data.data_bundles.stock_etf_exposure.pipeline import run
 
 
 class StockEtfExposurePipelineTests(unittest.TestCase):

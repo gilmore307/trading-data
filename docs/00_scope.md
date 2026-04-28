@@ -23,6 +23,8 @@ This repository exists to make data production explicit, testable, and reusable 
 - Expose component-local tests for data parsing, validation, and fixture-based provider behavior.
 - Track data-provider limitations, quotas, and quality caveats that affect this repository.
 - Build provider/source connector layer boundaries before domain pipelines depend on live APIs.
+- Keep `src/trading_data/data_sources/` limited to smallest-unit provider/source acquisition and normalization interfaces.
+- Keep manager-facing task execution and model-input generation in `src/trading_data/data_bundles/`, with config-backed parameters for reusable baskets, issuers, grains, and detector defaults.
 
 ## Out of Scope
 
@@ -52,6 +54,7 @@ The repository should prefer explicit provider boundaries, deterministic normali
 - Generated data and provider responses are runtime artifacts, not source files.
 - Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.
 - Shared helpers, templates, and registrable fields discovered here must be recorded through `trading-main` before other repositories depend on them.
+- Model-input derived features should be emitted by `data_bundles`, not mixed into `data_sources`.
 - Data features emitted here must be market/data-source based. Strategy returns or strategy performance must not feed upstream data production.
 
 ## Out-of-Scope Signals

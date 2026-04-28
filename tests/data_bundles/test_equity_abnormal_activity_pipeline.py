@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.equity_abnormal_activity.pipeline import detect_events, run
+from trading_data.data_bundles.equity_abnormal_activity.pipeline import detect_events, run
 
 
 def _bar(symbol: str, idx: int, close: float, volume: int, open_: float | None = None) -> dict[str, str]:

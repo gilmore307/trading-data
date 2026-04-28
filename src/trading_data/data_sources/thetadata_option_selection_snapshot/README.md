@@ -57,7 +57,7 @@ Top-level fields include:
 - `contract_count`
 - `contracts`
 
-Each contract includes expiration/right/strike plus nested quote, IV, Greeks, derived, and underlying context where provider data is available.
+Each contract includes expiration/option_right_type/strike plus nested quote, IV, Greeks, derived, and underlying context where provider data is available.
 
 ## Failure and retry
 

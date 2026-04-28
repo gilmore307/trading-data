@@ -103,7 +103,7 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             self.assertNotIn("source", rows[0])
             self.assertEqual(rows[0]["underlying"], "AAPL")
             self.assertEqual(rows[0]["expiration"], "2026-05-15")
-            self.assertEqual(rows[0]["right"], "CALL")
+            self.assertEqual(rows[0]["option_right_type"], "CALL")
             self.assertEqual(rows[0]["strike"], "270.0")
             self.assertEqual(rows[0]["timeframe"], "1Min")
             self.assertEqual(rows[0]["timestamp"], "2026-04-24T09:30:00-04:00")

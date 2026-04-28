@@ -101,7 +101,7 @@ class RegistryNames:
 # Output field ids. Do not replace these with literal output field names; the
 # bundle resolves current registry payloads when it materializes rows.
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, ("field", "temporal_field", "classification_field"))
+    return RegistryRef(item_id, ("field", "identity_field", "temporal_field", "classification_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:
@@ -112,7 +112,7 @@ DATA_KIND = field("fld_EKIND001")
 SOURCE = field("fld_EKIND002")
 OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
-OPTION_RIGHT = field("fld_OPT003")
+OPTION_RIGHT_TYPE = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
 DATA_TIMESTAMP = field("fld_OPT013")
 DATA_TIMEFRAME = field("fld_OPT014")
@@ -129,7 +129,7 @@ OPTION_BAR = data_kind("dki_OPBAR001")
 CSV_FIELD_REFS = [
     OPTION_UNDERLYING,
     OPTION_EXPIRATION,
-    OPTION_RIGHT,
+    OPTION_RIGHT_TYPE,
     OPTION_STRIKE,
     DATA_TIMEFRAME,
     DATA_TIMESTAMP,
@@ -398,7 +398,7 @@ def _aggregate_rows(names: RegistryNames, fetched: FetchedOhlc) -> tuple[list[di
             {
                 f(OPTION_UNDERLYING): fetched.underlying,
                 f(OPTION_EXPIRATION): fetched.expiration,
-                f(OPTION_RIGHT): fetched.right,
+                f(OPTION_RIGHT_TYPE): fetched.right,
                 f(OPTION_STRIKE): fetched.strike,
                 f(DATA_TIMEFRAME): fetched.timeframe,
                 f(DATA_TIMESTAMP): bucket_timestamp,

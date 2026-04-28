@@ -121,7 +121,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             self.assertEqual(snapshot["contract_count"], "1")
 
             contract = json.loads(snapshot["contracts"])[0]
-            self.assertEqual(contract["right"], "CALL")
+            self.assertEqual(contract["option_right_type"], "CALL")
             self.assertEqual(contract["quote"]["timestamp"], "2026-04-24T09:30:02.260000-04:00")
             self.assertEqual(contract["quote"]["mid"], 1.2)
             self.assertEqual(contract["quote"]["spread"], 0.10000000000000009)

@@ -89,7 +89,7 @@ class RegistryNames:
 # Output field ids. Do not replace these with literal output field names; the
 # bundle resolves the current registry payloads when it materializes JSON.
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, ("field", "temporal_field", "classification_field"))
+    return RegistryRef(item_id, ("field", "identity_field", "temporal_field", "classification_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:
@@ -100,7 +100,7 @@ DATA_KIND = field("fld_EKIND001")
 SOURCE = field("fld_EKIND002")
 OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
-OPTION_RIGHT = field("fld_OPT003")
+OPTION_RIGHT_TYPE = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
 SNAPSHOT_TIME = field("fld_OPT005")
 OPTION_CONTRACT_COUNT = field("fld_OPT006")
@@ -413,7 +413,7 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
         source_for_underlying = greeks or iv
         contract = {
             f(OPTION_EXPIRATION): expiration,
-            f(OPTION_RIGHT): right,
+            f(OPTION_RIGHT_TYPE): right,
             f(OPTION_STRIKE): strike,
             f(OPTION_QUOTE_CONTEXT): _compact(
                 {

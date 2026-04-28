@@ -49,7 +49,7 @@ class JsonTemplate:
 
 
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, ("field", "temporal_field", "classification_field"))
+    return RegistryRef(item_id, ("field", "identity_field", "temporal_field", "classification_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:
@@ -194,7 +194,7 @@ EQUITY_ABNORMAL_ACTIVITY_SOURCE_REFS = field("fld_ABN008")
 
 OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
-OPTION_RIGHT = field("fld_OPT003")
+OPTION_RIGHT_TYPE = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
 SNAPSHOT_TIME = field("fld_OPT005")
 OPTION_CONTRACT_COUNT = field("fld_OPT006")
@@ -410,18 +410,18 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "thetadata/option_activity_event_detail.preview.csv",
-        [OPTION_EVENT_DETAIL_EVENT_ID, TIMELINE_CREATED_AT, TIMELINE_UPDATED_AT, OPTION_UNDERLYING, OPTION_EXPIRATION, OPTION_RIGHT, OPTION_STRIKE, OPTION_CONTRACT_SYMBOL, OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS, OPTION_EVENT_DETAIL_EVIDENCE_WINDOW, OPTION_EVENT_DETAIL_TRIGGERING_TRADE, OPTION_EVENT_DETAIL_QUOTE_CONTEXT, OPTION_EVENT_DETAIL_IV_CONTEXT, OPTION_EVENT_DETAIL_SOURCE_REFS],
+        [OPTION_EVENT_DETAIL_EVENT_ID, TIMELINE_CREATED_AT, TIMELINE_UPDATED_AT, OPTION_UNDERLYING, OPTION_EXPIRATION, OPTION_RIGHT_TYPE, OPTION_STRIKE, OPTION_CONTRACT_SYMBOL, OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS, OPTION_EVENT_DETAIL_EVIDENCE_WINDOW, OPTION_EVENT_DETAIL_TRIGGERING_TRADE, OPTION_EVENT_DETAIL_QUOTE_CONTEXT, OPTION_EVENT_DETAIL_IV_CONTEXT, OPTION_EVENT_DETAIL_SOURCE_REFS],
         ["opt_evt_N7Q4K2M9", "2026-04-24T09:30:02.267000-04:00", "2026-04-24T09:30:02.500000-04:00", "AAPL", "2026-05-15", "CALL", 270.0, "AAPL 2026-05-15 270C", '{"trade_at_ask":{"statistics":{"trade_price":1.25,"ask_touch_ratio":1.0},"current_standard":{"max_price_vs_ask":0.01,"min_ask_touch_ratio":0.95}}}', '{"timeframe":"30Min","window_start":"2026-04-24T09:30:00-04:00","window_end":"2026-04-24T10:00:00-04:00"}', '{"trade_side_type":"ask_side","trade_timestamp":"2026-04-24T09:30:02.267000-04:00","trade_price":1.25,"trade_size":80}', '{"timestamp":"2026-04-24T09:30:02.260000-04:00","bid":1.15,"ask":1.25,"mid":1.2}', '{"implied_vol":0.64,"iv_percentile_by_expiration":0.97}', '{"provider":"thetadata","raw_persistence":"not_persisted_by_default"}'],
     ),
     csv_template(
         "thetadata/option_bar.preview.csv",
-        [OPTION_UNDERLYING, OPTION_EXPIRATION, OPTION_RIGHT, OPTION_STRIKE, DATA_TIMEFRAME, DATA_TIMESTAMP, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, CLOSE_PRICE, VOLUME, TRADE_COUNT, VWAP],
+        [OPTION_UNDERLYING, OPTION_EXPIRATION, OPTION_RIGHT_TYPE, OPTION_STRIKE, DATA_TIMEFRAME, DATA_TIMESTAMP, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, CLOSE_PRICE, VOLUME, TRADE_COUNT, VWAP],
         ["AAPL", "2026-05-15", "CALL", 270.0, "1Min", "2026-04-24T09:30:00-04:00", 9.4, 9.4, 8.26, 8.26, 21, 8, 8.71],
     ),
     csv_template(
         "thetadata/option_chain_snapshot.preview.csv",
         [OPTION_UNDERLYING, SNAPSHOT_TIME, OPTION_CONTRACT_COUNT, OPTION_CONTRACTS],
-        ["AAPL", "2026-04-24T16:00:00-04:00", 3120, '[{"expiration":"2026-04-27","right":"CALL","strike":270.0,"quote":{"bid":3.35,"ask":3.55,"mid":3.45},"iv":{"implied_vol":0.3124},"greeks":{"delta":0.52}}]'],
+        ["AAPL", "2026-04-24T16:00:00-04:00", 3120, '[{"expiration":"2026-04-27","option_right_type":"CALL","strike":270.0,"quote":{"bid":3.35,"ask":3.55,"mid":3.45},"iv":{"implied_vol":0.3124},"greeks":{"delta":0.52}}]'],
     ),
 )
 

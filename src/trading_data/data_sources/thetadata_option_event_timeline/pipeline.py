@@ -106,7 +106,7 @@ class RegistryNames:
 # Output field ids. Do not replace these with literal output field names; the
 # bundle resolves current registry payloads when it materializes rows.
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, ("field", "temporal_field", "classification_field"))
+    return RegistryRef(item_id, ("field", "identity_field", "temporal_field", "classification_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:
@@ -116,7 +116,7 @@ def data_kind(item_id: str) -> RegistryRef:
 DATA_KIND = field("fld_EKIND001")
 OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
-OPTION_RIGHT = field("fld_OPT003")
+OPTION_RIGHT_TYPE = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
 DATA_TIMESTAMP = field("fld_OPT013")
 DATA_TIMEFRAME = field("fld_OPT014")
@@ -650,7 +650,7 @@ def _build_event(
         f(OPTION_UNDERLYING): fetched.underlying,
         f(OPTION_EVENT_DETAIL_CONTRACT): {
             f(OPTION_EXPIRATION): fetched.expiration,
-            f(OPTION_RIGHT): fetched.right,
+            f(OPTION_RIGHT_TYPE): fetched.right,
             f(OPTION_STRIKE): fetched.strike,
             f(OPTION_CONTRACT_SYMBOL): contract_symbol,
         },
@@ -781,7 +781,7 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
         names.payload(TIMELINE_UPDATED_AT),
         names.payload(OPTION_UNDERLYING),
         names.payload(OPTION_EXPIRATION),
-        names.payload(OPTION_RIGHT),
+        names.payload(OPTION_RIGHT_TYPE),
         names.payload(OPTION_STRIKE),
         names.payload(OPTION_CONTRACT_SYMBOL),
         names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS),
@@ -803,7 +803,7 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
             names.payload(TIMELINE_UPDATED_AT): detail.get(names.payload(TIMELINE_UPDATED_AT)),
             names.payload(OPTION_UNDERLYING): detail.get(names.payload(OPTION_UNDERLYING)),
             names.payload(OPTION_EXPIRATION): contract.get(names.payload(OPTION_EXPIRATION)),
-            names.payload(OPTION_RIGHT): contract.get(names.payload(OPTION_RIGHT)),
+            names.payload(OPTION_RIGHT_TYPE): contract.get(names.payload(OPTION_RIGHT_TYPE)),
             names.payload(OPTION_STRIKE): contract.get(names.payload(OPTION_STRIKE)),
             names.payload(OPTION_CONTRACT_SYMBOL): contract.get(names.payload(OPTION_CONTRACT_SYMBOL)),
             names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS), {}), separators=(",", ":")),

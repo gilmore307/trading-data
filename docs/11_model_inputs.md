@@ -34,7 +34,7 @@ The manifest bundles do not fetch raw provider data. They compose saved source/d
 
 ### `stock_etf_exposure`
 
-Integrated step: `src/trading_data/data_bundles/02_security_selection_model_inputs/stock_etf_exposure.py`
+Integrated step: `src/trading_data/data_bundles/02_security_selection_model_inputs/pipeline.py`
 
 Config: `src/trading_data/data_bundles/02_security_selection_model_inputs/config.json` under `stock_etf_exposure`.
 

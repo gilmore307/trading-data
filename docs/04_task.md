@@ -2,7 +2,7 @@
 
 ## Active Tasks
 
-- Implement builders after model input bundle contracts are reviewed: `stock_etf_exposure` for SecuritySelectionModel and `equity_abnormal_activity_event` for EventOverlayModel.
+- Calibrate and harden the first derived model-input bundles: `stock_etf_exposure` freshness/scoring rules and `equity_abnormal_activity_event` thresholds/model standards.
 
 ## Queued Tasks
 
@@ -34,14 +34,16 @@
 - Provider quota/rate-limit policy and live-call guardrails.
 - Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
 - ETF issuer priority list, source-file formats, and as-of-date/available-time handling.
-- `stock_etf_exposure` builder location and whether it remains model-local first or becomes a `trading-data` derived bundle.
-- `equity_abnormal_activity_event` detection standards, lookbacks, thresholds, and model-standard identity.
+- Production ETF holdings freshness/available-time rules for `stock_etf_exposure`.
+- Calibrated `equity_abnormal_activity_event` detection standards, lookbacks, thresholds, and model-standard identity.
 - Optionability summary shape for SecuritySelectionModel.
 - ThetaData connector/JAR/credential layout.
 - Data-domain vocabulary registration in `trading-main` if exact domain keys become cross-repository contract values.
 
 ## Recently Accepted
 
+- Implemented `stock_etf_exposure` derived bundle over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
+- Implemented `equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
 - Registered seven model input organization bundles: `market_regime_model_inputs`, `security_selection_model_inputs`, `strategy_selection_model_inputs`, `trade_quality_model_inputs`, `option_expression_model_inputs`, `event_overlay_model_inputs`, and `portfolio_risk_model_inputs`.
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind for SecuritySelectionModel.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.

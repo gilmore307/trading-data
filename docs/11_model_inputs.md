@@ -26,6 +26,8 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 ### `stock_etf_exposure`
 
+Bundle: `src/trading_data/data_sources/stock_etf_exposure/`
+
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
 It derives from issuer-published `etf_holding_snapshot` rows and current ETF/sector/style scores from model research. It lets Layer 2 transmit ETF/sector/theme strength to individual stocks.
@@ -48,9 +50,11 @@ Boundary:
 
 - Derived feature artifact, not a raw provider table.
 - Must preserve `available_time_et`; do not assume a holdings file is usable before it was visible.
-- May start model-local, but is registered as a data kind because it is likely useful across model/data boundaries.
+- Implemented first as a conservative derived bundle over saved `etf_holding_snapshot.csv` inputs and caller-supplied ETF/sector/theme scores.
 
 ### `equity_abnormal_activity_event`
+
+Bundle: `src/trading_data/data_sources/equity_abnormal_activity/`
 
 Purpose: EventOverlayModel evidence row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 
@@ -67,11 +71,12 @@ Boundary:
 
 - Derived event-style row, not raw trades/quotes.
 - Should be created only from observable market data at/after the event effective time.
+- Implemented first as a conservative derived detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs.
 - Can feed unified `trading_event` / `event_factor` projection later.
 
 ## Known Open Data Gaps
 
-- Implement actual `stock_etf_exposure` builder after ETF-to-issuer mapping is accepted and ETF holdings freshness rules are defined.
-- Implement actual equity abnormal activity detector after event thresholds/model standards are defined.
+- Harden ETF-to-issuer mapping and ETF holdings freshness/available-time rules for production `stock_etf_exposure` runs.
+- Calibrate equity abnormal activity thresholds/model standards against historical distributions before training labels consume them.
 - Define optionability summary shape for SecuritySelectionModel; likely derived from option chain snapshots and liquidity filters.
 - Define portfolio/account-state artifact owner for PortfolioRiskModel; likely outside `trading-data`.

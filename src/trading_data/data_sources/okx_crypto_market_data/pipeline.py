@@ -21,7 +21,7 @@ OKX_BAR_MAP = {"1Min": "1m", "5Min": "5m", "15Min": "15m", "1Hour": "1H", "1Day"
 
 CRYPTO_BAR_FIELDS = ["symbol", "timeframe", "timestamp_et", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
 CRYPTO_TRADE_FIELDS = ["data_kind", "source", "symbol", "timestamp_utc", "timestamp_et", "trade_id", "side", "price", "size", "notional"]
-CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "trade_volume", "trade_vwap", "trade_open", "trade_high", "trade_low", "trade_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
+CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
 
 
 @dataclass(frozen=True)
@@ -180,23 +180,23 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], timefram
         size = float(trade["size"])
         row = buckets.setdefault(key, {
             "symbol": symbol, "timeframe": timeframe,
-            "interval_start_et": key, "trade_count": 0, "trade_volume": 0.0, "trade_notional": 0.0,
-            "trade_open": price, "trade_high": price, "trade_low": price, "trade_close": price,
+            "interval_start_et": key, "trade_count": 0, "volume": 0.0, "trade_notional": 0.0,
+            "open": price, "high": price, "low": price, "close": price,
             "quote_count": None, "avg_bid": None, "avg_ask": None, "avg_mid": None, "avg_spread": None,
             "last_bid": None, "last_ask": None, "last_mid": None, "vwap_minus_avg_mid": None,
         })
         row["trade_count"] += 1
-        row["trade_volume"] += size
+        row["volume"] += size
         row["trade_notional"] += price * size
-        row["trade_high"] = max(row["trade_high"], price)
-        row["trade_low"] = min(row["trade_low"], price)
-        row["trade_close"] = price
+        row["high"] = max(row["high"], price)
+        row["low"] = min(row["low"], price)
+        row["close"] = price
     out = []
     for key in sorted(buckets):
         row = buckets[key]
-        row["trade_volume"] = round(row["trade_volume"], 12)
+        row["volume"] = round(row["volume"], 12)
         row["trade_notional"] = round(row["trade_notional"], 12)
-        row["trade_vwap"] = round(row["trade_notional"] / row["trade_volume"], 10) if row["trade_volume"] else None
+        row["vwap"] = round(row["trade_notional"] / row["volume"], 10) if row["volume"] else None
         out.append(row)
     return out
 

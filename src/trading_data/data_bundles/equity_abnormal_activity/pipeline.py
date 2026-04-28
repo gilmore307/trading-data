@@ -155,7 +155,7 @@ def _returns_by_timestamp(rows: list[dict[str, str]]) -> dict[str, float]:
     out: dict[str, float] = {}
     prev_close: float | None = None
     for row in sorted(rows, key=lambda item: str(item.get("timestamp_et") or item.get("interval_start_et") or "")):
-        close = _float(row.get("close") or row.get("trade_close"))
+        close = _float(row.get("close"))
         timestamp = str(row.get("timestamp_et") or row.get("interval_start_et") or "")
         if close is not None and prev_close not in (None, 0) and timestamp:
             out[timestamp] = close / float(prev_close) - 1.0

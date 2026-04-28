@@ -112,7 +112,7 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             self.assertEqual(rows[0]["low"], "8.9")
             self.assertEqual(rows[0]["close"], "9.0")
             self.assertEqual(rows[0]["volume"], "3")
-            self.assertEqual(rows[0]["count"], "3")
+            self.assertEqual(rows[0]["trade_count"], "3")
             self.assertEqual(rows[0]["vwap"], "9.3333333333")
             self.assertEqual(rows[1]["timestamp_et"], "2026-04-24T09:31:00-04:00")
 

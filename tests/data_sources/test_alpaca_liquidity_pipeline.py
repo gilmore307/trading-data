@@ -39,8 +39,8 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]['interval_start_et'], '2024-01-02T09:30:00-05:00')
         self.assertEqual(rows[0]['trade_count'], 2)
-        self.assertEqual(rows[0]['trade_volume'], 5)
-        self.assertEqual(rows[0]['trade_vwap'], 11.2)
+        self.assertEqual(rows[0]['volume'], 5)
+        self.assertEqual(rows[0]['vwap'], 11.2)
 
     def test_quote_aggregation_spread_features(self):
         rows = aggregate_quotes('AAPL', [

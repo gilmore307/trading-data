@@ -17,7 +17,7 @@ from trading_data.source_availability.secrets import load_secret_alias, public_s
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
-EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "trade_volume", "trade_vwap", "trade_open", "trade_high", "trade_low", "trade_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
+EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
 DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
 
@@ -182,16 +182,16 @@ def aggregate_trades(symbol: str, trades: list[dict[str, Any]], timeframe: str) 
         key = bucket.isoformat()
         price = float(trade.get("p") or 0)
         size = int(trade.get("s") or 0)
-        row = buckets.setdefault(key, {"data_kind": "_transient_trade_interval", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "trade_count": 0, "trade_volume": 0, "trade_notional": 0.0, "trade_open": price, "trade_high": price, "trade_low": price, "trade_close": price, "first_trade_ts_et": _et_iso(ts), "last_trade_ts_et": _et_iso(ts)})
+        row = buckets.setdefault(key, {"data_kind": "_transient_trade_interval", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "trade_count": 0, "volume": 0, "trade_notional": 0.0, "open": price, "high": price, "low": price, "close": price, "first_trade_ts_et": _et_iso(ts), "last_trade_ts_et": _et_iso(ts)})
         row["trade_count"] += 1
-        row["trade_volume"] += size
+        row["volume"] += size
         row["trade_notional"] += price * size
-        row["trade_high"] = max(row["trade_high"], price)
-        row["trade_low"] = min(row["trade_low"], price)
-        row["trade_close"] = price
+        row["high"] = max(row["high"], price)
+        row["low"] = min(row["low"], price)
+        row["close"] = price
         row["last_trade_ts_et"] = _et_iso(ts)
     for row in buckets.values():
-        row["trade_vwap"] = round(row["trade_notional"] / row["trade_volume"], 10) if row["trade_volume"] else None
+        row["vwap"] = round(row["trade_notional"] / row["volume"], 10) if row["volume"] else None
         row["trade_notional"] = round(row["trade_notional"], 6)
     return [buckets[key] for key in sorted(buckets)]
 
@@ -246,7 +246,7 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
     for key in sorted(set(trade_by_bucket) | set(quote_by_bucket)):
         t = trade_by_bucket.get(key, {})
         q = quote_by_bucket.get(key, {})
-        trade_vwap = t.get("trade_vwap")
+        vwap = t.get("vwap")
         avg_mid = q.get("avg_mid")
         rows.append({
             "symbol": symbol,
@@ -254,12 +254,12 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
             "interval_start_et": key,
             "trade_count": t.get("trade_count", 0),
             "quote_count": q.get("quote_count", 0),
-            "trade_volume": t.get("trade_volume", 0),
-            "trade_vwap": trade_vwap,
-            "trade_open": t.get("trade_open"),
-            "trade_high": t.get("trade_high"),
-            "trade_low": t.get("trade_low"),
-            "trade_close": t.get("trade_close"),
+            "volume": t.get("volume", 0),
+            "vwap": vwap,
+            "open": t.get("open"),
+            "high": t.get("high"),
+            "low": t.get("low"),
+            "close": t.get("close"),
             "avg_bid": q.get("avg_bid"),
             "avg_ask": q.get("avg_ask"),
             "avg_mid": avg_mid,
@@ -271,8 +271,8 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
             "last_bid": q.get("last_bid"),
             "last_ask": q.get("last_ask"),
             "last_mid": q.get("last_mid"),
-            "last_trade_price": t.get("trade_close"),
-            "vwap_minus_avg_mid": round(trade_vwap - avg_mid, 10) if isinstance(trade_vwap, (int, float)) and isinstance(avg_mid, (int, float)) else None,
+            "last_trade_price": t.get("close"),
+            "vwap_minus_avg_mid": round(vwap - avg_mid, 10) if isinstance(vwap, (int, float)) and isinstance(avg_mid, (int, float)) else None,
         })
     return rows
 

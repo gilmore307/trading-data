@@ -171,7 +171,7 @@ IV_ZSCORE_BY_EXPIRATION = field("fld_OPD043")
 OPTION_EVENT_DETAIL_STANDARD_CONTEXT = field("fld_OPD044")
 OPTION_EVENT_DETAIL_STANDARD_SOURCE = field("fld_OPD045")
 OPTION_EVENT_DETAIL_STANDARD_ID = field("fld_OPD046")
-OPTION_EVENT_DETAIL_STANDARD_GENERATED_AT_ET = field("fld_OPD047")
+GENERATED_AT_ET = field("fld_EVT037")
 OPTION_EVENT_DETAIL_CURRENT_STANDARD = field("fld_OPD048")
 OPTION_EVENT_STANDARD_MAX_PRICE_VS_ASK = field("fld_OPD049")
 OPTION_EVENT_STANDARD_MIN_ASK_TOUCH_RATIO = field("fld_OPD050")
@@ -295,7 +295,8 @@ def _current_standard(params: Mapping[str, Any]) -> tuple[dict[str, Any], dict[s
     context = dict(standard.get("standard_context") if isinstance(standard.get("standard_context"), Mapping) else {})
     context.setdefault("standard_source", "task_key_current_standard")
     context.setdefault("standard_id", _new_id("opt_evt_std"))
-    context.setdefault("standard_generated_at_et", _now_et())
+    context.setdefault("generated_at_et", context.get("standard_generated_at_et") or _now_et())
+    context.pop("standard_generated_at_et", None)
     return {key: dict(value) for key, value in indicators.items()}, context
 
 
@@ -633,13 +634,13 @@ def _build_event(
 
     event_id = _new_id("opt_evt")
     created_at = _iso(trade_ts) or window_start.isoformat()
-    updated_at = fetched.standard_context.get("standard_generated_at_et") or created_at
+    updated_at = fetched.standard_context.get("generated_at_et") or created_at
     detail_filename = f"{event_id}.csv"
     window_end = window_start + timedelta(seconds=SUPPORTED_TIMEFRAMES[fetched.timeframe])
     standard_context = {
         f(OPTION_EVENT_DETAIL_STANDARD_SOURCE): fetched.standard_context.get("standard_source"),
         f(OPTION_EVENT_DETAIL_STANDARD_ID): fetched.standard_context.get("standard_id"),
-        f(OPTION_EVENT_DETAIL_STANDARD_GENERATED_AT_ET): fetched.standard_context.get("standard_generated_at_et"),
+        f(GENERATED_AT_ET): fetched.standard_context.get("generated_at_et"),
     }
     detail: dict[str, Any] = {
         f(OPTION_EVENT_DETAIL_EVENT_ID): event_id,

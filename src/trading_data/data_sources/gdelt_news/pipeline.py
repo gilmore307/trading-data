@@ -63,7 +63,7 @@ ARTICLE_FIELDS = [
     "locations",
     "tone",
     "sharing_image",
-    "impact_scope_hint",
+    "impact_scope",
     "source_type",
 ]
 
@@ -290,7 +290,7 @@ def _tone(row: Mapping[str, Any]) -> str:
 
 
 def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> list[dict[str, Any]]:
-    impact_scope_hint = str(params.get("impact_scope_hint") or "market;sector;industry;theme")
+    impact_scope = str(params.get("impact_scope") or "market;sector;industry;theme")
     output: list[dict[str, Any]] = []
     for row in rows:
         url = str(row.get("url") or "").strip()
@@ -311,7 +311,7 @@ def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> 
             "locations": str(row.get("locations") or ""),
             "tone": _tone(row),
             "sharing_image": str(row.get("sharing_image") or ""),
-            "impact_scope_hint": impact_scope_hint,
+            "impact_scope": impact_scope,
             "source_type": "gdelt_gkg_article",
         })
     return output

@@ -148,13 +148,12 @@ GDELT_ORGANIZATIONS = field("fld_GDLT010")
 GDELT_LOCATIONS = field("fld_GDLT011")
 GDELT_TONE = field("fld_GDLT012")
 GDELT_SHARING_IMAGE = field("fld_GDLT013")
-GDELT_IMPACT_SCOPE_HINT = field("fld_GDLT014")
 GDELT_SOURCE_TYPE = field("fld_EVT016")
 
 TRADING_ECONOMICS_EVENT_TIME_ET = field("fld_EVT013")
 TRADING_ECONOMICS_COUNTRY = field("fld_TEC002")
 TRADING_ECONOMICS_EVENT = field("fld_TEC003")
-TRADING_ECONOMICS_CATEGORY = field("fld_TEC004")
+SOURCE_EVENT_TYPE = field("fld_TEC004")
 TRADING_ECONOMICS_REFERENCE = field("fld_TEC005")
 TRADING_ECONOMICS_ACTUAL = field("fld_TEC006")
 TRADING_ECONOMICS_PREVIOUS = field("fld_TEC007")
@@ -243,7 +242,7 @@ OPTION_EVENT_DETAIL_EVIDENCE_WINDOW = field("fld_ABN002")
 WINDOW_START_ET = field("fld_OPD006")
 WINDOW_END_ET = field("fld_OPD007")
 OPTION_EVENT_DETAIL_TRIGGERING_TRADE = field("fld_OPD008")
-OPTION_EVENT_DETAIL_SIDE_HINT = field("fld_OPD009")
+TRADE_SIDE_TYPE = field("fld_OPD009")
 OPTION_EVENT_DETAIL_QUOTE_CONTEXT = field("fld_OPD010")
 OPTION_EVENT_DETAIL_IV_CONTEXT = field("fld_OPD011")
 IV_PERCENTILE_BY_EXPIRATION = field("fld_OPD012")
@@ -343,12 +342,12 @@ def csv_template(relative_path: str, columns: Sequence[RegistryRef], values: Seq
 CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     csv_template(
         "gdelt/gdelt_article.preview.csv",
-        [GDELT_ARTICLE_ID, GDELT_ARTICLE_SEEN_AT_UTC, GDELT_SOURCE_DOMAIN, GDELT_ARTICLE_URL, GDELT_ARTICLE_LANGUAGE, GDELT_SOURCE_COUNTRY, GDELT_ARTICLE_TITLE, GDELT_THEMES, GDELT_PERSONS, GDELT_ORGANIZATIONS, GDELT_LOCATIONS, GDELT_TONE, GDELT_SHARING_IMAGE, GDELT_IMPACT_SCOPE_HINT, GDELT_SOURCE_TYPE],
+        [GDELT_ARTICLE_ID, GDELT_ARTICLE_SEEN_AT_UTC, GDELT_SOURCE_DOMAIN, GDELT_ARTICLE_URL, GDELT_ARTICLE_LANGUAGE, GDELT_SOURCE_COUNTRY, GDELT_ARTICLE_TITLE, GDELT_THEMES, GDELT_PERSONS, GDELT_ORGANIZATIONS, GDELT_LOCATIONS, GDELT_TONE, GDELT_SHARING_IMAGE, EVENT_IMPACT_SCOPE, GDELT_SOURCE_TYPE],
         ["20260427123000-1", "2026-04-27T12:30:00Z", "example.com", "https://example.com/politics-economy-tech", "", "", "", "ECON_STOCKMARKET;TAX_FNCACT", "", "Federal Reserve", "US#United States#US", -1.2, "https://example.com/image.jpg", "market;sector;industry;theme", "gdelt_gkg_article"],
     ),
     csv_template(
         "trading_economics/trading_economics_calendar_event.preview.csv",
-        [TRADING_ECONOMICS_EVENT_TIME_ET, TRADING_ECONOMICS_COUNTRY, TRADING_ECONOMICS_EVENT, TRADING_ECONOMICS_CATEGORY, TRADING_ECONOMICS_REFERENCE, TRADING_ECONOMICS_ACTUAL, TRADING_ECONOMICS_PREVIOUS, TRADING_ECONOMICS_CONSENSUS, TRADING_ECONOMICS_FORECAST, TRADING_ECONOMICS_REVISED, TRADING_ECONOMICS_IMPORTANCE, TRADING_ECONOMICS_SYMBOL, TRADING_ECONOMICS_SOURCE_URL],
+        [TRADING_ECONOMICS_EVENT_TIME_ET, TRADING_ECONOMICS_COUNTRY, TRADING_ECONOMICS_EVENT, SOURCE_EVENT_TYPE, TRADING_ECONOMICS_REFERENCE, TRADING_ECONOMICS_ACTUAL, TRADING_ECONOMICS_PREVIOUS, TRADING_ECONOMICS_CONSENSUS, TRADING_ECONOMICS_FORECAST, TRADING_ECONOMICS_REVISED, TRADING_ECONOMICS_IMPORTANCE, TRADING_ECONOMICS_SYMBOL, TRADING_ECONOMICS_SOURCE_URL],
         ["2026-04-03T08:30:00-04:00", "United States", "Non Farm Payrolls", "Labour", "Mar", "228K", "117K", "135K", "140K", "", "3", "", "https://tradingeconomics.com/united-states/calendar"],
     ),
     csv_template(
@@ -419,7 +418,7 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     csv_template(
         "thetadata/option_activity_event_detail.preview.csv",
         [OPTION_EVENT_DETAIL_EVENT_ID, TIMELINE_CREATED_AT, TIMELINE_UPDATED_AT, OPTION_UNDERLYING, OPTION_EXPIRATION, OPTION_RIGHT, OPTION_STRIKE, OPTION_CONTRACT_SYMBOL, OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS, OPTION_EVENT_DETAIL_EVIDENCE_WINDOW, OPTION_EVENT_DETAIL_TRIGGERING_TRADE, OPTION_EVENT_DETAIL_QUOTE_CONTEXT, OPTION_EVENT_DETAIL_IV_CONTEXT, OPTION_EVENT_DETAIL_SOURCE_REFS],
-        ["opt_evt_N7Q4K2M9", "2026-04-24T09:30:02.267000-04:00", "2026-04-24T09:30:02.500000-04:00", "AAPL", "2026-05-15", "CALL", 270.0, "AAPL 2026-05-15 270C", '{"trade_at_ask":{"statistics":{"trade_price":1.25,"ask_touch_ratio":1.0},"current_standard":{"max_price_vs_ask":0.01,"min_ask_touch_ratio":0.95}}}', '{"timeframe":"30Min","window_start_et":"2026-04-24T09:30:00-04:00","window_end_et":"2026-04-24T10:00:00-04:00"}', '{"side_hint":"ask_side","trade_timestamp_et":"2026-04-24T09:30:02.267000-04:00","trade_price":1.25,"trade_size":80}', '{"timestamp_et":"2026-04-24T09:30:02.260000-04:00","bid":1.15,"ask":1.25,"mid":1.2}', '{"implied_vol":0.64,"iv_percentile_by_expiration":0.97}', '{"provider":"thetadata","raw_persistence":"not_persisted_by_default"}'],
+        ["opt_evt_N7Q4K2M9", "2026-04-24T09:30:02.267000-04:00", "2026-04-24T09:30:02.500000-04:00", "AAPL", "2026-05-15", "CALL", 270.0, "AAPL 2026-05-15 270C", '{"trade_at_ask":{"statistics":{"trade_price":1.25,"ask_touch_ratio":1.0},"current_standard":{"max_price_vs_ask":0.01,"min_ask_touch_ratio":0.95}}}', '{"timeframe":"30Min","window_start_et":"2026-04-24T09:30:00-04:00","window_end_et":"2026-04-24T10:00:00-04:00"}', '{"trade_side_type":"ask_side","trade_timestamp_et":"2026-04-24T09:30:02.267000-04:00","trade_price":1.25,"trade_size":80}', '{"timestamp_et":"2026-04-24T09:30:02.260000-04:00","bid":1.15,"ask":1.25,"mid":1.2}', '{"implied_vol":0.64,"iv_percentile_by_expiration":0.97}', '{"provider":"thetadata","raw_persistence":"not_persisted_by_default"}'],
     ),
     csv_template(
         "thetadata/option_bar.preview.csv",

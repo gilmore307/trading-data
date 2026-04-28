@@ -19,13 +19,13 @@ Optional params:
 - `max_rows` — 1 to 1000; defaults to `100`.
 - `maximum_bytes_billed` — optional BigQuery per-query cap. Omit for normal day-window fetches within the free/credit budget.
 - `dry_run` — optional BigQuery dry-run estimate mode.
-- `query_terms` — optional string or list of strings searched against GDELT GKG URL/theme/name/entity fields; overrides default category terms when supplied.
+- `query_terms` — optional string or list of strings searched against GDELT GKG URL/theme/name/entity fields; overrides default topic category terms when supplied.
 - `topic_categories` — defaults to `politics,economy,war,technology`; supported values are `politics`, `economy`, `war`, and `technology`.
 - `search_fields` — `themes_text`, `url_only`, or `all_text`; defaults to `themes_text`.
 - `focus` — defaults to `us_market`; use `none` only for explicit broader research.
 - `source_domain_allowlist` — optional string/list of domains; defaults to a curated U.S./U.S.-market news-domain allowlist used together with U.S. location and U.S.-market text filters.
 - `source_domain_contains` — optional extra domain substring filter.
-- `impact_scope_hint` — default hint for event extraction, defaults to `market;sector;industry;theme`.
+- `impact_scope` — default hint for event extraction, defaults to `market;sector;industry;theme`.
 
 Outputs:
 

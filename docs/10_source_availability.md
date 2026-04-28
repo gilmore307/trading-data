@@ -9,7 +9,7 @@ The inventory exists to support two decisions before connector implementation:
 
 ## Availability Rules
 
-- Verify source availability from official documentation or source pages before implementation depends on a data category.
+- Verify source availability from official documentation or source pages before implementation depends on a data source category.
 - Use `python -m trading_data.source_availability` for bounded smoke probes after documentation review; default tests for this probe package must not require network access or secrets.
 - Register accepted obtainable categories as `kind=data_kind` in `trading-main`.
 - Keep `data_bundle` and `data_kind` separate: bundles route execution; data kinds name requested/produced data categories.

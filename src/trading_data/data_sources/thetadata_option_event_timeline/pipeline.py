@@ -142,7 +142,7 @@ OPTION_EVENT_DETAIL_EVIDENCE_WINDOW = field("fld_ABN002")
 WINDOW_START_ET = field("fld_OPD006")
 WINDOW_END_ET = field("fld_OPD007")
 OPTION_EVENT_DETAIL_TRIGGERING_TRADE = field("fld_OPD008")
-OPTION_EVENT_DETAIL_SIDE_HINT = field("fld_OPD009")
+TRADE_SIDE_TYPE = field("fld_OPD009")
 OPTION_EVENT_DETAIL_QUOTE_CONTEXT = field("fld_OPD010")
 OPTION_EVENT_DETAIL_IV_CONTEXT = field("fld_OPD011")
 IV_PERCENTILE_BY_EXPIRATION = field("fld_OPD012")
@@ -660,7 +660,7 @@ def _build_event(
             f(WINDOW_END_ET): window_end.isoformat(),
         },
         f(OPTION_EVENT_DETAIL_TRIGGERING_TRADE): {
-            f(OPTION_EVENT_DETAIL_SIDE_HINT): "ask_side" if trade_at_ask_key in triggered else None,
+            f(TRADE_SIDE_TYPE): "ask_side" if trade_at_ask_key in triggered else None,
             f(TRADE_TIMESTAMP_ET): created_at,
             f(TRADE_PRICE): price,
             f(TRADE_SIZE): size,

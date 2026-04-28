@@ -57,7 +57,7 @@ ARTICLE_FIELDS = [
     "language",
     "source_country",
     "title",
-    "themes",
+    "source_theme_tags",
     "persons",
     "organizations",
     "locations",
@@ -207,11 +207,11 @@ def build_sql(params: Mapping[str, Any]) -> tuple[str, int]:
     max_rows = int(params.get("max_rows", DEFAULT_MAX_ROWS))
     if max_rows < 1 or max_rows > 1000:
         raise GdeltNewsError("params.max_rows must be between 1 and 1000")
-    fields = str(params.get("search_fields") or "themes_text")
-    if fields not in {"themes_text", "url_only", "all_text"}:
-        raise GdeltNewsError("params.search_fields must be themes_text, url_only, or all_text")
+    fields = str(params.get("search_fields") or "source_theme_tags_text")
+    if fields not in {"source_theme_tags_text", "url_only", "all_text"}:
+        raise GdeltNewsError("params.search_fields must be source_theme_tags_text, url_only, or all_text")
     search_expr = {
-        "themes_text": "LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(Persons,'')))",
+        "source_theme_tags_text": "LOWER(CONCAT(IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(Persons,'')))",
         "url_only": "LOWER(IFNULL(DocumentIdentifier,''))",
         "all_text": "LOWER(CONCAT(IFNULL(DocumentIdentifier,''), ' ', IFNULL(V2Themes,''), ' ', IFNULL(Themes,''), ' ', IFNULL(AllNames,''), ' ', IFNULL(Organizations,''), ' ', IFNULL(Persons,''), ' ', IFNULL(Locations,'')))",
     }[fields]
@@ -233,7 +233,7 @@ SELECT
   DATE AS gdelt_date,
   SourceCommonName AS source_domain,
   DocumentIdentifier AS url,
-  V2Themes AS themes,
+  V2Themes AS source_theme_tags,
   V2Persons AS persons,
   V2Organizations AS organizations,
   V2Locations AS locations,
@@ -305,7 +305,7 @@ def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> 
             "language": "",
             "source_country": "",
             "title": "",
-            "themes": str(row.get("themes") or ""),
+            "source_theme_tags": str(row.get("source_theme_tags") or ""),
             "persons": str(row.get("persons") or ""),
             "organizations": str(row.get("organizations") or ""),
             "locations": str(row.get("locations") or ""),

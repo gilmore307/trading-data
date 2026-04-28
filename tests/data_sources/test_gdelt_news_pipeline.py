@@ -32,7 +32,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
                 "gdelt_date": "20260427123000",
                 "source_domain": "example.com",
                 "url": "https://example.com/politics-economy-tech",
-                "themes": "ECON_STOCKMARKET;TAX_FNCACT",
+                "source_theme_tags": "ECON_STOCKMARKET;TAX_FNCACT",
                 "persons": "",
                 "organizations": "Federal Reserve",
                 "locations": "US#United States#US",

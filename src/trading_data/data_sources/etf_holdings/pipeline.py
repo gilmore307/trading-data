@@ -33,7 +33,7 @@ FIELDS = [
     "cusip",
     "sedol",
     "asset_class",
-    "sector",
+    "sector_type",
     "source_url",
 ]
 
@@ -159,7 +159,8 @@ def _canonical_key(key: str) -> str:
         "cusip": "cusip",
         "sedol": "sedol",
         "asset_class": "asset_class",
-        "sector": "sector",
+        "sector": "sector_type",
+        "sector_type": "sector_type",
         "date": "as_of_date",
         "as_of_date": "as_of_date",
     }
@@ -185,7 +186,7 @@ def _normalize_row(raw: Mapping[str, Any], *, etf_ticker: str, issuer: str, sour
         "cusip": mapped.get("cusip", ""),
         "sedol": mapped.get("sedol", ""),
         "asset_class": mapped.get("asset_class", ""),
-        "sector": mapped.get("sector", ""),
+        "sector_type": mapped.get("sector_type", ""),
         "source_url": source_url,
     }
 

@@ -34,7 +34,7 @@
         "SPY": {
           "issuer": "state_street",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "large_cap",
             "broad_market"
           ]
@@ -42,7 +42,7 @@
         "QQQ": {
           "issuer": "invesco",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "nasdaq",
             "growth",
             "technology"
@@ -51,7 +51,7 @@
         "IWM": {
           "issuer": "blackrock",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "small_cap"
           ]
         }
@@ -60,28 +60,28 @@
         "XLK": {
           "issuer": "state_street",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "technology"
           ]
         },
         "XLF": {
           "issuer": "state_street",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "financials"
           ]
         },
         "XLE": {
           "issuer": "state_street",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "energy"
           ]
         },
         "XLV": {
           "issuer": "state_street",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "healthcare"
           ]
         }
@@ -90,7 +90,7 @@
         "SMH": {
           "issuer": "vaneck",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "semiconductor",
             "AI"
           ]
@@ -98,14 +98,14 @@
         "SOXX": {
           "issuer": "blackrock",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "semiconductor"
           ]
         },
         "BOTZ": {
           "issuer": "global_x",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "robotics",
             "AI"
           ]
@@ -113,7 +113,7 @@
         "CIBR": {
           "issuer": "first_trust",
           "grain": "1Day",
-          "style_tags": [
+          "exposure_tags": [
             "cybersecurity"
           ]
         }

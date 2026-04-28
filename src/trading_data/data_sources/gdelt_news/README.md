@@ -21,7 +21,7 @@ Optional params:
 - `dry_run` — optional BigQuery dry-run estimate mode.
 - `query_terms` — optional string or list of strings searched against GDELT GKG URL/theme/name/entity fields; overrides default topic category terms when supplied.
 - `topic_categories` — defaults to `politics,economy,war,technology`; supported values are `politics`, `economy`, `war`, and `technology`.
-- `search_fields` — `themes_text`, `url_only`, or `all_text`; defaults to `themes_text`.
+- `search_fields` — `source_theme_tags_text`, `url_only`, or `all_text`; defaults to `source_theme_tags_text`.
 - `focus` — defaults to `us_market`; use `none` only for explicit broader research.
 - `source_domain_allowlist` — optional string/list of domains; defaults to a curated U.S./U.S.-market news-domain allowlist used together with U.S. location and U.S.-market text filters.
 - `source_domain_contains` — optional extra domain substring filter.

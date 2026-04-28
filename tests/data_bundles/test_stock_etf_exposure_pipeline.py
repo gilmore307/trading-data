@@ -11,12 +11,12 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             holdings = Path(tmp) / "etf_holding_snapshot.csv"
             with holdings.open("w", newline="", encoding="utf-8") as handle:
-                writer = csv.DictWriter(handle, fieldnames=["etf_ticker", "issuer", "as_of_date", "holding_ticker", "holding_name", "weight", "shares", "market_value", "cusip", "sedol", "asset_class", "sector", "source_url"])
+                writer = csv.DictWriter(handle, fieldnames=["etf_ticker", "issuer", "as_of_date", "holding_ticker", "holding_name", "weight", "shares", "market_value", "cusip", "sedol", "asset_class", "sector_type", "source_url"])
                 writer.writeheader()
                 writer.writerows([
-                    {"etf_ticker": "SMH", "issuer": "vaneck", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "20", "sector": "Information Technology"},
-                    {"etf_ticker": "SOXX", "issuer": "ishares", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "10", "sector": "Information Technology"},
-                    {"etf_ticker": "XLK", "issuer": "spdr", "as_of_date": "2026-04-24", "holding_ticker": "AAPL", "holding_name": "Apple Inc", "weight": "15", "sector": "Information Technology"},
+                    {"etf_ticker": "SMH", "issuer": "vaneck", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "20", "sector_type": "Information Technology"},
+                    {"etf_ticker": "SOXX", "issuer": "ishares", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "10", "sector_type": "Information Technology"},
+                    {"etf_ticker": "XLK", "issuer": "spdr", "as_of_date": "2026-04-24", "holding_ticker": "AAPL", "holding_name": "Apple Inc", "weight": "15", "sector_type": "Information Technology"},
                 ])
             equity_bars = Path(tmp) / "equity_bar.csv"
             equity_bars.write_text("symbol,timestamp,close\nNVDA,2026-04-24T16:00:00-04:00,100\n", encoding="utf-8")
@@ -30,9 +30,9 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                         "holdings_csv_paths": [str(holdings)],
                         "available_time_et": "2026-04-25T09:30:00-04:00",
                         "etf_scores": {
-                            "SMH": {"sector_score": 0.9, "theme_score": 0.8, "style_tags": ["semiconductor", "AI"]},
-                            "SOXX": {"sector_score": 0.7, "theme_score": 0.6, "style_tags": "semiconductor"},
-                            "XLK": {"sector_score": 0.5, "theme_score": 0.4, "style_tags": "large_cap_growth"},
+                            "SMH": {"sector_score": 0.9, "theme_score": 0.8, "exposure_tags": ["semiconductor", "AI"]},
+                            "SOXX": {"sector_score": 0.7, "theme_score": 0.6, "exposure_tags": "semiconductor"},
+                            "XLK": {"sector_score": 0.5, "theme_score": 0.4, "exposure_tags": "large_cap_growth"},
                         },
                     },
                 },
@@ -49,7 +49,7 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
             self.assertEqual(rows["NVDA"]["top_exposure_etf"], "SMH")
             self.assertEqual(rows["NVDA"]["total_etf_exposure_score"], "0.3")
             self.assertEqual(rows["NVDA"]["weighted_sector_score"], "0.25")
-            self.assertIn("semiconductor", rows["NVDA"]["style_tags"])
+            self.assertIn("semiconductor", rows["NVDA"]["exposure_tags"])
             manifest = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "02_security_selection_model_inputs.csv"
             with manifest.open(newline="", encoding="utf-8") as handle:
                 manifest_rows = {row["input_role"]: row for row in csv.DictReader(handle)}

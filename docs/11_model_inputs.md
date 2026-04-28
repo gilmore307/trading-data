@@ -51,7 +51,7 @@ Important fields:
 - `total_etf_exposure_score`
 - `weighted_sector_score`
 - `weighted_theme_score`
-- `style_tags`
+- `exposure_tags`
 - `source_etf_count`
 - `source_snapshot_refs`
 - `available_time_et`

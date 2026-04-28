@@ -20,7 +20,7 @@ STOCK_ETF_EXPOSURE_FIELDS = [
     "total_etf_exposure_score",
     "weighted_sector_score",
     "weighted_theme_score",
-    "style_tags",
+    "exposure_tags",
     "source_etf_count",
     "source_snapshot_refs",
     "available_time_et",
@@ -81,7 +81,7 @@ def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -
         row["weighted_theme"] += weight * theme_score
         if weight > row["top"][1]:
             row["top"] = (etf, weight)
-        row["tags"].extend(_style_tags(score, str(holding.get("sector") or "")))
+        row["tags"].extend(_exposure_tags(score, str(holding.get("sector_type") or "")))
         as_of = str(holding.get("as_of_date") or default_as_of_date)
         row["refs"].append(f"{etf}:{as_of}" if as_of else etf)
 
@@ -97,7 +97,7 @@ def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -
             "total_etf_exposure_score": _fmt(float(item["weighted_total"])),
             "weighted_sector_score": _fmt(float(item["weighted_sector"])),
             "weighted_theme_score": _fmt(float(item["weighted_theme"])),
-            "style_tags": ";".join(sorted(set(item["tags"]))),
+            "exposure_tags": ";".join(sorted(set(item["tags"]))),
             "source_etf_count": str(len(set(item["etfs"]))),
             "source_snapshot_refs": ";".join(sorted(set(item["refs"]))),
             "available_time_et": available_time_et,
@@ -156,13 +156,13 @@ def _fmt(value: float) -> str:
     return f"{value:.6f}".rstrip("0").rstrip(".")
 
 
-def _style_tags(score: Mapping[str, Any], sector: str) -> list[str]:
+def _exposure_tags(score: Mapping[str, Any], sector_type: str) -> list[str]:
     tags: list[str] = []
-    raw = score.get("style_tags") or []
+    raw = score.get("exposure_tags") or []
     if isinstance(raw, str):
         tags.extend([part.strip() for part in raw.replace(",", ";").split(";") if part.strip()])
     elif isinstance(raw, Iterable):
         tags.extend([str(part).strip() for part in raw if str(part).strip()])
-    if sector:
-        tags.append(sector.lower().replace(" ", "_"))
+    if sector_type:
+        tags.append(sector_type.lower().replace(" ", "_"))
     return tags

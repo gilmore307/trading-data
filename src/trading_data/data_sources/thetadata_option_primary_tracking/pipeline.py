@@ -59,7 +59,7 @@ class StepResult:
 @dataclass(frozen=True)
 class RegistryRef:
     id: str
-    expected_kind: str
+    expected_kinds: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -91,9 +91,9 @@ class RegistryNames:
         row = self._rows.get(ref.id)
         if row is None:
             raise ThetaDataOptionPrimaryTrackingError(f"registry id not found: {ref.id}")
-        if row["kind"] != ref.expected_kind:
+        if row["kind"] not in ref.expected_kinds:
             raise ThetaDataOptionPrimaryTrackingError(
-                f"registry id {ref.id} expected kind={ref.expected_kind}, got kind={row['kind']}"
+                f"registry id {ref.id} expected kind in {ref.expected_kinds}, got kind={row['kind']}"
             )
         return row["payload"]
 
@@ -101,11 +101,11 @@ class RegistryNames:
 # Output field ids. Do not replace these with literal output field names; the
 # bundle resolves current registry payloads when it materializes rows.
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, "field")
+    return RegistryRef(item_id, ("field", "temporal_field", "classification_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, "data_kind")
+    return RegistryRef(item_id, ("data_kind",))
 
 
 DATA_KIND = field("fld_EKIND001")

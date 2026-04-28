@@ -28,7 +28,7 @@ class RegistryRef:
     """Stable registry id reference used inside generated template specs."""
 
     id: str
-    expected_kind: str
+    expected_kinds: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -49,11 +49,11 @@ class JsonTemplate:
 
 
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, "field")
+    return RegistryRef(item_id, ("field", "temporal_field", "classification_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, "data_kind")
+    return RegistryRef(item_id, ("data_kind",))
 
 
 # Field registry ids. Keep these values stable; do not replace them with
@@ -94,8 +94,8 @@ TRADE_VWAP_MINUS_QUOTE_AVG_MID = field("fld_MKT018")
 
 TIMELINE_ID = field("fld_A7K3P2Q9")
 TIMELINE_HEADLINE = field("fld_EVT001")
-TIMELINE_CREATED_AT_ET = field("fld_EVT003")
-TIMELINE_UPDATED_AT_ET = field("fld_EVT004")
+TIMELINE_CREATED_AT = field("fld_P8L2C4TY")
+TIMELINE_UPDATED_AT = field("fld_Q5F9M2NZ")
 TIMELINE_SYMBOLS = field("fld_EVT005")
 TIMELINE_SUMMARY = field("fld_EVT020")
 TIMELINE_URL = field("fld_EVT007")
@@ -314,9 +314,9 @@ class Registry:
         row = self._by_id.get(ref.id)
         if row is None:
             raise KeyError(f"Registry id not found: {ref.id}")
-        if row["kind"] != ref.expected_kind:
+        if row["kind"] not in ref.expected_kinds:
             raise ValueError(
-                f"Registry id {ref.id} expected kind={ref.expected_kind}, got kind={row['kind']}"
+                f"Registry id {ref.id} expected kind in {ref.expected_kinds}, got kind={row['kind']}"
             )
         return row["payload"]
 
@@ -378,7 +378,7 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "alpaca/equity_news.preview.csv",
-        [TIMELINE_ID, TIMELINE_HEADLINE, TIMELINE_CREATED_AT_ET, TIMELINE_UPDATED_AT_ET, TIMELINE_SYMBOLS, TIMELINE_SUMMARY, TIMELINE_URL],
+        [TIMELINE_ID, TIMELINE_HEADLINE, TIMELINE_CREATED_AT, TIMELINE_UPDATED_AT, TIMELINE_SYMBOLS, TIMELINE_SUMMARY, TIMELINE_URL],
         [36564250, "Bank Of America Predicts 10 2024 Market Surprises: From Booming IPOs To Japanese Equity Surge", "2024-01-09T14:46:19-05:00", "2024-01-09T14:46:19-05:00", "AAPL;EWJ;IHE;KBE;NVDA", "Bank of America lists 10 market surprises...", "https://www.benzinga.com/..."],
     ),
     csv_template(
@@ -413,12 +413,12 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
     ),
     csv_template(
         "thetadata/option_activity_event.preview.csv",
-        [TIMELINE_ID, TIMELINE_HEADLINE, TIMELINE_CREATED_AT_ET, TIMELINE_UPDATED_AT_ET, TIMELINE_SYMBOLS, TIMELINE_SUMMARY, TIMELINE_URL],
+        [TIMELINE_ID, TIMELINE_HEADLINE, TIMELINE_CREATED_AT, TIMELINE_UPDATED_AT, TIMELINE_SYMBOLS, TIMELINE_SUMMARY, TIMELINE_URL],
         ["opt_evt_N7Q4K2M9", "AAPL May 15 270C draws opening ask-side activity with elevated IV", "2026-04-24T09:30:02.267000-04:00", "2026-04-24T09:30:02.500000-04:00", "AAPL;AAPL 2026-05-15 270C", "trade_at_ask;opening_activity;iv_high_cross_section", "opt_evt_N7Q4K2M9.csv"],
     ),
     csv_template(
         "thetadata/option_activity_event_detail.preview.csv",
-        [OPTION_EVENT_DETAIL_EVENT_ID, TIMELINE_CREATED_AT_ET, TIMELINE_UPDATED_AT_ET, OPTION_UNDERLYING, OPTION_EXPIRATION, OPTION_RIGHT, OPTION_STRIKE, OPTION_CONTRACT_SYMBOL, OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS, OPTION_EVENT_DETAIL_EVIDENCE_WINDOW, OPTION_EVENT_DETAIL_TRIGGERING_TRADE, OPTION_EVENT_DETAIL_QUOTE_CONTEXT, OPTION_EVENT_DETAIL_IV_CONTEXT, OPTION_EVENT_DETAIL_SOURCE_REFS],
+        [OPTION_EVENT_DETAIL_EVENT_ID, TIMELINE_CREATED_AT, TIMELINE_UPDATED_AT, OPTION_UNDERLYING, OPTION_EXPIRATION, OPTION_RIGHT, OPTION_STRIKE, OPTION_CONTRACT_SYMBOL, OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS, OPTION_EVENT_DETAIL_EVIDENCE_WINDOW, OPTION_EVENT_DETAIL_TRIGGERING_TRADE, OPTION_EVENT_DETAIL_QUOTE_CONTEXT, OPTION_EVENT_DETAIL_IV_CONTEXT, OPTION_EVENT_DETAIL_SOURCE_REFS],
         ["opt_evt_N7Q4K2M9", "2026-04-24T09:30:02.267000-04:00", "2026-04-24T09:30:02.500000-04:00", "AAPL", "2026-05-15", "CALL", 270.0, "AAPL 2026-05-15 270C", '{"trade_at_ask":{"statistics":{"trade_price":1.25,"ask_touch_ratio":1.0},"current_standard":{"max_price_vs_ask":0.01,"min_ask_touch_ratio":0.95}}}', '{"timeframe":"30Min","window_start_et":"2026-04-24T09:30:00-04:00","window_end_et":"2026-04-24T10:00:00-04:00"}', '{"side_hint":"ask_side","trade_timestamp_et":"2026-04-24T09:30:02.267000-04:00","trade_price":1.25,"trade_size":80}', '{"timestamp_et":"2026-04-24T09:30:02.260000-04:00","bid":1.15,"ask":1.25,"mid":1.2}', '{"implied_vol":0.64,"iv_percentile_by_expiration":0.97}', '{"provider":"thetadata","raw_persistence":"not_persisted_by_default"}'],
     ),
     csv_template(

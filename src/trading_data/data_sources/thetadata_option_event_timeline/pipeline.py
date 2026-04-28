@@ -60,7 +60,7 @@ class StepResult:
 @dataclass(frozen=True)
 class RegistryRef:
     id: str
-    expected_kind: str
+    expected_kinds: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -96,9 +96,9 @@ class RegistryNames:
         row = self._rows.get(ref.id)
         if row is None:
             raise ThetaDataOptionEventTimelineError(f"registry id not found: {ref.id}")
-        if row["kind"] != ref.expected_kind:
+        if row["kind"] not in ref.expected_kinds:
             raise ThetaDataOptionEventTimelineError(
-                f"registry id {ref.id} expected kind={ref.expected_kind}, got kind={row['kind']}"
+                f"registry id {ref.id} expected kind in {ref.expected_kinds}, got kind={row['kind']}"
             )
         return row["payload"]
 
@@ -106,11 +106,11 @@ class RegistryNames:
 # Output field ids. Do not replace these with literal output field names; the
 # bundle resolves current registry payloads when it materializes rows.
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, "field")
+    return RegistryRef(item_id, ("field", "temporal_field", "classification_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, "data_kind")
+    return RegistryRef(item_id, ("data_kind",))
 
 
 DATA_KIND = field("fld_EKIND001")
@@ -128,8 +128,8 @@ IMPLIED_VOL = field("fld_OPT045")
 
 TIMELINE_ID = field("fld_A7K3P2Q9")
 TIMELINE_HEADLINE = field("fld_EVT001")
-TIMELINE_CREATED_AT_ET = field("fld_EVT003")
-TIMELINE_UPDATED_AT_ET = field("fld_EVT004")
+TIMELINE_CREATED_AT = field("fld_P8L2C4TY")
+TIMELINE_UPDATED_AT = field("fld_Q5F9M2NZ")
 TIMELINE_SYMBOLS = field("fld_EVT005")
 TIMELINE_SUMMARY = field("fld_EVT020")
 TIMELINE_URL = field("fld_EVT007")
@@ -186,8 +186,8 @@ OPTION_ACTIVITY_EVENT_DETAIL = data_kind("dki_OPDET01")
 CSV_FIELD_REFS = [
     TIMELINE_ID,
     TIMELINE_HEADLINE,
-    TIMELINE_CREATED_AT_ET,
-    TIMELINE_UPDATED_AT_ET,
+    TIMELINE_CREATED_AT,
+    TIMELINE_UPDATED_AT,
     TIMELINE_SYMBOLS,
     TIMELINE_SUMMARY,
     TIMELINE_URL,
@@ -643,8 +643,8 @@ def _build_event(
     }
     detail: dict[str, Any] = {
         f(OPTION_EVENT_DETAIL_EVENT_ID): event_id,
-        f(TIMELINE_CREATED_AT_ET): created_at,
-        f(TIMELINE_UPDATED_AT_ET): updated_at,
+        f(TIMELINE_CREATED_AT): created_at,
+        f(TIMELINE_UPDATED_AT): updated_at,
         f(OPTION_EVENT_DETAIL_STANDARD_CONTEXT): standard_context,
         f(OPTION_UNDERLYING): fetched.underlying,
         f(OPTION_EVENT_DETAIL_CONTRACT): {
@@ -686,8 +686,8 @@ def _build_event(
     row = {
         f(TIMELINE_ID): event_id,
         f(TIMELINE_HEADLINE): _event_headline(contract_symbol, order),
-        f(TIMELINE_CREATED_AT_ET): created_at,
-        f(TIMELINE_UPDATED_AT_ET): updated_at,
+        f(TIMELINE_CREATED_AT): created_at,
+        f(TIMELINE_UPDATED_AT): updated_at,
         f(TIMELINE_SYMBOLS): f"{fetched.underlying};{contract_symbol}",
         f(TIMELINE_SUMMARY): ";".join(order),
         f(TIMELINE_URL): detail_filename,
@@ -776,8 +776,8 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
     url_field = names.payload(TIMELINE_URL)
     detail_fields = [
         names.payload(OPTION_EVENT_DETAIL_EVENT_ID),
-        names.payload(TIMELINE_CREATED_AT_ET),
-        names.payload(TIMELINE_UPDATED_AT_ET),
+        names.payload(TIMELINE_CREATED_AT),
+        names.payload(TIMELINE_UPDATED_AT),
         names.payload(OPTION_UNDERLYING),
         names.payload(OPTION_EXPIRATION),
         names.payload(OPTION_RIGHT),
@@ -798,8 +798,8 @@ def save(context: BundleContext, clean_result: StepResult) -> StepResult:
         contract = detail.get(contract_field, {})
         detail_row = {
             names.payload(OPTION_EVENT_DETAIL_EVENT_ID): detail.get(names.payload(OPTION_EVENT_DETAIL_EVENT_ID)),
-            names.payload(TIMELINE_CREATED_AT_ET): detail.get(names.payload(TIMELINE_CREATED_AT_ET)),
-            names.payload(TIMELINE_UPDATED_AT_ET): detail.get(names.payload(TIMELINE_UPDATED_AT_ET)),
+            names.payload(TIMELINE_CREATED_AT): detail.get(names.payload(TIMELINE_CREATED_AT)),
+            names.payload(TIMELINE_UPDATED_AT): detail.get(names.payload(TIMELINE_UPDATED_AT)),
             names.payload(OPTION_UNDERLYING): detail.get(names.payload(OPTION_UNDERLYING)),
             names.payload(OPTION_EXPIRATION): contract.get(names.payload(OPTION_EXPIRATION)),
             names.payload(OPTION_RIGHT): contract.get(names.payload(OPTION_RIGHT)),

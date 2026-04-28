@@ -84,8 +84,8 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Status:** `implemented`.
 - **Persistence policy:** Persist triggered event rows as CSV plus one compact detail JSON per event. Do not persist process data, transient trade_quote rows, or periodic chain snapshots in this bundle.
 - **Earliest available range:** `unknown`; trade_quote live preview confirmed AAPL 2026-05-15 270 CALL on 2026-04-24.
-- **Default timestamp semantics:** `created_at_et` is the event source time and `updated_at_et` is the detection/report time, both in `America/New_York`.
-- **Natural grain:** One detected option-activity event using the shared model-facing timeline fields: `id`, `headline`, `created_at_et`, `updated_at_et`, `symbols`, `summary`, `url`.
+- **Default timestamp semantics:** `created_at` is the event source time and `updated_at` is the detection/report time, both in `America/New_York`.
+- **Natural grain:** One detected option-activity event using the shared model-facing timeline fields: `id`, `headline`, `created_at`, `updated_at`, `symbols`, `summary`, `url`.
 - **Request parameters:** `underlying`, `expiration`, `right`, `strike`, `start_date`, `end_date`, `timeframe`, and task/model `current_standard` params.
 - **Pagination/range behavior:** Process trade_quote rows within event-window state; optional `iv_context` can provide IV cross-section context. Emit a final row only when the supplied event-time `current_standard` is satisfied.
 - **Preview file:** see `option_activity_event.preview.csv`.
@@ -98,7 +98,7 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Status:** `preview-designed`.
 - **Persistence policy:** Persist one SQL-shaped CSV detail row only for emitted option activity events. Do not persist full rolling-window raw rows or periodic chain snapshots by default.
 - **Earliest available range:** Same as `option_activity_event`.
-- **Default timestamp semantics:** `created_at_et`, `updated_at_et`, and nested timestamps use `America/New_York`.
+- **Default timestamp semantics:** `created_at`, `updated_at`, and nested timestamps use `America/New_York`.
 - **Natural grain:** One detail row per detected option-activity event, keyed by `event_id` matching the CSV row stable random `id`.
 - **Request parameters:** Same as `option_activity_event`.
 - **Pagination/range behavior:** Written only when an event is emitted; the CSV row `url` points to the detail row/artifact as `<id>.csv`.

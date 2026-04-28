@@ -27,7 +27,7 @@ class DataKindPreviewGenerationTests(unittest.TestCase):
 
             option_event = root / "thetadata" / "option_activity_event.preview.csv"
             self.assertIn(
-                "id,headline,created_at_et,updated_at_et,symbols,summary,url",
+                "id,headline,created_at,updated_at,symbols,summary,url",
                 option_event.read_text(encoding="utf-8"),
             )
 

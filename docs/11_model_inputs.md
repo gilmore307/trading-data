@@ -24,6 +24,12 @@ This document maps `trading-data` outputs and derived data products to the seven
 | `EventOverlayModel` | `event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. Trading Economics is the accepted macro calendar/value surface. |
 | `PortfolioRiskModel` | `portfolio_risk_model_inputs` | option contract data, positions, fills, PnL, cash/margin, exposures, risk limits, kill-switch state | Portfolio/account state is likely execution/account-owned, not pure `trading-data`. Historical simulation outputs may fill this during research. |
 
+## Implemented Model Input Bundle Manifests
+
+Each accepted model layer now has a manager-facing bundle under `src/trading_data/data_bundles/<model_id>_inputs/`. These bundles load their bundle-local `config.json`, accept a manager task key with `params.as_of_et` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
+
+The manifest bundles do not fetch raw provider data. They compose saved source/derived artifacts into a model-layer input contract.
+
 ## Derived Data Products Added for Model Needs
 
 ### `stock_etf_exposure`

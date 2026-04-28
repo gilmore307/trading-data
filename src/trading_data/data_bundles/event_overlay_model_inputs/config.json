@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "description": "Default input contract for event_overlay_model_inputs. Task keys provide input_paths and as_of_et.",
+  "model_id": "event_overlay_model",
+  "inputs": [
+    {
+      "role": "gdelt_articles",
+      "data_kind": "gdelt_article",
+      "required": false,
+      "notes": "Broad news source evidence"
+    },
+    {
+      "role": "sec_company_financials",
+      "data_kind": "sec_company_fact",
+      "required": false,
+      "notes": "Official company/SEC evidence"
+    },
+    {
+      "role": "trading_economics_calendar",
+      "data_kind": "trading_economics_calendar_event",
+      "required": false,
+      "notes": "Accepted macro calendar/value rows"
+    },
+    {
+      "role": "option_activity_events",
+      "data_kind": "option_activity_event",
+      "required": false,
+      "notes": "Option activity event context"
+    },
+    {
+      "role": "equity_abnormal_activity_events",
+      "data_kind": "equity_abnormal_activity_event",
+      "required": false,
+      "notes": "Stock/ETF abnormal market activity context"
+    }
+  ]
+}

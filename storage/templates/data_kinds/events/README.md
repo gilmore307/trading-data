@@ -9,6 +9,7 @@ Raw acquisition remains source-specific:
 - `alpaca_news` owns raw/news-provider article acquisition.
 - `sec_company_financials` owns official SEC submissions/companyfacts/companyconcept/frame acquisition.
 - `thetadata_option_event_timeline` owns option-market abnormal activity detection.
+- Equity abnormal activity builders own stock/ETF price, volume, relative-strength, gap, and liquidity anomaly detection from observable market data.
 - Future SEC filing-event builders, market anomaly builders, and macro release builders should project their source outputs into this event layer.
 
 The event database layer owns common research rows:
@@ -16,6 +17,7 @@ The event database layer owns common research rows:
 - `trading_event` — factual event row and artifact links.
 - `event_analysis_report` — index row for long-form agent/model analysis artifacts.
 - `event_factor` — model-facing numeric features derived from events.
+- `equity_abnormal_activity_event` — derived event-style row for abnormal stock/ETF market activity used by EventOverlayModel.
 
 Long text belongs in report artifacts, not inside event CSV rows. Event rows store short titles/summaries and `analysis_report_url` / sidecar references.
 

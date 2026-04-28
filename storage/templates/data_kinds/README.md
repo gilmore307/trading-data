@@ -28,6 +28,9 @@ storage/templates/data_kinds/
   etf/
     README.md            ETF issuer holdings source details.
     *.preview.csv        Generated ETF holdings snapshot preview.
+  model_inputs/
+    README.md            Derived model-input data-kind details.
+    *.preview.csv        Generated model-input preview rows.
   events/
     README.md            Unified event database template details.
     *.preview.csv        Generated trading_event, event_factor, and report-index previews.
@@ -48,9 +51,10 @@ storage/templates/data_kinds/
 | GDELT BigQuery | `gdelt/` | `gdelt_article` | Primary broad news/event discovery source for U.S. and U.S.-market politics, economy, war/geopolitics, and technology event candidates; queries pre-filter in BigQuery. |
 | Trading Economics visible calendar | `trading_economics/` | `trading_economics_calendar_event` | Conservative webpage-visible interface for U.S. high-impact actual/previous/consensus/forecast macro rows; no API/download/export endpoints and no bulk backfill yet. |
 | ETF issuer holdings | `etf/` | `etf_holding_snapshot` | Official issuer holdings snapshots for ETF constituents and portfolio weights; source-specific raw pages/files remain run-local evidence. |
+| Derived model inputs | `model_inputs/` | `stock_etf_exposure` | Point-in-time derived rows that connect source outputs to model-layer needs, especially SecuritySelectionModel ETF/sector/style exposure transmission. |
 | OKX Market Data API | `okx/` | `crypto_bar`, `crypto_liquidity_bar` | OKX is canonical for crypto execution research; raw trades are transient inputs to liquidity bars and quote-derived fields may be blank/null because historical quote parity with Alpaca is not assumed. |
 | ThetaData Terminal v3 | `thetadata/` | `option_chain_snapshot`, `option_bar`, `option_activity_event`, `option_activity_event_detail` | Option outputs are split by use case: selection snapshot, specified-contract tracking, and event timeline. Nested contexts are stored as JSON text columns inside CSV previews until SQL JSONB storage exists. |
-| Unified event database | `events/` | `trading_event`, `event_factor`, `event_analysis_report` | Source-neutral event research layer for financial reports, SEC corporate events, news, option activity, macro releases, and market anomalies. Raw source acquisition remains in source-specific bundles. |
+| Unified event database | `events/` | `trading_event`, `event_factor`, `event_analysis_report`, `equity_abnormal_activity_event` | Source-neutral event research layer for financial reports, SEC corporate events, news, option activity, macro releases, equity abnormal activity, and market anomalies. Raw source acquisition remains in source-specific bundles. |
 
 ## Source README Fields
 

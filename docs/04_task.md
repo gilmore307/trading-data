@@ -2,7 +2,7 @@
 
 ## Active Tasks
 
-- None.
+- Implement builders after model input bundle contracts are reviewed: `stock_etf_exposure` for SecuritySelectionModel and `equity_abnormal_activity_event` for EventOverlayModel.
 
 ## Queued Tasks
 
@@ -33,12 +33,19 @@
 - Timestamp normalization contract for payload fields that must remain America/New_York versus any required UTC/database fields.
 - Provider quota/rate-limit policy and live-call guardrails.
 - Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
-- ETF issuer priority list, source-file formats, and as-of-date handling.
+- ETF issuer priority list, source-file formats, and as-of-date/available-time handling.
+- `stock_etf_exposure` builder location and whether it remains model-local first or becomes a `trading-data` derived bundle.
+- `equity_abnormal_activity_event` detection standards, lookbacks, thresholds, and model-standard identity.
+- Optionability summary shape for SecuritySelectionModel.
 - ThetaData connector/JAR/credential layout.
 - Data-domain vocabulary registration in `trading-main` if exact domain keys become cross-repository contract values.
 
 ## Recently Accepted
 
+- Registered seven model input organization bundles: `market_regime_model_inputs`, `security_selection_model_inputs`, `strategy_selection_model_inputs`, `trade_quality_model_inputs`, `option_expression_model_inputs`, `event_overlay_model_inputs`, and `portfolio_risk_model_inputs`.
+- Added `stock_etf_exposure` as a derived point-in-time model-input data kind for SecuritySelectionModel.
+- Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.
+- Added `docs/11_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input bundles.
 - Implemented `thetadata_option_event_timeline` for triggered option-activity events: explicit contract + date range + evidence-window `timeframe` + task/model `current_standard` input, local ThetaData Terminal trade_quote endpoint, event-only CSV rows, compact per-event detail JSON artifacts, and no raw provider response persistence.
 - Implemented `thetadata_option_primary_tracking` for specified-contract option bars: explicit contract + date range + `timeframe` input, local ThetaData Terminal OHLC endpoint, zero-volume placeholder filtering, requested-timeframe aggregation, final `option_bar.csv` save, and completion receipt without raw provider response persistence.
 - Implemented `thetadata_option_selection_snapshot` as the first ThetaData option final-output bundle: explicit `underlying` + `snapshot_time_et` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.

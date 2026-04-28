@@ -181,6 +181,27 @@ ETF_HOLDING_ASSET_CLASS = field("fld_ETFH011")
 ETF_HOLDING_SECTOR = field("fld_ETFH012")
 ETF_HOLDING_SOURCE_URL = field("fld_ETFH013")
 
+STOCK_ETF_EXPOSURE_AS_OF_DATE = field("fld_STKEX001")
+STOCK_ETF_EXPOSURE_SYMBOL = field("fld_STKEX002")
+STOCK_ETF_EXPOSED_ETFS = field("fld_STKEX003")
+STOCK_ETF_TOP_EXPOSURE_ETF = field("fld_STKEX004")
+STOCK_ETF_TOTAL_EXPOSURE_SCORE = field("fld_STKEX005")
+STOCK_ETF_WEIGHTED_SECTOR_SCORE = field("fld_STKEX006")
+STOCK_ETF_WEIGHTED_THEME_SCORE = field("fld_STKEX007")
+STOCK_ETF_STYLE_TAGS = field("fld_STKEX008")
+STOCK_ETF_SOURCE_ETF_COUNT = field("fld_STKEX009")
+STOCK_ETF_SOURCE_SNAPSHOT_REFS = field("fld_STKEX010")
+STOCK_ETF_AVAILABLE_TIME_ET = field("fld_STKEX011")
+
+ABNORMAL_ACTIVITY_TYPE = field("fld_ABN001")
+ABNORMAL_ACTIVITY_EVIDENCE_WINDOW = field("fld_ABN002")
+RETURN_ZSCORE = field("fld_ABN003")
+VOLUME_ZSCORE = field("fld_ABN004")
+RELATIVE_STRENGTH_ZSCORE = field("fld_ABN005")
+GAP_PCT = field("fld_ABN006")
+LIQUIDITY_SPREAD_ZSCORE = field("fld_ABN007")
+EQUITY_ABNORMAL_ACTIVITY_SOURCE_REFS = field("fld_ABN008")
+
 OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
 OPTION_RIGHT = field("fld_OPT003")
@@ -277,6 +298,8 @@ MACRO_RELEASE_EVENT = data_kind("dki_MACREVT1")
 GDELT_ARTICLE = data_kind("dki_GDELTART")
 TRADING_ECONOMICS_CALENDAR_EVENT = data_kind("dki_TECALWEB")
 ETF_HOLDINGS_SNAPSHOT = data_kind("dki_NFRKHNJO")
+STOCK_ETF_EXPOSURE = data_kind("dki_STKETFEX")
+EQUITY_ABNORMAL_ACTIVITY_EVENT = data_kind("dki_EQABNACT")
 TRADING_EVENT = data_kind("dki_TREVT001")
 EVENT_FACTOR = data_kind("dki_TREVT002")
 EVENT_ANALYSIS_REPORT = data_kind("dki_TREVT003")
@@ -342,6 +365,11 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
         ["VGT", "vanguard", "2026-04-24", "NVDA", "NVIDIA Corp.", 18.53, 129246346, 22540562742, "67066G104", "2379504", "Equity", "Information Technology", "https://investor.vanguard.com/investment-products/etfs/profile/vgt"],
     ),
     csv_template(
+        "model_inputs/stock_etf_exposure.preview.csv",
+        [STOCK_ETF_EXPOSURE_AS_OF_DATE, STOCK_ETF_EXPOSURE_SYMBOL, STOCK_ETF_EXPOSED_ETFS, STOCK_ETF_TOP_EXPOSURE_ETF, STOCK_ETF_TOTAL_EXPOSURE_SCORE, STOCK_ETF_WEIGHTED_SECTOR_SCORE, STOCK_ETF_WEIGHTED_THEME_SCORE, STOCK_ETF_STYLE_TAGS, STOCK_ETF_SOURCE_ETF_COUNT, STOCK_ETF_SOURCE_SNAPSHOT_REFS, STOCK_ETF_AVAILABLE_TIME_ET],
+        ["2026-04-24", "NVDA", "QQQ;XLK;SMH;SOXX;AIQ", "SMH", 0.92, 0.93, 0.88, "semiconductor;AI;large_cap_growth;high_beta", 5, "VGT:2026-04-24;SMH:2026-04-24;QQQ:2026-04-24", "2026-04-25T09:30:00-04:00"],
+    ),
+    csv_template(
         "events/macro_release_event.preview.csv",
         [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TIME_ET, EVENT_EFFECTIVE_TIME_ET, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, MACRO_METRIC, OBSERVED_VALUE, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
         ["macro_evt_P8Q4W6R2", "macro_evt_P8Q4W6R2", "canonical", 100, "market", "US_MARKET;rates;USD;equities", "US_MARKET", "", "", "2026-04-10T08:30:00-04:00", "2026-04-10T08:30:00-04:00", "macro_release_event", "official_macro_release", "cpi_yoy", "https://www.bls.gov/news.release/cpi.htm", "CPI YoY macro release", "Official CPI release became observable at 08:30 ET and may affect broad market, rates, USD, and equity risk appetite.", "cpi_yoy", 3.2, "", "not_requested", "official macro release is source of truth", '{"provider":"bls","consensus_source":"not_available","surprise_status":"pending_consensus_source"}'],
@@ -365,6 +393,11 @@ CSV_TEMPLATES: tuple[CsvTemplate, ...] = (
         "events/trading_event.preview.csv",
         [EVENT_ID, EVENT_CANONICAL_EVENT_ID, EVENT_DEDUP_STATUS, EVENT_SOURCE_PRIORITY, EVENT_IMPACT_SCOPE, EVENT_IMPACTED_UNIVERSE, EVENT_PRIMARY_IMPACT_TARGET, EVENT_SECURITY_ID, EVENT_SYMBOL, EVENT_TIME_ET, EVENT_EFFECTIVE_TIME_ET, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_SOURCE_REF, EVENT_SOURCE_URL, EVENT_TITLE, EVENT_SUMMARY, EVENT_ANALYSIS_REPORT_URL, EVENT_ANALYSIS_STATUS, EVENT_COVERAGE_REASON, EVENT_TAXONOMY_CONTEXT],
         ["evt_Q7M4N2PX", "evt_Q7M4N2PX", "canonical", 100, "security", "AAPL", "AAPL", "AAPL", "AAPL", "2026-01-30T16:05:00-05:00", "2026-02-02T09:30:00-05:00", "equity_financial_report_event", "sec_filing", "0000320193-26-000012", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000012/", "AAPL files 10-K annual report", "Apple filed a 10-K annual report after market close.", "reports/evt_Q7M4N2PX.md", "succeeded", "official SEC filing is source of truth", '{"sec_form":"10-K","sec_items":[]}'],
+    ),
+    csv_template(
+        "events/equity_abnormal_activity_event.preview.csv",
+        [EVENT_ID, EVENT_SYMBOL, EVENT_TIME_ET, EVENT_EFFECTIVE_TIME_ET, EVENT_TYPE, EVENT_SOURCE_TYPE, EVENT_TITLE, EVENT_SUMMARY, ABNORMAL_ACTIVITY_TYPE, ABNORMAL_ACTIVITY_EVIDENCE_WINDOW, RETURN_ZSCORE, VOLUME_ZSCORE, RELATIVE_STRENGTH_ZSCORE, GAP_PCT, LIQUIDITY_SPREAD_ZSCORE, EQUITY_ABNORMAL_ACTIVITY_SOURCE_REFS, EVENT_TAXONOMY_CONTEXT],
+        ["eq_abn_N7K4Q2MX", "NVDA", "2026-04-24T09:35:00-04:00", "2026-04-24T09:36:00-04:00", "equity_abnormal_activity_event", "alpaca_equity_market_data", "NVDA abnormal opening move with volume expansion", "NVDA showed abnormal return and volume versus recent same-time windows and sector benchmark.", "return_zscore;volume_spike;sector_relative_move", '{"timeframe":"5Min","window_start_et":"2026-04-24T09:30:00-04:00","window_end_et":"2026-04-24T09:35:00-04:00","lookback_days":20}', 3.1, 4.8, 2.2, 1.4, 0.7, "alpaca_bars:NVDA:2026-04-24T09:30;alpaca_liquidity:NVDA:2026-04-24T09:30;sector:SMH", '{"benchmark":"SMH","detector":"equity_abnormal_activity_v0"}'],
     ),
     csv_template(
         "events/event_factor.preview.csv",

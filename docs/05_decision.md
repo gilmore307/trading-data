@@ -697,3 +697,36 @@ The system does not need all global GDELT news. `gdelt_news` should pre-filter i
 ## D048 - GDELT default topics are politics, economy, war, and technology
 
 `gdelt_news` should not be an open-ended news firehose. Its default query scope is U.S./U.S.-market news in four market-impact categories: politics, economy, war/geopolitics, and technology. If a task omits `query_terms`, the bundle expands those categories into a bounded default term set. Other categories require explicit task parameters and should be reviewed before becoming production defaults.
+
+## D049 - Seven model input bundles organize data products by model layer
+
+Date: 2026-04-28
+
+### Context
+
+The accepted `trading-model` architecture now has seven layers. Source acquisition is sufficiently complete for v1, but model-specific data needs require a clear organization layer before final cleaning, derived features, and table shapes are hardened.
+
+### Decision
+
+`trading-data` will organize model-facing inputs into seven registered input bundles:
+
+1. `market_regime_model_inputs`
+2. `security_selection_model_inputs`
+3. `strategy_selection_model_inputs`
+4. `trade_quality_model_inputs`
+5. `option_expression_model_inputs`
+6. `event_overlay_model_inputs`
+7. `portfolio_risk_model_inputs`
+
+These are organization bundles, not necessarily new raw-source acquisition bundles. They map existing source outputs and derived products to model-layer needs.
+
+### Rationale
+
+Model needs should drive data organization. This prevents raw-source tables from dictating model schemas and keeps layer boundaries clear.
+
+### Consequences
+
+- `docs/11_model_inputs.md` owns the current mapping from source outputs to model input bundles.
+- `SecuritySelectionModel` requires `stock_etf_exposure` derived from ETF holdings and ETF/sector/style scores.
+- `EventOverlayModel` requires `equity_abnormal_activity_event` in addition to GDELT, SEC, Trading Economics, macro, and option activity data.
+- `PortfolioRiskModel` depends partly on portfolio/account state that may be execution/account-owned rather than pure `trading-data`.

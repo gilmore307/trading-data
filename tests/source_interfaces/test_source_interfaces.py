@@ -8,7 +8,6 @@ from unittest.mock import patch
 
 from trading_data.source_availability.http import HttpResult
 from trading_data.source_interfaces.__main__ import main
-from trading_data.data_sources.macro_data.interfaces import MACRO_INTERFACES
 from trading_data.source_interfaces.catalog import INTERFACES
 from trading_data.source_interfaces.probes import probe_interface
 
@@ -27,12 +26,11 @@ class SourceInterfaceTests(unittest.TestCase):
         for key in ["equity_bar", "equity_trade", "equity_quote", "equity_news", "gdelt_article", "trading_economics_calendar_event", "etf_holding_snapshot", "crypto_bar", "crypto_trade", "crypto_quote", "crypto_order_book", "option_trade", "option_quote", "sec_submission"]:
             self.assertIn(key, INTERFACES)
 
-    def test_catalog_has_all_macro_interfaces(self):
-        self.assertGreaterEqual(len(MACRO_INTERFACES), 30)
-        for key in MACRO_INTERFACES:
-            self.assertIn(key, INTERFACES)
-            expected_bundle = "trading-execution/calendar_discovery" if key == "macro_release_calendar" else "macro_data"
-            self.assertEqual(INTERFACES[key].bundle, expected_bundle)
+    def test_trading_economics_is_macro_calendar_source(self):
+        interface = INTERFACES["trading_economics_calendar_event"]
+        self.assertEqual(interface.source, "trading_economics")
+        self.assertEqual(interface.bundle, "trading_economics_calendar_web")
+        self.assertEqual(interface.access, "web/login")
 
     def test_cli_list_no_network(self):
         stdout = io.StringIO()

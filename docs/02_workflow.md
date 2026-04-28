@@ -144,23 +144,17 @@ Initial source interfaces are organized around source-level output types. Manage
 | `thetadata_option_event_timeline` | ThetaData | News-like timeline records for unusual option contract activity. | Event-oriented output, similar to news: timestamped option activity signals rather than bulk raw ticks. |
 | `thetadata_option_selection_snapshot` | ThetaData | Point-in-time option-chain snapshot visible at signal/selection time. | Simulates what the strategy could know when choosing a contract; preserve timestamp and visible contract context. |
 | `okx_crypto_market_data` | OKX | Historical crypto bars/trades/liquidity. | Quote-derived liquidity fields may be blank when no sampled order-book snapshots exist. |
-| `macro_data` | FRED-unique series, Census, BEA, BLS, U.S. Treasury Fiscal Data, official agency pages | Parameterized macro data acquisition. | One macro bundle for clarity; task params must select provider/source, dataset/release/series, cadence, time range, and output target. Do not use FRED to duplicate data whose official source is accepted elsewhere. |
-| `calendar_discovery` | Official web sources discovered by search | FOMC and official macro release calendars. | Confirm official source domains before accepting results. |
+| `trading_economics_calendar_web` | Trading Economics visible calendar page | U.S. high-impact macro calendar rows with Actual, Previous, Consensus, and Forecast. | Accepted replacement for the former `macro_data` official macro API bundle. Visible page only; no TE API/download/export. |
+| `calendar_discovery` | Official web sources discovered by search | FOMC and future calendar scheduling where execution needs it. | Historical macro values now use Trading Economics calendar rows instead of official macro API acquisition. |
 | `etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |
 
 These names are planning names until accepted through registry/contract review.
 
-## Macro Data Bundle Rule
+## Macro Data Source Rule
 
-Macro data uses one accepted bundle key: `macro_data`.
+`macro_data` is removed as an executable acquisition bundle. Macro calendar/value rows for model inputs now come from `trading_economics_calendar_web`, using visible Trading Economics page data only.
 
-This keeps bundle inventory small while moving selection detail into task params. A `macro_data` task must explicitly identify the requested source/provider, dataset or release key, series identifiers when applicable, publication/revision behavior, cadence, covered period or time range, official source URL, and output target.
-
-Examples of valid `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, Census durable goods, FRED-unique St. Louis Fed/ALFRED/research series, U.S. Treasury Fiscal Data datasets, and official agency release pages.
-
-Do not create a new bundle just because a macro dataset comes from a different agency. Split inside `params`, not in the bundle registry, unless a future implementation proves one source needs a fundamentally different runner boundary.
-
-For source consistency, the same economic measure should have one canonical acquisition source. Use official agency sources for BLS, BEA, Census, Treasury, and other agency-owned data. Use FRED only for data that is unique to FRED/St. Louis Fed/ALFRED or for explicitly approved FRED-native research series/groups, not as a duplicate path for the same official data.
+BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-data` should not route manager tasks to the removed `macro_data` bundle.
 
 ## Completion Receipt Requirements
 

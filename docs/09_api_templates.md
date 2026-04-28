@@ -86,7 +86,7 @@ Initial bundle planning names remain:
 - `thetadata_option_event_timeline`
 - `thetadata_option_selection_snapshot`
 - `okx_crypto_market_data`
-- `macro_data`
+- `trading_economics_calendar_web`
 - `calendar_discovery`
 - `etf_holdings`
 - `sec_company_financials`
@@ -98,7 +98,7 @@ ThetaData option acquisition is intentionally split by use case, not endpoint fa
 - `thetadata_option_event_timeline` produces news-like timestamped option activity events.
 - `thetadata_option_selection_snapshot` captures point-in-time option-chain information visible when an equity signal needs to choose a contract.
 
-`macro_data` is the single macro acquisition bundle. It stays clear by requiring task params to name the concrete provider/source, dataset/release/series, cadence, period, and output target. For source consistency, FRED should be used only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups, not as a duplicate path for official BLS/BEA/Census/Treasury data.
+`macro_data` has been removed as an executable macro acquisition bundle. Macro model inputs now use the conservative `trading_economics_calendar_web` visible-page interface; official macro API secret aliases may remain stored but are not active manager task routes.
 
 `sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `sec_company_financials_task_...` and `sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.
 

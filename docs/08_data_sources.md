@@ -144,27 +144,19 @@ Accepted Alpaca bundle keys are:
 
 `alpaca_news` must document article timestamps in America/New_York for research workflow metadata, provider publication timestamp semantics, symbols/entities covered, source/publisher fields, pagination, and rate-limit behavior. Task/run IDs should use `alpaca_news_task_...` and `alpaca_news_run_...` prefixes. Development should persist only final cleaned news outputs; tiny sanitized provider response fixtures are allowed only during development and should be replaced before production hardening.
 
-## Macro Data Bundle Rule
+## Macro Data Source Rule
 
-Macro data uses one bundle key: `macro_data`.
+`macro_data` is removed as an executable acquisition bundle. Macro calendar/value rows for model inputs now use `trading_economics_calendar_web` as the accepted source surface.
 
-This bundle covers FRED-unique series, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages. It intentionally keeps the bundle layer simple; task params must carry the source-specific selection detail.
+The Trading Economics path is deliberately constrained:
 
-A `macro_data` task must document:
+- visible website calendar rows only;
+- no Trading Economics API;
+- no Download/export endpoints;
+- no WAF/captcha/permission bypass;
+- bounded windows, with bulk history deferred until explicitly accepted.
 
-- provider/source, such as `fred`, `bls`, `census`, `bea`, `us_treasury_fiscal_data`, or an official agency page;
-- dataset, release key, or series/group identifiers;
-- publication timestamp or expected release window when relevant;
-- covered period, time range, cadence, and revision/vintage behavior;
-- endpoint URL pattern or source URL;
-- credential config id when required, or no-key rule when not required;
-- pagination, filters, sorting, and rate-limit behavior;
-- America/New_York research timestamps;
-- development file destination and future target SQL table/partition.
-
-Examples of `macro_data` parameter selections include BLS CPI, BLS employment, BEA GDP, BEA PCE, Census retail sales, FRED-unique St. Louis Fed/ALFRED/research series, and Treasury Fiscal Data datasets. Do not create separate registry bundles for each macro agency or release unless implementation later proves a separate runner boundary is necessary.
-
-For source consistency, one economic measure should not be fetched from multiple providers by default. If a measure belongs to BLS, BEA, Census, Treasury, or another official agency, use that official source as canonical. Use FRED only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups.
+BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but manager-issued macro tasks should not use the removed `macro_data` bundle.
 
 ## Web-Discovered And Issuer-Sourced Inputs
 

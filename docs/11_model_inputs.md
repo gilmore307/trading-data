@@ -21,7 +21,7 @@ This document maps `trading-data` outputs and derived data products to the seven
 | `StrategySelectionModel` | `strategy_selection_model_inputs` | equity bars/liquidity from Alpaca, crypto bars/liquidity from OKX, selected candidate pools from Layer 2 | Chooses strategy family/variant for candidate symbols. |
 | `TradeQualityModel` | `trade_quality_model_inputs` | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require a new raw provider; mostly consumes model-generated signals and source-market features. |
 | `OptionExpressionModel` | `option_expression_model_inputs` | option chain snapshot, option bars/contract tracking, IV/Greeks/liquidity, upstream signal forecast | V1 supports long call / long put only; no multi-leg option structures. |
-| `EventOverlayModel` | `event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, `macro_release_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. |
+| `EventOverlayModel` | `event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. Trading Economics is the accepted macro calendar/value surface. |
 | `PortfolioRiskModel` | `portfolio_risk_model_inputs` | option contract data, positions, fills, PnL, cash/margin, exposures, risk limits, kill-switch state | Portfolio/account state is likely execution/account-owned, not pure `trading-data`. Historical simulation outputs may fill this during research. |
 
 ## Derived Data Products Added for Model Needs

@@ -77,12 +77,12 @@ Typical `event_type` values include:
 - `equity_buyback_event`
 - `equity_management_change_event`
 - `equity_legal_regulatory_event`
-- `macro_release_event`
+- `trading_economics_calendar_event`
 - `market_anomaly_event`
 
 SEC event classification should use `taxonomy_context` for source-specific details such as `sec_form`, `sec_items`, accession number context, and filing document references.
 
-Macro releases are event-layer objects as well as metric facts. `macro_release` owns the actual observed value and sparse validity interval; `macro_release_event` owns the market-impact moment, impact scope, event timing, and later reaction/factor linkage. Official macro APIs usually provide actual values but not stable consensus expectations, so `surprise_score` should remain blank/pending until an approved consensus source exists.
+Macro model inputs now come from Trading Economics visible calendar rows. The former official-API `macro_data` bundle and `macro_release` evidence path are deprecated; use `trading_economics_calendar_event` for Actual, Previous, Consensus, and Forecast fields when visible.
 
 ## `event_analysis_report`
 

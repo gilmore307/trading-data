@@ -35,7 +35,7 @@ Optional provider secrets are loaded only by local alias from `/root/secrets/<al
 
 ## API-Level Confirmation
 
-Documentation availability is not sufficient for implementation acceptance. The first API-backed acquisition code now lives under `src/trading_data/data_sources/macro_data/` and makes real bounded requests for `bls`, `census`, `bea`, `us_treasury_fiscal_data`, and `fred`.
+Documentation availability is not sufficient for implementation acceptance. The former API-backed `macro_data` acquisition code has been removed after accepting Trading Economics visible-page rows as the macro model-input source.
 
 The macro bundle writes sanitized request evidence, normalized rows, CSV/JSONL development outputs, and a completion receipt under ignored `storage/`. It does not persist full raw provider responses by default. The first live smoke runs confirmed these actual response shapes:
 
@@ -45,7 +45,7 @@ The macro bundle writes sanitized request evidence, normalized rows, CSV/JSONL d
 - U.S. Treasury Fiscal Data debt sample normalizes `data[]` rows with record-date/calendar/fiscal fields and amount fields as provider strings.
 - FRED native sample normalizes `observations[]` rows with `date`, `value`, and real-time vintage bounds.
 
-Use this implementation path to discover actual source formats before accepting source-specific `macro_data.params` contracts or SQL storage mappings.
+Do not create new manager routes to the removed `macro_data` bundle. Official macro API documentation and secret aliases may remain available for optional future research only.
 
 ## Macro Sources
 

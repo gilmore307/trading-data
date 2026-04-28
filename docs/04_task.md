@@ -8,7 +8,7 @@
 
 - Define initial manager-issued data task key file schema with `trading-main` and `trading-manager`.
 - Fill API-specific templates for the first implementation bundle before writing connector code.
-- Define strict `macro_data` parameter vocabulary and validation rules using registered `data_kind` rows for source, dataset/release/series, cadence, period, revision/vintage behavior, and output target.
+- Define strict Trading Economics macro calendar task/config vocabulary for accepted visible-page macro model inputs.
 - Define bundle-specific task/run ID prefix rules in implementation helpers.
 - Define segment checkpoint/resume behavior for long historical fetch-clean-save jobs.
 - Define data artifact reference and manifest requirements with `trading-main` and `trading-storage`.
@@ -59,11 +59,11 @@
 - Implemented `alpaca_liquidity` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` CSV, and writes completion receipts without raw trade/quote persistence.
 - Decided raw high-volume Alpaca trade/quote rows must not be persisted by default; `alpaca_liquidity` should save ET-aligned aggregate/derived outputs and discard transient raw segments after aggregation unless a bounded debug artifact is explicitly approved.
 - Added provider/data-kind source interface catalog and smoke runner under `src/trading_data/source_interfaces/`; live checks now confirm Alpaca equity bars/trades/quotes/snapshots/news, OKX crypto bars/trades/tickers/books, and SEC submissions/companyfacts/companyconcept/frames; ThetaData option endpoint families are cataloged but blocked until local Theta Terminal is reachable.
-- Added the first API-backed `macro_data` acquisition bundle under `src/trading_data/data_sources/macro_data/`; it runs real bounded requests for BLS, Census, BEA, U.S. Treasury Fiscal Data, and FRED, normalizes rows, saves cleaned CSV development outputs, and writes completion receipts without persisting full raw provider payloads by default.
+- Removed the executable `macro_data` official macro API acquisition bundle after accepting Trading Economics visible-page rows as the macro model-input source.
 - Added `src/trading_data/source_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `storage/source_availability/` and default tests use mocks/fixtures only.
 - Registered the initial source-availability `data_kind` inventory in `trading-main` and documented it in `docs/10_source_availability.md`.
 - Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.
-- Consolidated macro acquisition into one accepted `macro_data` bundle with source/dataset/release/series selection in task params.
+- Previously consolidated macro acquisition into `macro_data`; this was later superseded by Trading Economics visible-page macro inputs.
 - Added `data_bundle` as a registry kind and registered current acquisition bundle keys there.
 - Split Alpaca news into standalone `alpaca_news` and renamed liquidity bundle planning to `alpaca_liquidity`.
 - Added `sec_company_financials` for official SEC EDGAR company financial report data.

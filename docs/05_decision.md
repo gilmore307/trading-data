@@ -511,7 +511,7 @@ This keeps the task definition stable and lets manager compare or inspect runs w
 - `completion_receipt.json` lives at task level and contains `runs[]`.
 - `pipeline.py` receives `run_id` separately from the task key.
 
-## D024 - Macro data uses one parameterized bundle
+## D024 - Macro data uses one parameterized bundle [superseded by D050]
 
 Date: 2026-04-26
 
@@ -522,6 +522,8 @@ After reviewing separate macro release and Treasury source bundle planning, the 
 ### Decision
 
 Use one accepted macro bundle key: `macro_data`.
+
+Superseded on 2026-04-28 by D050: `macro_data` is removed as an executable bundle and Trading Economics visible calendar rows are the accepted macro model-input source.
 
 The bundle covers FRED, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages. Task params must specify the provider/source, dataset or release key, series identifiers when applicable, cadence, covered period/time range, publication or revision behavior, source URL, credential/no-key rule, and output target.
 
@@ -536,7 +538,7 @@ A single macro bundle keeps manager routing and bundle inventory clear. Macro da
 - Macro task params must be stricter because the bundle name no longer carries the release/source boundary.
 - A macro source/release inventory is still needed, but it should feed parameter validation and docs rather than bundle proliferation.
 
-## D025 - FRED only fetches FRED-unique macro data by default
+## D025 - FRED only fetches FRED-unique macro data by default [superseded for active routing by D050]
 
 Date: 2026-04-26
 
@@ -547,6 +549,8 @@ The user clarified that the same economic measure should use one unified, consis
 ### Decision
 
 Use official agency sources as canonical for their own measures. Use FRED only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups.
+
+Superseded for active `trading-data` manager routing on 2026-04-28 by D050: official macro APIs and FRED/ALFRED aliases may remain stored, but macro model inputs now use Trading Economics visible calendar rows.
 
 ### Rationale
 
@@ -673,7 +677,7 @@ Unified event rows must identify whether the event primarily affects the broad m
 
 `security_id`/`symbol` remains the primary tradable identifier when one exists, but it is not enough to describe impact. For example, a company 10-K is normally `impact_scope=security`, while a CPI release may be `impact_scope=market` with `impacted_universe=US_MARKET;rates;USD`.
 
-## D045 - Macro releases are event-layer objects
+## D045 - Macro releases are event-layer objects [superseded for source path by D050]
 
 Macroeconomic publications such as CPI, payrolls, PCE, GDP, and rate decisions are not only indicator values. They are market-impact events because the publication moment can move broad markets, rates, FX, sectors, and securities immediately.
 
@@ -682,7 +686,9 @@ Keep source evidence and final saved outputs separate:
 - `macro_release` is transient cleaned source evidence for observed values and release-time validity. It is not a final saved/model-facing alpha table.
 - `macro_release_event` is the final saved event-layer object with `event_type=macro_release_event`, `source_type=official_macro_release`, impact scope/universe, source reference, actual value attributes, and report/factor linkage.
 
-The `macro_data` bundle should save `macro_release_event.csv` as the final output and keep `macro_release.jsonl` only under `cleaned/` as run-local evidence. Event studies and reaction labels should use `macro_release_event`. Market-state models should use pure market/index/ETF data for state classification rather than macro reason labels. Official macro APIs usually provide actual values but not consensus expectations, so surprise fields remain pending until an approved consensus source is accepted.
+The `macro_data` bundle should save `macro_release_event.csv` as the final output and keep `macro_release.jsonl` only under `cleaned/` as run-local evidence. Event studies and reaction labels should use `macro_release_event`. Market-state models should use pure market/index/ETF data for state classification rather than macro reason labels. Official macro APIs usually provide actual values but not consensus expectations, so surprise fields remain pending until an approved consensus source exists.
+
+Superseded for active source path on 2026-04-28 by D050: `macro_data` is removed, and macro model inputs now use Trading Economics visible calendar rows with Actual, Previous, Consensus, and Forecast when visible.
 
 ## D046 - GDELT is the primary broad news source
 
@@ -730,3 +736,24 @@ Model needs should drive data organization. This prevents raw-source tables from
 - `SecuritySelectionModel` requires `stock_etf_exposure` derived from ETF holdings and ETF/sector/style scores.
 - `EventOverlayModel` requires `equity_abnormal_activity_event` in addition to GDELT, SEC, Trading Economics, macro, and option activity data.
 - `PortfolioRiskModel` depends partly on portfolio/account state that may be execution/account-owned rather than pure `trading-data`.
+
+## D050 - Trading Economics replaces macro_data for macro model inputs
+
+Date: 2026-04-28
+
+### Context
+
+`macro_data` previously acted as a parameterized official macro API bundle for BLS, BEA, Census, Treasury, and FRED/ALFRED-style rows. The project now prioritizes model-facing macro calendar/value rows with Actual, Previous, Consensus, and Forecast fields from Trading Economics visible pages.
+
+### Decision
+
+Remove `macro_data` as an executable `trading-data` acquisition bundle. Macro model inputs should use `trading_economics_calendar_web` visible-page rows.
+
+Official macro API keys and secret aliases may remain stored and registered for optional future research, but they are not active manager task routes.
+
+### Consequences
+
+- Do not route manager-issued tasks to `macro_data`.
+- Do not add new `macro_data` source interfaces or tests.
+- Keep Trading Economics constraints: visible page only, no TE API, no Download/export endpoint, and no WAF/captcha/permission bypass.
+- Deprecated registry/template rows may remain as historical references until a broader registry cleanup is explicitly accepted.

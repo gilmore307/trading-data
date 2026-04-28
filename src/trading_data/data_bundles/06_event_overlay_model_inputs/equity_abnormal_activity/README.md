@@ -1,6 +1,6 @@
-# equity_abnormal_activity
+# 06_event_overlay_model_inputs/equity_abnormal_activity
 
-Derived event detector for `EventOverlayModel`.
+Derived event detector inside the `06_event_overlay_model_inputs` EventOverlayModel layer. This is not a standalone manager-facing data bundle.
 
 ## Boundary
 

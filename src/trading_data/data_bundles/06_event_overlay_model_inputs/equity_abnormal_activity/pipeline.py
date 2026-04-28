@@ -1,6 +1,6 @@
 """Derived equity abnormal activity event detector.
 
-This bundle projects observable stock/ETF bars and optional liquidity bars into
+This EventOverlayModel detector projects observable stock/ETF bars and optional liquidity bars into
 compact event-style rows for EventOverlayModel. It does not acquire market data;
 Alpaca source bundles own bar/liquidity acquisition.
 """
@@ -19,7 +19,7 @@ from typing import Any, Mapping
 from trading_data.data_bundles.config import load_bundle_config
 from trading_data.source_availability.sanitize import sanitize_value
 
-BUNDLE = "equity_abnormal_activity"
+BUNDLE = "06_event_overlay_model_inputs.equity_abnormal_activity"
 FIELDS = [
     "event_id",
     "symbol",
@@ -68,7 +68,7 @@ class SourcePayload:
 
 
 class EquityAbnormalActivityError(ValueError):
-    """Raised for invalid equity_abnormal_activity tasks."""
+    """Raised for invalid EventOverlayModel equity abnormal activity detector tasks."""
 
 
 def _now_utc() -> str:
@@ -106,7 +106,7 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     if not bars:
         raise EquityAbnormalActivityError("bars_csv_path produced zero rows")
     context.run_dir.mkdir(parents=True, exist_ok=True)
-    config_path = str(params.get("config_path") or "") or None
+    config_path = str(params.get("config_path") or Path(__file__).with_name("config.json"))
     manifest = {
         "bundle": BUNDLE,
         "config": config_path or "bundle-local config.json",

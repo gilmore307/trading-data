@@ -43,7 +43,7 @@
 ## Recently Accepted
 
 - Implemented `stock_etf_exposure` derived bundle over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
-- Implemented `equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
+- Implemented `06_event_overlay_model_inputs/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
 - Registered seven model input organization bundles: `market_regime_model_inputs`, `security_selection_model_inputs`, `strategy_selection_model_inputs`, `trade_quality_model_inputs`, `option_expression_model_inputs`, `event_overlay_model_inputs`, and `portfolio_risk_model_inputs`.
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind for SecuritySelectionModel.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.

@@ -1,10 +1,15 @@
 import csv
+import importlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_bundles.equity_abnormal_activity.pipeline import detect_events, run
+pipeline = importlib.import_module(
+    "trading_data.data_bundles.06_event_overlay_model_inputs.equity_abnormal_activity.pipeline"
+)
+detect_events = pipeline.detect_events
+run = pipeline.run
 
 
 def _bar(symbol: str, idx: int, close: float, volume: int, open_: float | None = None) -> dict[str, str]:
@@ -45,7 +50,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
                 writer.writerows(rows)
             task_key = {
                 "task_id": "equity_abnormal_activity_task_test",
-                "bundle": "equity_abnormal_activity",
+                "bundle": "06_event_overlay_model_inputs.equity_abnormal_activity",
                 "params": {
                     "bars_csv_path": str(bars_path),
                     "lookback_intervals": 5,

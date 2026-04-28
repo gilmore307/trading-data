@@ -64,9 +64,9 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Bundle: `src/trading_data/data_bundles/equity_abnormal_activity/`
+Bundle: `src/trading_data/data_bundles/06_event_overlay_model_inputs/equity_abnormal_activity/`
 
-Config: `src/trading_data/data_bundles/equity_abnormal_activity/config.json`
+Config: `src/trading_data/data_bundles/06_event_overlay_model_inputs/equity_abnormal_activity/config.json`
 
 Purpose: EventOverlayModel evidence row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

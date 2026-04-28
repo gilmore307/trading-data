@@ -17,6 +17,6 @@ Current model-input/data-product bundles:
 - `05_option_expression_model_inputs` — point-in-time OptionExpressionModel input manifest.
 - `06_event_overlay_model_inputs` — point-in-time EventOverlayModel input manifest.
 - `07_portfolio_risk_model_inputs` — point-in-time PortfolioRiskModel input manifest.
-- `equity_abnormal_activity` — equity bars + optional benchmark/liquidity inputs + `equity_abnormal_activity/config.json` detector defaults -> `equity_abnormal_activity_event.csv`.
+- `06_event_overlay_model_inputs/equity_abnormal_activity` — equity bars + optional benchmark/liquidity inputs + `06_event_overlay_model_inputs/equity_abnormal_activity/config.json` detector defaults -> `equity_abnormal_activity_event.csv`.
 
 The remaining historical acquisition runners still live under `data_sources` until each has a reviewed manager-facing wrapper. Do not add new model-input generation under `data_sources`.

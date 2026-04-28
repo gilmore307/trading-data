@@ -4,6 +4,8 @@ EventOverlayModel inputs manager-facing data bundle.
 
 This bundle accepts a manager task key, loads bundle-local `config.json`, and writes a point-in-time model-input manifest CSV. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
 
+The nested `equity_abnormal_activity/` detector belongs to this layer: it derives `equity_abnormal_activity_event` rows from already-saved equity bars/liquidity inputs for the EventOverlayModel path. It is not a standalone manager-facing data bundle.
+
 ## Required task params
 
 - `as_of` — America/New_York timestamp for the point-in-time input manifest.

@@ -1,2 +1,0 @@
-underlying,snapshot_time,contract_count,contracts
-AAPL,2026-04-24T16:00:00-04:00,3120,"[{""expiration"":""2026-04-27"",""option_right_type"":""CALL"",""strike"":270.0,""quote"":{""bid"":3.35,""ask"":3.55,""mid"":3.45},""iv"":{""implied_vol"":0.3124},""greeks"":{""delta"":0.52}}]"

@@ -10,9 +10,9 @@ It does not own shared storage policy, strategy logic, model research, execution
 
 ```text
 docs/        Required docs spine plus component-specific guides for data domains and data sources.
-src/         Importable data-source, source-interface, and template-generator implementation packages.
-tests/       First-party tests for data-source pipelines, interface probes, and generated templates.
-storage/     Local development storage root plus committed storage-facing templates under `storage/templates/`.
+src/         Importable data-source, source-interface, bundle, storage, and probe implementation packages.
+tests/       First-party tests for data-source pipelines, interface probes, storage, and bundles.
+storage/     Ignored local development storage root for task receipts, inspected legacy files, and run-local artifacts.
 ```
 
 Executable CLIs are package entrypoints that call `src/`. If future operational wrappers are needed, place them under `scripts/`; `src/` must not import `scripts/`.

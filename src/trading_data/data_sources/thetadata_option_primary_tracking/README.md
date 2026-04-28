@@ -23,7 +23,7 @@ Optional development/runtime params:
 - `output_root` at task-key top level — development output root. Defaults to `storage/<task_id>`.
 - `thetadata_base_url` — local ThetaData Terminal base URL. Defaults to `http://127.0.0.1:25503`.
 - `timeout_seconds` — request timeout. Defaults to `30`.
-- `registry_csv` — registry snapshot used to resolve stable field/data-kind ids. Defaults to `/root/projects/trading-main/registry/current.csv`.
+- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-main/registry/current.csv`.
 
 ## Source endpoint
 
@@ -52,7 +52,7 @@ Only `saved/option_bar.csv` is the final saved output. Cleaned JSONL is run-loca
 
 ## Final CSV shape
 
-The output follows `storage/templates/data_kinds/thetadata/option_bar.preview.csv` and is materialized with field names resolved from stable `trading-main` registry ids.
+This legacy source interface can still emit the local development CSV shape listed below, but the old `storage/templates/data_kinds/` preview contract has been retired. Accepted model-input output contracts are now owned by dedicated SQL tables.
 
 Fields include:
 

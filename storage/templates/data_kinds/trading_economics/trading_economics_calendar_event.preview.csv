@@ -1,2 +1,0 @@
-event_time,country,event,source_event_type,reference_period,actual,previous,consensus,te_forecast,revised,importance,symbol,source_url
-2026-04-03T08:30:00-04:00,United States,Non Farm Payrolls,Labour,Mar,228K,117K,135K,140K,,3,,https://tradingeconomics.com/united-states/calendar

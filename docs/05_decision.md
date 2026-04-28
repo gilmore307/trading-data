@@ -567,6 +567,7 @@ Consistent source ownership avoids duplicate rows, conflicting revisions, mismat
 ## D026 - Final output templates are generated from registry ids
 
 Date: 2026-04-27
+Status: Superseded by D059 for current development
 
 ### Context
 
@@ -912,3 +913,16 @@ Consequences:
 - Layer 07 writes `model_inputs.event_overlay_event`.
 - `07_event_overlay_model_inputs/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
+
+## D059 - Retire data-kind preview templates
+
+Accepted: 2026-04-28
+
+The old `storage/templates/data_kinds/` preview catalog and `trading_data.template_generators.data_kind_previews` generator are retired. Dedicated SQL storage definitions and bundle/source README contracts now own accepted output shapes.
+
+Consequences:
+
+- Do not add new `*.preview.csv` or preview JSON files under `storage/templates/data_kinds/`.
+- Do not run or depend on the removed `trading-data-generate-data-kind-templates` command.
+- Field registration should target final SQL tables and still-valid shared/task/receipt/registry artifacts, not historical preview files.
+- Older D026 is superseded for current development; it remains historical context only.

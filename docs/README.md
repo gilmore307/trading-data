@@ -19,6 +19,6 @@ This directory is the authoritative documentation set for `trading-data`: the re
 
 Optional docs are allowed when they have a clear component-specific boundary and do not duplicate the required spine. Do not place generated data, notebooks, logs, credentials, or implementation artifacts in this directory.
 
-## Related Templates
+## Related Contracts
 
-- `../storage/templates/data_kinds/README.md` — source-organized final saved data-kind catalog and per-kind CSV preview templates.
+Accepted model-input/data contracts now live in dedicated SQL storage definitions and bundle/source README files. The old `storage/templates/data_kinds/` preview catalog has been retired.

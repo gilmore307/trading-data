@@ -1,2 +1,0 @@
-symbol,timeframe,interval_start,trade_count,quote_count,volume,vwap,open,high,low,close,avg_bid,avg_ask,avg_mid,avg_spread,last_bid,last_ask,last_mid,vwap_minus_avg_mid
-AAPL,1Min,2024-01-02T09:30:00-05:00,1000,1000,53862,187.0966001819,187.18,187.25,186.35,187.06,187.06611,187.09592,187.081015,0.02981,187.0,187.05,187.025,0.0155851819

@@ -56,6 +56,106 @@ class StepResult:
     details: dict[str, Any] = field(default_factory=dict)
 
 
+RETIRED_LOCAL_FIELD_PAYLOADS = {
+    "fld_A7K3P2Q9": "id",
+    "fld_ABN002": "evidence_window",
+    "fld_ABN008": "source_references",
+    "fld_EKIND001": "data_kind",
+    "fld_EKIND002": "source_name",
+    "fld_EVT001": "timeline_headline",
+    "fld_EVT005": "symbols",
+    "fld_EVT007": "event_link_url",
+    "fld_EVT010": "event_id",
+    "fld_EVT020": "summary",
+    "fld_EVT037": "generated_at",
+    "fld_OPD002": "contract",
+    "fld_OPD003": "contract_symbol",
+    "fld_OPD004": "triggered_indicators",
+    "fld_OPD006": "window_start",
+    "fld_OPD007": "window_end",
+    "fld_OPD008": "triggering_trade",
+    "fld_OPD009": "trade_side_type",
+    "fld_OPD010": "quote_context",
+    "fld_OPD011": "iv_context",
+    "fld_OPD012": "iv_percentile_by_expiration",
+    "fld_OPD014": "source_provider_name",
+    "fld_OPD015": "raw_persistence",
+    "fld_OPD016": "trade_timestamp",
+    "fld_OPD018": "trade_size",
+    "fld_OPD019": "trade_at_ask",
+    "fld_OPD020": "opening_activity",
+    "fld_OPD021": "iv_high_cross_section",
+    "fld_OPD022": "statistics",
+    "fld_OPD024": "trade_price",
+    "fld_OPD028": "price_vs_ask",
+    "fld_OPD030": "window_trade_count",
+    "fld_OPD031": "window_volume",
+    "fld_OPD032": "window_notional",
+    "fld_OPD033": "first_seen_in_window",
+    "fld_OPD037": "ask_touch_ratio",
+    "fld_OPD038": "contract_prior_window_volume",
+    "fld_OPD039": "volume_vs_prior_window_ratio",
+    "fld_OPD040": "volume_percentile_20d_same_time",
+    "fld_OPD041": "expiration_chain_contract_count",
+    "fld_OPD042": "iv_rank_in_expiration",
+    "fld_OPD043": "iv_zscore_by_expiration",
+    "fld_OPD044": "standard_context",
+    "fld_OPD045": "option_event_detail_standard_source_name",
+    "fld_OPD046": "option_event_detail_standard_id",
+    "fld_OPD048": "current_standard",
+    "fld_OPD049": "max_price_vs_ask",
+    "fld_OPD050": "min_ask_touch_ratio",
+    "fld_OPD051": "min_window_volume",
+    "fld_OPD052": "min_volume_percentile_20d_same_time",
+    "fld_OPD053": "min_iv_percentile_by_expiration",
+    "fld_OPD054": "min_iv_zscore_by_expiration",
+    "fld_OPT001": "underlying",
+    "fld_OPT002": "expiration",
+    "fld_OPT003": "option_right_type",
+    "fld_OPT004": "strike",
+    "fld_OPT005": "snapshot_time",
+    "fld_OPT006": "contract_count",
+    "fld_OPT007": "contracts",
+    "fld_OPT008": "quote",
+    "fld_OPT009": "iv",
+    "fld_OPT010": "greeks",
+    "fld_OPT011": "underlying_context",
+    "fld_OPT012": "derived",
+    "fld_OPT013": "timestamp",
+    "fld_OPT014": "timeframe",
+    "fld_OPT015": "open",
+    "fld_OPT016": "high",
+    "fld_OPT017": "low",
+    "fld_OPT018": "close",
+    "fld_OPT019": "volume",
+    "fld_OPT020": "trade_count",
+    "fld_OPT021": "vwap",
+    "fld_OPT032": "bid",
+    "fld_OPT033": "ask",
+    "fld_OPT034": "mid",
+    "fld_OPT035": "spread",
+    "fld_OPT036": "spread_pct",
+    "fld_OPT037": "bid_size",
+    "fld_OPT038": "ask_size",
+    "fld_OPT045": "implied_vol",
+    "fld_OPT051": "delta",
+    "fld_OPT052": "theta",
+    "fld_OPT053": "vega",
+    "fld_OPT054": "rho",
+    "fld_OPT055": "epsilon",
+    "fld_OPT056": "lambda",
+    "fld_OPT057": "underlying_price",
+    "fld_OPT058": "underlying_timestamp",
+    "fld_OPT059": "days_to_expiration",
+    "fld_OPT060": "bid_exchange",
+    "fld_OPT061": "ask_exchange",
+    "fld_OPT062": "bid_condition",
+    "fld_OPT063": "ask_condition",
+    "fld_OPT064": "iv_error",
+    "fld_P8L2C4TY": "created_at",
+    "fld_Q5F9M2NZ": "updated_at",
+}
+
 @dataclass(frozen=True)
 class RegistryRef:
     id: str
@@ -81,7 +181,7 @@ class ThetaDataOptionPrimaryTrackingError(ValueError):
 
 
 class RegistryNames:
-    """Resolve output field names and data-kind values by stable registry id."""
+    """Resolve retained registry fields and retired local-output field names."""
 
     def __init__(self, registry_csv: Path = DEFAULT_REGISTRY_CSV) -> None:
         with registry_csv.open(newline="", encoding="utf-8") as handle:
@@ -90,7 +190,10 @@ class RegistryNames:
     def payload(self, ref: RegistryRef) -> str:
         row = self._rows.get(ref.id)
         if row is None:
-            raise ThetaDataOptionPrimaryTrackingError(f"registry id not found: {ref.id}")
+            try:
+                return RETIRED_LOCAL_FIELD_PAYLOADS[ref.id]
+            except KeyError as exc:
+                raise ThetaDataOptionPrimaryTrackingError(f"registry id not found: {ref.id}") from exc
         if row["kind"] not in ref.expected_kinds:
             raise ThetaDataOptionPrimaryTrackingError(
                 f"registry id {ref.id} expected kind in {ref.expected_kinds}, got kind={row['kind']}"
@@ -98,8 +201,8 @@ class RegistryNames:
         return row["payload"]
 
 
-# Output field ids. Do not replace these with literal output field names; the
-# bundle resolves current registry payloads when it materializes rows.
+# Legacy local-output field ids. Current registry rows are used when present;
+# retired preview-only ids fall back to code-local names and must not be re-registered.
 def field(item_id: str) -> RegistryRef:
     return RegistryRef(item_id, ("field", "identity_field", "path_field", "temporal_field", "classification_field", "text_field", "parameter_field"))
 

@@ -9,6 +9,7 @@ from typing import Any, Iterable, Mapping
 
 from trading_data.data_bundles.config import config_section, load_bundle_config
 from trading_data.data_bundles.model_input_bundle import BundleSpec, run_bundle
+from trading_data.storage.sql import SqlTableWriter
 
 SPEC = BundleSpec(bundle="02_security_selection_model_inputs", model_id="security_selection_model", output_name="02_security_selection_model_inputs")
 
@@ -31,7 +32,7 @@ class SecuritySelectionInputsError(ValueError):
     """Raised for invalid SecuritySelectionModel input tasks."""
 
 
-def run(task_key: dict[str, Any], *, run_id: str):
+def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None):
     prepared = deepcopy(task_key)
     params = prepared.setdefault("params", {})
     if "stock_etf_exposure" in params:
@@ -40,7 +41,7 @@ def run(task_key: dict[str, Any], *, run_id: str):
         stock_path, _row_count = _derive_stock_etf_exposure(params["stock_etf_exposure"], output_dir=derived_dir)
         input_paths = params.setdefault("input_paths", {})
         input_paths["stock_etf_exposure"] = str(stock_path)
-    return run_bundle(SPEC, prepared, run_id=run_id)
+    return run_bundle(SPEC, prepared, run_id=run_id, sql_writer=sql_writer)
 
 
 def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -> tuple[Path, int]:

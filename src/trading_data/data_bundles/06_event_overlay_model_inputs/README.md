@@ -1,24 +1,50 @@
 # 06_event_overlay_model_inputs
 
-EventOverlayModel inputs manager-facing data bundle.
+Manager-facing EventOverlayModel input bundle.
 
-This bundle accepts a manager task key, loads bundle-local `config.json`, and writes a point-in-time model-input manifest CSV. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
+This bundle accepts a manager task key, loads bundle-local `config.json`, writes point-in-time artifact references, and saves the final bundle manifest to SQL table `model_inputs.model_input_artifact_reference`. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
 
-The nested `equity_abnormal_activity/` detector belongs to this layer: it derives `equity_abnormal_activity_event` rows from already-saved equity bars/liquidity inputs for the EventOverlayModel path. It is not a standalone manager-facing data bundle.
+## Input parameters
 
-## Required task params
+Required task key fields:
 
-- `as_of` — America/New_York timestamp for the point-in-time input manifest.
-- `input_paths` — object mapping configured input roles to one path or a list of paths.
+- `bundle`: `06_event_overlay_model_inputs`
+- `task_id`: stable task identifier
+- `params.as_of`: point-in-time timestamp for the model input view
+- `params.input_paths`: object mapping configured input roles to one artifact reference or a list of artifact references
 
-## Configured inputs
+Optional task key fields:
 
-- `gdelt_articles` -> `gdelt_article` (optional)
-- `sec_company_financials` -> `sec_company_fact` (optional)
-- `trading_economics_calendar` -> `trading_economics_calendar_event` (optional)
-- `option_activity_events` -> `option_activity_event` (optional)
-- `equity_abnormal_activity_events` -> `equity_abnormal_activity_event` (optional)
+- `params.config_path`: reviewed config override
+- `output_root`: local receipt/request-manifest root
 
 ## Output
 
-`saved/06_event_overlay_model_inputs.csv`
+Final saved output is SQL-only:
+
+```text
+model_inputs.model_input_artifact_reference
+```
+
+Natural key:
+
+```text
+run_id + bundle + input_role + data_kind + artifact_reference
+```
+
+Columns:
+
+- `run_id`
+- `task_id`
+- `bundle`
+- `model_id`
+- `as_of`
+- `input_role`
+- `data_kind`
+- `artifact_reference`
+- `required`
+- `point_in_time`
+- `notes`
+- `created_at`
+
+No saved bundle CSV is written.

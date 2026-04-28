@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "description": "Default input contract for 03_strategy_selection_model_inputs. Task keys provide input_paths and as_of.",
   "model_id": "strategy_selection_model",
   "inputs": [
@@ -33,5 +33,38 @@
       "required": false,
       "notes": "Crypto liquidity context"
     }
-  ]
+  ],
+  "storage_target": {
+    "id": "trading_data_model_inputs_postgres",
+    "driver": "postgresql",
+    "secret_alias": "trading_storage_postgres",
+    "schema": "model_inputs",
+    "create_table": true,
+    "batch_size": 5000
+  },
+  "output": {
+    "table": "model_input_artifact_reference",
+    "format": "sql_table",
+    "natural_key": [
+      "run_id",
+      "bundle",
+      "input_role",
+      "data_kind",
+      "artifact_reference"
+    ],
+    "columns": [
+      "run_id",
+      "task_id",
+      "bundle",
+      "model_id",
+      "as_of",
+      "input_role",
+      "data_kind",
+      "artifact_reference",
+      "required",
+      "point_in_time",
+      "notes",
+      "created_at"
+    ]
+  }
 }

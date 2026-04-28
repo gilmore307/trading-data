@@ -28,9 +28,9 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 Each accepted model layer has a manager-facing bundle under `src/trading_data/data_bundles/NN_<model_id>_inputs/`.
 
-Most layers load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
+Layers 2-7 load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference`.
 
-Layer 1 is intentionally different: `01_market_regime_model_inputs` accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
+Layer 1 is intentionally different: `01_market_regime_model_inputs` accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
 
 ## Derived Data Products Added for Model Needs
 

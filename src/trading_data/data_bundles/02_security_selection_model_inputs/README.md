@@ -1,25 +1,50 @@
 # 02_security_selection_model_inputs
 
-SecuritySelectionModel inputs manager-facing data bundle.
+Manager-facing SecuritySelectionModel input bundle.
 
-This bundle accepts a manager task key, loads bundle-local `config.json`, derives SecuritySelectionModel inputs such as `stock_etf_exposure` when requested, and writes a point-in-time model-input manifest CSV. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
+This bundle accepts a manager task key, loads bundle-local `config.json`, derives SecuritySelectionModel inputs such as `stock_etf_exposure` when requested, then writes artifact references, and saves the final bundle manifest to SQL table `model_inputs.model_input_artifact_reference`. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
 
-## Required task params
+## Input parameters
 
-- `as_of` — America/New_York timestamp for the point-in-time input manifest.
-- `input_paths` — object mapping configured input roles to one path or a list of paths. `stock_etf_exposure` may be omitted when `stock_etf_exposure` params are provided for in-pipeline derivation.
+Required task key fields:
 
-## Configured inputs
+- `bundle`: `02_security_selection_model_inputs`
+- `task_id`: stable task identifier
+- `params.as_of`: point-in-time timestamp for the model input view
+- `params.input_paths`: object mapping configured input roles to one artifact reference or a list of artifact references
 
-- `stock_etf_exposure` -> `stock_etf_exposure` (required)
-- `equity_bars` -> `equity_bar` (required)
-- `equity_liquidity` -> `equity_liquidity_bar` (optional)
-- `event_exclusions` -> `trading_event` (optional)
+Optional task key fields:
 
-## Optional stock ETF exposure derivation
-
-Provide `params.stock_etf_exposure` with `holdings_csv_paths`, `available_time`, and optional `etf_scores` to derive `stock_etf_exposure.csv` inside this same pipeline run. The generated CSV is then injected into `input_paths.stock_etf_exposure` before the model-input manifest is saved.
+- `params.config_path`: reviewed config override
+- `output_root`: local receipt/request-manifest root
 
 ## Output
 
-`saved/02_security_selection_model_inputs.csv`
+Final saved output is SQL-only:
+
+```text
+model_inputs.model_input_artifact_reference
+```
+
+Natural key:
+
+```text
+run_id + bundle + input_role + data_kind + artifact_reference
+```
+
+Columns:
+
+- `run_id`
+- `task_id`
+- `bundle`
+- `model_id`
+- `as_of`
+- `input_role`
+- `data_kind`
+- `artifact_reference`
+- `required`
+- `point_in_time`
+- `notes`
+- `created_at`
+
+No saved bundle CSV is written.

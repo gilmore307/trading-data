@@ -798,3 +798,24 @@ Accepted SQL-only model input bundles target a configured PostgreSQL storage tar
 - Runtime credentials come from a storage secret alias such as `trading_storage_postgres`.
 - Receipt details should record receipt-safe target/table metadata, not database credentials or local SQLite paths.
 - Local SQLite is not the canonical development or production output for accepted SQL-only model inputs.
+
+## D053 - Model input bundle manifests are SQL tables
+
+Date: 2026-04-28
+
+### Context
+
+After `01_market_regime_model_inputs` became SQL-only, the remaining numbered model input bundles still emitted saved CSV manifest files. That left the seven-bundle model input layer split between formal SQL and temporary local artifacts.
+
+### Decision
+
+Model input bundle manifests for layers 2-7 are SQL-only and write to `model_inputs.model_input_artifact_reference`. Layer 1 remains a specialized bar table, `model_inputs.market_regime_etf_bar`.
+
+The shared manifest table stores point-in-time artifact references keyed by `run_id + bundle + input_role + data_kind + artifact_reference`.
+
+### Consequences
+
+- Do not write `saved/<bundle>.csv` for layers 2-7.
+- Use the shared PostgreSQL storage target configured by each bundle's `storage_target`.
+- Tests inject fake SQL writers; production uses the PostgreSQL writer.
+- Artifact-producing internal steps, such as `stock_etf_exposure` derivation inside Layer 2, remain separate implementation details until their own final SQL contracts are accepted.

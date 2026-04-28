@@ -1,21 +1,50 @@
 # 04_trade_quality_model_inputs
 
-TradeQualityModel inputs manager-facing data bundle.
+Manager-facing TradeQualityModel input bundle.
 
-This bundle accepts a manager task key, loads bundle-local `config.json`, and writes a point-in-time model-input manifest CSV. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
+This bundle accepts a manager task key, loads bundle-local `config.json`, writes point-in-time artifact references, and saves the final bundle manifest to SQL table `model_inputs.model_input_artifact_reference`. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
 
-## Required task params
+## Input parameters
 
-- `as_of` — America/New_York timestamp for the point-in-time input manifest.
-- `input_paths` — object mapping configured input roles to one path or a list of paths.
+Required task key fields:
 
-## Configured inputs
+- `bundle`: `04_trade_quality_model_inputs`
+- `task_id`: stable task identifier
+- `params.as_of`: point-in-time timestamp for the model input view
+- `params.input_paths`: object mapping configured input roles to one artifact reference or a list of artifact references
 
-- `strategy_candidates` -> `strategy_selection_model_inputs` (required)
-- `market_context` -> `market_regime_model_inputs` (required)
-- `security_context` -> `security_selection_model_inputs` (required)
-- `outcome_labels` -> `trade_quality_label` (optional)
+Optional task key fields:
+
+- `params.config_path`: reviewed config override
+- `output_root`: local receipt/request-manifest root
 
 ## Output
 
-`saved/04_trade_quality_model_inputs.csv`
+Final saved output is SQL-only:
+
+```text
+model_inputs.model_input_artifact_reference
+```
+
+Natural key:
+
+```text
+run_id + bundle + input_role + data_kind + artifact_reference
+```
+
+Columns:
+
+- `run_id`
+- `task_id`
+- `bundle`
+- `model_id`
+- `as_of`
+- `input_role`
+- `data_kind`
+- `artifact_reference`
+- `required`
+- `point_in_time`
+- `notes`
+- `created_at`
+
+No saved bundle CSV is written.

@@ -110,7 +110,7 @@ class PostgresSqlTableWriter:
             conflict = f"ON CONFLICT ({', '.join(id_keys)}) DO UPDATE SET {assignments}"
         else:
             conflict = f"ON CONFLICT ({', '.join(id_keys)}) DO NOTHING"
-        ddl = _market_regime_table_ddl(qualified) if self.create_table and table == "market_regime_etf_bar" else None
+        ddl = _table_ddl(table, qualified) if self.create_table else None
         statement = f"INSERT INTO {qualified} ({', '.join(id_columns)}) VALUES ({placeholders}) {conflict}"
         values = [tuple(row.get(column) for column in columns) for row in rows]
         try:
@@ -137,6 +137,14 @@ class PostgresSqlTableWriter:
         }
 
 
+def _table_ddl(table: str, qualified_table: str) -> str | None:
+    if table == "market_regime_etf_bar":
+        return _market_regime_table_ddl(qualified_table)
+    if table == "model_input_artifact_reference":
+        return _model_input_artifact_reference_ddl(qualified_table)
+    return None
+
+
 def _market_regime_table_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
@@ -154,5 +162,25 @@ def _market_regime_table_ddl(qualified_table: str) -> str:
         trade_count BIGINT,
         created_at TIMESTAMPTZ NOT NULL,
         PRIMARY KEY (run_id, symbol, timeframe, timestamp)
+    )
+    """
+
+
+def _model_input_artifact_reference_ddl(qualified_table: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        run_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        bundle TEXT NOT NULL,
+        model_id TEXT NOT NULL,
+        as_of TIMESTAMPTZ NOT NULL,
+        input_role TEXT NOT NULL,
+        data_kind TEXT NOT NULL,
+        artifact_reference TEXT NOT NULL,
+        required BOOLEAN NOT NULL,
+        point_in_time BOOLEAN NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMPTZ NOT NULL,
+        PRIMARY KEY (run_id, bundle, input_role, data_kind, artifact_reference)
     )
     """

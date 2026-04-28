@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "description": "Default input contract for 02_security_selection_model_inputs. Task keys provide input_paths and as_of; optional params.stock_etf_exposure derives stock_etf_exposure internally from ETF holdings snapshots.",
   "model_id": "security_selection_model",
   "inputs": [
@@ -121,5 +121,38 @@
     },
     "default_available_lag": "next_regular_session_open",
     "etf_scores": {}
+  },
+  "storage_target": {
+    "id": "trading_data_model_inputs_postgres",
+    "driver": "postgresql",
+    "secret_alias": "trading_storage_postgres",
+    "schema": "model_inputs",
+    "create_table": true,
+    "batch_size": 5000
+  },
+  "output": {
+    "table": "model_input_artifact_reference",
+    "format": "sql_table",
+    "natural_key": [
+      "run_id",
+      "bundle",
+      "input_role",
+      "data_kind",
+      "artifact_reference"
+    ],
+    "columns": [
+      "run_id",
+      "task_id",
+      "bundle",
+      "model_id",
+      "as_of",
+      "input_role",
+      "data_kind",
+      "artifact_reference",
+      "required",
+      "point_in_time",
+      "notes",
+      "created_at"
+    ]
   }
 }

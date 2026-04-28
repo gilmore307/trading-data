@@ -1,13 +1,12 @@
-"""Shared runner for model-input bundle manifests.
+"""Shared runner for model-input bundle SQL manifests.
 
 These bundles are manager-facing orchestration surfaces. They do not fetch raw
 provider data directly; they collect already-produced source/derived artifacts
-into a point-in-time model-input manifest for the named model layer.
+into a point-in-time model-input SQL manifest for the named model layer.
 """
 
 from __future__ import annotations
 
-import csv
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -16,18 +15,32 @@ from typing import Any, Mapping
 
 from trading_data.data_bundles.config import load_bundle_config
 from trading_data.source_availability.sanitize import sanitize_value
+from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 FIELDS = [
+    "run_id",
+    "task_id",
     "bundle",
     "model_id",
     "as_of",
     "input_role",
     "data_kind",
-    "path",
+    "artifact_reference",
     "required",
     "point_in_time",
     "notes",
+    "created_at",
 ]
+OUTPUT_TABLE = "model_input_artifact_reference"
+KEY_COLUMNS = ["run_id", "bundle", "input_role", "data_kind", "artifact_reference"]
+DEFAULT_STORAGE_TARGET = {
+    "id": "trading_data_model_inputs_postgres",
+    "driver": "postgresql",
+    "secret_alias": "trading_storage_postgres",
+    "schema": "model_inputs",
+    "create_table": True,
+    "batch_size": 5000,
+}
 
 
 @dataclass(frozen=True)
@@ -62,6 +75,11 @@ class SourcePayload:
     inputs: dict[str, list[str]]
 
 
+@dataclass(frozen=True)
+class CleanedPayload:
+    rows: list[dict[str, Any]]
+
+
 class ModelInputBundleError(ValueError):
     """Raised for invalid model-input bundle tasks."""
 
@@ -78,6 +96,12 @@ def _listify(value: Any) -> list[str]:
     return [str(item) for item in value]
 
 
+def _config_with_storage_target(config: Mapping[str, Any]) -> dict[str, Any]:
+    merged = dict(config)
+    merged.setdefault("storage_target", dict(DEFAULT_STORAGE_TARGET))
+    return merged
+
+
 def build_context(spec: BundleSpec, task_key: dict[str, Any], run_id: str) -> BundleContext:
     if task_key.get("bundle") != spec.bundle:
         raise ModelInputBundleError(f"task_key.bundle must be {spec.bundle}")
@@ -89,7 +113,7 @@ def build_context(spec: BundleSpec, task_key: dict[str, Any], run_id: str) -> Bu
 def fetch(spec: BundleSpec, context: BundleContext) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     config_path = str(params.get("config_path") or "") or None
-    config = load_bundle_config(spec.bundle, config_path=config_path)
+    config = _config_with_storage_target(load_bundle_config(spec.bundle, config_path=config_path))
     explicit_inputs = params.get("input_paths") or {}
     if explicit_inputs and not isinstance(explicit_inputs, Mapping):
         raise ModelInputBundleError("params.input_paths must be an object mapping input_role to one path or list of paths")
@@ -110,15 +134,16 @@ def fetch(spec: BundleSpec, context: BundleContext) -> tuple[StepResult, SourceP
     return StepResult("succeeded", [str(path)], {"input_artifact_ref": sum(len(paths) for paths in inputs.values())}, details=manifest), SourcePayload(config, inputs)
 
 
-def clean(spec: BundleSpec, context: BundleContext, payload: SourcePayload) -> StepResult:
+def clean(spec: BundleSpec, context: BundleContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
     params = dict(context.task_key.get("params") or {})
     as_of = str(params.get("as_of") or params.get("as_of_et") or params.get("available_time") or "")
     if not as_of:
         raise ModelInputBundleError("params.as_of is required for point-in-time model-input bundles")
     configured_inputs = payload.config.get("inputs") or []
-    rows: list[dict[str, str]] = []
+    rows: list[dict[str, Any]] = []
     if not isinstance(configured_inputs, list):
         raise ModelInputBundleError("bundle config field inputs must be a list")
+    created_at = _now_utc()
     for item in configured_inputs:
         if not isinstance(item, Mapping):
             continue
@@ -130,42 +155,35 @@ def clean(spec: BundleSpec, context: BundleContext, payload: SourcePayload) -> S
         if not paths and item.get("required", True):
             raise ModelInputBundleError(f"missing required params.input_paths.{role}")
         if not paths:
-            rows.append(_row(spec, as_of, role, data_kind, "", item))
+            rows.append(_row(spec, context, as_of, role, data_kind, "", item, created_at))
         for path in paths:
-            rows.append(_row(spec, as_of, role, data_kind, path, item))
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    output = context.cleaned_dir / f"{spec.output_name}.jsonl"
-    with output.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
-    schema = context.cleaned_dir / "schema.json"
-    schema.write_text(json.dumps({spec.output_name: FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(output), str(schema)], {spec.output_name: len(rows)}, details={"columns": FIELDS})
+            rows.append(_row(spec, context, as_of, role, data_kind, path, item, created_at))
+    result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"columns": FIELDS, "table": OUTPUT_TABLE, "natural_key": KEY_COLUMNS})
+    return result, CleanedPayload(rows)
 
 
-def _row(spec: BundleSpec, as_of: str, role: str, data_kind: str, path: str, item: Mapping[str, Any]) -> dict[str, str]:
+def _row(spec: BundleSpec, context: BundleContext, as_of: str, role: str, data_kind: str, path: str, item: Mapping[str, Any], created_at: str) -> dict[str, Any]:
     return {
+        "run_id": str(context.metadata["run_id"]),
+        "task_id": str(context.task_key.get("task_id") or ""),
         "bundle": spec.bundle,
         "model_id": spec.model_id,
         "as_of": as_of,
         "input_role": role,
         "data_kind": data_kind,
-        "path": path,
-        "required": str(bool(item.get("required", True))).lower(),
-        "point_in_time": str(bool(item.get("point_in_time", True))).lower(),
+        "artifact_reference": path,
+        "required": bool(item.get("required", True)),
+        "point_in_time": bool(item.get("point_in_time", True)),
         "notes": str(item.get("notes") or ""),
+        "created_at": created_at,
     }
 
 
-def save(spec: BundleSpec, context: BundleContext, clean_result: StepResult) -> StepResult:
-    rows = [json.loads(line) for line in (context.cleaned_dir / f"{spec.output_name}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / f"{spec.output_name}.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
+def save(spec: BundleSpec, context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    writer = sql_writer or PostgresSqlTableWriter.from_config(config)
+    metadata = writer.write_rows(table=OUTPUT_TABLE, columns=FIELDS, rows=payload.rows, key_columns=KEY_COLUMNS)
+    reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
+    return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": FIELDS, "storage": metadata})
 
 
 def write_receipt(spec: BundleSpec, context: BundleContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
@@ -185,13 +203,13 @@ def write_receipt(spec: BundleSpec, context: BundleContext, *, status: str, fetc
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run_bundle(spec: BundleSpec, task_key: dict[str, Any], *, run_id: str) -> StepResult:
+def run_bundle(spec: BundleSpec, task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(spec, task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, payload = fetch(spec, context)
-        clean_result = clean(spec, context, payload)
-        save_result = save(spec, context, clean_result)
+        fetch_result, source_payload = fetch(spec, context)
+        clean_result, cleaned_payload = clean(spec, context, source_payload)
+        save_result = save(spec, context, clean_result, cleaned_payload, source_payload.config, sql_writer=sql_writer)
         return write_receipt(spec, context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except BaseException as exc:
         return write_receipt(spec, context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

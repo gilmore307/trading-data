@@ -1,4 +1,3 @@
-import csv
 import json
 import tempfile
 import unittest
@@ -87,7 +86,7 @@ class ModelInputBundleTests(unittest.TestCase):
         finally:
             module.load_secret_alias = old_load_secret
 
-    def test_model_input_bundles_emit_point_in_time_manifest_csv(self):
+    def test_model_input_bundles_emit_point_in_time_sql_manifest_rows(self):
         for bundle, required_roles in BUNDLES.items():
             with self.subTest(bundle=bundle), tempfile.TemporaryDirectory() as tmp:
                 module = import_module(f"trading_data.data_bundles.{bundle}.pipeline")
@@ -100,12 +99,16 @@ class ModelInputBundleTests(unittest.TestCase):
                     "params": {"as_of": "2026-04-28T09:30:00-04:00", "input_paths": input_paths},
                     "output_root": str(Path(tmp) / "task"),
                 }
-                result = module.run(task_key, run_id="run")
+                writer = FakeSqlWriter()
+                result = module.run(task_key, run_id="run", sql_writer=writer)
                 self.assertEqual(result.status, "succeeded")
-                self.assertGreaterEqual(result.row_counts[bundle], len(required_roles))
-                saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / f"{bundle}.csv"
-                with saved.open(newline="", encoding="utf-8") as handle:
-                    rows = list(csv.DictReader(handle))
+                self.assertGreaterEqual(result.row_counts["model_input_artifact_reference"], len(required_roles))
+                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / f"{bundle}.csv").exists())
+                self.assertEqual(len(writer.calls), 1)
+                call = writer.calls[0]
+                self.assertEqual(call["table"], "model_input_artifact_reference")
+                self.assertEqual(call["key_columns"], ["run_id", "bundle", "input_role", "data_kind", "artifact_reference"])
+                rows = call["rows"]
                 self.assertTrue(rows)
                 self.assertEqual({row["bundle"] for row in rows}, {bundle})
                 self.assertEqual({row["as_of"] for row in rows}, {"2026-04-28T09:30:00-04:00"})

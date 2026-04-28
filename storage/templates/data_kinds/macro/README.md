@@ -1,9 +1,5 @@
-# Deprecated macro data-kind templates
+# Macro Data Kind Templates
 
-The executable `macro_data` official macro API bundle has been removed.
+The old `macro_release` transient preview has been removed. The active macro event-layer shape is now `events/macro_release_event.preview.csv`, generated from the registry-backed template generator.
 
-Macro model inputs now use `trading_economics_calendar_web` visible-page rows, which include Actual, Previous, Consensus, and Forecast when visible on Trading Economics pages.
-
-The historical `macro_release` preview shape is retained only as a deprecated/transient reference for old registry rows and should not be used by new manager tasks. Do not add new code that writes `macro_release.csv` or routes tasks to `macro_data`.
-
-Official macro API secret aliases may remain stored for optional future research, but they are not active `trading-data` task routes.
+Do not add new `macro_data` or `macro_release` manager-facing outputs. Official macro evidence should flow into event-layer rows or source-interface/run-local evidence only.

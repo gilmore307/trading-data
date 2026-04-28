@@ -31,11 +31,7 @@ class DataKindPreviewGenerationTests(unittest.TestCase):
                 option_event.read_text(encoding="utf-8"),
             )
 
-            macro_release = root / "macro" / "macro_release.preview.csv"
-            self.assertIn(
-                "metric,release_time,effective_until,value",
-                macro_release.read_text(encoding="utf-8"),
-            )
+            self.assertNotIn(root / "macro" / "macro_release.preview.csv", written)
 
             macro_release_event = root / "events" / "macro_release_event.preview.csv"
             macro_event_text = macro_release_event.read_text(encoding="utf-8")

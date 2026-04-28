@@ -6,13 +6,13 @@ from importlib import import_module
 from pathlib import Path
 
 BUNDLES = {
-    "layer01_market_regime_model_inputs": ["broad_market_bars", "sector_etf_bars"],
-    "layer02_security_selection_model_inputs": ["stock_etf_exposure", "equity_bars"],
-    "layer03_strategy_selection_model_inputs": ["selected_universe", "equity_bars"],
-    "layer04_trade_quality_model_inputs": ["strategy_candidates", "market_context", "security_context"],
-    "layer05_option_expression_model_inputs": ["option_chain_snapshot", "trade_quality_candidates"],
-    "layer06_event_overlay_model_inputs": ["gdelt_articles", "trading_economics_calendar", "equity_abnormal_activity_events"],
-    "layer07_portfolio_risk_model_inputs": ["option_expression_candidates"],
+    "01_market_regime_model_inputs": ["broad_market_bars", "sector_etf_bars"],
+    "02_security_selection_model_inputs": ["stock_etf_exposure", "equity_bars"],
+    "03_strategy_selection_model_inputs": ["selected_universe", "equity_bars"],
+    "04_trade_quality_model_inputs": ["strategy_candidates", "market_context", "security_context"],
+    "05_option_expression_model_inputs": ["option_chain_snapshot", "trade_quality_candidates"],
+    "06_event_overlay_model_inputs": ["gdelt_articles", "trading_economics_calendar", "equity_abnormal_activity_events"],
+    "07_portfolio_risk_model_inputs": ["option_expression_candidates"],
 }
 
 
@@ -44,10 +44,10 @@ class ModelInputBundleTests(unittest.TestCase):
 
     def test_missing_required_role_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
-            module = import_module("trading_data.data_bundles.layer01_market_regime_model_inputs.pipeline")
+            module = import_module("trading_data.data_bundles.01_market_regime_model_inputs.pipeline")
             task_key = {
-                "task_id": "layer01_market_regime_model_inputs_task_bad",
-                "bundle": "layer01_market_regime_model_inputs",
+                "task_id": "01_market_regime_model_inputs_task_bad",
+                "bundle": "01_market_regime_model_inputs",
                 "params": {"as_of_et": "2026-04-28T09:30:00-04:00", "input_paths": {"broad_market_bars": "spy.csv"}},
                 "output_root": str(Path(tmp) / "task"),
             }

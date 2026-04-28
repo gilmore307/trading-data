@@ -11,12 +11,12 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             holdings = Path(tmp) / "etf_holding_snapshot.csv"
             with holdings.open("w", newline="", encoding="utf-8") as handle:
-                writer = csv.DictWriter(handle, fieldnames=["etf_ticker", "issuer", "as_of_date", "holding_ticker", "holding_name", "weight", "shares", "market_value", "cusip", "sedol", "asset_class", "sector_type", "source_url"])
+                writer = csv.DictWriter(handle, fieldnames=["etf_ticker", "issuer_name", "as_of_date", "holding_ticker", "holding_name", "weight", "shares", "market_value", "cusip", "sedol", "asset_class", "sector_type", "source_url"])
                 writer.writeheader()
                 writer.writerows([
-                    {"etf_ticker": "SMH", "issuer": "vaneck", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "20", "sector_type": "Information Technology"},
-                    {"etf_ticker": "SOXX", "issuer": "ishares", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "10", "sector_type": "Information Technology"},
-                    {"etf_ticker": "XLK", "issuer": "spdr", "as_of_date": "2026-04-24", "holding_ticker": "AAPL", "holding_name": "Apple Inc", "weight": "15", "sector_type": "Information Technology"},
+                    {"etf_ticker": "SMH", "issuer_name": "vaneck", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "20", "sector_type": "Information Technology"},
+                    {"etf_ticker": "SOXX", "issuer_name": "ishares", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "10", "sector_type": "Information Technology"},
+                    {"etf_ticker": "XLK", "issuer_name": "spdr", "as_of_date": "2026-04-24", "holding_ticker": "AAPL", "holding_name": "Apple Inc", "weight": "15", "sector_type": "Information Technology"},
                 ])
             equity_bars = Path(tmp) / "equity_bar.csv"
             equity_bars.write_text("symbol,timestamp,close\nNVDA,2026-04-24T16:00:00-04:00,100\n", encoding="utf-8")

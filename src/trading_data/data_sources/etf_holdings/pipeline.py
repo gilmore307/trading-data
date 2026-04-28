@@ -23,7 +23,7 @@ from trading_data.source_availability.sanitize import sanitize_value
 BUNDLE = "etf_holdings"
 FIELDS = [
     "etf_ticker",
-    "issuer",
+    "issuer_name",
     "as_of_date",
     "holding_ticker",
     "holding_name",
@@ -105,7 +105,7 @@ def _required(params: Mapping[str, Any], key: str) -> str:
 def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     etf_ticker = _required(params, "etf_ticker").upper()
-    issuer = _required(params, "issuer").lower().replace(" ", "_")
+    issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
     source_url = str(params.get("source_url") or "")
     payload: SourcePayload | None = None
     for kind in ("csv", "html", "json"):
@@ -124,7 +124,7 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     manifest = {
         "bundle": BUNDLE,
         "etf_ticker": etf_ticker,
-        "issuer": issuer,
+        "issuer_name": issuer,
         "issuer_pattern": ISSUER_FETCH_PATTERNS.get(issuer, "issuer adapter pending mapping review"),
         "source_url": source_url,
         "source_payload_kind": payload.kind,
@@ -176,7 +176,7 @@ def _normalize_row(raw: Mapping[str, Any], *, etf_ticker: str, issuer: str, sour
     mapped = {_canonical_key(str(key)): str(value or "").strip() for key, value in raw.items()}
     return {
         "etf_ticker": etf_ticker,
-        "issuer": issuer,
+        "issuer_name": issuer,
         "as_of_date": mapped.get("as_of_date") or default_as_of,
         "holding_ticker": mapped.get("holding_ticker", ""),
         "holding_name": mapped.get("holding_name", ""),
@@ -233,7 +233,7 @@ def _iter_json_rows(value: Any) -> Iterable[Mapping[str, Any]]:
 def clean(context: BundleContext, payload: SourcePayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
     etf_ticker = _required(params, "etf_ticker").upper()
-    issuer = _required(params, "issuer").lower().replace(" ", "_")
+    issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
     as_of_date = str(params.get("as_of_date") or "")
     if payload.kind == "csv":
         raw_rows = _parse_csv(payload.text)

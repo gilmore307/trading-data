@@ -1,2 +1,2 @@
-etf_ticker,issuer,as_of_date,holding_ticker,holding_name,weight,shares,market_value,cusip,sedol,asset_class,sector_type,source_url
+etf_ticker,issuer_name,as_of_date,holding_ticker,holding_name,weight,shares,market_value,cusip,sedol,asset_class,sector_type,source_url
 VGT,vanguard,2026-04-24,NVDA,NVIDIA Corp.,18.53,129246346,22540562742,67066G104,2379504,Equity,Information Technology,https://investor.vanguard.com/investment-products/etfs/profile/vgt

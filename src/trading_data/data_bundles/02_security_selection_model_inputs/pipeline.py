@@ -22,7 +22,7 @@ STOCK_ETF_EXPOSURE_FIELDS = [
     "weighted_theme_score",
     "exposure_tags",
     "source_etf_count",
-    "source_snapshot_refs",
+    "source_snapshot_references",
     "available_time",
 ]
 
@@ -99,7 +99,7 @@ def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -
             "weighted_theme_score": _fmt(float(item["weighted_theme"])),
             "exposure_tags": ";".join(sorted(set(item["tags"]))),
             "source_etf_count": str(len(set(item["etfs"]))),
-            "source_snapshot_refs": ";".join(sorted(set(item["refs"]))),
+            "source_snapshot_references": ";".join(sorted(set(item["refs"]))),
             "available_time": available_time,
         })
     if not rows:

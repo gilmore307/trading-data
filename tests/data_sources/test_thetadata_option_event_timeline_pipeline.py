@@ -99,12 +99,12 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             event_id = rows[0]["id"]
             self.assertTrue(event_id.startswith("opt_evt_"))
             self.assertNotIn("data_kind", rows[0])
-            self.assertIn("AAPL 2026-05-15 270C", rows[0]["headline"])
+            self.assertIn("AAPL 2026-05-15 270C", rows[0]["timeline_headline"])
             self.assertEqual(rows[0]["created_at"], "2026-04-24T09:30:02.267000-04:00")
             self.assertEqual(rows[0]["updated_at"], "2026-04-24T09:30:02.500000-04:00")
             self.assertEqual(rows[0]["symbols"], "AAPL;AAPL 2026-05-15 270C")
             self.assertEqual(rows[0]["summary"], "trade_at_ask;opening_activity")
-            self.assertEqual(rows[0]["url"], f"{event_id}.csv")
+            self.assertEqual(rows[0]["event_link_url"], f"{event_id}.csv")
 
             detail_path = saved_dir / f"{event_id}.csv"
             self.assertTrue(detail_path.exists())
@@ -120,7 +120,7 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             self.assertEqual(triggered["opening_activity"]["statistics"]["window_volume"], 120)
             self.assertEqual(json.loads(detail["triggering_trade"])["trade_size"], 80)
             self.assertEqual(json.loads(detail["quote_context"])["ask"], 1.25)
-            self.assertEqual(json.loads(detail["source_refs"])["raw_persistence"], "not_persisted_by_default")
+            self.assertEqual(json.loads(detail["source_references"])["raw_persistence"], "not_persisted_by_default")
 
             self.assertTrue((output_root / "runs" / "thetadata_option_event_timeline_run_test" / "cleaned" / "option_activity_event.jsonl").exists())
             self.assertFalse((saved_dir / "option_activity_event.jsonl").exists())

@@ -62,7 +62,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
             with saved.open(newline="", encoding="utf-8") as handle:
                 row = next(csv.DictReader(handle))
             self.assertEqual(row["source_type"], "alpaca_equity_market_data")
-            self.assertIn("alpaca_bars:NVDA", row["source_refs"])
+            self.assertIn("alpaca_bars:NVDA", row["source_references"])
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 

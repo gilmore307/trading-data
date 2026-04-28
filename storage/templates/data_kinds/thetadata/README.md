@@ -22,7 +22,7 @@ Final output:
 
 ### `thetadata_option_event_timeline`
 
-Reports only option-activity events. It may use transient 30Min window state and periodic option-chain snapshots for IV context, but final timeline output contains only triggered events. `headline` is a human-facing news-style title; `summary` carries only triggered abnormal indicator type names. Each event row has a stable random `id` and links through `url` to `<id>.csv`, a compact SQL-shaped detail row for the full event context.
+Reports only option-activity events. It may use transient 30Min window state and periodic option-chain snapshots for IV context, but final timeline output contains only triggered events. `timeline_headline` is a human-facing news-style title; `summary` carries only triggered abnormal indicator type names. Each event row has a stable random `id` and links through `event_link_url` to `<id>.csv`, a compact SQL-shaped detail row for the full event context.
 
 Final output:
 
@@ -85,11 +85,11 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Persistence policy:** Persist triggered event rows as CSV plus one compact detail JSON per event. Do not persist process data, transient trade_quote rows, or periodic chain snapshots in this bundle.
 - **Earliest available range:** `unknown`; trade_quote live preview confirmed AAPL 2026-05-15 270 CALL on 2026-04-24.
 - **Default timestamp semantics:** `created_at` is the event source time and `updated_at` is the detection/report time, both in `America/New_York`.
-- **Natural grain:** One detected option-activity event using the shared model-facing timeline fields: `id`, `headline`, `created_at`, `updated_at`, `symbols`, `summary`, `url`.
+- **Natural grain:** One detected option-activity event using the shared model-facing timeline fields: `id`, `timeline_headline`, `created_at`, `updated_at`, `symbols`, `summary`, `event_link_url`.
 - **Request parameters:** `underlying`, `expiration`, `right`, `strike`, `start_date`, `end_date`, `timeframe`, and task/model `current_standard` params.
 - **Pagination/range behavior:** Process trade_quote rows within event-window state; optional `iv_context` can provide IV cross-section context. Emit a final row only when the supplied event-time `current_standard` is satisfied.
 - **Preview file:** see `option_activity_event.preview.csv`.
-- **Known caveats:** This output intentionally reuses the simplified news/timeline schema. `id` is a stable random event id, not a semantic timestamp/contract id. `headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries only abnormal indicator type names such as `trade_at_ask;opening_activity`; normal metrics and event scoring are omitted and belong to downstream models. `url` is `<id>.csv` and links to the event detail artifact rather than to an external article. Current implementation evaluates supplied `trade_at_ask`, `opening_activity`, and optional `iv_high_cross_section` standards; model-standard identity/versioning remains downstream `trading-model` work.
+- **Known caveats:** This output intentionally reuses the simplified news/timeline schema. `id` is a stable random event id, not a semantic timestamp/contract id. `timeline_headline` is human-facing and should mention only triggered abnormal indicators. `summary` carries only abnormal indicator type names such as `trade_at_ask;opening_activity`; normal metrics and event scoring are omitted and belong to downstream models. `event_link_url` is `<id>.csv` and links to the event detail artifact rather than to an external article. Current implementation evaluates supplied `trade_at_ask`, `opening_activity`, and optional `iv_high_cross_section` standards; model-standard identity/versioning remains downstream `trading-model` work.
 
 ## `option_activity_event_detail`
 
@@ -101,6 +101,6 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Default timestamp semantics:** `created_at`, `updated_at`, and nested timestamps use `America/New_York`.
 - **Natural grain:** One detail row per detected option-activity event, keyed by `event_id` matching the CSV row stable random `id`.
 - **Request parameters:** Same as `option_activity_event`.
-- **Pagination/range behavior:** Written only when an event is emitted; the CSV row `url` points to the detail row/artifact as `<id>.csv`.
+- **Pagination/range behavior:** Written only when an event is emitted; the CSV row `event_link_url` points to the detail row/artifact as `<id>.csv`.
 - **Preview file:** see `option_activity_event_detail.preview.csv`.
 - **Known caveats:** Detail row is an evidence/context artifact, not a dump of all transient provider rows. `triggered_indicators` is an object keyed by abnormal indicator type; each child object owns objective observed `statistics` and the event-time `current_standard` produced by the detection model. `current_standard` is not a global fixed rule value; it is the standard used by the model for this event and may change across model versions/runs. It should be enough to audit why the event fired while keeping high-volume source rows transient.

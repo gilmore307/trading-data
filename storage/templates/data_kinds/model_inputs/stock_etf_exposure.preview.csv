@@ -1,2 +1,2 @@
-as_of_date,symbol,exposed_etfs,top_exposure_etf,total_etf_exposure_score,weighted_sector_score,weighted_theme_score,exposure_tags,source_etf_count,source_snapshot_refs,available_time
+as_of_date,symbol,exposed_etfs,top_exposure_etf,total_etf_exposure_score,weighted_sector_score,weighted_theme_score,exposure_tags,source_etf_count,source_snapshot_references,available_time
 2026-04-24,NVDA,QQQ;XLK;SMH;SOXX;AIQ,SMH,0.92,0.93,0.88,semiconductor;AI;large_cap_growth;high_beta,5,VGT:2026-04-24;SMH:2026-04-24;QQQ:2026-04-24,2026-04-25T09:30:00-04:00

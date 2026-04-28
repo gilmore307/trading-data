@@ -55,7 +55,7 @@ ARTICLE_FIELDS = [
     "article_id",
     "seen_at",
     "source_domain",
-    "url",
+    "event_link_url",
     "language",
     "source_country",
     "title",
@@ -297,7 +297,7 @@ def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> 
     impact_scope = str(params.get("impact_scope") or "market;sector;industry;theme")
     output: list[dict[str, Any]] = []
     for row in rows:
-        url = str(row.get("url") or "").strip()
+        url = str(row.get("url") or row.get("event_link_url") or "").strip()
         article_id = str(row.get("article_id") or url).strip()
         if not url or not article_id:
             continue
@@ -305,7 +305,7 @@ def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> 
             "article_id": article_id,
             "seen_at": _seen_at(row),
             "source_domain": str(row.get("source_domain") or ""),
-            "url": url,
+            "event_link_url": url,
             "language": "",
             "source_country": "",
             "title": "",

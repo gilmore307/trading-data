@@ -32,7 +32,7 @@
     "etf_universe": {
       "broad_market": {
         "SPY": {
-          "issuer": "state_street",
+          "issuer_name": "state_street",
           "grain": "1Day",
           "exposure_tags": [
             "large_cap",
@@ -40,7 +40,7 @@
           ]
         },
         "QQQ": {
-          "issuer": "invesco",
+          "issuer_name": "invesco",
           "grain": "1Day",
           "exposure_tags": [
             "nasdaq",
@@ -49,7 +49,7 @@
           ]
         },
         "IWM": {
-          "issuer": "blackrock",
+          "issuer_name": "blackrock",
           "grain": "1Day",
           "exposure_tags": [
             "small_cap"
@@ -58,28 +58,28 @@
       },
       "sector": {
         "XLK": {
-          "issuer": "state_street",
+          "issuer_name": "state_street",
           "grain": "1Day",
           "exposure_tags": [
             "technology"
           ]
         },
         "XLF": {
-          "issuer": "state_street",
+          "issuer_name": "state_street",
           "grain": "1Day",
           "exposure_tags": [
             "financials"
           ]
         },
         "XLE": {
-          "issuer": "state_street",
+          "issuer_name": "state_street",
           "grain": "1Day",
           "exposure_tags": [
             "energy"
           ]
         },
         "XLV": {
-          "issuer": "state_street",
+          "issuer_name": "state_street",
           "grain": "1Day",
           "exposure_tags": [
             "healthcare"
@@ -88,7 +88,7 @@
       },
       "theme": {
         "SMH": {
-          "issuer": "vaneck",
+          "issuer_name": "vaneck",
           "grain": "1Day",
           "exposure_tags": [
             "semiconductor",
@@ -96,14 +96,14 @@
           ]
         },
         "SOXX": {
-          "issuer": "blackrock",
+          "issuer_name": "blackrock",
           "grain": "1Day",
           "exposure_tags": [
             "semiconductor"
           ]
         },
         "BOTZ": {
-          "issuer": "global_x",
+          "issuer_name": "global_x",
           "grain": "1Day",
           "exposure_tags": [
             "robotics",
@@ -111,7 +111,7 @@
           ]
         },
         "CIBR": {
-          "issuer": "first_trust",
+          "issuer_name": "first_trust",
           "grain": "1Day",
           "exposure_tags": [
             "cybersecurity"

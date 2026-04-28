@@ -36,7 +36,7 @@ FIELDS = [
     "relative_strength_zscore",
     "gap_pct",
     "liquidity_spread_zscore",
-    "source_refs",
+    "source_references",
     "taxonomy_context",
 ]
 
@@ -233,7 +233,7 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
                 "relative_strength_zscore": _fmt(relative_z),
                 "gap_pct": _fmt(gap),
                 "liquidity_spread_zscore": _fmt(spread_z),
-                "source_refs": ";".join(refs),
+                "source_references": ";".join(refs),
                 "taxonomy_context": json.dumps(taxonomy, sort_keys=True),
             })
         if ret is not None:

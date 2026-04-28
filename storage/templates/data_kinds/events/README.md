@@ -19,7 +19,7 @@ The event database layer owns common research rows:
 - `event_factor` — model-facing numeric features derived from events.
 - `equity_abnormal_activity_event` — derived event-style row for abnormal stock/ETF market activity used by EventOverlayModel.
 
-Long text belongs in report artifacts, not inside event CSV rows. Event rows store short titles/summaries and `analysis_report_url` / sidecar references.
+Long text belongs in report artifacts, not inside event CSV rows. Event rows store short titles/summaries and `event_analysis_report_url` / sidecar references.
 
 ## Source priority and news coverage filtering
 

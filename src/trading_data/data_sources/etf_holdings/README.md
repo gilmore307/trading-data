@@ -19,7 +19,7 @@ Confirmed issuer patterns:
 Params:
 
 - `etf_ticker` — required.
-- `issuer` — required until the mapping table is registered.
+- `issuer_name` — required until the mapping table is registered. Legacy `issuer` is accepted temporarily at the ingestion boundary for compatibility.
 - `source_url` — optional official URL.
 - `csv_path` / `csv_text` — optional issuer CSV evidence.
 - `html_path` / `html` — optional issuer HTML table evidence.

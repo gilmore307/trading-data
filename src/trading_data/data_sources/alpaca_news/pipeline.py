@@ -10,7 +10,7 @@ from trading_data.source_availability.http import HttpClient, HttpResult
 from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
-NEWS_FIELDS=['id','headline','created_at','updated_at','symbols','summary','url']
+NEWS_FIELDS=['id','timeline_headline','created_at','updated_at','symbols','summary','event_link_url']
 @dataclass(frozen=True)
 class BundleContext: task_key:dict[str,Any]; run_dir:Path; cleaned_dir:Path; saved_dir:Path; receipt_path:Path; metadata:dict[str,Any]=field(default_factory=dict)
 @dataclass(frozen=True)
@@ -62,7 +62,7 @@ def fetch(context,*,client=None):
 def clean(context,fetched):
     rows=[]
     for i in fetched.news:
-        rows.append({'id':i.get('id'),'headline':i.get('headline'),'created_at':_et_iso(i.get('created_at')),'updated_at':_et_iso(i.get('updated_at')),'symbols':i.get('symbols') or [],'summary':i.get('summary'),'url':i.get('url')})
+        rows.append({'id':i.get('id'),'timeline_headline':i.get('headline'),'created_at':_et_iso(i.get('created_at')),'updated_at':_et_iso(i.get('updated_at')),'symbols':i.get('symbols') or [],'summary':i.get('summary'),'event_link_url':i.get('url')})
     context.cleaned_dir.mkdir(parents=True,exist_ok=True); path=context.cleaned_dir/'equity_news.jsonl'
     with path.open('w') as h:
         for r in rows: h.write(json.dumps(sanitize_value(r),sort_keys=True)+'\n')

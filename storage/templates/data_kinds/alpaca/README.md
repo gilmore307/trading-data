@@ -51,9 +51,9 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 - **Persistence policy:** Persist cleaned final event/news timeline rows only. Do not persist full raw provider payloads by default.
 - **Earliest available range:** `unknown`; live implementation confirmed AAPL news around 2024-01-09.
 - **Default timestamp semantics:** `created_at` and `updated_at` in `America/New_York`.
-- **Natural grain:** One news article/item using the shared model-facing timeline fields: `id`, `headline`, `created_at`, `updated_at`, `symbols`, `summary`, `url`.
+- **Natural grain:** One news article/item using the shared model-facing timeline fields: `id`, `timeline_headline`, `created_at`, `updated_at`, `symbols`, `summary`, `event_link_url`.
 - **Request parameters:** `symbols`, `start`, `end`; optional `limit`, `max_pages`.
 - **Pagination/range behavior:** Alpaca `next_page_token`; implementation uses bounded `max_pages`.
 - **Preview file:** see `equity_news.preview.csv`.
 
-- **Known caveats:** Article text may be empty or provider-limited. `url` links back to the original article. Provider byline/source/image metadata is intentionally omitted from the model-facing final row unless a later model need proves it useful.
+- **Known caveats:** Article text may be empty or provider-limited. `event_link_url` links back to the original article. Provider byline/source/image metadata is intentionally omitted from the model-facing final row unless a later model need proves it useful.

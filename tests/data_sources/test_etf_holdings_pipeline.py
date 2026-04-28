@@ -19,7 +19,7 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "bundle": "etf_holdings",
                 "params": {
                     "etf_ticker": "VGT",
-                    "issuer": "vanguard",
+                    "issuer_name": "vanguard",
                     "as_of_date": "2026-04-24",
                     "source_url": "https://investor.vanguard.com/investment-products/etfs/profile/vgt",
                     "csv_text": csv_text,
@@ -50,7 +50,7 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             task_key = {
                 "task_id": "etf_holdings_html_test",
                 "bundle": "etf_holdings",
-                "params": {"etf_ticker": "VGT", "issuer": "vanguard", "as_of_date": "2026-04-24", "html": html},
+                "params": {"etf_ticker": "VGT", "issuer_name": "vanguard", "as_of_date": "2026-04-24", "html": html},
                 "output_root": str(Path(tmp) / "task"),
             }
             result = run(task_key, run_id="run")

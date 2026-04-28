@@ -31,7 +31,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
                 "article_id": "20260427123000-1",
                 "gdelt_date": "20260427123000",
                 "source_domain": "example.com",
-                "url": "https://example.com/politics-economy-tech",
+                "event_link_url": "https://example.com/politics-economy-tech",
                 "source_theme_tags": "ECON_STOCKMARKET;TAX_FNCACT",
                 "persons": "",
                 "organizations": "Federal Reserve",
@@ -68,7 +68,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             self.assertEqual(receipt["runs"][0]["row_counts"]["gdelt_article"], 1)
 
     def test_default_topics_allow_omitting_query_terms(self):
-        rows = [{"article_id": "a", "gdelt_date": "20260427123000", "source_domain": "reuters.com", "url": "https://reuters.com/a"}]
+        rows = [{"article_id": "a", "gdelt_date": "20260427123000", "source_domain": "reuters.com", "event_link_url": "https://reuters.com/a"}]
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "gdelt_news_task_default", "bundle": "gdelt_news", "params": {"max_rows": 1}, "output_root": str(Path(tmp) / "task")}
             client = FakeBigQueryClient(rows)

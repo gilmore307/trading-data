@@ -16,19 +16,19 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 | Model layer | Input bundle | Core data products | Notes |
 |---|---|---|---|
-| `MarketRegimeModel` | `01_market_regime_model_inputs` | ETF/broad-market `equity_bar`; cross-asset ETF basket bars; ratios and market-only features derived later | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model, except as explanatory metadata. |
-| `SecuritySelectionModel` | `02_security_selection_model_inputs` | `etf_holding_snapshot`, `stock_etf_exposure`, equity bars/liquidity, optionability summaries, event exclusions | Bridges sector/style strength to tradable stocks. Uses both ETF holdings-driven universe and full-market scan universe. |
-| `StrategySelectionModel` | `03_strategy_selection_model_inputs` | equity bars/liquidity from Alpaca, crypto bars/liquidity from OKX, selected candidate pools from Layer 2 | Chooses strategy family/variant for candidate symbols. |
+| `MarketRegimeModel` | `01_market_regime_model_inputs` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
+| `SecuritySelectionModel` | `02_security_selection_model_inputs` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
+| `StrategySelectionModel` | `03_strategy_selection_model_inputs` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
 | `TradeQualityModel` | _(no trading-data bundle)_ | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new data acquisition, SQL view, or manifest contract in `trading-data`; `trading-model` consumes upstream SQL outputs directly. |
-| `OptionExpressionModel` | `05_option_expression_model_inputs` | option chain snapshot, option bars/contract tracking, IV/Greeks/liquidity, upstream signal forecast | V1 supports long call / long put only; no multi-leg option structures. |
-| `EventOverlayModel` | `06_event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. Trading Economics is the accepted macro calendar/value surface. |
-| `PortfolioRiskModel` | `07_portfolio_risk_model_inputs` | option contract data, positions, fills, PnL, cash/margin, exposures, risk limits, kill-switch state | Portfolio/account state is likely execution/account-owned, not pure `trading-data`. Historical simulation outputs may fill this during research. |
+| `OptionExpressionModel` | `05_option_expression_model_inputs` | option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts. Contract-level snapshot revision is pending. |
+| `PositionExecutionModel` | `06_position_execution_model_inputs` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
+| `EventOverlayModel` | `07_event_overlay_model_inputs` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
 ## Implemented Model Input Bundles
 
-Each accepted model layer has a manager-facing bundle under `src/trading_data/data_bundles/NN_<model_id>_inputs/`.
+Each accepted model layer has a manager-facing bundle under `src/trading_data/data_bundles/NN_<model_id>_inputs/` unless the layer requires no new `trading-data` acquisition.
 
-Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
+Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`.
 
 Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
 
@@ -36,9 +36,11 @@ Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbo
 
 Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model/strategy candidates without new data acquisition or manifest/view contract.
 
-Layer 5 accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `model_inputs.option_expression_option_chain_snapshot`.
+Layer 5 currently accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `model_inputs.option_expression_option_chain_snapshot`. This is scheduled to become contract-level entry/exit snapshot rows because the model compares contracts.
 
-Layers 6-7 still need true data-product contract review; historical manifest-style behavior should not be expanded.
+Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `model_inputs.position_execution_option_contract_timeseries`, containing selected option contract market data from entry time through exit time plus one hour.
+
+Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `model_inputs.event_overlay_event`, one row per event. Full news, SEC, macro, and detector details remain behind references.
 
 ## Derived Data Products Added for Model Needs
 
@@ -72,11 +74,11 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Bundle: `src/trading_data/data_bundles/06_event_overlay_model_inputs/equity_abnormal_activity/`
+Bundle: `src/trading_data/data_bundles/07_event_overlay_model_inputs/equity_abnormal_activity/`
 
-Config: `src/trading_data/data_bundles/06_event_overlay_model_inputs/equity_abnormal_activity/config.json`
+Config: `src/trading_data/data_bundles/07_event_overlay_model_inputs/equity_abnormal_activity/config.json`
 
-Purpose: EventOverlayModel evidence row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
+Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 
 It is analogous to option activity events but uses equity/ETF market data:
 
@@ -92,11 +94,12 @@ Boundary:
 - Derived event-style row, not raw trades/quotes.
 - Should be created only from observable market data at/after the event effective time.
 - Implemented first as a conservative derived detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs.
-- Can feed unified `trading_event` / `event_factor` projection later.
+- Can feed the Layer 7 `event_overlay_event` overview table as a `prior_signal`.
 
 ## Known Open Data Gaps
 
-- Harden ETF-symbol-to-issuer mapping and ETF holdings freshness/available-time rules for production `stock_etf_exposure` runs.
+- Revise Layer 5 from nested option snapshot payloads to contract-level entry/exit snapshot rows.
+- Clean accepted SQL business tables so `run_id`, `task_id`, and write audit timestamps stay in receipts/run metadata rather than business rows.
+- Harden ETF-symbol-to-issuer mapping and ETF holdings freshness/available-time rules for production runs.
 - Calibrate equity abnormal activity thresholds/model standards against historical distributions before training labels consume them.
 - Define optionability summary shape for SecuritySelectionModel; likely derived from option chain snapshots and liquidity filters.
-- Define portfolio/account-state artifact owner for PortfolioRiskModel; likely outside `trading-data`.

@@ -156,6 +156,10 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _strategy_selection_symbol_bar_liquidity_ddl(qualified_table)
     if table == "option_expression_option_chain_snapshot":
         return _option_expression_option_chain_snapshot_ddl(qualified_table)
+    if table == "position_execution_option_contract_timeseries":
+        return _position_execution_option_contract_timeseries_ddl(qualified_table)
+    if table == "event_overlay_event":
+        return _event_overlay_event_ddl(qualified_table)
     return None
 
 
@@ -262,5 +266,48 @@ def _option_expression_option_chain_snapshot_ddl(qualified_table: str) -> str:
         contract_count BIGINT NOT NULL,
         contracts JSONB NOT NULL,
         PRIMARY KEY (run_id, underlying, snapshot_time)
+    )
+    """
+
+
+def _position_execution_option_contract_timeseries_ddl(qualified_table: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        underlying TEXT NOT NULL,
+        option_symbol TEXT NOT NULL,
+        expiration DATE NOT NULL,
+        option_right_type TEXT NOT NULL,
+        strike DOUBLE PRECISION NOT NULL,
+        timeframe TEXT NOT NULL,
+        timestamp TIMESTAMPTZ NOT NULL,
+        open DOUBLE PRECISION,
+        high DOUBLE PRECISION,
+        low DOUBLE PRECISION,
+        close DOUBLE PRECISION,
+        volume DOUBLE PRECISION,
+        trade_count BIGINT,
+        vwap DOUBLE PRECISION,
+        PRIMARY KEY (option_symbol, timeframe, timestamp)
+    )
+    """
+
+
+def _event_overlay_event_ddl(qualified_table: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        event_id TEXT NOT NULL,
+        event_time TIMESTAMPTZ NOT NULL,
+        available_time TIMESTAMPTZ NOT NULL,
+        information_role TEXT NOT NULL,
+        event_category TEXT NOT NULL,
+        scope_type TEXT NOT NULL,
+        symbol TEXT,
+        sector_type TEXT,
+        title TEXT NOT NULL,
+        summary TEXT,
+        source_name TEXT NOT NULL,
+        reference_type TEXT NOT NULL,
+        reference TEXT NOT NULL,
+        PRIMARY KEY (event_id)
     )
     """

@@ -6,12 +6,6 @@ from pathlib import Path
 
 from trading_data.source_availability.http import HttpResult
 
-BUNDLES = {
-    "06_event_overlay_model_inputs": ["gdelt_articles", "trading_economics_calendar", "equity_abnormal_activity_events"],
-    "07_portfolio_risk_model_inputs": ["option_expression_candidates"],
-}
-
-
 class FakeBarsClient:
     def get(self, url, *, params=None, headers=None):
         symbol = url.rstrip("/").split("/")[-2]
@@ -157,34 +151,96 @@ class ModelInputBundleTests(unittest.TestCase):
             self.assertEqual(row["contracts"][0]["option_right_type"], "CALL")
             self.assertNotIn("created_at", row)
 
-    def test_model_input_bundles_emit_point_in_time_sql_manifest_rows(self):
-        for bundle, required_roles in BUNDLES.items():
-            with self.subTest(bundle=bundle), tempfile.TemporaryDirectory() as tmp:
-                module = import_module(f"trading_data.data_bundles.{bundle}.pipeline")
-                input_paths = {role: str(Path(tmp) / f"{role}.csv") for role in required_roles}
-                for path in input_paths.values():
-                    Path(path).write_text("placeholder\n", encoding="utf-8")
-                task_key = {
-                    "task_id": f"{bundle}_task_test",
-                    "bundle": bundle,
-                    "params": {"as_of": "2026-04-28T09:30:00-04:00", "input_paths": input_paths},
-                    "output_root": str(Path(tmp) / "task"),
-                }
-                writer = FakeSqlWriter()
-                result = module.run(task_key, run_id="run", sql_writer=writer)
-                self.assertEqual(result.status, "succeeded")
-                self.assertGreaterEqual(result.row_counts["model_input_artifact_reference"], len(required_roles))
-                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / f"{bundle}.csv").exists())
-                self.assertEqual(len(writer.calls), 1)
-                call = writer.calls[0]
-                self.assertEqual(call["table"], "model_input_artifact_reference")
-                self.assertEqual(call["key_columns"], ["run_id", "bundle", "input_role", "data_kind", "artifact_reference"])
-                rows = call["rows"]
-                self.assertTrue(rows)
-                self.assertEqual({row["bundle"] for row in rows}, {bundle})
-                self.assertEqual({row["as_of"] for row in rows}, {"2026-04-28T09:30:00-04:00"})
-                receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
-                self.assertEqual(receipt["runs"][0]["status"], "succeeded")
+    def test_position_execution_bundle_writes_selected_contract_timeseries(self):
+        module = import_module("trading_data.data_bundles.06_position_execution_model_inputs.pipeline")
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "06_position_execution_model_inputs_task_test",
+                "bundle": "06_position_execution_model_inputs",
+                "params": {
+                    "selected_contracts": [
+                        {
+                            "underlying": "AAPL",
+                            "option_symbol": "AAPL260515C270",
+                            "expiration": "2026-05-15",
+                            "option_right_type": "CALL",
+                            "strike": 270,
+                            "entry_time": "2026-04-24T09:30:00-04:00",
+                            "exit_time": "2026-04-24T09:31:00-04:00",
+                            "timeframe": "1Min",
+                            "option_rows": [
+                                {"timestamp": "2026-04-24T09:30:00-04:00", "open": 1.1, "high": 1.3, "low": 1.0, "close": 1.2, "volume": 10, "trade_count": 2, "vwap": 1.18},
+                                {"timestamp": "2026-04-24T10:31:00-04:00", "open": 1.4, "high": 1.5, "low": 1.3, "close": 1.35, "volume": 8, "trade_count": 1, "vwap": 1.38},
+                                {"timestamp": "2026-04-24T10:32:00-04:00", "open": 1.6, "high": 1.7, "low": 1.5, "close": 1.65, "volume": 3, "trade_count": 1, "vwap": 1.62},
+                            ],
+                        }
+                    ]
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            writer = FakeSqlWriter()
+            result = module.run(task_key, run_id="run", sql_writer=writer)
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["position_execution_option_contract_timeseries"], 2)
+            call = writer.calls[0]
+            self.assertEqual(call["table"], "position_execution_option_contract_timeseries")
+            self.assertEqual(call["key_columns"], ["option_symbol", "timeframe", "timestamp"])
+            self.assertNotIn("run_id", call["columns"])
+            rows = call["rows"]
+            self.assertEqual({row["option_symbol"] for row in rows}, {"AAPL260515C270"})
+            self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
+
+    def test_event_overlay_bundle_writes_one_row_per_event(self):
+        module = import_module("trading_data.data_bundles.07_event_overlay_model_inputs.pipeline")
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "07_event_overlay_model_inputs_task_test",
+                "bundle": "07_event_overlay_model_inputs",
+                "params": {
+                    "start": "2026-04-24T09:30:00-04:00",
+                    "end": "2026-04-24T16:00:00-04:00",
+                    "focus_sectors": ["semiconductor"],
+                    "symbols": ["NVDA"],
+                    "events": [
+                        {
+                            "event_id": "evt_nvda_abnormal_1",
+                            "event_time": "2026-04-24T09:35:00-04:00",
+                            "available_time": "2026-04-24T09:36:00-04:00",
+                            "information_role": "prior_signal",
+                            "event_category": "equity_abnormal_activity",
+                            "scope_type": "symbol",
+                            "symbol": "NVDA",
+                            "title": "NVDA abnormal opening activity",
+                            "summary": "NVDA opened with abnormal return and volume.",
+                            "source_name": "alpaca_equity_market_data",
+                            "reference_type": "internal_artifact_path",
+                            "reference": "/tmp/equity_abnormal_activity_event.csv",
+                        },
+                        {
+                            "event_id": "evt_macro_1",
+                            "event_time": "2026-04-24T08:30:00-04:00",
+                            "information_role": "lagging_evidence",
+                            "event_category": "macro_data",
+                            "scope_type": "macro",
+                            "title": "US durable goods release",
+                            "summary": "Macro calendar release overview.",
+                            "source_name": "trading_economics_calendar_web",
+                            "reference_type": "web_url",
+                            "reference": "https://tradingeconomics.com/united-states/calendar",
+                        },
+                    ],
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            writer = FakeSqlWriter()
+            result = module.run(task_key, run_id="run", sql_writer=writer)
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["event_overlay_event"], 2)
+            call = writer.calls[0]
+            self.assertEqual(call["table"], "event_overlay_event")
+            self.assertEqual(call["key_columns"], ["event_id"])
+            self.assertNotIn("run_id", call["columns"])
+            self.assertEqual({row["information_role"] for row in call["rows"]}, {"lagging_evidence", "prior_signal"})
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

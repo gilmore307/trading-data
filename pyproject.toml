@@ -29,8 +29,8 @@ trading-data-01-market-regime-model-inputs = "trading_data.data_bundles.01_marke
 trading-data-02-security-selection-model-inputs = "trading_data.data_bundles.02_security_selection_model_inputs.__main__:main"
 trading-data-03-strategy-selection-model-inputs = "trading_data.data_bundles.03_strategy_selection_model_inputs.__main__:main"
 trading-data-05-option-expression-model-inputs = "trading_data.data_bundles.05_option_expression_model_inputs.__main__:main"
-trading-data-06-event-overlay-model-inputs = "trading_data.data_bundles.06_event_overlay_model_inputs.__main__:main"
-trading-data-07-portfolio-risk-model-inputs = "trading_data.data_bundles.07_portfolio_risk_model_inputs.__main__:main"
+trading-data-06-position-execution-model-inputs = "trading_data.data_bundles.06_position_execution_model_inputs.__main__:main"
+trading-data-07-event-overlay-model-inputs = "trading_data.data_bundles.07_event_overlay_model_inputs.__main__:main"
 trading-data-generate-data-kind-templates = "trading_data.template_generators.data_kind_previews:main"
 
 [tool.setuptools.packages.find]

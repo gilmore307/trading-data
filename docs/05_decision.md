@@ -897,3 +897,18 @@ Consequences:
 - Tests inject fake SQL writers instead of overriding storage config.
 - One-off universe overrides remain possible through explicit task params where useful for tests/review.
 - Future config files should be added only when a value is intentionally operator-managed outside code review.
+
+### D058 — Reorder execution and event overlay model-input bundles
+
+Accepted: 2026-04-28
+
+Decision: Layer 06 is now `PositionExecutionModel` / `06_position_execution_model_inputs`, and Layer 07 is now `EventOverlayModel` / `07_event_overlay_model_inputs`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
+
+Rationale: OptionExpressionModel chooses the theoretically best-return and risk-controllable contracts. The next layer should study how to execute those selected contracts, requiring option contract time-series data from entry through exit plus one hour. Event overlay is a later global context layer and should use one event overview table rather than manifest references.
+
+Consequences:
+
+- Layer 06 writes `model_inputs.position_execution_option_contract_timeseries`.
+- Layer 07 writes `model_inputs.event_overlay_event`.
+- `07_event_overlay_model_inputs/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
+- Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.

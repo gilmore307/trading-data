@@ -7,7 +7,9 @@ name = "trading-data"
 version = "0.1.0"
 description = "API-backed source probes and acquisition bundles for trading-data."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.2",
+]
 
 [project.scripts]
 trading-data-source-availability = "trading_data.source_availability.__main__:main"

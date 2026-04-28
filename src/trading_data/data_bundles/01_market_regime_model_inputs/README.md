@@ -12,10 +12,9 @@ The manager supplies these values in `task_key.params`:
 - `end` — required. Exclusive/provider request end timestamp/date.
 - `symbols` — optional debug/review subset. String comma list or JSON list of symbols from the configured universe. Normal production runs omit this and use the full config universe.
 - `config_path` — optional reviewed override for `config.json`; normal runs use this directory's bundle-local config.
-- `database_path` — optional SQL database override for tests or reviewed local runs. Default: `<output_root>/market_regime_model_inputs.sqlite`.
 - `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds` — optional request/runtime overrides. Defaults come from config.
 
-The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "01_market_regime_model_inputs"`, and optional `output_root`.
+The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "01_market_regime_model_inputs"`, and optional `output_root` for receipts/manifests.
 
 ## Config
 
@@ -24,7 +23,8 @@ The task key also carries orchestration fields outside `params`, including `task
 - `market_etf_universe_path` — canonical CSV containing the ETF universe. Current default: `/root/projects/trading-main/storage/shared/market_etf_universe.csv`.
 - `secret_alias` — Alpaca credential source alias.
 - `adjustment`, `limit`, `max_pages`, `timeout_seconds` — default request/runtime settings.
-- `output` — SQL output contract: table, format, natural key, and columns.
+- `storage_target` — formal SQL target. Current contract expects PostgreSQL via secret alias `trading_storage_postgres`, schema `model_inputs`, and batch upserts.
+- `output` — SQL table contract: table, format, natural key, and columns.
 
 The universe CSV owns the ETF scope and grain choices:
 
@@ -38,8 +38,10 @@ The universe CSV owns the ETF scope and grain choices:
 Final saved artifact is SQL-only:
 
 ```text
-sqlite://<output_root>/market_regime_model_inputs.sqlite#market_regime_etf_bar
+model_inputs.market_regime_etf_bar
 ```
+
+Driver: PostgreSQL (`storage_target.driver = "postgresql"`). Tests inject a fake writer; local SQLite is not the accepted production contract.
 
 Table: `market_regime_etf_bar`
 
@@ -68,4 +70,4 @@ Run metadata:
 - request manifest: `<output_root>/runs/<run_id>/request_manifest.json`
 - completion receipt: `<output_root>/completion_receipt.json`
 
-No CSV or cleaned JSONL is written for the saved model input output.
+No CSV, cleaned JSONL, or SQLite database is written for the saved model input output.

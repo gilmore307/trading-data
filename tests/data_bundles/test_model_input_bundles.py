@@ -1,6 +1,5 @@
 import csv
 import json
-import sqlite3
 import tempfile
 import unittest
 from importlib import import_module
@@ -26,6 +25,15 @@ class FakeBarsClient:
         if timeframe == "30Min":
             payload["bars"][0]["t"] = "2026-04-24T14:00:00Z"
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+
+
+class FakeSqlWriter:
+    def __init__(self):
+        self.calls = []
+
+    def write_rows(self, *, table, columns, rows, key_columns):
+        self.calls.append({"table": table, "columns": list(columns), "rows": list(rows), "key_columns": list(key_columns)})
+        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "model_inputs", "table": table, "qualified_table": f"model_inputs.{table}", "rows_written": len(rows)}
 
 
 class Secret:
@@ -61,18 +69,21 @@ class ModelInputBundleTests(unittest.TestCase):
                     "params": {"start": "2026-04-24", "end": "2026-04-25", "config_path": str(config_path)},
                     "output_root": str(Path(tmp) / "task"),
                 }
-                result = module.run(task_key, run_id="run", client=FakeBarsClient())
+                writer = FakeSqlWriter()
+                result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=writer)
                 self.assertEqual(result.status, "succeeded")
                 self.assertEqual(result.row_counts["market_regime_etf_bar"], 2)
-                database_path = Path(task_key["output_root"]) / "market_regime_model_inputs.sqlite"
                 self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_market_regime_model_inputs.csv").exists())
-                with sqlite3.connect(database_path) as connection:
-                    rows = connection.execute(
-                        "SELECT run_id, task_id, symbol, timeframe, timestamp, open, high, low, close, volume, vwap, trade_count FROM market_regime_etf_bar ORDER BY symbol"
-                    ).fetchall()
+                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "model_inputs.market_regime_etf_bar"])
+                self.assertEqual(len(writer.calls), 1)
+                call = writer.calls[0]
+                self.assertEqual(call["table"], "market_regime_etf_bar")
+                self.assertEqual(call["key_columns"], ["run_id", "symbol", "timeframe", "timestamp"])
+                rows = sorted(call["rows"], key=lambda row: row["symbol"])
                 self.assertEqual(len(rows), 2)
-                self.assertEqual({row[2]: row[3] for row in rows}, {"BITW": "30Min", "SPY": "1Day"})
-                self.assertEqual({row[0] for row in rows}, {"run"})
+                self.assertEqual({row["symbol"]: row["timeframe"] for row in rows}, {"BITW": "30Min", "SPY": "1Day"})
+                self.assertEqual({row["run_id"] for row in rows}, {"run"})
+                self.assertEqual(call["columns"], ["run_id", "task_id", "symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count", "created_at"])
         finally:
             module.load_secret_alias = old_load_secret
 

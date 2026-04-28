@@ -777,3 +777,24 @@ The first MarketRegimeModel bundle now fetches ETF bars directly from the config
 - Do not write `saved/01_market_regime_model_inputs.csv` or cleaned JSONL for the final model input output.
 - Keep `timeframe` as an explicit column; downstream features must group/filter by `symbol + timeframe`.
 - D019 remains the default for legacy bundles, but is superseded for accepted SQL-only bundle contracts.
+
+## D052 - SQL-only model inputs target PostgreSQL, not local SQLite
+
+Date: 2026-04-28
+
+### Context
+
+After accepting SQL-only output for `01_market_regime_model_inputs`, the first implementation used SQLite as a local minimal SQL target. The user clarified that the project should prepare directly for a formal large SQL backend instead of encoding SQLite as the output contract.
+
+### Decision
+
+Accepted SQL-only model input bundles target a configured PostgreSQL storage target. Tests may inject fake SQL writers, but production bundle semantics must not hard-code SQLite files or local database paths.
+
+`01_market_regime_model_inputs` uses `storage_target.driver = "postgresql"`, target schema `model_inputs`, and table `market_regime_etf_bar`.
+
+### Consequences
+
+- Use `format = "sql_table"` for bundle output contracts, not `sqlite`.
+- Runtime credentials come from a storage secret alias such as `trading_storage_postgres`.
+- Receipt details should record receipt-safe target/table metadata, not database credentials or local SQLite paths.
+- Local SQLite is not the canonical development or production output for accepted SQL-only model inputs.

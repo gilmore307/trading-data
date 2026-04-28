@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import csv
 import json
-import sqlite3
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -12,8 +11,9 @@ from zoneinfo import ZoneInfo
 
 from trading_data.data_bundles.config import load_bundle_config
 from trading_data.source_availability.http import HttpClient, HttpResult
-from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
+from trading_data.source_availability.sanitize import sanitize_url
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
+from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 BUNDLE = "01_market_regime_model_inputs"
 MODEL_ID = "market_regime_model"
@@ -203,71 +203,35 @@ def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, C
     return result, CleanedPayload(rows)
 
 
-def _database_path(context: BundleContext, config: Mapping[str, Any]) -> Path:
-    params = dict(context.task_key.get("params") or {})
-    value = params.get("database_path") or config.get("database_path")
-    path = Path(str(value)) if value else context.receipt_path.parent / "market_regime_model_inputs.sqlite"
-    return path if path.is_absolute() else Path.cwd() / path
-
-
-def _create_table(connection: sqlite3.Connection) -> None:
-    connection.execute(
-        f"""
-        CREATE TABLE IF NOT EXISTS {OUTPUT_TABLE} (
-            run_id TEXT NOT NULL,
-            task_id TEXT NOT NULL,
-            symbol TEXT NOT NULL,
-            timeframe TEXT NOT NULL,
-            timestamp TEXT NOT NULL,
-            open REAL,
-            high REAL,
-            low REAL,
-            close REAL,
-            volume REAL,
-            vwap REAL,
-            trade_count INTEGER,
-            created_at TEXT NOT NULL,
-            PRIMARY KEY (run_id, symbol, timeframe, timestamp)
-        )
-        """
-    )
-    connection.execute(f"CREATE INDEX IF NOT EXISTS idx_{OUTPUT_TABLE}_symbol_timeframe_timestamp ON {OUTPUT_TABLE} (symbol, timeframe, timestamp)")
-
-
-def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any]) -> StepResult:
-    database_path = _database_path(context, config)
-    database_path.parent.mkdir(parents=True, exist_ok=True)
+def _build_sql_rows(context: BundleContext, payload: CleanedPayload) -> list[dict[str, Any]]:
     created_at = _now_utc()
     task_id = str(context.task_key.get("task_id") or "")
     run_id = str(context.metadata["run_id"])
-    with sqlite3.connect(database_path) as connection:
-        _create_table(connection)
-        connection.executemany(
-            f"""
-            INSERT OR REPLACE INTO {OUTPUT_TABLE} ({', '.join(SQL_FIELDS)})
-            VALUES ({', '.join(['?'] * len(SQL_FIELDS))})
-            """,
-            [
-                (
-                    run_id,
-                    task_id,
-                    row["symbol"],
-                    row["timeframe"],
-                    row["timestamp"],
-                    row.get("open"),
-                    row.get("high"),
-                    row.get("low"),
-                    row.get("close"),
-                    row.get("volume"),
-                    row.get("vwap"),
-                    row.get("trade_count"),
-                    created_at,
-                )
-                for row in payload.rows
-            ],
-        )
-    reference = f"sqlite://{database_path}#{OUTPUT_TABLE}"
-    return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sqlite", "database_path": str(database_path), "table": OUTPUT_TABLE, "columns": SQL_FIELDS})
+    return [
+        {
+            "run_id": run_id,
+            "task_id": task_id,
+            "symbol": row["symbol"],
+            "timeframe": row["timeframe"],
+            "timestamp": row["timestamp"],
+            "open": row.get("open"),
+            "high": row.get("high"),
+            "low": row.get("low"),
+            "close": row.get("close"),
+            "volume": row.get("volume"),
+            "vwap": row.get("vwap"),
+            "trade_count": row.get("trade_count"),
+            "created_at": created_at,
+        }
+        for row in payload.rows
+    ]
+
+
+def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    writer = sql_writer or PostgresSqlTableWriter.from_config(config)
+    metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=_build_sql_rows(context, payload), key_columns=["run_id", "symbol", "timeframe", "timestamp"])
+    reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
+    return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
 
 
 def write_receipt(context: BundleContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
@@ -287,13 +251,13 @@ def write_receipt(context: BundleContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, source_payload = fetch(context, client=client)
         clean_result, cleaned_payload = clean(context, source_payload)
-        save_result = save(context, clean_result, cleaned_payload, source_payload.config)
+        save_result = save(context, clean_result, cleaned_payload, source_payload.config, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except BaseException as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

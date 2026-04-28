@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "description": "MarketRegimeModel ETF bar acquisition contract. Task keys provide start/end; market_etf_universe_path supplies the ETF universe and per-symbol bar grain; final output is SQL-only.",
+  "version": 4,
+  "description": "MarketRegimeModel ETF bar acquisition contract. Task keys provide start/end; market_etf_universe_path supplies the ETF universe and per-symbol bar grain; final output is a formal SQL table.",
   "model_id": "market_regime_model",
   "market_etf_universe_path": "/root/projects/trading-main/storage/shared/market_etf_universe.csv",
   "secret_alias": "alpaca",
@@ -8,9 +8,17 @@
   "limit": 1000,
   "max_pages": 10,
   "timeout_seconds": 20,
+  "storage_target": {
+    "id": "trading_data_model_inputs_postgres",
+    "driver": "postgresql",
+    "secret_alias": "trading_storage_postgres",
+    "schema": "model_inputs",
+    "create_table": true,
+    "batch_size": 5000
+  },
   "output": {
     "table": "market_regime_etf_bar",
-    "format": "sqlite",
+    "format": "sql_table",
     "natural_key": ["run_id", "symbol", "timeframe", "timestamp"],
     "columns": ["run_id", "task_id", "symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count", "created_at"]
   }

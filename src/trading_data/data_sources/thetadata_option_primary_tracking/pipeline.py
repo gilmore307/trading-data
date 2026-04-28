@@ -101,7 +101,7 @@ class RegistryNames:
 # Output field ids. Do not replace these with literal output field names; the
 # bundle resolves current registry payloads when it materializes rows.
 def field(item_id: str) -> RegistryRef:
-    return RegistryRef(item_id, ("field", "identity_field", "path_field", "temporal_field", "classification_field", "text_field"))
+    return RegistryRef(item_id, ("field", "identity_field", "path_field", "temporal_field", "classification_field", "text_field", "parameter_field"))
 
 
 def data_kind(item_id: str) -> RegistryRef:

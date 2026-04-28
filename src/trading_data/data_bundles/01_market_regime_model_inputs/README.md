@@ -1,40 +1,36 @@
 # 01_market_regime_model_inputs
 
-MarketRegimeModel manager-facing model-input manifest bundle.
+MarketRegimeModel manager-facing ETF bar bundle.
 
-This bundle does not fetch provider data. It receives a manager task key that points at already-saved source artifacts, validates those paths against the bundle-local input contract, and writes a point-in-time manifest CSV for the MarketRegimeModel layer.
+This bundle fetches the configured market/sector/cross-asset ETF universe over a manager-supplied time range and writes one normalized long-table bar CSV. The ETF universe, per-symbol bar grain, and stable fetch defaults live in bundle config, not in the task key.
 
 ## Input parameters
 
 The manager supplies these values in `task_key.params`:
 
-- `as_of` — required. America/New_York point-in-time timestamp for the manifest. Legacy `as_of_et` and `available_time` are accepted by the shared runner as compatibility aliases.
-- `input_paths` — required object. Keys are configured input roles; each value is one path string or a list of path strings.
+- `start` — required. Inclusive provider request start timestamp/date.
+- `end` — required. Exclusive/provider request end timestamp/date.
+- `symbols` — optional debug/review subset. String comma list or JSON list of symbols from the configured universe. Normal production runs omit this and use the full config universe.
 - `config_path` — optional reviewed override for `config.json`; normal runs use this directory's bundle-local config.
-
-Minimum valid `input_paths` roles:
-
-- `broad_market_bars`
-- `sector_etf_bars`
-
-Optional `input_paths` roles:
-
-- `cross_asset_etf_bars`
+- `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds` — optional request/runtime overrides. Defaults come from config.
 
 The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "01_market_regime_model_inputs"`, and optional `output_root`.
 
 ## Config
 
-`config.json` owns stable contract facts required to complete the task but not supplied per run:
+`config.json` owns stable facts required to complete the task but not supplied per run:
 
-- `version` — config schema/version marker.
-- `description` — human-readable contract summary.
-- `model_id = "market_regime_model"` — target model layer.
-- `inputs` — ordered role contract used to build output rows:
-  - `role` — manifest input role name expected under `params.input_paths`.
-  - `data_kind` — expected upstream data kind for that role.
-  - `required` — whether the role must be present in the task key.
-  - `notes` — role-specific contract notes copied into the manifest.
+- `market_etf_universe_path` — canonical CSV containing the ETF universe. Current default: `/root/projects/trading-main/storage/shared/market_etf_universe.csv`.
+- `secret_alias` — Alpaca credential source alias.
+- `adjustment`, `limit`, `max_pages`, `timeout_seconds` — default request/runtime settings.
+- `output` — saved artifact contract: output name, format, natural key, and columns.
+
+The universe CSV owns the ETF scope and grain choices:
+
+- `symbol` — ETF symbol to fetch.
+- `universe_type` / `exposure_type` — why the ETF belongs in the universe.
+- `bar_grain` — requested bar grain for that ETF, e.g. `1d`, `30m`.
+- `fund_name`, `issuer_name` — human-readable metadata.
 
 ## Output format
 
@@ -46,17 +42,20 @@ Final saved artifact:
 
 Columns, in order:
 
-1. `bundle`
-2. `model_id`
-3. `as_of`
-4. `input_role`
-5. `data_kind`
-6. `path`
-7. `required`
-8. `point_in_time`
-9. `notes`
+1. `symbol`
+2. `timeframe`
+3. `timestamp`
+4. `open`
+5. `high`
+6. `low`
+7. `close`
+8. `volume`
+9. `vwap`
+10. `trade_count`
 
-Natural grain: one row per configured input role/path at the requested `as_of`. Optional roles with no paths still emit an empty-path row marked `required=false`.
+Natural key: `symbol + timeframe + timestamp`.
+
+All configured ETFs and all configured grains are stored in the same long table. Downstream feature code must explicitly group/filter by both `symbol` and `timeframe`; daily and intraday rows must not be rolled together accidentally.
 
 Run metadata:
 

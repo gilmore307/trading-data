@@ -24,11 +24,13 @@ This document maps `trading-data` outputs and derived data products to the seven
 | `EventOverlayModel` | `06_event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. Trading Economics is the accepted macro calendar/value surface. |
 | `PortfolioRiskModel` | `07_portfolio_risk_model_inputs` | option contract data, positions, fills, PnL, cash/margin, exposures, risk limits, kill-switch state | Portfolio/account state is likely execution/account-owned, not pure `trading-data`. Historical simulation outputs may fill this during research. |
 
-## Implemented Model Input Bundle Manifests
+## Implemented Model Input Bundles
 
-Each accepted model layer now has a manager-facing bundle under `src/trading_data/data_bundles/layerNN_<model_id>_inputs/`. These bundles load their bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
+Each accepted model layer has a manager-facing bundle under `src/trading_data/data_bundles/NN_<model_id>_inputs/`.
 
-The manifest bundles do not fetch raw provider data. They compose saved source/derived artifacts into a model-layer input contract.
+Most layers load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
+
+Layer 1 is intentionally different: `01_market_regime_model_inputs` accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and emits one combined long-table CSV keyed by `symbol + timeframe + timestamp`.
 
 ## Derived Data Products Added for Model Needs
 

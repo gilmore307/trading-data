@@ -1,25 +1,17 @@
 {
-  "version": 1,
-  "description": "Default input contract for 01_market_regime_model_inputs. Task keys provide input_paths and as_of.",
+  "version": 2,
+  "description": "MarketRegimeModel ETF bar acquisition contract. Task keys provide start/end; market_etf_universe_path supplies the ETF universe and per-symbol bar grain.",
   "model_id": "market_regime_model",
-  "inputs": [
-    {
-      "role": "broad_market_bars",
-      "data_kind": "equity_bar",
-      "required": true,
-      "notes": "SPY/QQQ/IWM or accepted broad-market ETF bars"
-    },
-    {
-      "role": "sector_etf_bars",
-      "data_kind": "equity_bar",
-      "required": true,
-      "notes": "Sector ETF bars for rotation/regime scores"
-    },
-    {
-      "role": "cross_asset_etf_bars",
-      "data_kind": "equity_bar",
-      "required": false,
-      "notes": "Rates, volatility, commodity, dollar, and defensive proxy ETFs"
-    }
-  ]
+  "market_etf_universe_path": "/root/projects/trading-main/storage/shared/market_etf_universe.csv",
+  "secret_alias": "alpaca",
+  "adjustment": "raw",
+  "limit": 1000,
+  "max_pages": 10,
+  "timeout_seconds": 20,
+  "output": {
+    "name": "01_market_regime_model_inputs",
+    "format": "csv",
+    "natural_key": ["symbol", "timeframe", "timestamp"],
+    "columns": ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
+  }
 }

@@ -2,7 +2,7 @@
 
 Manager-facing StrategySelectionModel bar/liquidity input bundle.
 
-This bundle accepts manager-selected symbols over a requested time range, fetches Alpaca bars plus transient trade/quote liquidity inputs, aggregates them to the configured interval, and writes one SQL table for StrategySelectionModel inputs.
+This bundle accepts manager-selected symbols over a requested time range, fetches Alpaca bars plus transient trade/quote liquidity inputs, aggregates them to the requested interval, and writes one SQL table for StrategySelectionModel inputs. Stable defaults live in pipeline code; there is no bundle-local `config.json`.
 
 ## Input parameters
 
@@ -16,20 +16,9 @@ Required task key fields:
 
 Optional task key fields:
 
-- `params.timeframe`: bar/liquidity interval. Default comes from config and is `1Min`.
-- `params.config_path`: reviewed config override
-- `params.limit`, `params.max_pages`, `params.adjustment`, `params.feed`, `params.timeout_seconds`: request/runtime overrides
+- `params.timeframe`: bar/liquidity interval. Default is `1Min`.
+- `params.limit`, `params.max_pages`, `params.adjustment`, `params.feed`, `params.timeout_seconds`, `params.secret_alias`: request/runtime overrides
 - `output_root`: local receipt/request-manifest root
-
-## Config
-
-`config.json` owns only source/default output settings for this bundle:
-
-- Alpaca secret alias
-- default timeframe: `1Min`
-- request defaults
-- PostgreSQL storage target
-- SQL output table contract
 
 Liquidity thresholds and feature windows are intentionally not in this bundle. Strategy features such as returns, volatility, trend strength, gap logic, and model scoring are downstream feature/model responsibilities.
 

@@ -882,3 +882,18 @@ Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundl
 - Layer 5 owns option-chain snapshot acquisition for OptionExpressionModel inputs.
 - Raw ThetaData responses remain transient; final durable payload is the normalized SQL row.
 - Primary key for Layer 5: `run_id + underlying + snapshot_time`.
+
+### D057 — Keep accepted model-input bundle defaults in code, not bundle-local config
+
+Accepted: 2026-04-28
+
+Decision: Remove bundle-local `config.json` files from the accepted 01, 02, 03, and 05 model-input bundles. Stable table contracts, storage defaults, source aliases, and request defaults live in reviewed pipeline code. Manager-supplied values remain in task keys, and reviewed shared universes remain shared artifacts such as `/root/projects/trading-main/storage/shared/market_etf_universe.csv`.
+
+Rationale: The removed config files duplicated code-level contracts and made table schemas, storage targets, and defaults look operator-tunable when they are actually semantic contracts. Keeping them in code reduces drift and makes contract changes reviewable.
+
+Consequences:
+
+- `params.config_path` is no longer part of accepted 01/02/03/05 bundle contracts.
+- Tests inject fake SQL writers instead of overriding storage config.
+- One-off universe overrides remain possible through explicit task params where useful for tests/review.
+- Future config files should be added only when a value is intentionally operator-managed outside code review.

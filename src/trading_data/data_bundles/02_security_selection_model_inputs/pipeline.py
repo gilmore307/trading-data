@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from trading_data.data_bundles.config import load_bundle_config
 from trading_data.data_sources.etf_holdings.pipeline import clean as clean_holding_source
 from trading_data.data_sources.etf_holdings.pipeline import fetch as fetch_holding_source
 from trading_data.data_sources.etf_holdings.pipeline import build_context as build_holding_context
@@ -37,6 +36,7 @@ SQL_FIELDS = [
     "sector_type",
 ]
 KEY_COLUMNS = ["run_id", "etf_symbol", "as_of_date", "holding_symbol"]
+MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-main/storage/shared/market_etf_universe.csv")
 EXCLUDED_ASSET_PATTERNS = re.compile(r"\b(cash|money market|treasury|bond|fixed income|future|futures|swap|option|warrant|fund|etf|preferred)\b", re.I)
 NON_US_MARKER = re.compile(r"\b(adr|gdr|foreign|depositary|ltd|plc|s\.a\.|ag|nv|oyj|asa|spa|se|kk|co ltd|limited)\b", re.I)
 
@@ -60,7 +60,6 @@ class StepResult:
 
 @dataclass(frozen=True)
 class SourcePayload:
-    config: dict[str, Any]
     universe_rows: list[dict[str, str]]
     raw_rows: list[dict[str, str]]
 
@@ -108,11 +107,9 @@ def _resolve_path(value: str) -> Path:
 
 def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
-    config_path = str(params.get("config_path") or "") or None
-    config = load_bundle_config(BUNDLE, config_path=config_path)
     start = _required(params, "start")
     end = _required(params, "end")
-    universe_path = _resolve_path(str(config.get("market_etf_universe_path") or "storage/shared/market_etf_universe.csv"))
+    universe_path = _resolve_path(str(params.get("market_etf_universe_path") or MARKET_ETF_UNIVERSE_PATH))
     universe_rows = _read_universe(universe_path)
     selected = _selected_symbols(universe_rows, params.get("symbols"))
     source_payloads = params.get("holding_source_payloads") or {}
@@ -144,7 +141,7 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     }
     path = context.run_dir / "request_manifest.json"
     path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(path)], {"raw_etf_holding_rows": len(raw_rows)}, details=manifest), SourcePayload(config, universe_rows, raw_rows)
+    return StepResult("succeeded", [str(path)], {"raw_etf_holding_rows": len(raw_rows)}, details=manifest), SourcePayload(universe_rows, raw_rows)
 
 
 def _selected_symbols(universe_rows: list[dict[str, str]], value: Any) -> set[str]:
@@ -247,8 +244,8 @@ def _num(value: Any) -> float | None:
         return None
 
 
-def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
-    writer = sql_writer or PostgresSqlTableWriter.from_config(config)
+def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    writer = sql_writer or PostgresSqlTableWriter.from_config({})
     metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=payload.rows, key_columns=KEY_COLUMNS)
     reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
     return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
@@ -277,7 +274,7 @@ def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | N
     try:
         fetch_result, source_payload = fetch(context)
         clean_result, cleaned_payload = clean(context, source_payload)
-        save_result = save(context, clean_result, cleaned_payload, source_payload.config, sql_writer=sql_writer)
+        save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except BaseException as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

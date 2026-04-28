@@ -6,8 +6,8 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 - Keep raw/source acquisition in smallest-unit modules under `src/trading_data/data_sources/`.
 - Keep manager-facing model-input orchestration under `src/trading_data/data_bundles/`.
-- Keep reusable bundle parameters in config files, e.g. ETF lists, issuer labels, grains, and detector defaults.
-- Keep final model-facing flat outputs as CSV unless an explicit JSON contract is accepted.
+- Keep task inputs in manager task keys, stable bundle contracts/defaults in code, and shared reviewed universes in shared artifacts; avoid bundle-local config files unless operators must routinely change the value outside code review.
+- Keep final model-facing outputs SQL-only for accepted numbered model-input bundles.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
 - Use derived model-input tables only when they clarify layer boundaries or avoid repeated feature construction.
 - Register reusable names through `trading-main` before other repositories depend on them.
@@ -28,9 +28,9 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 Each accepted model layer has a manager-facing bundle under `src/trading_data/data_bundles/NN_<model_id>_inputs/`.
 
-Layer 1 accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
+Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
 
-Layer 2 accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
+Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
 
 Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `model_inputs.strategy_selection_symbol_bar_liquidity`.
 
@@ -38,15 +38,13 @@ Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model
 
 Layer 5 accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `model_inputs.option_expression_option_chain_snapshot`.
 
-Layers 6-7 currently load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference` until their true data-product contracts are reviewed.
+Layers 6-7 still need true data-product contract review; historical manifest-style behavior should not be expanded.
 
 ## Derived Data Products Added for Model Needs
 
 ### `stock_etf_exposure`
 
 Integrated step: `src/trading_data/data_bundles/02_security_selection_model_inputs/pipeline.py`
-
-Config: `src/trading_data/data_bundles/02_security_selection_model_inputs/config.json` under `stock_etf_exposure`.
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 

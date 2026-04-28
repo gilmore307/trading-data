@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
-from trading_data.data_bundles.config import load_bundle_config
 from trading_data.data_sources.alpaca_liquidity.pipeline import aggregate_liquidity_bars
 from trading_data.source_availability.http import HttpClient, HttpResult
 from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
@@ -44,6 +43,12 @@ SQL_FIELDS = [
     "last_ask",
 ]
 KEY_COLUMNS = ["run_id", "symbol", "timeframe", "timestamp"]
+DEFAULT_SECRET_ALIAS = "alpaca"
+DEFAULT_TIMEFRAME = "1Min"
+DEFAULT_ADJUSTMENT = "raw"
+DEFAULT_LIMIT = 1000
+DEFAULT_MAX_PAGES = 10
+DEFAULT_TIMEOUT_SECONDS = 20
 
 
 @dataclass(frozen=True)
@@ -65,7 +70,6 @@ class StepResult:
 
 @dataclass(frozen=True)
 class SourcePayload:
-    config: dict[str, Any]
     timeframe: str
     bars_by_symbol: dict[str, list[dict[str, Any]]]
     trades_by_symbol: dict[str, list[dict[str, Any]]]
@@ -147,23 +151,21 @@ def _fetch_paginated(client: HttpClient, url: str, row_key: str, params: dict[st
 
 def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
-    config_path = str(params.get("config_path") or "") or None
-    config = load_bundle_config(BUNDLE, config_path=config_path)
     start = str(_required(params, "start"))
     end = str(_required(params, "end"))
     symbols = _symbols(_required(params, "symbols"))
-    timeframe = str(params.get("timeframe") or config.get("default_timeframe") or "1Min")
-    max_pages = int(params.get("max_pages", config.get("max_pages", 10)))
-    limit = str(params.get("limit", config.get("limit", 1000)))
-    feed = str(params.get("feed", config.get("feed", ""))).strip()
-    adjustment = str(params.get("adjustment", config.get("adjustment", "raw")))
-    client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", config.get("timeout_seconds", 20))))
-    secret = load_secret_alias(str(config.get("secret_alias") or "alpaca"))
+    timeframe = str(params.get("timeframe") or DEFAULT_TIMEFRAME)
+    max_pages = int(params.get("max_pages", DEFAULT_MAX_PAGES))
+    limit = str(params.get("limit", DEFAULT_LIMIT))
+    feed = str(params.get("feed", "")).strip()
+    adjustment = str(params.get("adjustment", DEFAULT_ADJUSTMENT))
+    client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
+    secret = load_secret_alias(str(params.get("secret_alias") or DEFAULT_SECRET_ALIAS))
     api_key = secret.values.get("api_key")
     secret_key = secret.values.get("secret_key")
     if not api_key or not secret_key:
         raise StrategySelectionInputsError("Alpaca requires api_key and secret_key")
-    base_url = str(secret.values.get("data_endpoint") or config.get("data_endpoint") or "https://data.alpaca.markets").rstrip("/")
+    base_url = str(secret.values.get("data_endpoint") or "https://data.alpaca.markets").rstrip("/")
     headers = {"APCA-API-KEY-ID": str(api_key), "APCA-API-SECRET-KEY": str(secret_key)}
 
     bars_by_symbol: dict[str, list[dict[str, Any]]] = {}
@@ -186,7 +188,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(json.dumps({"bundle": BUNDLE, "model_id": MODEL_ID, "start": start, "end": end, "symbols": symbols, "timeframe": timeframe, "requests": evidence, "secret_alias": public_secret_summary(secret), "raw_persistence": "raw trades/quotes are transient; final output is interval bar/liquidity SQL", "fetched_at_utc": _now_utc()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], {"raw_bar_rows": sum(len(v) for v in bars_by_symbol.values()), "raw_trade_rows_transient": sum(len(v) for v in trades_by_symbol.values()), "raw_quote_rows_transient": sum(len(v) for v in quotes_by_symbol.values())}, details=sanitize_value({"symbols": symbols, "timeframe": timeframe})), SourcePayload(config, timeframe, bars_by_symbol, trades_by_symbol, quotes_by_symbol)
+    return StepResult("succeeded", [str(manifest)], {"raw_bar_rows": sum(len(v) for v in bars_by_symbol.values()), "raw_trade_rows_transient": sum(len(v) for v in trades_by_symbol.values()), "raw_quote_rows_transient": sum(len(v) for v in quotes_by_symbol.values())}, details=sanitize_value({"symbols": symbols, "timeframe": timeframe})), SourcePayload(timeframe, bars_by_symbol, trades_by_symbol, quotes_by_symbol)
 
 
 def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
@@ -255,8 +257,8 @@ def _int(value: Any) -> int | None:
         return None
 
 
-def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
-    writer = sql_writer or PostgresSqlTableWriter.from_config(config)
+def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    writer = sql_writer or PostgresSqlTableWriter.from_config({})
     metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=payload.rows, key_columns=KEY_COLUMNS)
     reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
     return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
@@ -285,7 +287,7 @@ def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = No
     try:
         fetch_result, source_payload = fetch(context, client=client)
         clean_result, cleaned_payload = clean(context, source_payload)
-        save_result = save(context, clean_result, cleaned_payload, source_payload.config, sql_writer=sql_writer)
+        save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except BaseException as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

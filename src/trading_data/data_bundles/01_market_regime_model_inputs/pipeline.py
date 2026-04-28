@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
-from trading_data.data_bundles.config import load_bundle_config
 from trading_data.source_availability.http import HttpClient, HttpResult
 from trading_data.source_availability.sanitize import sanitize_url
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
@@ -22,6 +21,12 @@ OUTPUT_TABLE = "market_regime_etf_bar"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
 SQL_FIELDS = ["run_id", "task_id", *FIELDS, "created_at"]
+MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-main/storage/shared/market_etf_universe.csv")
+DEFAULT_LIMIT = 1000
+DEFAULT_MAX_PAGES = 10
+DEFAULT_TIMEOUT_SECONDS = 20
+DEFAULT_ADJUSTMENT = "raw"
+DEFAULT_SECRET_ALIAS = "alpaca"
 
 
 @dataclass(frozen=True)
@@ -45,7 +50,6 @@ class StepResult:
 
 @dataclass(frozen=True)
 class SourcePayload:
-    config: dict[str, Any]
     universe_rows: list[dict[str, str]]
     bars_by_symbol: dict[str, list[dict[str, Any]]]
     secret_alias: dict[str, Any] | None = None
@@ -145,11 +149,9 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
 
 def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
-    config_path = str(params.get("config_path") or "") or None
-    config = load_bundle_config(BUNDLE, config_path=config_path)
     start = str(_required(params, "start"))
     end = str(_required(params, "end"))
-    universe_path = Path(str(config.get("market_etf_universe_path") or "storage/shared/market_etf_universe.csv"))
+    universe_path = Path(str(params.get("market_etf_universe_path") or MARKET_ETF_UNIVERSE_PATH))
     if not universe_path.is_absolute():
         universe_path = Path("/root/projects/trading-main") / universe_path
     universe_rows = _read_universe(universe_path)
@@ -161,23 +163,23 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     if not symbols:
         raise MarketRegimeInputsError("no market ETF symbols selected")
 
-    client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", config.get("timeout_seconds", 20))))
-    secret = load_secret_alias(str(config.get("secret_alias") or "alpaca"))
+    client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
+    secret = load_secret_alias(str(params.get("secret_alias") or DEFAULT_SECRET_ALIAS))
     api_key = secret.values.get("api_key")
     secret_key = secret.values.get("secret_key")
     if not api_key or not secret_key:
         raise MarketRegimeInputsError("Alpaca requires api_key and secret_key")
-    base_url = str(secret.values.get("data_endpoint") or config.get("data_endpoint") or "https://data.alpaca.markets").rstrip("/")
+    base_url = str(secret.values.get("data_endpoint") or "https://data.alpaca.markets").rstrip("/")
     headers = {"APCA-API-KEY-ID": str(api_key), "APCA-API-SECRET-KEY": str(secret_key)}
-    limit = str(params.get("limit", config.get("limit", 1000)))
-    max_pages = int(params.get("max_pages", config.get("max_pages", 10)))
-    adjustment = str(params.get("adjustment", config.get("adjustment", "raw")))
-    feed = str(params.get("feed", config.get("feed", ""))).strip()
+    limit = str(params.get("limit", DEFAULT_LIMIT))
+    max_pages = int(params.get("max_pages", DEFAULT_MAX_PAGES))
+    adjustment = str(params.get("adjustment", DEFAULT_ADJUSTMENT))
+    feed = str(params.get("feed", "")).strip()
 
     evidence: list[dict[str, Any]] = []
     bars_by_symbol: dict[str, list[dict[str, Any]]] = {}
     for symbol in symbols:
-        timeframe = _normalize_timeframe(str(universe_by_symbol[symbol].get("bar_grain") or config.get("default_timeframe") or "1Day"))
+        timeframe = _normalize_timeframe(str(universe_by_symbol[symbol].get("bar_grain") or "1Day"))
         request = {"timeframe": timeframe, "start": start, "end": end, "limit": limit, "adjustment": adjustment}
         if feed:
             request["feed"] = feed
@@ -188,14 +190,14 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(json.dumps({"bundle": BUNDLE, "model_id": MODEL_ID, "start": start, "end": end, "market_etf_universe_path": str(universe_path), "symbols": symbols, "bar_requests": evidence, "secret_alias": public_secret_summary(secret), "raw_persistence": "not_persisted_by_default", "fetched_at_utc": _now_utc()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], {"raw_bars_transient": sum(len(rows) for rows in bars_by_symbol.values())}, details={"symbols": symbols, "market_etf_universe_path": str(universe_path)}), SourcePayload(config, universe_rows, bars_by_symbol, public_secret_summary(secret))
+    return StepResult("succeeded", [str(manifest)], {"raw_bars_transient": sum(len(rows) for rows in bars_by_symbol.values())}, details={"symbols": symbols, "market_etf_universe_path": str(universe_path)}), SourcePayload(universe_rows, bars_by_symbol, public_secret_summary(secret))
 
 
 def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
     universe_by_symbol = {row["symbol"].upper(): row for row in payload.universe_rows}
     rows: list[dict[str, Any]] = []
     for symbol in sorted(payload.bars_by_symbol):
-        timeframe = _normalize_timeframe(str(universe_by_symbol[symbol].get("bar_grain") or payload.config.get("default_timeframe") or "1Day"))
+        timeframe = _normalize_timeframe(str(universe_by_symbol[symbol].get("bar_grain") or "1Day"))
         for bar in payload.bars_by_symbol[symbol]:
             rows.append({"symbol": symbol, "timeframe": timeframe, "timestamp": _et_iso(bar["t"]), "open": bar.get("o"), "high": bar.get("h"), "low": bar.get("l"), "close": bar.get("c"), "volume": bar.get("v"), "vwap": bar.get("vw"), "trade_count": bar.get("n")})
     rows.sort(key=lambda row: (str(row["timeframe"]), str(row["symbol"]), str(row["timestamp"])))
@@ -227,8 +229,8 @@ def _build_sql_rows(context: BundleContext, payload: CleanedPayload) -> list[dic
     ]
 
 
-def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
-    writer = sql_writer or PostgresSqlTableWriter.from_config(config)
+def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    writer = sql_writer or PostgresSqlTableWriter.from_config({})
     metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=_build_sql_rows(context, payload), key_columns=["run_id", "symbol", "timeframe", "timestamp"])
     reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
     return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
@@ -257,7 +259,7 @@ def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = No
     try:
         fetch_result, source_payload = fetch(context, client=client)
         clean_result, cleaned_payload = clean(context, source_payload)
-        save_result = save(context, clean_result, cleaned_payload, source_payload.config, sql_writer=sql_writer)
+        save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except BaseException as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

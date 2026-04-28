@@ -2,7 +2,7 @@
 
 Manager-facing OptionExpressionModel option-chain snapshot input bundle.
 
-This bundle accepts a manager-selected underlying and explicit snapshot time, calls the ThetaData option selection snapshot source interface, and writes the full visible option chain to SQL as one row with nested contracts payload.
+This bundle accepts a manager-selected underlying and explicit snapshot time, calls the ThetaData option selection snapshot source interface, and writes the visible option-chain snapshot to SQL. Stable defaults live in pipeline code; there is no bundle-local `config.json`.
 
 ## Input parameters
 
@@ -17,7 +17,6 @@ Optional task key fields:
 
 - `params.thetadata_base_url`: local ThetaData terminal/API base URL
 - `params.timeout_seconds`: request timeout
-- `params.config_path`: reviewed config override
 - `output_root`: local receipt/request-manifest root
 
 ## Output

@@ -5,8 +5,8 @@ Manager-facing task bundles live here.
 Boundary:
 
 - `trading_data.data_sources.*` owns the smallest reusable data acquisition / source normalization interfaces.
-- `trading_data.data_bundles.*` accepts manager-issued task keys, chooses the required source interfaces, applies that bundle's local `config.json`, and writes task-run outputs/receipts.
-- Model input generation belongs here, not in `data_sources`, because it composes multiple source outputs and model-layer configuration.
+- `trading_data.data_bundles.*` accepts manager-issued task keys, chooses the required source interfaces, applies reviewed code-level contracts/defaults, and writes task-run outputs/receipts.
+- Model input generation belongs here, not in `data_sources`, because it composes multiple source outputs and model-layer boundaries.
 
 Current model-input/data-product bundles:
 
@@ -18,6 +18,6 @@ Note: `TradeQualityModel` currently does not need a `trading-data` bundle becaus
 - `05_option_expression_model_inputs` — SQL-only ThetaData option-chain snapshot table for OptionExpressionModel.
 - `06_event_overlay_model_inputs` — point-in-time EventOverlayModel input manifest.
 - `07_portfolio_risk_model_inputs` — point-in-time PortfolioRiskModel input manifest.
-- `06_event_overlay_model_inputs/equity_abnormal_activity` — equity bars + optional benchmark/liquidity inputs + `06_event_overlay_model_inputs/equity_abnormal_activity/config.json` detector defaults -> `equity_abnormal_activity_event.csv`.
+- `06_event_overlay_model_inputs/equity_abnormal_activity` — equity bars + optional benchmark/liquidity inputs + detector defaults -> `equity_abnormal_activity_event.csv`.
 
 The remaining historical acquisition runners still live under `data_sources` until each has a reviewed manager-facing wrapper. Do not add new model-input generation under `data_sources`.

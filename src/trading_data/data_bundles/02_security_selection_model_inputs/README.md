@@ -2,7 +2,7 @@
 
 Manager-facing SecuritySelectionModel ETF holdings input bundle.
 
-This bundle reads the configured ETF universe, collects issuer holdings snapshots for the selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the final model input to SQL.
+This bundle reads the reviewed ETF universe, collects issuer holdings snapshots for the selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the final model input to SQL. Stable defaults live in pipeline code; there is no bundle-local `config.json`.
 
 ## Input parameters
 
@@ -16,19 +16,10 @@ Required task key fields:
 
 Optional task key fields:
 
-- `params.symbols`: comma string or list selecting a reviewed ETF subset from the configured universe
+- `params.symbols`: comma string or list selecting a reviewed ETF subset from the universe
 - `params.available_time`: explicit model-availability timestamp for all output rows. If omitted, the bundle derives a conservative session-open timestamp from `as_of_date`.
-- `params.config_path`: reviewed config override
+- `params.market_etf_universe_path`: reviewed universe override. Normal runs use `/root/projects/trading-main/storage/shared/market_etf_universe.csv`.
 - `output_root`: local receipt/request-manifest root
-
-## Config
-
-`config.json` owns:
-
-- `market_etf_universe_path`: canonical ETF universe CSV, currently `/root/projects/trading-main/storage/shared/market_etf_universe.csv`
-- `holding_filter`: US-listed equity-only filtering policy
-- `storage_target`: PostgreSQL model-input target
-- `output`: SQL table contract
 
 The universe CSV supplies `symbol`, `issuer_name`, `universe_type`, and `exposure_type`. The holdings source supplies constituent rows.
 

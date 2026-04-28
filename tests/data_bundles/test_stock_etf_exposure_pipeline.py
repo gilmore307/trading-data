@@ -33,15 +33,13 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                     {"Ticker": "CASH", "Name": "Cash Collateral", "Weight": "2", "Asset Class": "Cash", "Sector": "Cash"},
                     {"Ticker": "SAP", "Name": "SAP SE", "Weight": "1", "Asset Class": "Equity", "Sector": "Technology"},
                 ])
-            config = Path(tmp) / "config.json"
-            config.write_text(json.dumps({"market_etf_universe_path": str(universe), "storage_target": {"driver": "postgresql", "secret_alias": "trading_storage_postgres", "schema": "model_inputs"}}), encoding="utf-8")
             task_key = {
                 "task_id": "02_security_selection_model_inputs_task_test",
                 "bundle": "02_security_selection_model_inputs",
                 "params": {
                     "start": "2026-04-24",
                     "end": "2026-04-25",
-                    "config_path": str(config),
+                    "market_etf_universe_path": str(universe),
                     "available_time": "2026-04-25T09:30:00-04:00",
                     "holding_source_payloads": {"SMH": {"csv_path": str(holdings), "as_of_date": "2026-04-24"}},
                 },

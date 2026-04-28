@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from trading_data.data_bundles.config import load_bundle_config
 from trading_data.data_sources.thetadata_option_selection_snapshot.pipeline import build_context as build_snapshot_context
 from trading_data.data_sources.thetadata_option_selection_snapshot.pipeline import clean as clean_snapshot
 from trading_data.data_sources.thetadata_option_selection_snapshot.pipeline import fetch as fetch_snapshot
@@ -41,7 +40,6 @@ class StepResult:
 
 @dataclass(frozen=True)
 class SourcePayload:
-    config: dict[str, Any]
     snapshot: dict[str, Any]
     contract_count: int
     fetch_result: Any
@@ -70,8 +68,6 @@ def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
 
 def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
-    config_path = str(params.get("config_path") or "") or None
-    config = load_bundle_config(BUNDLE, config_path=config_path)
     source_task = {
         "task_id": f"{context.task_key.get('task_id')}_option_snapshot",
         "bundle": "thetadata_option_selection_snapshot",
@@ -84,7 +80,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(json.dumps(sanitize_value({"bundle": BUNDLE, "model_id": MODEL_ID, "source_bundle": "thetadata_option_selection_snapshot", "params": {"underlying": params.get("underlying"), "snapshot_time": params.get("snapshot_time")}, "source_fetch": asdict(fetch_result), "source_clean": asdict(clean_result), "raw_persistence": "ThetaData raw responses are transient; final output is SQL JSONB-style contracts payload", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], dict(clean_result.row_counts), details={"underlying": snapshot.get("underlying"), "snapshot_time": snapshot.get("snapshot_time")}), SourcePayload(config, snapshot, int(clean_result.row_counts.get("option_chain_snapshot_contracts", 0)), fetch_result, clean_result)
+    return StepResult("succeeded", [str(manifest)], dict(clean_result.row_counts), details={"underlying": snapshot.get("underlying"), "snapshot_time": snapshot.get("snapshot_time")}), SourcePayload(snapshot, int(clean_result.row_counts.get("option_chain_snapshot_contracts", 0)), fetch_result, clean_result)
 
 
 def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
@@ -100,8 +96,8 @@ def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, C
     return result, CleanedPayload([row])
 
 
-def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
-    writer = sql_writer or PostgresSqlTableWriter.from_config(config)
+def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    writer = sql_writer or PostgresSqlTableWriter.from_config({})
     metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=payload.rows, key_columns=KEY_COLUMNS)
     reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
     return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
@@ -130,7 +126,7 @@ def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = No
     try:
         fetch_result, source_payload = fetch(context, client=client)
         clean_result, cleaned_payload = clean(context, source_payload)
-        save_result = save(context, clean_result, cleaned_payload, source_payload.config, sql_writer=sql_writer)
+        save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except BaseException as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

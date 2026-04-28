@@ -8,6 +8,14 @@ from typing import Any, Mapping, Protocol, Sequence
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+DEFAULT_POSTGRES_STORAGE_TARGET = {
+    "id": "trading_data_model_inputs_postgres",
+    "driver": "postgresql",
+    "secret_alias": "trading_storage_postgres",
+    "schema": "model_inputs",
+    "create_table": True,
+    "batch_size": 5000,
+}
 
 
 class SqlStorageError(ValueError):
@@ -58,7 +66,7 @@ class PostgresSqlTableWriter:
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any]) -> "PostgresSqlTableWriter":
-        target = dict(config.get("storage_target") or {})
+        target = {**DEFAULT_POSTGRES_STORAGE_TARGET, **dict(config.get("storage_target") or {})}
         if target.get("driver") != "postgresql":
             raise SqlStorageError("storage_target.driver must be 'postgresql' for formal SQL output")
         secret_alias = str(target.get("secret_alias") or "").strip()

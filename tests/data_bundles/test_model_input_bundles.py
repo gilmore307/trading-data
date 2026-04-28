@@ -79,15 +79,10 @@ class ModelInputBundleTests(unittest.TestCase):
                     "BITW,sector_observation_etf,crypto_beta,30m,Bitwise 10 Crypto Index ETF,Bitwise\n",
                     encoding="utf-8",
                 )
-                config_path = Path(tmp) / "config.json"
-                config_path.write_text(
-                    json.dumps({"market_etf_universe_path": str(universe_path), "secret_alias": "alpaca", "limit": 1000, "max_pages": 2}),
-                    encoding="utf-8",
-                )
                 task_key = {
                     "task_id": "01_market_regime_model_inputs_task_test",
                     "bundle": "01_market_regime_model_inputs",
-                    "params": {"start": "2026-04-24", "end": "2026-04-25", "config_path": str(config_path)},
+                    "params": {"start": "2026-04-24", "end": "2026-04-25", "market_etf_universe_path": str(universe_path), "max_pages": 2},
                     "output_root": str(Path(tmp) / "task"),
                 }
                 writer = FakeSqlWriter()

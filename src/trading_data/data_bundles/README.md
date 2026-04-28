@@ -10,11 +10,12 @@ Boundary:
 
 Current model-input/data-product bundles:
 
+Note: `TradeQualityModel` currently does not need a `trading-data` bundle because it consumes upstream SQL outputs and model/strategy candidates without new data acquisition.
+
 - `01_market_regime_model_inputs` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_etf_universe.csv`.
 - `02_security_selection_model_inputs` — SQL-only filtered US-listed equity ETF holdings table for SecuritySelectionModel; ETF universe comes from `market_etf_universe.csv`.
 - `03_strategy_selection_model_inputs` — SQL-only manager-selected symbol bar/liquidity table for StrategySelectionModel; defaults to 1Min.
-- `04_trade_quality_model_inputs` — point-in-time TradeQualityModel input manifest.
-- `05_option_expression_model_inputs` — point-in-time OptionExpressionModel input manifest.
+- `05_option_expression_model_inputs` — SQL-only ThetaData option-chain snapshot table for OptionExpressionModel.
 - `06_event_overlay_model_inputs` — point-in-time EventOverlayModel input manifest.
 - `07_portfolio_risk_model_inputs` — point-in-time PortfolioRiskModel input manifest.
 - `06_event_overlay_model_inputs/equity_abnormal_activity` — equity bars + optional benchmark/liquidity inputs + `06_event_overlay_model_inputs/equity_abnormal_activity/config.json` detector defaults -> `equity_abnormal_activity_event.csv`.

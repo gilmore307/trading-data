@@ -19,7 +19,7 @@ This document maps `trading-data` outputs and derived data products to the seven
 | `MarketRegimeModel` | `01_market_regime_model_inputs` | ETF/broad-market `equity_bar`; cross-asset ETF basket bars; ratios and market-only features derived later | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model, except as explanatory metadata. |
 | `SecuritySelectionModel` | `02_security_selection_model_inputs` | `etf_holding_snapshot`, `stock_etf_exposure`, equity bars/liquidity, optionability summaries, event exclusions | Bridges sector/style strength to tradable stocks. Uses both ETF holdings-driven universe and full-market scan universe. |
 | `StrategySelectionModel` | `03_strategy_selection_model_inputs` | equity bars/liquidity from Alpaca, crypto bars/liquidity from OKX, selected candidate pools from Layer 2 | Chooses strategy family/variant for candidate symbols. |
-| `TradeQualityModel` | `04_trade_quality_model_inputs` | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require a new raw provider; mostly consumes model-generated signals and source-market features. |
+| `TradeQualityModel` | _(no trading-data bundle)_ | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new data acquisition, SQL view, or manifest contract in `trading-data`; `trading-model` consumes upstream SQL outputs directly. |
 | `OptionExpressionModel` | `05_option_expression_model_inputs` | option chain snapshot, option bars/contract tracking, IV/Greeks/liquidity, upstream signal forecast | V1 supports long call / long put only; no multi-leg option structures. |
 | `EventOverlayModel` | `06_event_overlay_model_inputs` | `gdelt_article`, SEC company financials/filings, `trading_economics_calendar_event`, option activity, `equity_abnormal_activity_event` | Event overlay affects all earlier layers plus final risk gate. Trading Economics is the accepted macro calendar/value surface. |
 | `PortfolioRiskModel` | `07_portfolio_risk_model_inputs` | option contract data, positions, fills, PnL, cash/margin, exposures, risk limits, kill-switch state | Portfolio/account state is likely execution/account-owned, not pure `trading-data`. Historical simulation outputs may fill this during research. |
@@ -34,7 +34,11 @@ Layer 2 accepts `params.start` and `params.end`, reads the configured `market_et
 
 Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `model_inputs.strategy_selection_symbol_bar_liquidity`.
 
-Layers 4-7 currently load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference` until their true data-product contracts are reviewed.
+Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model/strategy candidates without new data acquisition or manifest/view contract.
+
+Layer 5 accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `model_inputs.option_expression_option_chain_snapshot`.
+
+Layers 6-7 currently load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and write point-in-time artifact references to SQL table `model_inputs.model_input_artifact_reference` until their true data-product contracts are reviewed.
 
 ## Derived Data Products Added for Model Needs
 

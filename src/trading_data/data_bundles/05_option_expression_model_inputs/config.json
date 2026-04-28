@@ -1,33 +1,7 @@
 {
-  "version": 2,
-  "description": "Default input contract for 05_option_expression_model_inputs. Task keys provide input_paths and as_of.",
+  "version": 3,
+  "description": "OptionExpressionModel option-chain snapshot input contract. Task keys provide underlying and snapshot_time; final output is a SQL row with nested contracts payload.",
   "model_id": "option_expression_model",
-  "inputs": [
-    {
-      "role": "option_chain_snapshot",
-      "data_kind": "option_chain_snapshot",
-      "required": true,
-      "notes": "Point-in-time option chain visible at expression decision"
-    },
-    {
-      "role": "option_bars",
-      "data_kind": "option_bar",
-      "required": false,
-      "notes": "Specified contract tracking rows"
-    },
-    {
-      "role": "trade_quality_candidates",
-      "data_kind": "trade_quality_model_inputs",
-      "required": true,
-      "notes": "Approved equity direction/quality candidates"
-    },
-    {
-      "role": "option_activity_events",
-      "data_kind": "option_activity_event",
-      "required": false,
-      "notes": "Option abnormal activity context; V1 still ranks long call/long put only"
-    }
-  ],
   "storage_target": {
     "id": "trading_data_model_inputs_postgres",
     "driver": "postgresql",
@@ -37,28 +11,9 @@
     "batch_size": 5000
   },
   "output": {
-    "table": "model_input_artifact_reference",
+    "table": "option_expression_option_chain_snapshot",
     "format": "sql_table",
-    "natural_key": [
-      "run_id",
-      "bundle",
-      "input_role",
-      "data_kind",
-      "artifact_reference"
-    ],
-    "columns": [
-      "run_id",
-      "task_id",
-      "bundle",
-      "model_id",
-      "as_of",
-      "input_role",
-      "data_kind",
-      "artifact_reference",
-      "required",
-      "point_in_time",
-      "notes",
-      "created_at"
-    ]
+    "natural_key": ["run_id", "underlying", "snapshot_time"],
+    "columns": ["run_id", "task_id", "underlying", "snapshot_time", "contract_count", "contracts"]
   }
 }

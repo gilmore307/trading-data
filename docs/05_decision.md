@@ -861,3 +861,24 @@ The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average 
 - Raw trades/quotes remain transient and are not persisted by default.
 - Feature engineering for returns/volatility/trend/gaps remains downstream of this data bundle.
 - Primary key: `run_id + symbol + timeframe + timestamp`.
+
+## D056 - Trade quality has no trading-data bundle; option expression writes option snapshot
+
+Date: 2026-04-28
+
+### Context
+
+The user clarified that `TradeQualityModel` does not require a `trading-data` bundle, SQL view, or manifest contract because it does not fetch new data. It consumes upstream SQL outputs and model/strategy candidates. The next model-input acquisition need is `OptionExpressionModel`, which needs a point-in-time option snapshot.
+
+### Decision
+
+Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
+
+`05_option_expression_model_inputs` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `model_inputs.option_expression_option_chain_snapshot` with one row per requested snapshot and a nested `contracts` JSONB payload.
+
+### Consequences
+
+- Do not keep a Layer 4 runnable data bundle or SQL manifest/view just for orchestration symmetry.
+- Layer 5 owns option-chain snapshot acquisition for OptionExpressionModel inputs.
+- Raw ThetaData responses remain transient; final durable payload is the normalized SQL row.
+- Primary key for Layer 5: `run_id + underlying + snapshot_time`.

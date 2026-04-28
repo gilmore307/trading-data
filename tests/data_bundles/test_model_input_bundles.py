@@ -7,8 +7,6 @@ from pathlib import Path
 from trading_data.source_availability.http import HttpResult
 
 BUNDLES = {
-    "04_trade_quality_model_inputs": ["strategy_candidates", "market_context", "security_context"],
-    "05_option_expression_model_inputs": ["option_chain_snapshot", "trade_quality_candidates"],
     "06_event_overlay_model_inputs": ["gdelt_articles", "trading_economics_calendar", "equity_abnormal_activity_events"],
     "07_portfolio_risk_model_inputs": ["option_expression_candidates"],
 }
@@ -34,6 +32,19 @@ class FakeStrategySelectionClient:
             payload = {"quotes": [{"t": "2026-04-24T13:30:05Z", "bp": 100.4, "ap": 100.6, "bs": 10, "as": 12}, {"t": "2026-04-24T13:30:45Z", "bp": 100.5, "ap": 100.7, "bs": 20, "as": 22}]}
         else:
             payload = {}
+        return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+
+
+class FakeThetaDataClient:
+    def get(self, url, *, params=None, headers=None):
+        if url.endswith("/snapshot/quote"):
+            payload = {"response": [{"contract": {"symbol": "AAPL", "expiration": "2026-05-15", "right": "CALL", "strike": 270.0}, "data": [{"timestamp": "2026-04-24T09:30:02.260", "bid": 1.15, "ask": 1.25, "bid_size": 12, "ask_size": 15}]}]}
+        elif url.endswith("/snapshot/greeks/implied_volatility"):
+            payload = {"response": [{"contract": {"symbol": "AAPL", "expiration": "2026-05-15", "right": "CALL", "strike": 270.0}, "data": [{"timestamp": "2026-04-24T09:30:02.260", "implied_vol": 0.64, "iv_error": 0.0, "underlying_price": 271.95, "underlying_timestamp": "2026-04-24T13:30:02.260"}]}]}
+        elif url.endswith("/snapshot/greeks/first_order"):
+            payload = {"response": [{"contract": {"symbol": "AAPL", "expiration": "2026-05-15", "right": "CALL", "strike": 270.0}, "data": [{"timestamp": "2026-04-24T09:30:02.260", "delta": 0.52, "theta": -0.11, "vega": 18.2, "rho": 4.3}]}]}
+        else:
+            payload = {"response": []}
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
@@ -126,6 +137,30 @@ class ModelInputBundleTests(unittest.TestCase):
                 self.assertNotIn("created_at", row)
         finally:
             module.load_secret_alias = old_load_secret
+
+    def test_option_expression_bundle_writes_option_snapshot_sql_row(self):
+        module = import_module("trading_data.data_bundles.05_option_expression_model_inputs.pipeline")
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "05_option_expression_model_inputs_task_test",
+                "bundle": "05_option_expression_model_inputs",
+                "params": {"underlying": "AAPL", "snapshot_time": "2026-04-24T09:30:02.500000-04:00"},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            writer = FakeSqlWriter()
+            result = module.run(task_key, run_id="run", client=FakeThetaDataClient(), sql_writer=writer)
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["option_expression_option_chain_snapshot"], 1)
+            self.assertEqual(result.row_counts["option_chain_snapshot_contracts"], 1)
+            call = writer.calls[0]
+            self.assertEqual(call["table"], "option_expression_option_chain_snapshot")
+            self.assertEqual(call["key_columns"], ["run_id", "underlying", "snapshot_time"])
+            row = call["rows"][0]
+            self.assertEqual(row["underlying"], "AAPL")
+            self.assertEqual(row["snapshot_time"], "2026-04-24T09:30:02.500000-04:00")
+            self.assertEqual(row["contract_count"], 1)
+            self.assertEqual(row["contracts"][0]["option_right_type"], "CALL")
+            self.assertNotIn("created_at", row)
 
     def test_model_input_bundles_emit_point_in_time_sql_manifest_rows(self):
         for bundle, required_roles in BUNDLES.items():

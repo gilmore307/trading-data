@@ -146,6 +146,8 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _security_selection_us_equity_etf_holding_ddl(qualified_table)
     if table == "strategy_selection_symbol_bar_liquidity":
         return _strategy_selection_symbol_bar_liquidity_ddl(qualified_table)
+    if table == "option_expression_option_chain_snapshot":
+        return _option_expression_option_chain_snapshot_ddl(qualified_table)
     return None
 
 
@@ -238,5 +240,19 @@ def _strategy_selection_symbol_bar_liquidity_ddl(qualified_table: str) -> str:
         last_bid DOUBLE PRECISION,
         last_ask DOUBLE PRECISION,
         PRIMARY KEY (run_id, symbol, timeframe, timestamp)
+    )
+    """
+
+
+def _option_expression_option_chain_snapshot_ddl(qualified_table: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        run_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        underlying TEXT NOT NULL,
+        snapshot_time TIMESTAMPTZ NOT NULL,
+        contract_count BIGINT NOT NULL,
+        contracts JSONB NOT NULL,
+        PRIMARY KEY (run_id, underlying, snapshot_time)
     )
     """

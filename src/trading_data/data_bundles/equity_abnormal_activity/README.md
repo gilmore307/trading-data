@@ -18,9 +18,9 @@ Derived event detector for `EventOverlayModel`.
 
 ## Optional params
 
-- `benchmark_bars_csv_path` — benchmark or sector ETF bars aligned by `timestamp_et`.
+- `benchmark_bars_csv_path` — benchmark or sector ETF bars aligned by `timestamp`.
 - `config_path` — reviewed one-off config override path; normal runs use bundle-local `config.json`.
-- `liquidity_csv_path` — equity liquidity bars aligned by `interval_start_et`.
+- `liquidity_csv_path` — equity liquidity bars aligned by `interval_start`.
 - `lookback_intervals` — default `20`.
 - `min_abs_return_zscore` — default `3.0`.
 - `min_volume_zscore` — default `3.0`.

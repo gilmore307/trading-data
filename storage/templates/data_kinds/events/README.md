@@ -53,7 +53,7 @@ When a news article covers an already-known SEC event, the news-derived `trading
 - `dedup_status = covered_by_official_source`.
 - `coverage_reason` explaining the match, e.g. same CIK/accession/form, same company/event type/time window, or high text similarity to an official disclosure.
 
-Covered news may still be useful for propagation, attention, or human-readable explanation, but it must not create a second independent `event_factor` row unless the article adds new non-SEC information that is safely observable at its own `effective_time_et`.
+Covered news may still be useful for propagation, attention, or human-readable explanation, but it must not create a second independent `event_factor` row unless the article adds new non-SEC information that is safely observable at its own `effective_time`.
 
 ## `trading_event`
 
@@ -61,9 +61,9 @@ Canonical source-neutral event row. It stores what happened, when it became obse
 
 Important timing rules:
 
-- `event_time_et` is the source publication/detection timestamp.
-- `effective_time_et` is the earliest trading timestamp when the event can safely be used by a strategy.
-- For after-hours SEC filings or articles, `effective_time_et` should usually be the next regular session open unless a strategy explicitly trades extended hours.
+- `event_time` is the source publication/detection timestamp.
+- `effective_time` is the earliest trading timestamp when the event can safely be used by a strategy.
+- For after-hours SEC filings or articles, `effective_time` should usually be the next regular session open unless a strategy explicitly trades extended hours.
 
 Typical `event_type` values include:
 

@@ -99,7 +99,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 "bundle": "thetadata_option_selection_snapshot",
                 "params": {
                     "underlying": "AAPL",
-                    "snapshot_time_et": "2026-04-24T09:30:02.500000-04:00",
+                    "snapshot_time": "2026-04-24T09:30:02.500000-04:00",
                     "thetadata_base_url": "http://127.0.0.1:25503",
                 },
                 "output_root": str(output_root),
@@ -117,18 +117,18 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             self.assertNotIn("data_kind", snapshot)
             self.assertNotIn("source", snapshot)
             self.assertEqual(snapshot["underlying"], "AAPL")
-            self.assertEqual(snapshot["snapshot_time_et"], "2026-04-24T09:30:02.500000-04:00")
+            self.assertEqual(snapshot["snapshot_time"], "2026-04-24T09:30:02.500000-04:00")
             self.assertEqual(snapshot["contract_count"], "1")
 
             contract = json.loads(snapshot["contracts"])[0]
             self.assertEqual(contract["right"], "CALL")
-            self.assertEqual(contract["quote"]["timestamp_et"], "2026-04-24T09:30:02.260000-04:00")
+            self.assertEqual(contract["quote"]["timestamp"], "2026-04-24T09:30:02.260000-04:00")
             self.assertEqual(contract["quote"]["mid"], 1.2)
             self.assertEqual(contract["quote"]["spread"], 0.10000000000000009)
             self.assertEqual(contract["iv"]["implied_vol"], 0.64)
             self.assertEqual(contract["greeks"]["delta"], 0.52)
             self.assertEqual(
-                contract["underlying_context"]["underlying_timestamp_et"],
+                contract["underlying_context"]["underlying_timestamp"],
                 "2026-04-24T09:30:02.260000-04:00",
             )
             self.assertEqual(contract["derived"]["days_to_expiration"], 21)
@@ -141,7 +141,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             self.assertEqual(receipt["bundle"], "thetadata_option_selection_snapshot")
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_chain_snapshot_contracts"], 1)
 
-    def test_requires_explicit_snapshot_time_et(self):
+    def test_requires_explicit_snapshot_time(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "thetadata_option_selection_snapshot_task_test",
@@ -151,7 +151,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             }
             result = run(task_key, run_id="run_missing_time", client=FakeThetaDataClient())
             self.assertEqual(result.status, "failed")
-            self.assertIn("snapshot_time_et is required", result.details["error"]["message"])
+            self.assertIn("snapshot_time is required", result.details["error"]["message"])
 
 
 if __name__ == "__main__":

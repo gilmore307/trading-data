@@ -1,2 +1,2 @@
-article_id,seen_at_utc,source_domain,url,language,source_country,title,source_theme_tags,persons,organizations,locations,tone,sharing_image,impact_scope,source_type
-20260427123000-1,2026-04-27T12:30:00Z,example.com,https://example.com/politics-economy-tech,,,,ECON_STOCKMARKET;TAX_FNCACT,,Federal Reserve,US#United States#US,-1.2,https://example.com/image.jpg,market;sector;industry;theme,gdelt_gkg_article
+article_id,seen_at,source_domain,url,language,source_country,title,source_theme_tags,persons,organizations,locations,tone,sharing_image,impact_scope,source_type
+20260427123000-1,2026-04-27T08:30:00-04:00,example.com,https://example.com/politics-economy-tech,,,,ECON_STOCKMARKET;TAX_FNCACT,,Federal Reserve,US#United States#US,-1.2,https://example.com/image.jpg,market;sector;industry;theme,gdelt_gkg_article

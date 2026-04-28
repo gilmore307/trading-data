@@ -1,2 +1,2 @@
-symbol,timeframe,interval_start_et,trade_count,quote_count,volume,vwap,open,high,low,close,avg_bid,avg_ask,avg_mid,avg_spread,last_bid,last_ask,last_mid,vwap_minus_avg_mid
+symbol,timeframe,interval_start,trade_count,quote_count,volume,vwap,open,high,low,close,avg_bid,avg_ask,avg_mid,avg_spread,last_bid,last_ask,last_mid,vwap_minus_avg_mid
 BTC-USDT,1Min,2026-04-26T18:13:00-04:00,1,,0.0013739,78535.1,78535.1,78535.1,78535.1,78535.1,,,,,,,,

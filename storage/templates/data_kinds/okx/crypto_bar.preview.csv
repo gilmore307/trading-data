@@ -1,2 +1,2 @@
-symbol,timeframe,timestamp_et,open,high,low,close,volume,vwap,trade_count
+symbol,timeframe,timestamp,open,high,low,close,volume,vwap,trade_count
 BTC-USDT,1Min,2026-04-26T18:13:00-04:00,78527.3,78535.1,78527.2,78535.1,0.0013739,,

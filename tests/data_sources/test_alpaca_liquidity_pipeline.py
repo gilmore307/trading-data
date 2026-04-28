@@ -37,7 +37,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             {'t': '2024-01-02T14:30:30Z', 'p': 12, 's': 3},
         ], '1Min')
         self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]['interval_start_et'], '2024-01-02T09:30:00-05:00')
+        self.assertEqual(rows[0]['interval_start'], '2024-01-02T09:30:00-05:00')
         self.assertEqual(rows[0]['trade_count'], 2)
         self.assertEqual(rows[0]['volume'], 5)
         self.assertEqual(rows[0]['vwap'], 11.2)

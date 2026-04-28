@@ -13,12 +13,14 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from trading_data.source_availability.sanitize import sanitize_value
 
 BUNDLE = "gdelt_news"
+ET = ZoneInfo("America/New_York")
 DEFAULT_MAX_ROWS = 100
 DEFAULT_FOCUS = "us_market"
 DEFAULT_TOPIC_CATEGORIES = ("politics", "economy", "war", "technology")
@@ -51,7 +53,7 @@ DEFAULT_US_MARKET_DOMAINS = (
 )
 ARTICLE_FIELDS = [
     "article_id",
-    "seen_at_utc",
+    "seen_at",
     "source_domain",
     "url",
     "language",
@@ -272,13 +274,15 @@ def fetch(context: BundleContext, *, client: QueryClient | None = None) -> tuple
     return StepResult("succeeded", [str(manifest_path)], {"bigquery_rows": len(rows)}, details={"table": "gdelt-bq.gdeltv2.gkg_partitioned", "maximum_bytes_billed": maximum_bytes_billed_int, "dry_run": dry_run, "estimated_total_bytes_processed": getattr(result, "total_bytes_processed", None)}), FetchedGdeltRows(sql, rows)
 
 
-def _seen_at_utc(row: Mapping[str, Any]) -> str:
+def _seen_at(row: Mapping[str, Any]) -> str:
     value = row.get("gdelt_date") or ""
     text = str(value)
     if re.fullmatch(r"\d{14}", text):
-        return f"{text[0:4]}-{text[4:6]}-{text[6:8]}T{text[8:10]}:{text[10:12]}:{text[12:14]}Z"
+        dt = datetime.strptime(text, "%Y%m%d%H%M%S").replace(tzinfo=UTC)
+        return dt.astimezone(ET).isoformat()
     if re.fullmatch(r"\d{8}", text):
-        return f"{text[0:4]}-{text[4:6]}-{text[6:8]}T00:00:00Z"
+        dt = datetime.strptime(text, "%Y%m%d").replace(tzinfo=UTC)
+        return dt.astimezone(ET).isoformat()
     return ""
 
 
@@ -299,7 +303,7 @@ def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> 
             continue
         output.append({
             "article_id": article_id,
-            "seen_at_utc": _seen_at_utc(row),
+            "seen_at": _seen_at(row),
             "source_domain": str(row.get("source_domain") or ""),
             "url": url,
             "language": "",

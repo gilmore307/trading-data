@@ -26,7 +26,7 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 ## Implemented Model Input Bundle Manifests
 
-Each accepted model layer now has a manager-facing bundle under `src/trading_data/data_bundles/layerNN_<model_id>_inputs/`. These bundles load their bundle-local `config.json`, accept a manager task key with `params.as_of_et` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
+Each accepted model layer now has a manager-facing bundle under `src/trading_data/data_bundles/layerNN_<model_id>_inputs/`. These bundles load their bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
 
 The manifest bundles do not fetch raw provider data. They compose saved source/derived artifacts into a model-layer input contract.
 
@@ -54,12 +54,12 @@ Important fields:
 - `exposure_tags`
 - `source_etf_count`
 - `source_snapshot_refs`
-- `available_time_et`
+- `available_time`
 
 Boundary:
 
 - Derived feature artifact, not a raw provider table.
-- Must preserve `available_time_et`; do not assume a holdings file is usable before it was visible.
+- Must preserve `available_time`; do not assume a holdings file is usable before it was visible.
 - Implemented as an internal step of `02_security_selection_model_inputs`, not as a standalone manager-facing bundle. When `params.stock_etf_exposure` is provided, Layer 2 derives `stock_etf_exposure.csv` from saved `etf_holding_snapshot.csv` inputs and caller-supplied ETF/sector/theme scores before writing the Layer 2 input manifest.
 
 ### `equity_abnormal_activity_event`

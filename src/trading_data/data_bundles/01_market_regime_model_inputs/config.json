@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Default input contract for 01_market_regime_model_inputs. Task keys provide input_paths and as_of_et.",
+  "description": "Default input contract for 01_market_regime_model_inputs. Task keys provide input_paths and as_of.",
   "model_id": "market_regime_model",
   "inputs": [
     {

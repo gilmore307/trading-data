@@ -44,8 +44,8 @@ The option templates reuse common nested leaf names where their semantics match:
 - Quote context: `bid`, `ask`, `mid`, `spread`, `bid_size`, `ask_size`, `spread_pct`, `bid_exchange`, `ask_exchange`, `bid_condition`, `ask_condition`.
 - IV context: `implied_vol`, `iv_error`, `iv_percentile_by_expiration`, `iv_rank_in_expiration`, `iv_zscore_by_expiration`.
 - Greeks context: `delta`, `theta`, `vega`, `rho`, `epsilon`, `lambda`.
-- Underlying context: `underlying_price`, `underlying_timestamp_et`.
-- Window context: `window_start_et`, `window_end_et`, `window_trade_count`, `window_volume`, `window_notional`.
+- Underlying context: `underlying_price`, `underlying_timestamp`.
+- Window context: `window_start`, `window_end`, `window_trade_count`, `window_volume`, `window_notional`.
 
 Scenario-specific event-detail metrics keep explicit event names, such as `price_vs_ask` and `ask_touch_ratio`.
 
@@ -56,9 +56,9 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Status:** `preview-confirmed`.
 - **Persistence policy:** Persist one SQL-shaped snapshot row; nested visible contracts are encoded as a JSON text/JSONB payload column. Do not filter contracts; do not persist raw provider responses separately.
 - **Earliest available range:** `unknown`; live preview confirmed AAPL chain snapshot with 3120 contracts for 2026-04-24 latest-visible timestamps.
-- **Default timestamp semantics:** `snapshot_time_et` records requested/receipt context when available; contract quote/IV/Greeks timestamps remain per-contract ET timestamps.
+- **Default timestamp semantics:** `snapshot_time` records requested/receipt context when available; contract quote/IV/Greeks timestamps remain per-contract ET timestamps.
 - **Natural grain:** One snapshot artifact per underlying/snapshot request, containing many contracts.
-- **Request parameters:** `underlying`, `snapshot_time_et`. The caller must provide an explicit `America/New_York` snapshot datetime; no implicit latest/current mode is supported.
+- **Request parameters:** `underlying`, `snapshot_time`. The caller must provide an explicit `America/New_York` snapshot datetime; no implicit latest/current mode is supported.
 - **Pagination/range behavior:** Source returns full visible chain response for requested underlying/expiration scope; no contract filtering in this template. Development preview is CSV; durable production storage should map the JSON text payload to SQL JSONB.
 - **Preview file:** see `option_chain_snapshot.preview.csv`.
 - **Known caveats:** ThetaData snapshot rows carry per-contract latest timestamps, not one guaranteed identical timestamp across all contracts.
@@ -70,7 +70,7 @@ Scenario-specific event-detail metrics keep explicit event names, such as `price
 - **Status:** `implemented`.
 - **Persistence policy:** Persist final aggregated contract bars as CSV. Raw 1Sec source rows are transient.
 - **Earliest available range:** `unknown`; live preview confirmed AAPL 2026-05-15 270 CALL on 2026-04-24.
-- **Default timestamp semantics:** `timestamp_et` in `America/New_York`.
+- **Default timestamp semantics:** `timestamp` in `America/New_York`.
 - **Natural grain:** One option contract/timeframe/timestamp bar.
 - **Request parameters:** `underlying`, `expiration`, `right`, `strike`, `start_date`, `end_date`, `timeframe`.
 - **Pagination/range behavior:** Segment by contract and date range; `timeframe` is an input parameter and final rows should aggregate transient 1Sec OHLC to requested grain.

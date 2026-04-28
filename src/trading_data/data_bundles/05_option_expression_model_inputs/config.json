@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Default input contract for 05_option_expression_model_inputs. Task keys provide input_paths and as_of_et.",
+  "description": "Default input contract for 05_option_expression_model_inputs. Task keys provide input_paths and as_of.",
   "model_id": "option_expression_model",
   "inputs": [
     {

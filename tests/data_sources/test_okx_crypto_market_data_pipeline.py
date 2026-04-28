@@ -40,7 +40,7 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
         bars = normalize_bars('BTC-USDT', [['1777241580000', '1', '2', '0.5', '1.5', '3', '3', '4.5', '1']], '1Min')
         self.assertNotIn('data_kind', bars[0])
         self.assertNotIn('source', bars[0])
-        self.assertEqual(bars[0]['timestamp_et'], '2026-04-26T18:13:00-04:00')
+        self.assertEqual(bars[0]['timestamp'], '2026-04-26T18:13:00-04:00')
 
         trades = normalize_trades('BTC-USDT', [{'side': 'buy', 'sz': '0.1', 'px': '10', 'tradeId': 'abc', 'ts': '1777241590242'}])
         self.assertEqual(trades[0]['data_kind'], 'crypto_trade')

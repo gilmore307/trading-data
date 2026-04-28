@@ -23,8 +23,8 @@ BUNDLE = "equity_abnormal_activity"
 FIELDS = [
     "event_id",
     "symbol",
-    "event_time_et",
-    "effective_time_et",
+    "event_time",
+    "effective_time",
     "event_type",
     "source_type",
     "title",
@@ -154,9 +154,9 @@ def _fmt(value: float | None) -> str:
 def _returns_by_timestamp(rows: list[dict[str, str]]) -> dict[str, float]:
     out: dict[str, float] = {}
     prev_close: float | None = None
-    for row in sorted(rows, key=lambda item: str(item.get("timestamp_et") or item.get("interval_start_et") or "")):
+    for row in sorted(rows, key=lambda item: str(item.get("timestamp") or item.get("interval_start") or "")):
         close = _float(row.get("close"))
-        timestamp = str(row.get("timestamp_et") or row.get("interval_start_et") or "")
+        timestamp = str(row.get("timestamp") or row.get("interval_start") or "")
         if close is not None and prev_close not in (None, 0) and timestamp:
             out[timestamp] = close / float(prev_close) - 1.0
         if close is not None:
@@ -165,11 +165,11 @@ def _returns_by_timestamp(rows: list[dict[str, str]]) -> dict[str, float]:
 
 
 def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, str]] | None = None, liquidity_rows: list[dict[str, str]] | None = None, lookback_intervals: int = 20, min_abs_return_zscore: float = 3.0, min_volume_zscore: float = 3.0, min_abs_relative_strength_zscore: float = 3.0, min_abs_gap_pct: float = 0.04, min_liquidity_spread_zscore: float = 3.0, model_standard: str = "equity_abnormal_activity_v0") -> list[dict[str, str]]:
-    sorted_bars = sorted(bars, key=lambda row: str(row.get("timestamp_et") or ""))
+    sorted_bars = sorted(bars, key=lambda row: str(row.get("timestamp") or ""))
     symbol = str(sorted_bars[0].get("symbol") or "").upper() if sorted_bars else ""
     timeframe = str(sorted_bars[0].get("timeframe") or "") if sorted_bars else ""
     benchmark_returns = _returns_by_timestamp(benchmark_bars or [])
-    liquidity_by_time = {str(row.get("interval_start_et") or ""): row for row in (liquidity_rows or [])}
+    liquidity_by_time = {str(row.get("interval_start") or ""): row for row in (liquidity_rows or [])}
     return_history: list[float] = []
     volume_history: list[float] = []
     relative_history: list[float] = []
@@ -177,7 +177,7 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
     prev_close: float | None = None
     events: list[dict[str, str]] = []
     for row in sorted_bars:
-        ts = str(row.get("timestamp_et") or "")
+        ts = str(row.get("timestamp") or "")
         close = _float(row.get("close"))
         open_ = _float(row.get("open"))
         volume = _float(row.get("volume"))
@@ -210,7 +210,7 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
             activity.append("liquidity_spread")
         if activity:
             event_id = f"eq_abn_{symbol}_{ts.replace('-', '').replace(':', '').replace('+', '').replace('T', '_')[:24]}"
-            evidence_window = {"timeframe": timeframe, "event_time_et": ts, "lookback_intervals": lookback_intervals}
+            evidence_window = {"timeframe": timeframe, "event_time": ts, "lookback_intervals": lookback_intervals}
             refs = [f"alpaca_bars:{symbol}:{ts}"]
             if liq:
                 refs.append(f"alpaca_liquidity:{symbol}:{ts}")
@@ -220,8 +220,8 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
             events.append({
                 "event_id": event_id,
                 "symbol": symbol,
-                "event_time_et": ts,
-                "effective_time_et": ts,
+                "event_time": ts,
+                "effective_time": ts,
                 "event_type": "equity_abnormal_activity_event",
                 "source_type": "alpaca_equity_market_data",
                 "title": f"{symbol} abnormal equity activity",

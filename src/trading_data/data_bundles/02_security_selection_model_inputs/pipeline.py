@@ -23,7 +23,7 @@ STOCK_ETF_EXPOSURE_FIELDS = [
     "exposure_tags",
     "source_etf_count",
     "source_snapshot_refs",
-    "available_time_et",
+    "available_time",
 ]
 
 
@@ -47,7 +47,7 @@ def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -
     """Build stock_etf_exposure as an internal Layer 02 pipeline step."""
 
     holding_paths = list(_iter_paths(_require_stock_etf_param(params, "holdings_csv_paths")))
-    available_time_et = str(_require_stock_etf_param(params, "available_time_et"))
+    available_time = str(_require_stock_etf_param(params, "available_time"))
     default_as_of_date = str(params.get("as_of_date") or "")
     config_path = str(params.get("config_path") or "") or None
     config = load_bundle_config(SPEC.bundle, config_path=config_path)
@@ -100,7 +100,7 @@ def _derive_stock_etf_exposure(params: Mapping[str, Any], *, output_dir: Path) -
             "exposure_tags": ";".join(sorted(set(item["tags"]))),
             "source_etf_count": str(len(set(item["etfs"]))),
             "source_snapshot_refs": ";".join(sorted(set(item["refs"]))),
-            "available_time_et": available_time_et,
+            "available_time": available_time,
         })
     if not rows:
         raise SecuritySelectionInputsError("zero stock_etf_exposure rows after cleaning")

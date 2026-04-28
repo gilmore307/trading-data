@@ -6,7 +6,7 @@ This bundle accepts a manager task key, loads bundle-local `config.json`, derive
 
 ## Required task params
 
-- `as_of_et` — America/New_York timestamp for the point-in-time input manifest.
+- `as_of` — America/New_York timestamp for the point-in-time input manifest.
 - `input_paths` — object mapping configured input roles to one path or a list of paths. `stock_etf_exposure` may be omitted when `stock_etf_exposure` params are provided for in-pipeline derivation.
 
 ## Configured inputs
@@ -18,7 +18,7 @@ This bundle accepts a manager task key, loads bundle-local `config.json`, derive
 
 ## Optional stock ETF exposure derivation
 
-Provide `params.stock_etf_exposure` with `holdings_csv_paths`, `available_time_et`, and optional `etf_scores` to derive `stock_etf_exposure.csv` inside this same pipeline run. The generated CSV is then injected into `input_paths.stock_etf_exposure` before the model-input manifest is saved.
+Provide `params.stock_etf_exposure` with `holdings_csv_paths`, `available_time`, and optional `etf_scores` to derive `stock_etf_exposure.csv` inside this same pipeline run. The generated CSV is then injected into `input_paths.stock_etf_exposure` before the model-input manifest is saved.
 
 ## Output
 

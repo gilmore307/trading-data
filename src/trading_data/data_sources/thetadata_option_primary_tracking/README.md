@@ -61,7 +61,7 @@ Fields include:
 - `right`
 - `strike`
 - `timeframe`
-- `timestamp_et`
+- `timestamp`
 - `open`
 - `high`
 - `low`

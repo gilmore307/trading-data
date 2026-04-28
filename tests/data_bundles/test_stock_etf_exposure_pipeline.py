@@ -24,11 +24,11 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                 "task_id": "02_security_selection_model_inputs_task_test",
                 "bundle": "02_security_selection_model_inputs",
                 "params": {
-                    "as_of_et": "2026-04-25T09:30:00-04:00",
+                    "as_of": "2026-04-25T09:30:00-04:00",
                     "input_paths": {"equity_bars": str(equity_bars)},
                     "stock_etf_exposure": {
                         "holdings_csv_paths": [str(holdings)],
-                        "available_time_et": "2026-04-25T09:30:00-04:00",
+                        "available_time": "2026-04-25T09:30:00-04:00",
                         "etf_scores": {
                             "SMH": {"sector_score": 0.9, "theme_score": 0.8, "exposure_tags": ["semiconductor", "AI"]},
                             "SOXX": {"sector_score": 0.7, "theme_score": 0.6, "exposure_tags": "semiconductor"},

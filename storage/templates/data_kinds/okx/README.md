@@ -13,7 +13,7 @@ Normalize OKX crypto rows to the same model-facing market-data shape used by Alp
 - **Status:** `implemented`.
 - **Persistence policy:** Persist cleaned final OHLCV candle rows as CSV only. Do not persist raw provider payloads by default once a pipeline exists.
 - **Earliest available range:** `unknown`; live preview confirmed current BTC-USDT candles.
-- **Default timestamp semantics:** Convert OKX millisecond candle `ts` to `timestamp_utc` and `timestamp_et`.
+- **Default timestamp semantics:** Convert OKX millisecond candle `ts` to `timestamp_utc` and `timestamp`.
 - **Natural grain:** One crypto candle per instrument/timeframe/timestamp.
 - **Request parameters:** `instId`, `timeframe`; optional `limit`.
 - **Pagination/range behavior:** Current implementation fetches bounded recent candles; broader historical range behavior must be verified before backfill claims.
@@ -36,7 +36,7 @@ Raw OKX `crypto_trade` source rows are live-confirmed but are **not** final save
 - **Status:** `derived-implemented`.
 - **Persistence policy:** Persist cleaned final interval rows as CSV only. Quote-derived fields may be blank/null by design.
 - **Earliest available range:** Trade-derived portions follow OKX trade availability; quote/order-book portions are available only from collected snapshots unless a historical order-book source is accepted.
-- **Default timestamp semantics:** `interval_start_et` in `America/New_York`; source trade timestamps are UTC milliseconds before normalization.
+- **Default timestamp semantics:** `interval_start` in `America/New_York`; source trade timestamps are UTC milliseconds before normalization.
 - **Natural grain:** One instrument/timeframe ET interval aggregate.
 - **Request parameters:** `instId`, `start`, `end`, `timeframe`; optional snapshot source/sampling cadence if quote/order-book features are included.
 - **Pagination/range behavior:** Trade-derived features can be paginated/segmented if historical endpoint behavior supports it; quote/order-book fields are nullable without sampled snapshots.

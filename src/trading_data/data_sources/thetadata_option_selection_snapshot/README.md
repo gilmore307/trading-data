@@ -11,7 +11,7 @@ Produce a point-in-time `option_chain_snapshot` final CSV artifact for a specifi
 Required:
 
 - `underlying` — equity underlying symbol, e.g. `AAPL`.
-- `snapshot_time_et` — explicit ISO datetime in `America/New_York`, e.g. `2026-04-24T16:00:00-04:00`.
+- `snapshot_time` — explicit ISO datetime in `America/New_York`, e.g. `2026-04-24T16:00:00-04:00`.
 
 Optional development/runtime params:
 
@@ -20,7 +20,7 @@ Optional development/runtime params:
 - `timeout_seconds` — request timeout. Defaults to `30`.
 - `registry_csv` — registry snapshot used to resolve stable field/data-kind ids. Defaults to `/root/projects/trading-main/registry/current.csv`.
 
-No implicit latest/current snapshot mode is supported. The caller must supply `snapshot_time_et`.
+No implicit latest/current snapshot mode is supported. The caller must supply `snapshot_time`.
 
 ## Source endpoints
 
@@ -30,7 +30,7 @@ The bundle uses ThetaData Terminal v3 snapshot endpoints:
 - `/v3/option/snapshot/greeks/implied_volatility`
 - `/v3/option/snapshot/greeks/first_order`
 
-The request passes the underlying, wildcard expiration, `date`, and ET `ms_of_day` derived from `snapshot_time_et`. Provider snapshot rows may carry per-contract timestamps that differ slightly from the requested context; the final artifact preserves those per-contract ET timestamps.
+The request passes the underlying, wildcard expiration, `date`, and ET `ms_of_day` derived from `snapshot_time`. Provider snapshot rows may carry per-contract timestamps that differ slightly from the requested context; the final artifact preserves those per-contract ET timestamps.
 
 ## Development outputs
 
@@ -53,7 +53,7 @@ The output follows `storage/templates/data_kinds/thetadata/option_chain_snapshot
 Top-level fields include:
 
 - `underlying`
-- `snapshot_time_et`
+- `snapshot_time`
 - `contract_count`
 - `contracts`
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Default input contract for 02_security_selection_model_inputs. Task keys provide input_paths and as_of_et; optional params.stock_etf_exposure derives stock_etf_exposure internally from ETF holdings snapshots.",
+  "description": "Default input contract for 02_security_selection_model_inputs. Task keys provide input_paths and as_of; optional params.stock_etf_exposure derives stock_etf_exposure internally from ETF holdings snapshots.",
   "model_id": "security_selection_model",
   "inputs": [
     {

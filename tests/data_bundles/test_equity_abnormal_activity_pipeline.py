@@ -11,7 +11,7 @@ def _bar(symbol: str, idx: int, close: float, volume: int, open_: float | None =
     return {
         "symbol": symbol,
         "timeframe": "1Min",
-        "timestamp_et": f"2026-04-24T09:{30 + idx:02d}:00-04:00",
+        "timestamp": f"2026-04-24T09:{30 + idx:02d}:00-04:00",
         "open": str(open_ if open_ is not None else close),
         "high": str(close),
         "low": str(close),

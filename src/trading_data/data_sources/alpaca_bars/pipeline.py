@@ -10,7 +10,7 @@ from trading_data.source_availability.http import HttpClient, HttpResult
 from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
-EQUITY_BAR_FIELDS=['symbol','timeframe','timestamp_et','open','high','low','close','volume','vwap','trade_count']
+EQUITY_BAR_FIELDS=['symbol','timeframe','timestamp','open','high','low','close','volume','vwap','trade_count']
 @dataclass(frozen=True)
 class BundleContext: task_key:dict[str,Any]; run_dir:Path; cleaned_dir:Path; saved_dir:Path; receipt_path:Path; metadata:dict[str,Any]=field(default_factory=dict)
 @dataclass(frozen=True)
@@ -60,7 +60,7 @@ def fetch(context,*,client=None):
 def clean(context,fetched):
     timeframe=str((context.task_key.get('params') or {}).get('timeframe','1Day')); rows=[]
     for b in fetched.bars:
-        rows.append({'symbol':fetched.symbol,'timeframe':timeframe,'timestamp_et':_et_iso(b['t']),'open':b.get('o'),'high':b.get('h'),'low':b.get('l'),'close':b.get('c'),'volume':b.get('v'),'vwap':b.get('vw'),'trade_count':b.get('n')})
+        rows.append({'symbol':fetched.symbol,'timeframe':timeframe,'timestamp':_et_iso(b['t']),'open':b.get('o'),'high':b.get('h'),'low':b.get('l'),'close':b.get('c'),'volume':b.get('v'),'vwap':b.get('vw'),'trade_count':b.get('n')})
     context.cleaned_dir.mkdir(parents=True,exist_ok=True); path=context.cleaned_dir/'equity_bar.jsonl'
     with path.open('w') as h:
         for r in rows: h.write(json.dumps(r,sort_keys=True)+'\n')

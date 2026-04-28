@@ -54,7 +54,7 @@ class RegistryRef:
 @dataclass(frozen=True)
 class FetchedSnapshot:
     underlying: str
-    snapshot_time_et: datetime
+    snapshot_time: datetime
     quote_rows: list[dict[str, Any]]
     iv_rows: list[dict[str, Any]]
     greeks_rows: list[dict[str, Any]]
@@ -102,7 +102,7 @@ OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
 OPTION_RIGHT = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
-SNAPSHOT_TIME_ET = field("fld_OPT005")
+SNAPSHOT_TIME = field("fld_OPT005")
 OPTION_CONTRACT_COUNT = field("fld_OPT006")
 OPTION_CONTRACTS = field("fld_OPT007")
 OPTION_QUOTE_CONTEXT = field("fld_OPT008")
@@ -110,7 +110,7 @@ IV_CONTEXT = field("fld_OPT009")
 GREEKS_CONTEXT = field("fld_OPT010")
 OPTION_UNDERLYING_CONTEXT = field("fld_OPT011")
 DERIVED_CONTEXT = field("fld_OPT012")
-DATA_TIMESTAMP_ET = field("fld_OPT013")
+DATA_TIMESTAMP = field("fld_OPT013")
 QUOTE_BID = field("fld_OPT032")
 QUOTE_ASK = field("fld_OPT033")
 QUOTE_MID = field("fld_OPT034")
@@ -126,7 +126,7 @@ GREEK_RHO = field("fld_OPT054")
 GREEK_EPSILON = field("fld_OPT055")
 GREEK_LAMBDA = field("fld_OPT056")
 UNDERLYING_PRICE = field("fld_OPT057")
-UNDERLYING_TIMESTAMP_ET = field("fld_OPT058")
+UNDERLYING_TIMESTAMP = field("fld_OPT058")
 OPTION_DAYS_TO_EXPIRATION = field("fld_OPT059")
 QUOTE_BID_EXCHANGE = field("fld_OPT060")
 QUOTE_ASK_EXCHANGE = field("fld_OPT061")
@@ -147,20 +147,20 @@ def _required(mapping: Mapping[str, Any], key: str) -> Any:
     return value
 
 
-def _parse_snapshot_time_et(value: Any) -> datetime:
+def _parse_snapshot_time(value: Any) -> datetime:
     text = str(value)
     try:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError as exc:
         raise ThetaDataOptionSelectionSnapshotError(
-            f"{BUNDLE}.params.snapshot_time_et must be an ISO datetime"
+            f"{BUNDLE}.params.snapshot_time must be an ISO datetime"
         ) from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=ET)
     return parsed.astimezone(ET)
 
 
-def _parse_thetadata_timestamp_et(value: Any, *, naive_tz: timezone | ZoneInfo = ET) -> str | None:
+def _parse_thetadata_timestamp(value: Any, *, naive_tz: timezone | ZoneInfo = ET) -> str | None:
     if value in (None, ""):
         return None
     try:
@@ -238,7 +238,7 @@ def _fetch_endpoint(
 def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[StepResult, FetchedSnapshot]:
     params = dict(context.task_key.get("params") or {})
     underlying = str(_required(params, "underlying")).upper()
-    snapshot_time = _parse_snapshot_time_et(_required(params, "snapshot_time_et"))
+    snapshot_time = _parse_snapshot_time(_required(params, "snapshot_time"))
     base_url = str(params.get("thetadata_base_url") or "http://127.0.0.1:25503").rstrip("/")
     timeout = int(params.get("timeout_seconds", 30))
     client = client or HttpClient(timeout_seconds=timeout)
@@ -282,7 +282,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
             {
                 "bundle": BUNDLE,
                 "underlying": underlying,
-                "snapshot_time_et": snapshot_time.isoformat(),
+                "snapshot_time": snapshot_time.isoformat(),
                 "params": sanitize_value(request_params),
                 "requests": evidence,
                 "secret_alias": secret_summary,
@@ -303,10 +303,10 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
             "iv_snapshot_rows_transient": len(iv_rows),
             "greeks_snapshot_rows_transient": len(greeks_rows),
         },
-        details={"underlying": underlying, "snapshot_time_et": snapshot_time.isoformat()},
+        details={"underlying": underlying, "snapshot_time": snapshot_time.isoformat()},
     ), FetchedSnapshot(
         underlying=underlying,
-        snapshot_time_et=snapshot_time,
+        snapshot_time=snapshot_time,
         quote_rows=quote_rows,
         iv_rows=iv_rows,
         greeks_rows=greeks_rows,
@@ -397,7 +397,7 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
     contracts: list[dict[str, Any]] = []
     warnings: list[str] = []
     for symbol, expiration, strike, right in keys:
-        days_to_expiration = _days_to_expiration(expiration, fetched.snapshot_time_et.date())
+        days_to_expiration = _days_to_expiration(expiration, fetched.snapshot_time.date())
         if days_to_expiration is not None and days_to_expiration < 0:
             continue
         quote = quote_index.get((symbol, expiration, strike, right), {})
@@ -417,7 +417,7 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
             f(OPTION_STRIKE): strike,
             f(OPTION_QUOTE_CONTEXT): _compact(
                 {
-                    f(DATA_TIMESTAMP_ET): _parse_thetadata_timestamp_et(quote.get("timestamp")),
+                    f(DATA_TIMESTAMP): _parse_thetadata_timestamp(quote.get("timestamp")),
                     f(QUOTE_BID): bid,
                     f(QUOTE_ASK): ask,
                     f(QUOTE_MID): mid,
@@ -433,14 +433,14 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
             ),
             f(IV_CONTEXT): _compact(
                 {
-                    f(DATA_TIMESTAMP_ET): _parse_thetadata_timestamp_et(iv.get("timestamp")),
+                    f(DATA_TIMESTAMP): _parse_thetadata_timestamp(iv.get("timestamp")),
                     f(IMPLIED_VOL): _float(iv.get("implied_vol")),
                     f(IV_ERROR): _float(iv.get("iv_error")),
                 }
             ),
             f(GREEKS_CONTEXT): _compact(
                 {
-                    f(DATA_TIMESTAMP_ET): _parse_thetadata_timestamp_et(greeks.get("timestamp")),
+                    f(DATA_TIMESTAMP): _parse_thetadata_timestamp(greeks.get("timestamp")),
                     f(GREEK_DELTA): _float(greeks.get("delta")),
                     f(GREEK_THETA): _float(greeks.get("theta")),
                     f(GREEK_VEGA): _float(greeks.get("vega")),
@@ -453,7 +453,7 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
             f(OPTION_UNDERLYING_CONTEXT): _compact(
                 {
                     f(UNDERLYING_PRICE): _float(source_for_underlying.get("underlying_price")),
-                    f(UNDERLYING_TIMESTAMP_ET): _parse_thetadata_timestamp_et(
+                    f(UNDERLYING_TIMESTAMP): _parse_thetadata_timestamp(
                         source_for_underlying.get("underlying_timestamp"), naive_tz=UTC
                     ),
                 }
@@ -468,7 +468,7 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
 
     snapshot = {
         f(OPTION_UNDERLYING): fetched.underlying,
-        f(SNAPSHOT_TIME_ET): fetched.snapshot_time_et.isoformat(),
+        f(SNAPSHOT_TIME): fetched.snapshot_time.isoformat(),
         f(OPTION_CONTRACT_COUNT): len(contracts),
         f(OPTION_CONTRACTS): contracts,
     }
@@ -485,7 +485,7 @@ def save(context: BundleContext, clean_result: StepResult, snapshot: dict[str, A
     names = RegistryNames(context.registry_csv)
     fields = [
         names.payload(OPTION_UNDERLYING),
-        names.payload(SNAPSHOT_TIME_ET),
+        names.payload(SNAPSHOT_TIME),
         names.payload(OPTION_CONTRACT_COUNT),
         names.payload(OPTION_CONTRACTS),
     ]

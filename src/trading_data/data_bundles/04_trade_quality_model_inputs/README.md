@@ -6,7 +6,7 @@ This bundle accepts a manager task key, loads bundle-local `config.json`, and wr
 
 ## Required task params
 
-- `as_of_et` — America/New_York timestamp for the point-in-time input manifest.
+- `as_of` — America/New_York timestamp for the point-in-time input manifest.
 - `input_paths` — object mapping configured input roles to one path or a list of paths.
 
 ## Configured inputs

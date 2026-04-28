@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Default input contract for 04_trade_quality_model_inputs. Task keys provide input_paths and as_of_et.",
+  "description": "Default input contract for 04_trade_quality_model_inputs. Task keys provide input_paths and as_of.",
   "model_id": "trade_quality_model",
   "inputs": [
     {

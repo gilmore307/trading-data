@@ -27,7 +27,7 @@ class ModelInputBundleTests(unittest.TestCase):
                 task_key = {
                     "task_id": f"{bundle}_task_test",
                     "bundle": bundle,
-                    "params": {"as_of_et": "2026-04-28T09:30:00-04:00", "input_paths": input_paths},
+                    "params": {"as_of": "2026-04-28T09:30:00-04:00", "input_paths": input_paths},
                     "output_root": str(Path(tmp) / "task"),
                 }
                 result = module.run(task_key, run_id="run")
@@ -38,7 +38,7 @@ class ModelInputBundleTests(unittest.TestCase):
                     rows = list(csv.DictReader(handle))
                 self.assertTrue(rows)
                 self.assertEqual({row["bundle"] for row in rows}, {bundle})
-                self.assertEqual({row["as_of_et"] for row in rows}, {"2026-04-28T09:30:00-04:00"})
+                self.assertEqual({row["as_of"] for row in rows}, {"2026-04-28T09:30:00-04:00"})
                 receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
                 self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 
@@ -48,7 +48,7 @@ class ModelInputBundleTests(unittest.TestCase):
             task_key = {
                 "task_id": "01_market_regime_model_inputs_task_bad",
                 "bundle": "01_market_regime_model_inputs",
-                "params": {"as_of_et": "2026-04-28T09:30:00-04:00", "input_paths": {"broad_market_bars": "spy.csv"}},
+                "params": {"as_of": "2026-04-28T09:30:00-04:00", "input_paths": {"broad_market_bars": "spy.csv"}},
                 "output_root": str(Path(tmp) / "task"),
             }
             result = module.run(task_key, run_id="run")

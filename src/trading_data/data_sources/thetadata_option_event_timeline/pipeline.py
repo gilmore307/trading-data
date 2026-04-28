@@ -118,7 +118,7 @@ OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
 OPTION_RIGHT = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
-DATA_TIMESTAMP_ET = field("fld_OPT013")
+DATA_TIMESTAMP = field("fld_OPT013")
 DATA_TIMEFRAME = field("fld_OPT014")
 QUOTE_BID = field("fld_OPT032")
 QUOTE_ASK = field("fld_OPT033")
@@ -139,8 +139,8 @@ OPTION_EVENT_DETAIL_CONTRACT = field("fld_OPD002")
 OPTION_CONTRACT_SYMBOL = field("fld_OPD003")
 OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS = field("fld_OPD004")
 OPTION_EVENT_DETAIL_EVIDENCE_WINDOW = field("fld_ABN002")
-WINDOW_START_ET = field("fld_OPD006")
-WINDOW_END_ET = field("fld_OPD007")
+WINDOW_START = field("fld_OPD006")
+WINDOW_END = field("fld_OPD007")
 OPTION_EVENT_DETAIL_TRIGGERING_TRADE = field("fld_OPD008")
 TRADE_SIDE_TYPE = field("fld_OPD009")
 OPTION_EVENT_DETAIL_QUOTE_CONTEXT = field("fld_OPD010")
@@ -149,7 +149,7 @@ IV_PERCENTILE_BY_EXPIRATION = field("fld_OPD012")
 OPTION_EVENT_DETAIL_SOURCE_REFS = field("fld_ABN008")
 OPTION_EVENT_DETAIL_PROVIDER = field("fld_OPD014")
 OPTION_EVENT_DETAIL_RAW_PERSISTENCE = field("fld_OPD015")
-TRADE_TIMESTAMP_ET = field("fld_OPD016")
+TRADE_TIMESTAMP = field("fld_OPD016")
 TRADE_SIZE = field("fld_OPD018")
 OPTION_EVENT_TRIGGER_TRADE_AT_ASK = field("fld_OPD019")
 OPTION_EVENT_TRIGGER_OPENING_ACTIVITY = field("fld_OPD020")
@@ -171,7 +171,7 @@ IV_ZSCORE_BY_EXPIRATION = field("fld_OPD043")
 OPTION_EVENT_DETAIL_STANDARD_CONTEXT = field("fld_OPD044")
 OPTION_EVENT_DETAIL_STANDARD_SOURCE = field("fld_OPD045")
 OPTION_EVENT_DETAIL_STANDARD_ID = field("fld_OPD046")
-GENERATED_AT_ET = field("fld_EVT037")
+GENERATED_AT = field("fld_EVT037")
 OPTION_EVENT_DETAIL_CURRENT_STANDARD = field("fld_OPD048")
 OPTION_EVENT_STANDARD_MAX_PRICE_VS_ASK = field("fld_OPD049")
 OPTION_EVENT_STANDARD_MIN_ASK_TOUCH_RATIO = field("fld_OPD050")
@@ -245,7 +245,7 @@ def _thetadata_strike(value: float) -> str:
     return f"{value:.3f}"
 
 
-def _parse_thetadata_timestamp_et(value: Any) -> datetime | None:
+def _parse_thetadata_timestamp(value: Any) -> datetime | None:
     if value in (None, ""):
         return None
     try:
@@ -295,8 +295,8 @@ def _current_standard(params: Mapping[str, Any]) -> tuple[dict[str, Any], dict[s
     context = dict(standard.get("standard_context") if isinstance(standard.get("standard_context"), Mapping) else {})
     context.setdefault("standard_source", "task_key_current_standard")
     context.setdefault("standard_id", _new_id("opt_evt_std"))
-    context.setdefault("generated_at_et", context.get("standard_generated_at_et") or _now_et())
-    context.pop("standard_generated_at_et", None)
+    context.setdefault("generated_at", context.get("standard_generated_at") or _now_et())
+    context.pop("standard_generated_at", None)
     return {key: dict(value) for key, value in indicators.items()}, context
 
 
@@ -578,8 +578,8 @@ def _build_event(
         ),
         max(window_rows, key=lambda row: _int(row.get("size"))),
     )
-    trade_ts = _parse_thetadata_timestamp_et(candidate.get("trade_timestamp"))
-    quote_ts = _parse_thetadata_timestamp_et(candidate.get("quote_timestamp"))
+    trade_ts = _parse_thetadata_timestamp(candidate.get("trade_timestamp"))
+    quote_ts = _parse_thetadata_timestamp(candidate.get("quote_timestamp"))
     quote = _quote_stats(candidate)
     price = _float(candidate.get("price"))
     size = _int(candidate.get("size"))
@@ -634,13 +634,13 @@ def _build_event(
 
     event_id = _new_id("opt_evt")
     created_at = _iso(trade_ts) or window_start.isoformat()
-    updated_at = fetched.standard_context.get("generated_at_et") or created_at
+    updated_at = fetched.standard_context.get("generated_at") or created_at
     detail_filename = f"{event_id}.csv"
     window_end = window_start + timedelta(seconds=SUPPORTED_TIMEFRAMES[fetched.timeframe])
     standard_context = {
         f(OPTION_EVENT_DETAIL_STANDARD_SOURCE): fetched.standard_context.get("standard_source"),
         f(OPTION_EVENT_DETAIL_STANDARD_ID): fetched.standard_context.get("standard_id"),
-        f(GENERATED_AT_ET): fetched.standard_context.get("generated_at_et"),
+        f(GENERATED_AT): fetched.standard_context.get("generated_at"),
     }
     detail: dict[str, Any] = {
         f(OPTION_EVENT_DETAIL_EVENT_ID): event_id,
@@ -657,17 +657,17 @@ def _build_event(
         f(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS): triggered,
         f(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW): {
             f(DATA_TIMEFRAME): fetched.timeframe,
-            f(WINDOW_START_ET): window_start.isoformat(),
-            f(WINDOW_END_ET): window_end.isoformat(),
+            f(WINDOW_START): window_start.isoformat(),
+            f(WINDOW_END): window_end.isoformat(),
         },
         f(OPTION_EVENT_DETAIL_TRIGGERING_TRADE): {
             f(TRADE_SIDE_TYPE): "ask_side" if trade_at_ask_key in triggered else None,
-            f(TRADE_TIMESTAMP_ET): created_at,
+            f(TRADE_TIMESTAMP): created_at,
             f(TRADE_PRICE): price,
             f(TRADE_SIZE): size,
         },
         f(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): {
-            f(DATA_TIMESTAMP_ET): _iso(quote_ts),
+            f(DATA_TIMESTAMP): _iso(quote_ts),
             f(QUOTE_BID): quote["bid"],
             f(QUOTE_ASK): quote["ask"],
             f(QUOTE_MID): quote["mid"],
@@ -700,7 +700,7 @@ def clean(context: BundleContext, fetched: FetchedTradeQuote) -> StepResult:
     names = RegistryNames(context.registry_csv)
     timestamped_rows: list[tuple[datetime, dict[str, Any]]] = []
     for row in fetched.rows:
-        timestamp = _parse_thetadata_timestamp_et(row.get("trade_timestamp"))
+        timestamp = _parse_thetadata_timestamp(row.get("trade_timestamp"))
         if timestamp is not None:
             timestamped_rows.append((timestamp, row))
     timestamped_rows.sort(key=lambda item: item[0])

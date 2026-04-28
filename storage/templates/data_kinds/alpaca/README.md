@@ -7,7 +7,7 @@
 - **Status:** `implemented`.
 - **Persistence policy:** Persist cleaned final `equity_bar` outputs as SQL-shaped CSV rows. Do not persist full raw provider payloads by default.
 - **Earliest available range:** `unknown`; live implementation confirmed AAPL daily bars for 2024-01-02 through 2024-01-03. Full historical entitlement/range should be tested by feed/timeframe later.
-- **Default timestamp semantics:** `timestamp_et` normalized to `America/New_York`.
+- **Default timestamp semantics:** `timestamp` normalized to `America/New_York`.
 - **Natural grain:** One OHLCV bar per symbol/timeframe/timestamp.
 - **Request parameters:** `symbol`, `timeframe`, `start`, `end`; optional `limit`, `max_pages`, `adjustment`, `feed`.
 - **Pagination/range behavior:** Alpaca `next_page_token`; implementation uses bounded `max_pages`.
@@ -31,7 +31,7 @@ Raw `equity_trade` and `equity_quote` source rows are live-confirmed but are **n
 - **Status:** `derived-implemented`.
 - **Persistence policy:** Persisted default output for trade/quote liquidity information. Raw trade and quote rows are discarded by default after aggregation.
 - **Earliest available range:** Same as Alpaca trades/quotes; implementation live-confirmed AAPL 2024-01-02 09:30 ET.
-- **Default timestamp semantics:** `interval_start_et` in `America/New_York`.
+- **Default timestamp semantics:** `interval_start` in `America/New_York`.
 - **Natural grain:** One symbol/timeframe ET interval aggregate.
 - **Request parameters:** Parent task uses `symbol`, `start`, `end`, `timeframe`; optional `limit`, `max_pages`, `feed`.
 - **Pagination/range behavior:** Aggregates paginated transient trades and quotes into one ET bucketed output.

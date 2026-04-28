@@ -26,7 +26,7 @@ BUNDLE = "trading_economics_calendar_web"
 SOURCE_URL = "https://tradingeconomics.com/united-states/calendar"
 DEFAULT_COOKIE_JAR = Path("/root/secrets/tradingeconomics-cookies.txt")
 FIELDS = [
-    "event_time_et",
+    "event_time",
     "country",
     "event",
     "source_event_type",
@@ -183,8 +183,8 @@ def _table_rows(html_text: str) -> list[list[str]]:
 
 def _header_index(header: list[str]) -> dict[str, int]:
     aliases = {
-        "date": "event_time_et",
-        "time": "event_time_et",
+        "date": "event_time",
+        "time": "event_time",
         "country": "country",
         "event": "event",
         "calendar": "event",
@@ -227,7 +227,7 @@ def parse_calendar_rows(html_text: str, *, source_url: str, default_country: str
         if not event or event.lower() in {"event", "calendar"}:
             continue
         parsed.append({
-            "event_time_et": at("event_time_et") or row[0],
+            "event_time": at("event_time") or row[0],
             "country": at("country") or default_country,
             "event": event,
             "source_event_type": at("source_event_type"),

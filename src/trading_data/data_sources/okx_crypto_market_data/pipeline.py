@@ -19,9 +19,9 @@ DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
 OKX_BAR_MAP = {"1Min": "1m", "5Min": "5m", "15Min": "15m", "1Hour": "1H", "1Day": "1D"}
 
-CRYPTO_BAR_FIELDS = ["symbol", "timeframe", "timestamp_et", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
-CRYPTO_TRADE_FIELDS = ["data_kind", "source", "symbol", "timestamp_utc", "timestamp_et", "trade_id", "side", "price", "size", "notional"]
-CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
+CRYPTO_BAR_FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
+CRYPTO_TRADE_FIELDS = ["data_kind", "source", "symbol", "timestamp_utc", "timestamp", "trade_id", "side", "price", "size", "notional"]
+CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
 
 
 @dataclass(frozen=True)
@@ -149,11 +149,11 @@ def normalize_bars(symbol: str, candles: list[list[Any]], timeframe: str) -> lis
         ts = _ms_to_utc(candle[0])
         rows.append({
             "symbol": symbol, "timeframe": timeframe,
-            "timestamp_et": _et_iso(ts),
+            "timestamp": _et_iso(ts),
             "open": float(candle[1]), "high": float(candle[2]), "low": float(candle[3]), "close": float(candle[4]),
             "volume": float(candle[5]), "vwap": None, "trade_count": None,
         })
-    return sorted(rows, key=lambda row: row["timestamp_et"])
+    return sorted(rows, key=lambda row: row["timestamp"])
 
 
 def normalize_trades(symbol: str, trades: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -164,7 +164,7 @@ def normalize_trades(symbol: str, trades: list[dict[str, Any]]) -> list[dict[str
         size = float(trade["sz"])
         rows.append({
             "data_kind": "crypto_trade", "source": "okx", "symbol": symbol,
-            "timestamp_utc": _utc_iso(ts), "timestamp_et": _et_iso(ts),
+            "timestamp_utc": _utc_iso(ts), "timestamp": _et_iso(ts),
             "trade_id": str(trade.get("tradeId") or ""), "side": str(trade.get("side") or ""),
             "price": price, "size": size, "notional": round(price * size, 12),
         })
@@ -180,7 +180,7 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], timefram
         size = float(trade["size"])
         row = buckets.setdefault(key, {
             "symbol": symbol, "timeframe": timeframe,
-            "interval_start_et": key, "trade_count": 0, "volume": 0.0, "trade_notional": 0.0,
+            "interval_start": key, "trade_count": 0, "volume": 0.0, "trade_notional": 0.0,
             "open": price, "high": price, "low": price, "close": price,
             "quote_count": None, "avg_bid": None, "avg_ask": None, "avg_mid": None, "avg_spread": None,
             "last_bid": None, "last_ask": None, "last_mid": None, "vwap_minus_avg_mid": None,

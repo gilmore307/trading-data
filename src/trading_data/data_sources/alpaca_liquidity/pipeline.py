@@ -17,7 +17,7 @@ from trading_data.source_availability.secrets import load_secret_alias, public_s
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
-EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start_et", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
+EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
 DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
 
@@ -182,7 +182,7 @@ def aggregate_trades(symbol: str, trades: list[dict[str, Any]], timeframe: str) 
         key = bucket.isoformat()
         price = float(trade.get("p") or 0)
         size = int(trade.get("s") or 0)
-        row = buckets.setdefault(key, {"data_kind": "_transient_trade_interval", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "trade_count": 0, "volume": 0, "trade_notional": 0.0, "open": price, "high": price, "low": price, "close": price, "first_trade_ts_et": _et_iso(ts), "last_trade_ts_et": _et_iso(ts)})
+        row = buckets.setdefault(key, {"data_kind": "_transient_trade_interval", "symbol": symbol, "timeframe": timeframe, "interval_start": key, "trade_count": 0, "volume": 0, "trade_notional": 0.0, "open": price, "high": price, "low": price, "close": price, "first_trade_ts_et": _et_iso(ts), "last_trade_ts_et": _et_iso(ts)})
         row["trade_count"] += 1
         row["volume"] += size
         row["trade_notional"] += price * size
@@ -208,7 +208,7 @@ def aggregate_quotes(symbol: str, quotes: list[dict[str, Any]], timeframe: str) 
         ask_size = int(quote.get("as") or 0)
         spread = ask - bid if bid and ask else None
         mid = (ask + bid) / 2 if bid and ask else None
-        row = buckets.setdefault(key, {"data_kind": "_transient_quote_interval", "symbol": symbol, "timeframe": timeframe, "interval_start_et": key, "quote_count": 0, "sum_bid": 0.0, "sum_ask": 0.0, "sum_mid": 0.0, "sum_spread": 0.0, "spread_count": 0, "min_spread": None, "max_spread": None, "sum_bid_size": 0, "sum_ask_size": 0, "first_quote_ts_et": _et_iso(ts), "last_quote_ts_et": _et_iso(ts), "last_bid": bid, "last_ask": ask, "last_mid": mid})
+        row = buckets.setdefault(key, {"data_kind": "_transient_quote_interval", "symbol": symbol, "timeframe": timeframe, "interval_start": key, "quote_count": 0, "sum_bid": 0.0, "sum_ask": 0.0, "sum_mid": 0.0, "sum_spread": 0.0, "spread_count": 0, "min_spread": None, "max_spread": None, "sum_bid_size": 0, "sum_ask_size": 0, "first_quote_ts_et": _et_iso(ts), "last_quote_ts_et": _et_iso(ts), "last_bid": bid, "last_ask": ask, "last_mid": mid})
         row["quote_count"] += 1
         row["sum_bid"] += bid
         row["sum_ask"] += ask
@@ -240,8 +240,8 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
     # For this first implementation, liquidity is interval-level trade/quote
     # aggregation, not tick-level previous-quote matching. Tick-level matching can
     # be added later without changing the raw non-persistence rule.
-    trade_by_bucket = {row["interval_start_et"]: row for row in aggregate_trades(symbol, trades, timeframe)}
-    quote_by_bucket = {row["interval_start_et"]: row for row in aggregate_quotes(symbol, quotes, timeframe)}
+    trade_by_bucket = {row["interval_start"]: row for row in aggregate_trades(symbol, trades, timeframe)}
+    quote_by_bucket = {row["interval_start"]: row for row in aggregate_quotes(symbol, quotes, timeframe)}
     rows = []
     for key in sorted(set(trade_by_bucket) | set(quote_by_bucket)):
         t = trade_by_bucket.get(key, {})
@@ -251,7 +251,7 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
         rows.append({
             "symbol": symbol,
             "timeframe": timeframe,
-            "interval_start_et": key,
+            "interval_start": key,
             "trade_count": t.get("trade_count", 0),
             "quote_count": q.get("quote_count", 0),
             "volume": t.get("volume", 0),

@@ -106,7 +106,7 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             self.assertEqual(rows[0]["right"], "CALL")
             self.assertEqual(rows[0]["strike"], "270.0")
             self.assertEqual(rows[0]["timeframe"], "1Min")
-            self.assertEqual(rows[0]["timestamp_et"], "2026-04-24T09:30:00-04:00")
+            self.assertEqual(rows[0]["timestamp"], "2026-04-24T09:30:00-04:00")
             self.assertEqual(rows[0]["open"], "10.0")
             self.assertEqual(rows[0]["high"], "10.0")
             self.assertEqual(rows[0]["low"], "8.9")
@@ -114,7 +114,7 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             self.assertEqual(rows[0]["volume"], "3")
             self.assertEqual(rows[0]["trade_count"], "3")
             self.assertEqual(rows[0]["vwap"], "9.3333333333")
-            self.assertEqual(rows[1]["timestamp_et"], "2026-04-24T09:31:00-04:00")
+            self.assertEqual(rows[1]["timestamp"], "2026-04-24T09:31:00-04:00")
 
             cleaned_jsonl = output_root / "runs" / "thetadata_option_primary_tracking_run_test" / "cleaned" / "option_bar.jsonl"
             self.assertTrue(cleaned_jsonl.exists())

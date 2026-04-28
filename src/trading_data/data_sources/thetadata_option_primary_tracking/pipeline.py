@@ -114,7 +114,7 @@ OPTION_UNDERLYING = field("fld_OPT001")
 OPTION_EXPIRATION = field("fld_OPT002")
 OPTION_RIGHT = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
-DATA_TIMESTAMP_ET = field("fld_OPT013")
+DATA_TIMESTAMP = field("fld_OPT013")
 DATA_TIMEFRAME = field("fld_OPT014")
 OPEN_PRICE = field("fld_OPT015")
 HIGH_PRICE = field("fld_OPT016")
@@ -132,7 +132,7 @@ CSV_FIELD_REFS = [
     OPTION_RIGHT,
     OPTION_STRIKE,
     DATA_TIMEFRAME,
-    DATA_TIMESTAMP_ET,
+    DATA_TIMESTAMP,
     OPEN_PRICE,
     HIGH_PRICE,
     LOW_PRICE,
@@ -180,7 +180,7 @@ def _thetadata_strike(value: float) -> str:
     return f"{value:.3f}"
 
 
-def _parse_thetadata_timestamp_et(value: Any) -> datetime | None:
+def _parse_thetadata_timestamp(value: Any) -> datetime | None:
     if value in (None, ""):
         return None
     try:
@@ -380,7 +380,7 @@ def _aggregate_rows(names: RegistryNames, fetched: FetchedOhlc) -> tuple[list[di
     for source_row in sorted_rows:
         if not _active_ohlc_row(source_row):
             continue
-        timestamp = _parse_thetadata_timestamp_et(source_row.get("timestamp"))
+        timestamp = _parse_thetadata_timestamp(source_row.get("timestamp"))
         if timestamp is None:
             continue
         active_count += 1
@@ -401,7 +401,7 @@ def _aggregate_rows(names: RegistryNames, fetched: FetchedOhlc) -> tuple[list[di
                 f(OPTION_RIGHT): fetched.right,
                 f(OPTION_STRIKE): fetched.strike,
                 f(DATA_TIMEFRAME): fetched.timeframe,
-                f(DATA_TIMESTAMP_ET): bucket_timestamp,
+                f(DATA_TIMESTAMP): bucket_timestamp,
                 f(OPEN_PRICE): open_price,
                 f(HIGH_PRICE): high_price,
                 f(LOW_PRICE): low_price,

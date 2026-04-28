@@ -23,7 +23,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 self.assertEqual(r.status,'succeeded')
                 with (Path(tk['output_root'])/'runs/alpaca_bars_run_test/saved/equity_bar.csv').open(newline='') as handle:
                     row=next(csv.DictReader(handle))
-                self.assertEqual(row['timestamp_et'],'2024-01-02T00:00:00-05:00')
+                self.assertEqual(row['timestamp'],'2024-01-02T00:00:00-05:00')
                 self.assertFalse((Path(tk['output_root'])/'runs/alpaca_bars_run_test/saved/equity_bar.jsonl').exists())
         finally: p.load_secret_alias=old
     def test_news_pipeline_et_timestamps(self):

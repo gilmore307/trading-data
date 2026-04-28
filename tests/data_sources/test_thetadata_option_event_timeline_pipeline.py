@@ -71,7 +71,7 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                         "standard_context": {
                             "standard_source": "task_key_current_standard",
                             "standard_id": "opt_evt_std_TEST1234",
-                            "generated_at_et": "2026-04-24T09:30:02.500000-04:00",
+                            "generated_at": "2026-04-24T09:30:02.500000-04:00",
                         },
                         "trade_at_ask": {
                             "max_price_vs_ask": 0.01,

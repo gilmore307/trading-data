@@ -62,7 +62,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             with saved.open(newline="") as handle:
                 row = next(csv.DictReader(handle))
             self.assertEqual(row["article_id"], "20260427123000-1")
-            self.assertEqual(row["seen_at_utc"], "2026-04-27T12:30:00Z")
+            self.assertEqual(row["seen_at"], "2026-04-27T08:30:00-04:00")
             self.assertEqual(row["tone"], "-1.2")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["row_counts"]["gdelt_article"], 1)

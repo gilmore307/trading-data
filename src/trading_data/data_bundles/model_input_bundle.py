@@ -20,7 +20,7 @@ from trading_data.source_availability.sanitize import sanitize_value
 FIELDS = [
     "bundle",
     "model_id",
-    "as_of_et",
+    "as_of",
     "input_role",
     "data_kind",
     "path",
@@ -112,9 +112,9 @@ def fetch(spec: BundleSpec, context: BundleContext) -> tuple[StepResult, SourceP
 
 def clean(spec: BundleSpec, context: BundleContext, payload: SourcePayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
-    as_of_et = str(params.get("as_of_et") or params.get("available_time_et") or "")
-    if not as_of_et:
-        raise ModelInputBundleError("params.as_of_et is required for point-in-time model-input bundles")
+    as_of = str(params.get("as_of") or params.get("as_of_et") or params.get("available_time") or "")
+    if not as_of:
+        raise ModelInputBundleError("params.as_of is required for point-in-time model-input bundles")
     configured_inputs = payload.config.get("inputs") or []
     rows: list[dict[str, str]] = []
     if not isinstance(configured_inputs, list):
@@ -130,9 +130,9 @@ def clean(spec: BundleSpec, context: BundleContext, payload: SourcePayload) -> S
         if not paths and item.get("required", True):
             raise ModelInputBundleError(f"missing required params.input_paths.{role}")
         if not paths:
-            rows.append(_row(spec, as_of_et, role, data_kind, "", item))
+            rows.append(_row(spec, as_of, role, data_kind, "", item))
         for path in paths:
-            rows.append(_row(spec, as_of_et, role, data_kind, path, item))
+            rows.append(_row(spec, as_of, role, data_kind, path, item))
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     output = context.cleaned_dir / f"{spec.output_name}.jsonl"
     with output.open("w", encoding="utf-8") as handle:
@@ -143,11 +143,11 @@ def clean(spec: BundleSpec, context: BundleContext, payload: SourcePayload) -> S
     return StepResult("succeeded", [str(output), str(schema)], {spec.output_name: len(rows)}, details={"columns": FIELDS})
 
 
-def _row(spec: BundleSpec, as_of_et: str, role: str, data_kind: str, path: str, item: Mapping[str, Any]) -> dict[str, str]:
+def _row(spec: BundleSpec, as_of: str, role: str, data_kind: str, path: str, item: Mapping[str, Any]) -> dict[str, str]:
     return {
         "bundle": spec.bundle,
         "model_id": spec.model_id,
-        "as_of_et": as_of_et,
+        "as_of": as_of,
         "input_role": role,
         "data_kind": data_kind,
         "path": path,

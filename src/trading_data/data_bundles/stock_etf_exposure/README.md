@@ -13,9 +13,14 @@ Derived model-input bundle for `SecuritySelectionModel`.
 - `holdings_csv_paths` — one path or list of saved ETF holdings CSV paths.
 - `available_time_et` — earliest America/New_York timestamp when the exposure row is usable.
 
+## Bundle config
+
+`config.json` lives in this bundle folder and owns reusable defaults such as ETF universe, issuer labels, desired grains, and default ETF scores. Task keys may override run-specific values.
+
 ## Optional params
 
 - `as_of_date` — fallback holdings date when source rows omit it.
+- `config_path` — reviewed one-off config override path; normal runs use bundle-local `config.json`.
 - `etf_scores` — object keyed by ETF ticker; values may include:
   - `sector_score`
   - `theme_score`

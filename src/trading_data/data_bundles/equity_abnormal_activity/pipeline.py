@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from trading_data.data_bundles.config import config_section, load_bundle_config
+from trading_data.data_bundles.config import load_bundle_config
 from trading_data.source_availability.sanitize import sanitize_value
 
 BUNDLE = "equity_abnormal_activity"
@@ -106,10 +106,10 @@ def fetch(context: BundleContext) -> tuple[StepResult, SourcePayload]:
     if not bars:
         raise EquityAbnormalActivityError("bars_csv_path produced zero rows")
     context.run_dir.mkdir(parents=True, exist_ok=True)
-    config_name = str(params.get("config") or "model_inputs")
+    config_path = str(params.get("config_path") or "") or None
     manifest = {
         "bundle": BUNDLE,
-        "config": config_name,
+        "config": config_path or "bundle-local config.json",
         "bars_csv_path": str(bars_path),
         "benchmark_bars_csv_path": str(benchmark_path) if benchmark_path else None,
         "liquidity_csv_path": str(liquidity_path) if liquidity_path else None,
@@ -250,8 +250,8 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
 
 def clean(context: BundleContext, payload: SourcePayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
-    config_name = str(params.get("config") or "model_inputs")
-    defaults = config_section(load_bundle_config(config_name), "equity_abnormal_activity")
+    config_path = str(params.get("config_path") or "") or None
+    defaults = load_bundle_config(BUNDLE, config_path=config_path)
     effective = {**defaults, **params}
     rows = detect_events(
         bars=payload.bars,

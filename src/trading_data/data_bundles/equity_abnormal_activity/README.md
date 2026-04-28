@@ -12,9 +12,14 @@ Derived event detector for `EventOverlayModel`.
 
 - `bars_csv_path` — saved equity bar CSV for one symbol.
 
+## Bundle config
+
+`config.json` lives in this bundle folder and owns reusable detector defaults such as bar grain, lookback, thresholds, and `model_standard`. Task keys may override run-specific values.
+
 ## Optional params
 
 - `benchmark_bars_csv_path` — benchmark or sector ETF bars aligned by `timestamp_et`.
+- `config_path` — reviewed one-off config override path; normal runs use bundle-local `config.json`.
 - `liquidity_csv_path` — equity liquidity bars aligned by `interval_start_et`.
 - `lookback_intervals` — default `20`.
 - `min_abs_return_zscore` — default `3.0`.

@@ -30,7 +30,7 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 Bundle: `src/trading_data/data_bundles/stock_etf_exposure/`
 
-Config: `src/trading_data/data_bundles/configs/model_inputs.json`
+Config: `src/trading_data/data_bundles/stock_etf_exposure/config.json`
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
@@ -60,7 +60,7 @@ Boundary:
 
 Bundle: `src/trading_data/data_bundles/equity_abnormal_activity/`
 
-Config: `src/trading_data/data_bundles/configs/model_inputs.json`
+Config: `src/trading_data/data_bundles/equity_abnormal_activity/config.json`
 
 Purpose: EventOverlayModel evidence row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

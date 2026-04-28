@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Default model-input bundle parameters. Task keys may override these values per run.",
+  "description": "Default parameters for the stock_etf_exposure bundle. Task keys may override these values per run.",
   "etf_universe": {
     "broad_market": {
       "SPY": {"issuer": "state_street", "grain": "1Day", "style_tags": ["large_cap", "broad_market"]},
@@ -20,18 +20,6 @@
       "CIBR": {"issuer": "first_trust", "grain": "1Day", "style_tags": ["cybersecurity"]}
     }
   },
-  "stock_etf_exposure": {
-    "default_available_lag": "next_regular_session_open",
-    "etf_scores": {}
-  },
-  "equity_abnormal_activity": {
-    "bar_grain": "1Min",
-    "lookback_intervals": 20,
-    "min_abs_return_zscore": 3.0,
-    "min_volume_zscore": 3.0,
-    "min_abs_relative_strength_zscore": 3.0,
-    "min_abs_gap_pct": 0.04,
-    "min_liquidity_spread_zscore": 3.0,
-    "model_standard": "equity_abnormal_activity_v0"
-  }
+  "default_available_lag": "next_regular_session_open",
+  "etf_scores": {}
 }

@@ -30,7 +30,7 @@ Each accepted model layer has a manager-facing bundle under `src/trading_data/da
 
 Most layers load bundle-local `config.json`, accept a manager task key with `params.as_of` and `params.input_paths`, and emit a point-in-time manifest CSV under `saved/<bundle>.csv`.
 
-Layer 1 is intentionally different: `01_market_regime_model_inputs` accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and emits one combined long-table CSV keyed by `symbol + timeframe + timestamp`.
+Layer 1 is intentionally different: `01_market_regime_model_inputs` accepts `params.start` and `params.end`, reads the configured `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `market_regime_etf_bar`, keyed by `run_id + symbol + timeframe + timestamp`.
 
 ## Derived Data Products Added for Model Needs
 

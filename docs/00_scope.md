@@ -15,8 +15,8 @@ This repository exists to make data production explicit, testable, and reusable 
 - Normalize provider responses into documented data shapes for market board data, instrument data, and option data.
 - Validate data completeness, schema expectations, timestamps, market calendars, and known provider quirks.
 - Execute `trading-manager` task key files for historical data acquisition.
-- During development, write cleaned outputs and task receipts to ignored local files under `storage/` instead of SQL.
-- Move durable outputs to specified storage SQL/artifact targets only after `trading-storage` contracts are accepted.
+- During development, prefer SQL outputs for accepted SQL-only bundle contracts; legacy bundles may still write inspected task files and receipts under ignored local `storage/`.
+- Move durable outputs to specified storage SQL/artifact targets as `trading-storage` contracts are accepted.
 - Produce data artifacts for downstream repositories.
 - Produce run manifests and ready signals using `trading-main` contracts once concrete schemas are accepted.
 - Coordinate with `trading-storage` for future durable output placement, SQL contracts, receipt storage, and retention rules.
@@ -49,7 +49,7 @@ The repository should prefer explicit provider boundaries, deterministic normali
 
 - `trading-data` owns historical data acquisition and data-output production; in development those outputs live under ignored local `storage/`; it does not own realtime execution feeds or downstream interpretation.
 - Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-main`.
-- Durable storage layout, SQL table contracts, and retention belong in `trading-storage`; `storage/` is only a local development staging area.
+- Durable storage layout and retention belong in `trading-storage`; SQL table contracts should be explicit before a bundle treats them as canonical output.
 - Scheduling, retries, and lifecycle routing belong in `trading-manager`.
 - Generated data and provider responses are runtime artifacts, not source files.
 - Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.

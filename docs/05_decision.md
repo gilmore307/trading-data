@@ -403,6 +403,8 @@ Release-time alignment matters for historical market context and avoids accident
 
 Date: 2026-04-26
 
+Superseded in part by D051 for accepted SQL-only bundle contracts.
+
 ### Context
 
 The previous workflow described writing cleaned historical data rows to storage SQL targets once contracts are accepted. The user clarified that during development, data should not be written into SQL because that would dirty the database and make cleanup harder.
@@ -757,3 +759,21 @@ Official macro API keys and secret aliases may remain stored and registered for 
 - Do not add new `macro_data` source interfaces or tests.
 - Keep Trading Economics constraints: visible page only, no TE API, no Download/export endpoint, and no WAF/captcha/permission bypass.
 - Deprecated registry/template rows may remain as historical references until a broader registry cleanup is explicitly accepted.
+
+## D051 - Market regime model inputs are SQL-only
+
+Date: 2026-04-28
+
+### Context
+
+The first MarketRegimeModel bundle now fetches ETF bars directly from the configured ETF universe over a manager-supplied time range. The user accepted SQL-only saved output for this bundle instead of CSV/debug artifacts.
+
+### Decision
+
+`01_market_regime_model_inputs` writes its canonical saved output to SQL table `market_regime_etf_bar`. The table is a single long table across symbols and bar grains, keyed by `run_id + symbol + timeframe + timestamp`.
+
+### Consequences
+
+- Do not write `saved/01_market_regime_model_inputs.csv` or cleaned JSONL for the final model input output.
+- Keep `timeframe` as an explicit column; downstream features must group/filter by `symbol + timeframe`.
+- D019 remains the default for legacy bundles, but is superseded for accepted SQL-only bundle contracts.

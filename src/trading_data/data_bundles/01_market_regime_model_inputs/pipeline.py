@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import json
+import sqlite3
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,8 +18,10 @@ from trading_data.source_availability.secrets import load_secret_alias, public_s
 BUNDLE = "01_market_regime_model_inputs"
 MODEL_ID = "market_regime_model"
 OUTPUT_NAME = "01_market_regime_model_inputs"
+OUTPUT_TABLE = "market_regime_etf_bar"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
+SQL_FIELDS = ["run_id", "task_id", *FIELDS, "created_at"]
 
 
 @dataclass(frozen=True)
@@ -46,6 +49,11 @@ class SourcePayload:
     universe_rows: list[dict[str, str]]
     bars_by_symbol: dict[str, list[dict[str, Any]]]
     secret_alias: dict[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    rows: list[dict[str, Any]]
 
 
 class MarketRegimeInputsError(ValueError):
@@ -183,7 +191,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     return StepResult("succeeded", [str(manifest)], {"raw_bars_transient": sum(len(rows) for rows in bars_by_symbol.values())}, details={"symbols": symbols, "market_etf_universe_path": str(universe_path)}), SourcePayload(config, universe_rows, bars_by_symbol, public_secret_summary(secret))
 
 
-def clean(context: BundleContext, payload: SourcePayload) -> StepResult:
+def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
     universe_by_symbol = {row["symbol"].upper(): row for row in payload.universe_rows}
     rows: list[dict[str, Any]] = []
     for symbol in sorted(payload.bars_by_symbol):
@@ -191,25 +199,75 @@ def clean(context: BundleContext, payload: SourcePayload) -> StepResult:
         for bar in payload.bars_by_symbol[symbol]:
             rows.append({"symbol": symbol, "timeframe": timeframe, "timestamp": _et_iso(bar["t"]), "open": bar.get("o"), "high": bar.get("h"), "low": bar.get("l"), "close": bar.get("c"), "volume": bar.get("v"), "vwap": bar.get("vw"), "trade_count": bar.get("n")})
     rows.sort(key=lambda row: (str(row["timeframe"]), str(row["symbol"]), str(row["timestamp"])))
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    output = context.cleaned_dir / f"{OUTPUT_NAME}.jsonl"
-    with output.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
-    schema = context.cleaned_dir / "schema.json"
-    schema.write_text(json.dumps({OUTPUT_NAME: FIELDS, "row_count": len(rows), "natural_key": ["symbol", "timeframe", "timestamp"]}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(output), str(schema)], {OUTPUT_NAME: len(rows)}, details={"columns": FIELDS, "natural_key": ["symbol", "timeframe", "timestamp"]})
+    result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"columns": SQL_FIELDS, "natural_key": ["run_id", "symbol", "timeframe", "timestamp"], "table": OUTPUT_TABLE})
+    return result, CleanedPayload(rows)
 
 
-def save(context: BundleContext, clean_result: StepResult) -> StepResult:
-    rows = [json.loads(line) for line in (context.cleaned_dir / f"{OUTPUT_NAME}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / f"{OUTPUT_NAME}.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
+def _database_path(context: BundleContext, config: Mapping[str, Any]) -> Path:
+    params = dict(context.task_key.get("params") or {})
+    value = params.get("database_path") or config.get("database_path")
+    path = Path(str(value)) if value else context.receipt_path.parent / "market_regime_model_inputs.sqlite"
+    return path if path.is_absolute() else Path.cwd() / path
+
+
+def _create_table(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {OUTPUT_TABLE} (
+            run_id TEXT NOT NULL,
+            task_id TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            timeframe TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            open REAL,
+            high REAL,
+            low REAL,
+            close REAL,
+            volume REAL,
+            vwap REAL,
+            trade_count INTEGER,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (run_id, symbol, timeframe, timestamp)
+        )
+        """
+    )
+    connection.execute(f"CREATE INDEX IF NOT EXISTS idx_{OUTPUT_TABLE}_symbol_timeframe_timestamp ON {OUTPUT_TABLE} (symbol, timeframe, timestamp)")
+
+
+def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, config: Mapping[str, Any]) -> StepResult:
+    database_path = _database_path(context, config)
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    created_at = _now_utc()
+    task_id = str(context.task_key.get("task_id") or "")
+    run_id = str(context.metadata["run_id"])
+    with sqlite3.connect(database_path) as connection:
+        _create_table(connection)
+        connection.executemany(
+            f"""
+            INSERT OR REPLACE INTO {OUTPUT_TABLE} ({', '.join(SQL_FIELDS)})
+            VALUES ({', '.join(['?'] * len(SQL_FIELDS))})
+            """,
+            [
+                (
+                    run_id,
+                    task_id,
+                    row["symbol"],
+                    row["timeframe"],
+                    row["timestamp"],
+                    row.get("open"),
+                    row.get("high"),
+                    row.get("low"),
+                    row.get("close"),
+                    row.get("volume"),
+                    row.get("vwap"),
+                    row.get("trade_count"),
+                    created_at,
+                )
+                for row in payload.rows
+            ],
+        )
+    reference = f"sqlite://{database_path}#{OUTPUT_TABLE}"
+    return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sqlite", "database_path": str(database_path), "table": OUTPUT_TABLE, "columns": SQL_FIELDS})
 
 
 def write_receipt(context: BundleContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
@@ -233,9 +291,9 @@ def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = No
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, payload = fetch(context, client=client)
-        clean_result = clean(context, payload)
-        save_result = save(context, clean_result)
+        fetch_result, source_payload = fetch(context, client=client)
+        clean_result, cleaned_payload = clean(context, source_payload)
+        save_result = save(context, clean_result, cleaned_payload, source_payload.config)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except BaseException as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

@@ -11,7 +11,7 @@ It describes how approved data requests become validated data artifacts, manifes
 `trading-data` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
 
 ```text
-manager task key file -> validate key -> select data bundle -> load bundle config -> call smallest-unit data sources -> normalize/derive -> validate -> write development files under storage -> write development task receipt under storage
+manager task key file -> validate key -> select data bundle -> load bundle config -> call smallest-unit data sources -> normalize/derive -> validate -> write accepted SQL output or legacy development files -> write task receipt
 ```
 
 Where:
@@ -23,8 +23,8 @@ Where:
 - **call smallest-unit data sources** calls external providers, official web sources, issuer websites, or approved local source-output interfaces through documented source connectors;
 - **normalize/derive** converts provider-specific responses and bundle-level joins into accepted table-oriented data shapes;
 - **validate** checks schema, timestamps, completeness, calendars, duplicates, and provider caveats;
-- **write development files under `storage/`** stores cleaned outputs in the registered development local storage root instead of writing to SQL;
-- **write development task receipt under `storage/`** records task status and evidence as a local file so runs remain inspectable and disposable during development.
+- **write accepted SQL output or legacy development files** stores canonical SQL tables for SQL-only bundles and keeps older file-manifest bundles under the registered development local storage root until migrated;
+- **write task receipt** records task status and evidence so runs remain inspectable and disposable during development.
 
 The development storage root is registered as `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT` with relative path `storage`. The exact task key file schema, future SQL table contract, and durable completion receipt schema remain cross-repository contract work with `trading-main` and `trading-storage`.
 
@@ -119,7 +119,7 @@ The task-level completion receipt should contain `runs[]` so manager can inspect
 
 ## Development Storage Rule
 
-During development, `trading-data` must not write task outputs into SQL by default. Use the registered development local storage root instead:
+During development, SQL-only bundles write to their reviewed SQL target. Legacy bundles still use the registered development local storage root until migrated:
 
 ```text
 storage/
@@ -129,7 +129,7 @@ This directory is ignored by Git except for README files. It is intentionally ea
 
 For high-volume raw market data such as trade prints and quote updates, temporary raw segments are only run-local aggregation inputs. Default saved outputs must be aggregate/feature rows aligned to accepted America/New_York time buckets.
 
-SQL writes are future durable-storage behavior and should require an accepted `trading-storage` contract or an explicitly guarded integration/smoke path.
+SQL writes are canonical only for bundles with an explicit SQL output contract; otherwise keep the legacy file path until the bundle is migrated.
 
 ## Historical Source Interfaces and Data Bundles
 

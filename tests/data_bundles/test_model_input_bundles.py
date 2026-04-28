@@ -1,5 +1,6 @@
 import csv
 import json
+import sqlite3
 import tempfile
 import unittest
 from importlib import import_module
@@ -36,7 +37,7 @@ class Secret:
 
 
 class ModelInputBundleTests(unittest.TestCase):
-    def test_market_regime_bundle_fetches_universe_bars_as_one_long_table(self):
+    def test_market_regime_bundle_fetches_universe_bars_as_one_sql_long_table(self):
         module = import_module("trading_data.data_bundles.01_market_regime_model_inputs.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
@@ -62,13 +63,16 @@ class ModelInputBundleTests(unittest.TestCase):
                 }
                 result = module.run(task_key, run_id="run", client=FakeBarsClient())
                 self.assertEqual(result.status, "succeeded")
-                self.assertEqual(result.row_counts["01_market_regime_model_inputs"], 2)
-                saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_market_regime_model_inputs.csv"
-                with saved.open(newline="", encoding="utf-8") as handle:
-                    rows = list(csv.DictReader(handle))
-                timeframes = {row["symbol"]: row["timeframe"] for row in rows}
-                self.assertEqual(timeframes, {"BITW": "30Min", "SPY": "1Day"})
-                self.assertEqual(list(rows[0]), ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"])
+                self.assertEqual(result.row_counts["market_regime_etf_bar"], 2)
+                database_path = Path(task_key["output_root"]) / "market_regime_model_inputs.sqlite"
+                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_market_regime_model_inputs.csv").exists())
+                with sqlite3.connect(database_path) as connection:
+                    rows = connection.execute(
+                        "SELECT run_id, task_id, symbol, timeframe, timestamp, open, high, low, close, volume, vwap, trade_count FROM market_regime_etf_bar ORDER BY symbol"
+                    ).fetchall()
+                self.assertEqual(len(rows), 2)
+                self.assertEqual({row[2]: row[3] for row in rows}, {"BITW": "30Min", "SPY": "1Day"})
+                self.assertEqual({row[0] for row in rows}, {"run"})
         finally:
             module.load_secret_alias = old_load_secret
 

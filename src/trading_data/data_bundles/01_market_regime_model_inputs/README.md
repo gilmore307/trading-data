@@ -2,7 +2,7 @@
 
 MarketRegimeModel manager-facing ETF bar bundle.
 
-This bundle fetches the configured market/sector/cross-asset ETF universe over a manager-supplied time range and writes one normalized long-table bar CSV. The ETF universe, per-symbol bar grain, and stable fetch defaults live in bundle config, not in the task key.
+This bundle fetches the configured market/sector/cross-asset ETF universe over a manager-supplied time range and writes one normalized SQL long table. The ETF universe, per-symbol bar grain, and stable fetch defaults live in bundle config, not in the task key.
 
 ## Input parameters
 
@@ -12,6 +12,7 @@ The manager supplies these values in `task_key.params`:
 - `end` — required. Exclusive/provider request end timestamp/date.
 - `symbols` — optional debug/review subset. String comma list or JSON list of symbols from the configured universe. Normal production runs omit this and use the full config universe.
 - `config_path` — optional reviewed override for `config.json`; normal runs use this directory's bundle-local config.
+- `database_path` — optional SQL database override for tests or reviewed local runs. Default: `<output_root>/market_regime_model_inputs.sqlite`.
 - `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds` — optional request/runtime overrides. Defaults come from config.
 
 The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "01_market_regime_model_inputs"`, and optional `output_root`.
@@ -23,7 +24,7 @@ The task key also carries orchestration fields outside `params`, including `task
 - `market_etf_universe_path` — canonical CSV containing the ETF universe. Current default: `/root/projects/trading-main/storage/shared/market_etf_universe.csv`.
 - `secret_alias` — Alpaca credential source alias.
 - `adjustment`, `limit`, `max_pages`, `timeout_seconds` — default request/runtime settings.
-- `output` — saved artifact contract: output name, format, natural key, and columns.
+- `output` — SQL output contract: table, format, natural key, and columns.
 
 The universe CSV owns the ETF scope and grain choices:
 
@@ -34,32 +35,37 @@ The universe CSV owns the ETF scope and grain choices:
 
 ## Output format
 
-Final saved artifact:
+Final saved artifact is SQL-only:
 
 ```text
-<output_root>/runs/<run_id>/saved/01_market_regime_model_inputs.csv
+sqlite://<output_root>/market_regime_model_inputs.sqlite#market_regime_etf_bar
 ```
+
+Table: `market_regime_etf_bar`
 
 Columns, in order:
 
-1. `symbol`
-2. `timeframe`
-3. `timestamp`
-4. `open`
-5. `high`
-6. `low`
-7. `close`
-8. `volume`
-9. `vwap`
-10. `trade_count`
+1. `run_id`
+2. `task_id`
+3. `symbol`
+4. `timeframe`
+5. `timestamp`
+6. `open`
+7. `high`
+8. `low`
+9. `close`
+10. `volume`
+11. `vwap`
+12. `trade_count`
+13. `created_at`
 
-Natural key: `symbol + timeframe + timestamp`.
+Natural key: `run_id + symbol + timeframe + timestamp`.
 
 All configured ETFs and all configured grains are stored in the same long table. Downstream feature code must explicitly group/filter by both `symbol` and `timeframe`; daily and intraday rows must not be rolled together accidentally.
 
 Run metadata:
 
-- cleaned JSONL: `<output_root>/runs/<run_id>/cleaned/01_market_regime_model_inputs.jsonl`
-- cleaned schema: `<output_root>/runs/<run_id>/cleaned/schema.json`
 - request manifest: `<output_root>/runs/<run_id>/request_manifest.json`
 - completion receipt: `<output_root>/completion_receipt.json`
+
+No CSV or cleaned JSONL is written for the saved model input output.

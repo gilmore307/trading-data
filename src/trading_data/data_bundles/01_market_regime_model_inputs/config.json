@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "description": "MarketRegimeModel ETF bar acquisition contract. Task keys provide start/end; market_etf_universe_path supplies the ETF universe and per-symbol bar grain.",
+  "version": 3,
+  "description": "MarketRegimeModel ETF bar acquisition contract. Task keys provide start/end; market_etf_universe_path supplies the ETF universe and per-symbol bar grain; final output is SQL-only.",
   "model_id": "market_regime_model",
   "market_etf_universe_path": "/root/projects/trading-main/storage/shared/market_etf_universe.csv",
   "secret_alias": "alpaca",
@@ -9,9 +9,9 @@
   "max_pages": 10,
   "timeout_seconds": 20,
   "output": {
-    "name": "01_market_regime_model_inputs",
-    "format": "csv",
-    "natural_key": ["symbol", "timeframe", "timestamp"],
-    "columns": ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
+    "table": "market_regime_etf_bar",
+    "format": "sqlite",
+    "natural_key": ["run_id", "symbol", "timeframe", "timestamp"],
+    "columns": ["run_id", "task_id", "symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count", "created_at"]
   }
 }

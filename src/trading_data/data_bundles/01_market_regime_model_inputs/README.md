@@ -1,20 +1,66 @@
 # 01_market_regime_model_inputs
 
-MarketRegimeModel inputs manager-facing data bundle.
+MarketRegimeModel manager-facing model-input manifest bundle.
 
-This bundle accepts a manager task key, loads bundle-local `config.json`, and writes a point-in-time model-input manifest CSV. It does not fetch raw provider data directly; source acquisition remains in `trading_data.data_sources`.
+This bundle does not fetch provider data. It receives a manager task key that points at already-saved source artifacts, validates those paths against the bundle-local input contract, and writes a point-in-time manifest CSV for the MarketRegimeModel layer.
 
-## Required task params
+## Input parameters
 
-- `as_of` — America/New_York timestamp for the point-in-time input manifest.
-- `input_paths` — object mapping configured input roles to one path or a list of paths.
+The manager supplies these values in `task_key.params`:
 
-## Configured inputs
+- `as_of` — required. America/New_York point-in-time timestamp for the manifest. Legacy `as_of_et` and `available_time` are accepted by the shared runner as compatibility aliases.
+- `input_paths` — required object. Keys are configured input roles; each value is one path string or a list of path strings.
+- `config_path` — optional reviewed override for `config.json`; normal runs use this directory's bundle-local config.
 
-- `broad_market_bars` -> `equity_bar` (required)
-- `sector_etf_bars` -> `equity_bar` (required)
-- `cross_asset_etf_bars` -> `equity_bar` (optional)
+Minimum valid `input_paths` roles:
 
-## Output
+- `broad_market_bars`
+- `sector_etf_bars`
 
-`saved/01_market_regime_model_inputs.csv`
+Optional `input_paths` roles:
+
+- `cross_asset_etf_bars`
+
+The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "01_market_regime_model_inputs"`, and optional `output_root`.
+
+## Config
+
+`config.json` owns stable contract facts required to complete the task but not supplied per run:
+
+- `version` — config schema/version marker.
+- `description` — human-readable contract summary.
+- `model_id = "market_regime_model"` — target model layer.
+- `inputs` — ordered role contract used to build output rows:
+  - `role` — manifest input role name expected under `params.input_paths`.
+  - `data_kind` — expected upstream data kind for that role.
+  - `required` — whether the role must be present in the task key.
+  - `notes` — role-specific contract notes copied into the manifest.
+
+## Output format
+
+Final saved artifact:
+
+```text
+<output_root>/runs/<run_id>/saved/01_market_regime_model_inputs.csv
+```
+
+Columns, in order:
+
+1. `bundle`
+2. `model_id`
+3. `as_of`
+4. `input_role`
+5. `data_kind`
+6. `path`
+7. `required`
+8. `point_in_time`
+9. `notes`
+
+Natural grain: one row per configured input role/path at the requested `as_of`. Optional roles with no paths still emit an empty-path row marked `required=false`.
+
+Run metadata:
+
+- cleaned JSONL: `<output_root>/runs/<run_id>/cleaned/01_market_regime_model_inputs.jsonl`
+- cleaned schema: `<output_root>/runs/<run_id>/cleaned/schema.json`
+- request manifest: `<output_root>/runs/<run_id>/request_manifest.json`
+- completion receipt: `<output_root>/completion_receipt.json`

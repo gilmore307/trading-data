@@ -34,9 +34,9 @@ The manifest bundles do not fetch raw provider data. They compose saved source/d
 
 ### `stock_etf_exposure`
 
-Bundle: `src/trading_data/data_bundles/stock_etf_exposure/`
+Integrated step: `src/trading_data/data_bundles/02_security_selection_model_inputs/stock_etf_exposure.py`
 
-Config: `src/trading_data/data_bundles/stock_etf_exposure/config.json`
+Config: `src/trading_data/data_bundles/02_security_selection_model_inputs/config.json` under `stock_etf_exposure`.
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
@@ -60,7 +60,7 @@ Boundary:
 
 - Derived feature artifact, not a raw provider table.
 - Must preserve `available_time_et`; do not assume a holdings file is usable before it was visible.
-- Implemented first as a conservative derived bundle over saved `etf_holding_snapshot.csv` inputs and caller-supplied ETF/sector/theme scores.
+- Implemented as an internal step of `02_security_selection_model_inputs`, not as a standalone manager-facing bundle. When `params.stock_etf_exposure` is provided, Layer 2 derives `stock_etf_exposure.csv` from saved `etf_holding_snapshot.csv` inputs and caller-supplied ETF/sector/theme scores before writing the Layer 2 input manifest.
 
 ### `equity_abnormal_activity_event`
 

@@ -11,13 +11,12 @@ Boundary:
 Current model-input/data-product bundles:
 
 - `01_market_regime_model_inputs` — point-in-time MarketRegimeModel input manifest.
-- `02_security_selection_model_inputs` — point-in-time SecuritySelectionModel input manifest.
+- `02_security_selection_model_inputs` — point-in-time SecuritySelectionModel input manifest; internally derives `stock_etf_exposure.csv` from ETF holdings snapshots when `params.stock_etf_exposure` is provided.
 - `03_strategy_selection_model_inputs` — point-in-time StrategySelectionModel input manifest.
 - `04_trade_quality_model_inputs` — point-in-time TradeQualityModel input manifest.
 - `05_option_expression_model_inputs` — point-in-time OptionExpressionModel input manifest.
 - `06_event_overlay_model_inputs` — point-in-time EventOverlayModel input manifest.
 - `07_portfolio_risk_model_inputs` — point-in-time PortfolioRiskModel input manifest.
-- `stock_etf_exposure` — ETF holdings snapshots + `stock_etf_exposure/config.json` ETF universe / issuer / score defaults -> `stock_etf_exposure.csv`.
 - `equity_abnormal_activity` — equity bars + optional benchmark/liquidity inputs + `equity_abnormal_activity/config.json` detector defaults -> `equity_abnormal_activity_event.csv`.
 
 The remaining historical acquisition runners still live under `data_sources` until each has a reviewed manager-facing wrapper. Do not add new model-input generation under `data_sources`.

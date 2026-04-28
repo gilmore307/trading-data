@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Default input contract for 02_security_selection_model_inputs. Task keys provide input_paths and as_of_et.",
+  "description": "Default input contract for 02_security_selection_model_inputs. Task keys provide input_paths and as_of_et; optional params.stock_etf_exposure derives stock_etf_exposure internally from ETF holdings snapshots.",
   "model_id": "security_selection_model",
   "inputs": [
     {
@@ -27,5 +27,99 @@
       "required": false,
       "notes": "Events that exclude or down-rank symbols"
     }
-  ]
+  ],
+  "stock_etf_exposure": {
+    "etf_universe": {
+      "broad_market": {
+        "SPY": {
+          "issuer": "state_street",
+          "grain": "1Day",
+          "style_tags": [
+            "large_cap",
+            "broad_market"
+          ]
+        },
+        "QQQ": {
+          "issuer": "invesco",
+          "grain": "1Day",
+          "style_tags": [
+            "nasdaq",
+            "growth",
+            "technology"
+          ]
+        },
+        "IWM": {
+          "issuer": "blackrock",
+          "grain": "1Day",
+          "style_tags": [
+            "small_cap"
+          ]
+        }
+      },
+      "sector": {
+        "XLK": {
+          "issuer": "state_street",
+          "grain": "1Day",
+          "style_tags": [
+            "technology"
+          ]
+        },
+        "XLF": {
+          "issuer": "state_street",
+          "grain": "1Day",
+          "style_tags": [
+            "financials"
+          ]
+        },
+        "XLE": {
+          "issuer": "state_street",
+          "grain": "1Day",
+          "style_tags": [
+            "energy"
+          ]
+        },
+        "XLV": {
+          "issuer": "state_street",
+          "grain": "1Day",
+          "style_tags": [
+            "healthcare"
+          ]
+        }
+      },
+      "theme": {
+        "SMH": {
+          "issuer": "vaneck",
+          "grain": "1Day",
+          "style_tags": [
+            "semiconductor",
+            "AI"
+          ]
+        },
+        "SOXX": {
+          "issuer": "blackrock",
+          "grain": "1Day",
+          "style_tags": [
+            "semiconductor"
+          ]
+        },
+        "BOTZ": {
+          "issuer": "global_x",
+          "grain": "1Day",
+          "style_tags": [
+            "robotics",
+            "AI"
+          ]
+        },
+        "CIBR": {
+          "issuer": "first_trust",
+          "grain": "1Day",
+          "style_tags": [
+            "cybersecurity"
+          ]
+        }
+      }
+    },
+    "default_available_lag": "next_regular_session_open",
+    "etf_scores": {}
+  }
 }

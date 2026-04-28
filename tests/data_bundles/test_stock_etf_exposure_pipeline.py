@@ -2,13 +2,12 @@ import csv
 import json
 import tempfile
 import unittest
+from importlib import import_module
 from pathlib import Path
-
-from trading_data.data_bundles.stock_etf_exposure.pipeline import run
 
 
 class StockEtfExposurePipelineTests(unittest.TestCase):
-    def test_builds_point_in_time_stock_exposure_from_holdings(self):
+    def test_security_selection_bundle_derives_stock_exposure_from_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
             holdings = Path(tmp) / "etf_holding_snapshot.csv"
             with holdings.open("w", newline="", encoding="utf-8") as handle:
@@ -19,32 +18,42 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                     {"etf_ticker": "SOXX", "issuer": "ishares", "as_of_date": "2026-04-24", "holding_ticker": "NVDA", "holding_name": "NVIDIA Corp", "weight": "10", "sector": "Information Technology"},
                     {"etf_ticker": "XLK", "issuer": "spdr", "as_of_date": "2026-04-24", "holding_ticker": "AAPL", "holding_name": "Apple Inc", "weight": "15", "sector": "Information Technology"},
                 ])
+            equity_bars = Path(tmp) / "equity_bar.csv"
+            equity_bars.write_text("symbol,timestamp,close\nNVDA,2026-04-24T16:00:00-04:00,100\n", encoding="utf-8")
             task_key = {
-                "task_id": "stock_etf_exposure_task_test",
-                "bundle": "stock_etf_exposure",
+                "task_id": "02_security_selection_model_inputs_task_test",
+                "bundle": "02_security_selection_model_inputs",
                 "params": {
-                    "holdings_csv_paths": [str(holdings)],
-                    "available_time_et": "2026-04-25T09:30:00-04:00",
-                    "etf_scores": {
-                        "SMH": {"sector_score": 0.9, "theme_score": 0.8, "style_tags": ["semiconductor", "AI"]},
-                        "SOXX": {"sector_score": 0.7, "theme_score": 0.6, "style_tags": "semiconductor"},
-                        "XLK": {"sector_score": 0.5, "theme_score": 0.4, "style_tags": "large_cap_growth"},
+                    "as_of_et": "2026-04-25T09:30:00-04:00",
+                    "input_paths": {"equity_bars": str(equity_bars)},
+                    "stock_etf_exposure": {
+                        "holdings_csv_paths": [str(holdings)],
+                        "available_time_et": "2026-04-25T09:30:00-04:00",
+                        "etf_scores": {
+                            "SMH": {"sector_score": 0.9, "theme_score": 0.8, "style_tags": ["semiconductor", "AI"]},
+                            "SOXX": {"sector_score": 0.7, "theme_score": 0.6, "style_tags": "semiconductor"},
+                            "XLK": {"sector_score": 0.5, "theme_score": 0.4, "style_tags": "large_cap_growth"},
+                        },
                     },
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            module = import_module("trading_data.data_bundles.02_security_selection_model_inputs.pipeline")
+            result = module.run(task_key, run_id="run")
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["stock_etf_exposure"], 2)
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "stock_etf_exposure.csv"
-            with saved.open(newline="", encoding="utf-8") as handle:
+            self.assertGreaterEqual(result.row_counts["02_security_selection_model_inputs"], 2)
+            exposure = Path(task_key["output_root"]) / "runs" / "run" / "derived" / "stock_etf_exposure" / "saved" / "stock_etf_exposure.csv"
+            with exposure.open(newline="", encoding="utf-8") as handle:
                 rows = {row["symbol"]: row for row in csv.DictReader(handle)}
             self.assertEqual(rows["NVDA"]["exposed_etfs"], "SMH;SOXX")
             self.assertEqual(rows["NVDA"]["top_exposure_etf"], "SMH")
             self.assertEqual(rows["NVDA"]["total_etf_exposure_score"], "0.3")
             self.assertEqual(rows["NVDA"]["weighted_sector_score"], "0.25")
             self.assertIn("semiconductor", rows["NVDA"]["style_tags"])
-            self.assertEqual(rows["NVDA"]["available_time_et"], "2026-04-25T09:30:00-04:00")
+            manifest = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "02_security_selection_model_inputs.csv"
+            with manifest.open(newline="", encoding="utf-8") as handle:
+                manifest_rows = {row["input_role"]: row for row in csv.DictReader(handle)}
+            self.assertEqual(manifest_rows["stock_etf_exposure"]["path"], str(exposure))
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 

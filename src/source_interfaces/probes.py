@@ -109,7 +109,7 @@ def _probe_alpaca(interface: DataKindInterface, client: HttpClient) -> ProbeResu
 
 def _probe_okx(interface: DataKindInterface, client: HttpClient) -> ProbeResult:
     inst_id = str(interface.smoke_params.get("instId") or "BTC-USDT")
-    headers = {"User-Agent": "trading-data-source-interfaces/0.1", "Accept": "application/json"}
+    headers = {"User-Agent": "trading-source-interfaces/0.1", "Accept": "application/json"}
     if interface.data_kind == "crypto_bar":
         http = client.get("https://www.okx.com/api/v5/market/candles", params={"instId": inst_id, "bar": "1D", "limit": "2"}, headers=headers)
     elif interface.data_kind == "crypto_trade":

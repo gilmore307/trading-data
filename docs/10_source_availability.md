@@ -1,6 +1,6 @@
 # Source Availability
 
-This file records the first public-docs availability inventory for `trading-data` sources. It is not generated data and does not include credentials or provider response dumps.
+This file records the first public-docs availability inventory for `trading-source` sources. It is not generated data and does not include credentials or provider response dumps.
 
 The inventory exists to support two decisions before connector implementation:
 

@@ -1,6 +1,6 @@
-# Model Input Data Organization
+# Source Outputs For Model Layers
 
-This document maps `trading-data` outputs and derived data products to the seven accepted `trading-model` layers. It is an organization contract, not a new raw-source acquisition plan.
+This document maps `trading-source` source-backed outputs to the seven accepted `trading-model` layers. It is an organization contract for external/source observations, not a complete training-data or derived-data plan.
 
 ## Principles
 
@@ -9,7 +9,7 @@ This document maps `trading-data` outputs and derived data products to the seven
 - Keep task inputs in manager task keys, stable bundle contracts/defaults in code, and shared reviewed universes in shared artifacts; avoid bundle-local config files unless operators must routinely change the value outside code review.
 - Keep final model-facing outputs SQL-only for accepted numbered data bundles.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
-- Use derived model-input tables only when they clarify layer boundaries or avoid repeated feature construction.
+- Keep internally generated labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs in `trading-derived`; this repository may only perform source-backed cleaning, aggregation, and point-in-time normalization needed to publish external observations.
 - Register reusable names through `trading-main` before other repositories depend on them.
 
 ## Layer Input Bundles
@@ -19,14 +19,14 @@ This document maps `trading-data` outputs and derived data products to the seven
 | `MarketRegimeModel` | `01_bundle_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
 | `SecuritySelectionModel` | `02_bundle_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
 | `StrategySelectionModel` | `03_bundle_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
-| `TradeQualityModel` | _(no trading-data bundle)_ | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new data acquisition, SQL view, or manifest contract in `trading-data`; `trading-model` consumes upstream SQL outputs directly. |
+| `TradeQualityModel` | _(no trading-source bundle)_ | candidate signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-source`; generated candidates/outcomes/labels belong to `trading-derived`. |
 | `OptionExpressionModel` | `05_bundle_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
 | `PositionExecutionModel` | `06_bundle_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
 | `EventOverlayModel` | `07_bundle_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
 ## Implemented Model Input Bundles
 
-Each accepted model layer that needs new `trading-data` acquisition has a manager-facing bundle under `src/data_bundles/NN_bundle_<layer>/`. These bundles fetch/prepare the data needed by the layer; they are not the complete model-input universe.
+Each accepted model layer that needs new `trading-source` acquisition has a manager-facing source-backed bundle under `src/data_bundles/NN_bundle_<layer>/`. These bundles fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `bundle_01_market_regime`.
 
@@ -34,7 +34,7 @@ Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_
 
 Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `bundle_03_strategy_selection`.
 
-Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model/strategy candidates without new data acquisition or manifest/view contract.
+Layer 4 has no `trading-source` bundle: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
 
 Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes SQL table `bundle_05_option_expression` as one row per visible option contract per snapshot. `snapshot_time` is the point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted from the business table.
 
@@ -42,7 +42,7 @@ Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `b
 
 Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `bundle_07_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
 
-## Derived Data Products Added for Model Needs
+## Source-Backed Aggregations That Need Migration Review
 
 ### `stock_etf_exposure`
 
@@ -68,9 +68,10 @@ Important fields:
 
 Boundary:
 
-- Derived feature artifact, not a raw provider table.
+- Source-backed aggregation, not a raw provider table.
 - Must preserve `available_time`; do not assume a holdings file is usable before it was visible.
-- Superseded as the primary Layer 2 bundle output by `bundle_02_security_selection`. Future stock-level exposure features should derive from the SQL holdings table plus reviewed ETF/sector/theme scores.
+- Superseded as the primary Layer 2 bundle output by `bundle_02_security_selection`.
+- Future stock-level exposure features that combine source holdings with model scores should move to `trading-derived` unless the output remains purely source-backed.
 
 ### `equity_abnormal_activity_event`
 
@@ -91,10 +92,10 @@ It is analogous to option activity events but uses equity/ETF market data:
 
 Boundary:
 
-- Derived event-style row, not raw trades/quotes.
+- Source-backed event-style aggregation, not raw trades/quotes.
 - Should be created only from observable market data at/after the event effective time.
-- Implemented first as a conservative derived detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs.
-- Can feed the Layer 7 `bundle_07_event_overlay` overview table as a `prior_signal`.
+- Implemented first as a conservative detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs.
+- If this becomes a generated signal/candidate/label rather than source evidence, move it to `trading-derived`.
 
 ## Known Open Data Gaps
 

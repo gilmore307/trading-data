@@ -1,4 +1,4 @@
-"""SQL table writers for durable trading-data outputs."""
+"""SQL table writers for durable trading-source outputs."""
 from __future__ import annotations
 
 import re
@@ -9,10 +9,10 @@ from source_availability.secrets import load_secret_alias, public_secret_summary
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 DEFAULT_POSTGRES_STORAGE_TARGET = {
-    "id": "trading_data_postgres",
+    "id": "trading_source_postgres",
     "driver": "postgresql",
     "secret_alias": "trading_storage_postgres",
-    "schema": "trading_data",
+    "schema": "trading_source",
     "create_table": True,
     "batch_size": 5000,
 }

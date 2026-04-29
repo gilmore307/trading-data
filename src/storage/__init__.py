@@ -1,1 +1,1 @@
-"""Storage adapter package for trading-data."""
+"""Storage adapter package for trading-source."""

@@ -10,7 +10,7 @@ Boundary:
 
 Current numbered data bundles:
 
-Note: `TradeQualityModel` currently does not need a `trading-data` bundle because it consumes upstream SQL outputs and model/strategy candidates without new data acquisition.
+Note: `TradeQualityModel` currently does not need a `trading-source` bundle because it consumes upstream SQL outputs and model/strategy candidates without new data acquisition.
 
 - `01_bundle_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_etf_universe.csv`.
 - `02_bundle_security_selection` — SQL-only filtered US-listed equity ETF holdings table for SecuritySelectionModel; ETF universe comes from `market_etf_universe.csv`.

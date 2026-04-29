@@ -2,7 +2,7 @@
 
 ## Acceptance Summary
 
-`trading-data` is accepted when it provides a clear, testable, and boundary-safe data upstream component for the trading system.
+`trading-source` is accepted when it provides a clear, testable, and boundary-safe data upstream component for the trading system.
 
 Acceptance focuses on:
 
@@ -114,4 +114,4 @@ A change must be rejected or returned if it:
 - writes to SQL during normal development/default tests instead of ignored local `storage/`;
 - claims acceptance without test or inspection evidence;
 - duplicates global contract definitions locally instead of referencing `trading-main`;
-- introduces realtime feed/execution behavior into `trading-data`.
+- introduces realtime feed/execution behavior into `trading-source`.

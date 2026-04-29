@@ -1,6 +1,6 @@
 # Data Organization
 
-`trading-data` organizes work around source-backed, manager-facing data bundles and accepted SQL outputs.
+`trading-source` organizes work around source-backed, manager-facing data bundles and accepted SQL outputs.
 
 The older three-domain language — market board data / 盘面数据, instrument data / 标的数据, and option data / 期权数据 — remains useful as historical intent, but it is no longer the primary docs boundary. It was too broad once concrete model-layer bundles and source interfaces appeared.
 
@@ -48,6 +48,6 @@ A bundle may compose multiple sources. Before implementation depends on a compos
 
 ## Output Rule
 
-`trading-data` does not store generated datasets in Git.
+`trading-source` does not store generated datasets in Git.
 
 Accepted outputs should be reviewed SQL tables or explicitly reviewed development artifacts. Runtime receipts and legacy local files remain under ignored `storage/` unless and until `trading-storage` accepts a durable contract.

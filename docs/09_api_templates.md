@@ -1,8 +1,8 @@
 # API Templates
 
-`trading-data` should design each historical acquisition bundle from the API/source requirements before writing connector code.
+`trading-source` should design each historical acquisition bundle from the API/source requirements before writing connector code.
 
-Reusable template files live in `trading-main/templates/data_tasks/`. This file explains how `trading-data` should apply them to API-specific bundles.
+Reusable template files live in `trading-main/templates/data_tasks/`. This file explains how `trading-source` should apply them to API-specific bundles.
 
 ## Template Sources
 
@@ -34,7 +34,7 @@ For each source bundle, design in this order:
 1. Identify the API/source endpoint, official docs, credentials/no-key rule, and source-of-truth page in the bundle README/specs.
 2. Fill the fetch spec from the provider's concrete API requirements.
 3. Fill the clean spec from the raw response shape and target normalized outputs.
-4. Fill the save spec for development files under `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT`.
+4. Fill the save spec for development files under `TRADING_SOURCE_DEVELOPMENT_STORAGE_ROOT`.
 5. Fill the completion receipt template for both success and failure evidence.
 6. Fill the fixture policy before writing default tests.
 7. Only then create `pipeline.py` under the accepted source package layout.
@@ -104,7 +104,7 @@ ThetaData option acquisition is intentionally split by use case, not endpoint fa
 
 ## Implemented bundle CLIs
 
-- `trading-data-01-source-alpaca-bars` / `python -m data_sources.01_source_alpaca_bars` runs the Alpaca bars pipeline.
-- `trading-data-02-source-alpaca-liquidity` / `python -m data_sources.02_source_alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
-- `trading-data-03-source-alpaca-news` / `python -m data_sources.03_source_alpaca_news` runs the Alpaca news pipeline.
-- `trading-data-04-source-okx-crypto-market-data` / `python -m data_sources.04_source_okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.
+- `trading-source-01-source-alpaca-bars` / `python -m data_sources.01_source_alpaca_bars` runs the Alpaca bars pipeline.
+- `trading-source-02-source-alpaca-liquidity` / `python -m data_sources.02_source_alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
+- `trading-source-03-source-alpaca-news` / `python -m data_sources.03_source_alpaca_news` runs the Alpaca news pipeline.
+- `trading-source-04-source-okx-crypto-market-data` / `python -m data_sources.04_source_okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.

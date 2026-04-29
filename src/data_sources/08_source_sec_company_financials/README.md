@@ -1,6 +1,6 @@
 # 08_source_sec_company_financials bundle
 
-`08_source_sec_company_financials` fetches official SEC EDGAR JSON APIs for public-company filing metadata and XBRL facts. It is a historical data bundle for `trading-data`.
+`08_source_sec_company_financials` fetches official SEC EDGAR JSON APIs for public-company filing metadata and XBRL facts. It is a historical data bundle for `trading-source`.
 
 Run a task key with:
 

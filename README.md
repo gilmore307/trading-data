@@ -1,10 +1,10 @@
-# trading-data
+# trading-source
 
-`trading-data` is the data upstream repository for the trading system.
+`trading-source` is the external/source-backed observed-data repository for the trading system.
 
-It owns historical market and related data ingestion, normalization, validation, and data-output production for downstream trading repositories. It executes self-contained task key files from `trading-manager`; legacy bundles may still create ignored local files under runtime `storage/`, while accepted SQL-only bundle outputs write directly to reviewed SQL tables.
+It owns historical market, options, issuer, filing, news, calendar, and related provider data acquisition, cleaning, validation, and publication for downstream repositories. It executes self-contained task key files from `trading-manager`; legacy bundles may still create ignored local files under runtime `storage/`, while accepted SQL-only bundle outputs write directly to reviewed SQL tables.
 
-It does not own shared storage policy, strategy logic, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
+It does not own shared storage policy, derived labels/samples/signals/outcomes, strategy/backtest generation, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
 
 ## Top-Level Structure
 
@@ -42,11 +42,11 @@ Development output: local SQL databases and, for legacy bundles, inspected local
 
 Durable output: storage-backed SQL/artifact outputs plus manifests and ready signals as cross-repository contracts are accepted.
 
-`trading-data` fetches and cleans historical data; realtime feeds belong to `trading-execution`, and generated datasets must not be stored in Git.
+`trading-source` fetches and cleans historical external observations; realtime feeds belong to `trading-execution`, and internally generated datasets belong to `trading-derived` rather than this repository.
 
 ## Data Organization
 
-`trading-data` now organizes work around source-backed, manager-facing data bundles and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
+`trading-source` now organizes work around provider/source adapters, source-backed manager-facing bundles, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
 
 See `docs/07_data_organization.md`. API-specific bundle design guidance is in `docs/09_api_templates.md`; model-layer mapping is in `docs/11_model_inputs.md`.
 
@@ -56,4 +56,4 @@ See `docs/07_data_organization.md`. API-specific bundle design guidance is in `d
 - `trading-storage` owns durable storage layout, retention, archive, backup, and restore rules.
 - `trading-manager` owns scheduling, request generation, lifecycle, retries, and promotion decisions.
 
-Any new global helper, template, shared field, status, type, or reusable vocabulary discovered while developing `trading-data` must be routed back to `trading-main` for documentation and registry review before other repositories depend on it.
+Any new global helper, template, shared field, status, type, or reusable vocabulary discovered while developing `trading-source` must be routed back to `trading-main` for documentation and registry review before other repositories depend on it.

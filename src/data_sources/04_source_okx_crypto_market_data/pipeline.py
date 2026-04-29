@@ -116,7 +116,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
         raise OkxCryptoMarketDataError(f"unsupported timeframe {timeframe!r}; supported={sorted(OKX_BAR_MAP)}")
     limit = str(params.get("limit", 100))
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
-    headers = {"User-Agent": "trading-data-04-source-okx-crypto-market-data/0.1", "Accept": "application/json"}
+    headers = {"User-Agent": "trading-source-04-source-okx-crypto-market-data/0.1", "Accept": "application/json"}
     base = str(params.get("base_url") or "https://www.okx.com").rstrip("/")
     candles_http = client.get(f"{base}/api/v5/market/candles", params={"instId": symbol, "bar": OKX_BAR_MAP[timeframe], "limit": limit}, headers=headers)
     trades_http = client.get(f"{base}/api/v5/market/trades", params={"instId": symbol, "limit": limit}, headers=headers)

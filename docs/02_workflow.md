@@ -2,46 +2,46 @@
 
 ## Purpose
 
-This file defines the intended data-production workflow for `trading-data`.
+This file defines the intended source-data production workflow for `trading-source`.
 
-It describes how approved data requests become validated data artifacts, manifests, and ready signals without leaking provider-specific details into downstream repositories.
+It describes how approved source-data requests become validated source-backed SQL outputs/artifacts, manifests, and ready signals without leaking provider-specific details into downstream repositories.
 
 ## Data Production Flow
 
-`trading-data` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
+`trading-source` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
 
 ```text
-manager task key file -> validate key -> select data bundle -> load bundle config -> call smallest-unit data sources -> normalize/derive -> validate -> write accepted SQL output or legacy development files -> write task receipt
+manager task key file -> validate key -> select source bundle -> load bundle config -> call smallest-unit data sources -> normalize/clean -> validate -> write accepted SQL output or legacy development files -> write task receipt
 ```
 
 Where:
 
 - **manager task key file** is the manager-issued request/control file that contains enough information to complete the task without hidden chat context;
 - **validate key** checks task identity, schema version, requested script/bundle, required parameters, destination expectations, idempotency key, and credential/source references;
-- **select data bundle** invokes the manager-facing bundle named by the task key;
+- **select source bundle** invokes the manager-facing source-backed bundle named by the task key;
 - **load bundle config** resolves stable project parameters such as ETF lists, issuer labels, grains, and detector defaults;
 - **call smallest-unit data sources** calls external providers, official web sources, issuer websites, or approved local source-output interfaces through documented source connectors;
-- **normalize/derive** converts provider-specific responses and bundle-level joins into accepted table-oriented data shapes;
+- **normalize/clean** converts provider-specific responses and source-backed joins into accepted table-oriented data shapes;
 - **validate** checks schema, timestamps, completeness, calendars, duplicates, and provider caveats;
-- **write accepted SQL output or legacy development files** stores canonical SQL tables for SQL-only bundles and keeps older file-manifest bundles under the registered development local storage root until migrated;
+- **write accepted SQL output or legacy development files** stores canonical SQL tables for SQL-only bundles and keeps older file-manifest bundles under ignored local runtime `storage/` until migrated;
 - **write task receipt** records task status and evidence so runs remain inspectable and disposable during development.
 
-The development storage root is registered as `TRADING_DATA_DEVELOPMENT_STORAGE_ROOT` with relative path `storage`. The exact task key file schema, future SQL table contract, and durable completion receipt schema remain cross-repository contract work with `trading-main` and `trading-storage`.
+Legacy development file outputs use ignored runtime `storage/` paths when a bundle has not migrated to accepted SQL-only output. The exact task key file schema and durable completion receipt schema remain cross-repository contract work with `trading-main` and `trading-storage`.
 
 ## Collaboration Flow
 
 ```mermaid
 flowchart TD
-  A[trading-manager Creates Data Task Key File] --> B[trading-data Validates Task Key]
+  A[trading-manager Creates Data Task Key File] --> B[trading-source Validates Task Key]
   B --> C[Select Data Bundle]
   C --> D[Load Bundle Config and Resolve Source Metadata]
   D --> E[Call Smallest-Unit Data Sources]
-  E --> F[Normalize or Derive Rows]
+  E --> F[Normalize or Clean Source Rows]
   F --> G[Validate Dataset]
   G --> H[Write Cleaned Development Files under storage]
   H --> I[Write Development Task Receipt under storage]
   I --> J[trading-manager Lifecycle]
-  I --> K[trading-model / trading-strategy / trading-dashboard via accepted contracts]
+  I --> K[trading-derived / trading-model / trading-dashboard via accepted contracts]
 ```
 
 ## Operating Principles
@@ -50,13 +50,13 @@ flowchart TD
 - Data requests originate from `trading-manager`, not ad hoc local script calls.
 - A task key file must be self-contained: no script may depend on missing chat context or implicit operator memory.
 - `src/data_sources/` owns smallest-unit provider/source access and source-output normalization.
-- `src/data_bundles/` owns manager-facing task execution, bundle config, cross-source orchestration, and model-input generation.
+- `src/data_bundles/` owns manager-facing source task execution, bundle config, cross-source orchestration, and source-backed table generation.
 - Bundles may call multiple data sources in one run, but outputs should remain separable by table/data type.
 - Data requests should be idempotent where practical.
 - Provider responses should be normalized before downstream exposure.
 - Validation evidence belongs in completion receipts/manifests, not only logs.
 - Downstream repositories should consume storage-backed outputs and receipts/manifests, not provider internals.
-- Development outputs must stay under ignored `storage/`; SQL targets must not be used until `trading-storage` contracts are accepted or a guarded integration test explicitly opts in.
+- Legacy development file outputs must stay under ignored `storage/`; accepted SQL-only bundle outputs may use reviewed SQL table contracts and guarded integration paths.
 - Shared fields, statuses, and type names must come from `trading-main/registry/`.
 - Live provider calls should be minimized in tests; prefer fixtures, recorded examples, or provider adapters with controlled mocks.
 
@@ -119,7 +119,7 @@ The task-level completion receipt should contain `runs[]` so manager can inspect
 
 ## Development Storage Rule
 
-During development, SQL-only bundles write to their reviewed SQL target. Legacy bundles still use the registered development local storage root until migrated:
+During development, SQL-only bundles write to their reviewed SQL target. Legacy bundles still use ignored local runtime storage until migrated:
 
 ```text
 storage/
@@ -148,17 +148,17 @@ Initial source interfaces are organized around source-level output types. Manage
 | `calendar_discovery` | Official web sources discovered by search | FOMC and future calendar scheduling where execution needs it. | Historical macro values now use Trading Economics calendar rows instead of official macro API acquisition. |
 | `06_source_etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |
 
-These names are planning names until accepted through registry/contract review.
+These names are source-module planning names until accepted through registry/contract review.
 
 ## Macro Data Source Rule
 
 `macro_data` is removed as an executable acquisition bundle. Macro calendar/value rows for model inputs now come from `07_source_trading_economics_calendar_web`, using visible Trading Economics page data only.
 
-BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-data` should not route manager tasks to the removed `macro_data` bundle.
+BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-source` should not route manager tasks to the removed `macro_data` bundle.
 
 ## Completion Receipt Requirements
 
-After each task attempt during development, `trading-data` should write a local completion receipt under `storage/`. Once durable contracts are accepted, this receipt can move through `trading-storage`. The receipt should eventually record:
+After each task attempt during development, `trading-source` should write a local completion receipt under `storage/`. Once durable contracts are accepted, this receipt can move through `trading-storage`. The receipt should eventually record:
 
 - task key reference and idempotency/replay key;
 - selected script/bundle and code version;
@@ -211,7 +211,7 @@ The following workflow details must be defined before implementation depends on 
 - exact manifest schema;
 - exact ready-signal schema;
 - provider selection and priority rules;
-- macro release event inventory and bundle naming rules;
+- macro release event inventory and source/bundle naming rules;
 - data-source connector layout and credential alias convention;
 - raw vs normalized artifact policy;
 - data partitioning strategy;

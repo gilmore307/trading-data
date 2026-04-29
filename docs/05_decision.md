@@ -791,7 +791,7 @@ After accepting SQL-only output for `01_bundle_market_regime`, the first impleme
 
 Accepted SQL-only model input bundles target a configured PostgreSQL storage target. Tests may inject fake SQL writers, but production bundle semantics must not hard-code SQLite files or local database paths.
 
-`01_bundle_market_regime` uses `storage_target.driver = "postgresql"`, target schema `model_inputs`, and table `trading_data_01_bundle_market_regime`.
+`01_bundle_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_data`, and table `trading_data_01_bundle_market_regime`.
 
 ### Consequences
 
@@ -803,6 +803,7 @@ Accepted SQL-only model input bundles target a configured PostgreSQL storage tar
 ## D053 - Model input bundle manifests are SQL tables
 
 Date: 2026-04-28
+Status: Superseded by D054-D061 for active numbered bundles
 
 ### Context
 
@@ -810,9 +811,9 @@ After `01_bundle_market_regime` became SQL-only, the remaining numbered model in
 
 ### Decision
 
-Model input bundle manifests for layers 2-7 are SQL-only and write to `model_inputs.model_input_artifact_reference`. Layer 1 remains a specialized bar table, `model_inputs.trading_data_01_bundle_market_regime`.
+Historical decision: model input bundle manifests for layers 2-7 were SQL-only and wrote to `model_inputs.model_input_artifact_reference`; Layer 1 remained a specialized bar table. This manifest approach has been superseded by specific bundle output tables under the `trading_data` schema.
 
-The shared manifest table stores point-in-time artifact references keyed by `run_id + bundle + input_role + data_kind + artifact_reference`.
+The old shared manifest table stored point-in-time artifact references keyed by `run_id + bundle + input_role + data_kind + artifact_reference`.
 
 ### Consequences
 
@@ -831,7 +832,7 @@ Layer 2 was incorrectly treated as a generic model-input artifact manifest, and 
 
 ### Decision
 
-`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `model_inputs.trading_data_02_bundle_security_selection`.
+`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `trading_data.trading_data_02_bundle_security_selection`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -852,7 +853,7 @@ Layer 3 was still represented as a generic artifact-reference manifest. The user
 
 ### Decision
 
-`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `model_inputs.trading_data_03_bundle_strategy_selection`.
+`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `trading_data.trading_data_03_bundle_strategy_selection`.
 
 The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
@@ -875,7 +876,7 @@ The user clarified that `TradeQualityModel` does not require a `trading-data` bu
 
 Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
-`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `model_inputs.trading_data_05_bundle_option_expression` with one row per requested snapshot and a nested `contracts` JSONB payload.
+`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `trading_data.trading_data_05_bundle_option_expression` with one row per requested snapshot and a nested `contracts` JSONB payload.
 
 ### Consequences
 
@@ -909,8 +910,8 @@ Rationale: OptionExpressionModel chooses the theoretically best-return and risk-
 
 Consequences:
 
-- Layer 06 writes `model_inputs.trading_data_06_bundle_position_execution`.
-- Layer 07 writes `model_inputs.trading_data_07_bundle_event_overlay`.
+- Layer 06 writes `trading_data.trading_data_06_bundle_position_execution`.
+- Layer 07 writes `trading_data.trading_data_07_bundle_event_overlay`.
 - `07_bundle_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 
@@ -947,7 +948,7 @@ Rename active numbered packages to `NN_bundle_<layer>`:
 - `06_bundle_position_execution`
 - `07_bundle_event_overlay`
 
-CLI entrypoints now use `trading-data-NN-bundle-<layer>` names. SQL output tables remain under `model_inputs` because those tables are consumed by model layers.
+CLI entrypoints now use `trading-data-NN-bundle-<layer>` names. SQL table names are handled separately; bundle outputs must not imply ownership of the complete model input universe.
 
 ### Consequences
 
@@ -965,14 +966,14 @@ The numbered data bundles wrote SQL tables with model-layer business names such 
 
 ### Decision
 
-Accepted numbered bundle SQL outputs use bundle-derived table names under the `model_inputs` schema:
+Accepted numbered bundle SQL outputs use bundle-derived table names under the `trading_data` schema:
 
-- `model_inputs.trading_data_01_bundle_market_regime`
-- `model_inputs.trading_data_02_bundle_security_selection`
-- `model_inputs.trading_data_03_bundle_strategy_selection`
-- `model_inputs.trading_data_05_bundle_option_expression`
-- `model_inputs.trading_data_06_bundle_position_execution`
-- `model_inputs.trading_data_07_bundle_event_overlay`
+- `trading_data.trading_data_01_bundle_market_regime`
+- `trading_data.trading_data_02_bundle_security_selection`
+- `trading_data.trading_data_03_bundle_strategy_selection`
+- `trading_data.trading_data_05_bundle_option_expression`
+- `trading_data.trading_data_06_bundle_position_execution`
+- `trading_data.trading_data_07_bundle_event_overlay`
 
 Use snake_case for SQL identifiers; hyphenated names are only for CLI/package presentation where supported.
 
@@ -980,3 +981,30 @@ Use snake_case for SQL identifiers; hyphenated names are only for CLI/package pr
 
 - Bundle output table names identify the producing `trading-data` bundle.
 - Downstream training/model tables can later use their own precise names without colliding with source-backed bundle outputs.
+
+## D062 - Bundle SQL outputs use trading_data schema, not model_inputs
+
+Date: 2026-04-28
+Status: Accepted
+
+### Context
+
+After bundle table names were changed to follow the producing `trading-data` bundle, Chentong clarified that the SQL schema name `model_inputs` is still wrong. A bundle output is not the model's full input set; models also consume upstream model outputs, candidate artifacts, feature tables, portfolio/execution state, and later training-data tables.
+
+### Decision
+
+Accepted numbered bundle SQL outputs live under schema `trading_data`, not `model_inputs`:
+
+- `trading_data.trading_data_01_bundle_market_regime`
+- `trading_data.trading_data_02_bundle_security_selection`
+- `trading_data.trading_data_03_bundle_strategy_selection`
+- `trading_data.trading_data_05_bundle_option_expression`
+- `trading_data.trading_data_06_bundle_position_execution`
+- `trading_data.trading_data_07_bundle_event_overlay`
+
+The default PostgreSQL storage target id is `trading_data_postgres` and its schema is `trading_data`.
+
+### Consequences
+
+- Do not use `model_inputs` for source-backed `trading-data` bundle outputs.
+- Future model/training repositories can own their own model-input or training-data schemas without semantic collision.

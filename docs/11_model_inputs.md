@@ -28,19 +28,19 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 Each accepted model layer that needs new `trading-data` acquisition has a manager-facing bundle under `src/trading_data/data_bundles/NN_bundle_<layer>/`. These bundles fetch/prepare the data needed by the layer; they are not the complete model-input universe.
 
-Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.trading_data_01_bundle_market_regime`.
+Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `trading_data.trading_data_01_bundle_market_regime`.
 
-Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `model_inputs.trading_data_02_bundle_security_selection`.
+Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `trading_data.trading_data_02_bundle_security_selection`.
 
-Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `model_inputs.trading_data_03_bundle_strategy_selection`.
+Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `trading_data.trading_data_03_bundle_strategy_selection`.
 
 Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model/strategy candidates without new data acquisition or manifest/view contract.
 
-Layer 5 currently accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `model_inputs.trading_data_05_bundle_option_expression`. This is scheduled to become contract-level entry/exit snapshot rows because the model compares contracts.
+Layer 5 currently accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `trading_data.trading_data_05_bundle_option_expression`. This is scheduled to become contract-level entry/exit snapshot rows because the model compares contracts.
 
-Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `model_inputs.trading_data_06_bundle_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
+Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `trading_data.trading_data_06_bundle_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
 
-Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `model_inputs.trading_data_07_bundle_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
+Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `trading_data.trading_data_07_bundle_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
 
 ## Derived Data Products Added for Model Needs
 
@@ -70,7 +70,7 @@ Boundary:
 
 - Derived feature artifact, not a raw provider table.
 - Must preserve `available_time`; do not assume a holdings file is usable before it was visible.
-- Superseded as the primary Layer 2 bundle output by `model_inputs.trading_data_02_bundle_security_selection`. Future stock-level exposure features should derive from the SQL holdings table plus reviewed ETF/sector/theme scores.
+- Superseded as the primary Layer 2 bundle output by `trading_data.trading_data_02_bundle_security_selection`. Future stock-level exposure features should derive from the SQL holdings table plus reviewed ETF/sector/theme scores.
 
 ### `equity_abnormal_activity_event`
 

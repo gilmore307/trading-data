@@ -9,10 +9,10 @@ from trading_data.source_availability.secrets import load_secret_alias, public_s
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 DEFAULT_POSTGRES_STORAGE_TARGET = {
-    "id": "trading_data_model_inputs_postgres",
+    "id": "trading_data_postgres",
     "driver": "postgresql",
     "secret_alias": "trading_storage_postgres",
-    "schema": "model_inputs",
+    "schema": "trading_data",
     "create_table": True,
     "batch_size": 5000,
 }

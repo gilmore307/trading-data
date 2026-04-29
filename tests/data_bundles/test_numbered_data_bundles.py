@@ -48,7 +48,7 @@ class FakeSqlWriter:
 
     def write_rows(self, *, table, columns, rows, key_columns):
         self.calls.append({"table": table, "columns": list(columns), "rows": list(rows), "key_columns": list(key_columns)})
-        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "model_inputs", "table": table, "qualified_table": f"model_inputs.{table}", "rows_written": len(rows)}
+        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"trading_data.{table}", "rows_written": len(rows)}
 
 
 class Secret:
@@ -84,7 +84,7 @@ class NumberedDataBundleTests(unittest.TestCase):
                 self.assertEqual(result.status, "succeeded")
                 self.assertEqual(result.row_counts["trading_data_01_bundle_market_regime"], 2)
                 self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_bundle_market_regime.csv").exists())
-                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "model_inputs.trading_data_01_bundle_market_regime"])
+                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "trading_data.trading_data_01_bundle_market_regime"])
                 self.assertEqual(len(writer.calls), 1)
                 call = writer.calls[0]
                 self.assertEqual(call["table"], "trading_data_01_bundle_market_regime")

@@ -36,7 +36,7 @@ SQL_FIELDS = [
     "sector_type",
 ]
 KEY_COLUMNS = ["etf_symbol", "as_of_date", "holding_symbol"]
-MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-main/storage/shared/market_etf_universe.csv")
+MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-storage/main/shared/market_etf_universe.csv")
 EXCLUDED_ASSET_PATTERNS = re.compile(r"\b(cash|money market|treasury|bond|fixed income|future|futures|swap|option|warrant|fund|etf|preferred)\b", re.I)
 NON_US_MARKER = re.compile(r"\b(adr|gdr|foreign|depositary|ltd|plc|s\.a\.|ag|nv|oyj|asa|spa|se|kk|co ltd|limited)\b", re.I)
 

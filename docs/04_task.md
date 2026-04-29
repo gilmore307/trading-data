@@ -84,6 +84,6 @@
 - Recorded ThetaData as registered provider terminology for option data, with connector/JAR/credential layout deferred.
 - Recorded Alpaca as first registered stock/ETF data provider config surface using source-level secret alias `alpaca`.
 - Recorded OKX as first registered crypto provider config surface using a `trading-main` source-level secret alias and non-secret metadata.
-- Added optional data-domain and data-source docs for the three data/model lanes and provider connection boundary.
+- Added optional data-organization and data-source docs for source/bundle/output planning and provider connection boundaries.
 - Created initial `trading-data` docs spine and repository boundary.
 - Added initial `.gitignore` for local environments, generated data, artifacts, logs, and secrets.

@@ -67,7 +67,7 @@ The manager-issued task key file should eventually include at least:
 
 - stable task identity;
 - requested acquisition script or script bundle;
-- target data domain;
+- requested data bundle, output table/category, or source interface;
 - provider/source identifiers;
 - symbols, underlyings, ETF identifiers, macro series, calendar scope, or source URLs as applicable;
 - historical time range, snapshot timestamp, granularity, timezone, and market/session assumptions;

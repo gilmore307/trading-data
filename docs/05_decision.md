@@ -139,7 +139,7 @@ Date: 2026-04-25
 
 ### Context
 
-The required docs spine covers scope, context, workflow, acceptance, tasks, decisions, and memory. `trading-data` also needs component-specific guides for data domains and data-source boundaries.
+The required docs spine covers scope, context, workflow, acceptance, tasks, decisions, and memory. `trading-data` also needs component-specific guides for data organization and data-source boundaries.
 
 ### Decision
 
@@ -147,15 +147,15 @@ Allow optional docs after `06_memory.md` when they own a clear component-specifi
 
 ### Rationale
 
-Provider and data-domain planning is too important to bury inside broad files, but it should remain docs-only until implementation contracts are accepted.
+Provider, bundle, and data-organization planning is too important to bury inside broad files, but it should remain docs-only until implementation contracts are accepted.
 
 ### Consequences
 
-- `docs/07_data_domains.md` owns the market board, instrument, and option data-domain planning surface.
+- `docs/07_data_organization.md` owns the current source/bundle/output organization surface and maps the older market board, instrument, and option domain labels as historical planning language.
 - `docs/08_data_sources.md` owns provider/source connector, API, token, and secret-alias planning boundaries.
 - Optional docs must be listed in `docs/README.md`.
 
-## D008 - Data work is organized into three purpose-driven domains
+## D008 - Data work was initially organized into three purpose-driven domains
 
 Date: 2026-04-25
 
@@ -173,9 +173,10 @@ Organizing by research purpose keeps provider composition and cleaning requireme
 
 ### Consequences
 
-- `trading-data` owns acquisition, cleaning, validation, and output production for these domains.
+- `trading-data` owns acquisition, cleaning, validation, and output production for these planning domains.
 - `trading-model` owns later model training, labels, inference, and model evaluation.
 - Exact domain keys are not cross-repository contract values until registered through `trading-main` if needed.
+- This decision is historical planning context. Current docs should prefer source-backed bundles, accepted SQL outputs, and model-layer mappings over broad domain labels.
 
 ## D009 - Source connectors come before domain pipelines
 
@@ -183,7 +184,7 @@ Date: 2026-04-25
 
 ### Context
 
-Each data domain is a composition of data from one or more providers. Implementation should first establish source connector boundaries, authentication, quotas, and provider capabilities before domain pipelines depend on live APIs.
+Each manager-facing bundle may compose data from one or more providers. Implementation should first establish source connector boundaries, authentication, quotas, and provider capabilities before bundles depend on live APIs.
 
 ### Decision
 
@@ -272,7 +273,7 @@ Date: 2026-04-26
 
 ### Context
 
-The user provided API keys for FRED, Census, BEA, and BLS. These providers support macroeconomic, demographic, labor, and market-context data acquisition for data-domain planning.
+The user provided API keys for FRED, Census, BEA, and BLS. These providers support macroeconomic, demographic, labor, and market-context data acquisition for source-backed bundle planning.
 
 ### Decision
 

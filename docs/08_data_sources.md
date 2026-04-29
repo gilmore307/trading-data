@@ -2,7 +2,7 @@
 
 `trading-data` must connect to external and approved local data sources before it can produce cleaned data outputs.
 
-This file defines the source-connection boundary: where provider adapters belong, how credentials are referenced, and what must be documented before a provider can become part of a data domain pipeline.
+This file defines the source-connection boundary: where provider adapters belong, how credentials are referenced, and what must be documented before a source becomes part of a manager-facing bundle.
 
 ## Source Layer Purpose
 
@@ -28,25 +28,23 @@ It should not own:
 - durable storage policy;
 - provider credentials or secret values.
 
-## Future Source Layout
+## Current Source Layout
 
-No source package exists yet. When implementation starts, the first source area should be a provider/source connector layer, with exact package layout accepted before code lands.
-
-A likely Python package shape is:
+The accepted source and bundle implementation packages are:
 
 ```text
 src/
-  sources/          Provider adapters and source capability descriptors.
-  domains/          Domain assembly for market_board_data, instrument_data, option_data.
-  normalize/        Provider-to-output normalization logic.
-  validate/         Data quality checks.
-  outputs/          Artifact/manifests/ready-signal writers after contracts are accepted.
-tests/              Component tests, with README inventory for each test script.
+  data_sources/       Smallest-unit source/provider acquisition and normalization interfaces.
+  source_interfaces/  Approved local source-output interfaces consumed by bundles.
+  data_bundles/       Manager-facing bundle orchestration for accepted acquisition/model-input routes.
+  storage/            Local SQL/output helpers for reviewed bundle outputs.
+  source_availability/ Bounded source availability probes and inventory support.
+tests/                Component tests for sources, interfaces, storage, and bundles.
 ```
 
 Shared helpers belong in `trading-main`, not in a local `helpers/` folder.
 
-This is a planning shape, not an accepted implementation contract. Any final source layout must update docs and tests in the same change.
+Any source layout change must update docs and tests in the same change.
 
 ## Secret And Credential Rule
 
@@ -106,7 +104,7 @@ Source connector scripts should be split by historical data type and usage bundl
 - ThetaData option 1-minute bundle: one bundle for `chain_timeline_1m`, `quote_1m`, `trade_1m`, `ohlc_1m`, `greeks_1m`, and `open_interest_1m`.
 - ThetaData option snapshot bundle: one separate bundle for requested-time snapshot, open interest, and Greeks.
 - OKX bars: one bars-only script/bundle.
-- Macro data: one parameterized bundle for FRED-unique series, Census, BEA, BLS, U.S. Treasury Fiscal Data, and official macro source pages; task params select the concrete provider/source, dataset/release/series, cadence, period, and output target.
+- Macro/event inputs: use accepted visible-page or official-source bundles such as Trading Economics calendar web rows and future reviewed official calendar/source interfaces. The old executable `macro_data` route is retired.
 - Calendar discovery: one web-search-backed source workflow for FOMC and official macro release calendars.
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
 - SEC company financials: one official SEC EDGAR workflow for public-company financial report facts, filings/submissions metadata, and future normalized statement outputs.
@@ -182,7 +180,7 @@ Each provider added later should document:
 | Field | Meaning |
 |---|---|
 | Provider name | Human-readable provider name. |
-| Provider role | Which data domain(s) it supports. |
+| Provider role | Which source interface, bundle, or model-input layer it supports. |
 | Secret alias | Alias path only; never the secret value. |
 | Authentication method | Token, API key, OAuth, signed request, local file, etc. |
 | Supported instruments | Equities, ETFs, options, indexes, macro series, calendars, etc. |
@@ -207,9 +205,9 @@ A provider/source connector is acceptable only when:
 
 ## Open Provider Decisions
 
-- Which additional non-OKX/non-economic provider(s), if any, support market board data?
-- Which non-Alpaca provider(s), if any, support non-crypto instrument data?
-- ThetaData connector/JAR/credential layout for the option data domain.
+- Which additional non-OKX/non-economic provider(s), if any, support broad-market or market-regime bundles?
+- Which non-Alpaca provider(s), if any, support equity/instrument bundle inputs?
+- ThetaData connector/JAR/credential layout for options source interfaces and option-expression/position-execution bundles.
 - Which additional source-level secret aliases should be registered in `trading-main`?
 - U.S. Treasury Fiscal Data dataset and endpoint coverage for federal finance context.
 - Macro release event inventory, release-key naming, and per-release bundle boundaries.

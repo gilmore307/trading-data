@@ -9,7 +9,7 @@ It does not own shared storage policy, strategy logic, model research, execution
 ## Top-Level Structure
 
 ```text
-docs/        Required docs spine plus component-specific guides for data domains and data sources.
+docs/        Required docs spine plus component-specific guides for data organization and data sources.
 src/         Importable data-source, source-interface, bundle, storage, and probe implementation packages.
 tests/       First-party tests for data-source pipelines, interface probes, storage, and bundles.
 ```
@@ -27,9 +27,11 @@ docs/
   04_task.md
   05_decision.md
   06_memory.md
-  07_data_domains.md
+  07_data_organization.md
   08_data_sources.md
   09_api_templates.md
+  10_source_availability.md
+  11_model_inputs.md
 ```
 
 ## Input And Output
@@ -42,15 +44,11 @@ Durable output: storage-backed SQL/artifact outputs plus manifests and ready sig
 
 `trading-data` fetches and cleans historical data; realtime feeds belong to `trading-execution`, and generated datasets must not be stored in Git.
 
-## Data Domains
+## Data Organization
 
-`trading-data` currently plans three data domains by research purpose:
+`trading-data` now organizes work around source-backed, manager-facing data bundles and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
 
-- market board data / 盘面数据;
-- instrument data / 标的数据;
-- option data / 期权数据.
-
-See `docs/07_data_domains.md`. API-specific bundle design guidance is in `docs/09_api_templates.md`.
+See `docs/07_data_organization.md`. API-specific bundle design guidance is in `docs/09_api_templates.md`; model-layer mapping is in `docs/11_model_inputs.md`.
 
 ## Platform Dependencies
 

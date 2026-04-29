@@ -11,7 +11,7 @@ This directory is the authoritative documentation set for `trading-data`: the re
 - `04_task.md` — current task state, queued work, blockers, and recently accepted work.
 - `05_decision.md` — ratified repository decisions.
 - `06_memory.md` — durable local continuity that does not fit narrower docs.
-- `07_data_domains.md` — optional guide for the three data domains: market board, instrument, and option data.
+- `07_data_organization.md` — optional guide for source-backed bundles, outputs, and the historical domain-label mapping.
 - `08_data_sources.md` — optional guide for data-source connectors, provider credentials, and API/token boundaries.
 - `09_api_templates.md` — optional guide for applying `trading-main/templates/data_tasks/` to API-specific bundles.
 - `10_source_availability.md` — optional inventory of verified source availability and registered data-kind groups.

@@ -18,17 +18,13 @@ The trading system depends on reliable upstream data. Data collection and normal
 | `trading-dashboard` | Displays already-produced data outputs and metadata; it should not become a data source of truth. |
 
 
-## Data Domains
+## Data Organization
 
-`trading-data` currently organizes data requests into three purpose-driven domains:
+`trading-data` now organizes work around source-backed data bundles and accepted output contracts rather than broad domain labels. The original market-board / instrument / option grouping remains useful historical product language, but concrete runtime boundaries should be bundle, source, table, and model-layer contracts.
 
-- market board data / 盘面数据: data collected to study broad market-board or market-regime conditions;
-- instrument data / 标的数据: data collected to study a specific tradable symbol or instrument;
-- option data / 期权数据: data collected to study options conditions for a specific underlying.
+`trading-data` owns acquisition, cleaning, validation, and output production. Model design, labels, training, and inference belong in `trading-model`.
 
-These domains correspond to later model lanes, but `trading-data` only owns data acquisition, cleaning, and output production. Model design, labels, training, and inference belong in `trading-model`.
-
-See `docs/07_data_domains.md`.
+See `docs/07_data_organization.md` and `docs/11_model_inputs.md`.
 
 ## Expected External Interfaces
 

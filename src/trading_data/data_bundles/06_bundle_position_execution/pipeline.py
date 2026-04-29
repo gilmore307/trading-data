@@ -16,7 +16,7 @@ from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 BUNDLE = "06_bundle_position_execution"
 MODEL_ID = "position_execution_model"
-OUTPUT_TABLE = "position_execution_option_contract_timeseries"
+OUTPUT_TABLE = "trading_data_06_bundle_position_execution"
 ET = ZoneInfo("America/New_York")
 DEFAULT_TIMEFRAME = "1Min"
 EXIT_EXTENSION_HOURS = 1

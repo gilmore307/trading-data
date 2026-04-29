@@ -16,7 +16,7 @@ from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 BUNDLE = "05_bundle_option_expression"
 MODEL_ID = "option_expression_model"
-OUTPUT_TABLE = "option_expression_option_chain_snapshot"
+OUTPUT_TABLE = "trading_data_05_bundle_option_expression"
 SQL_FIELDS = ["run_id", "task_id", "underlying", "snapshot_time", "contract_count", "contracts"]
 KEY_COLUMNS = ["run_id", "underlying", "snapshot_time"]
 

@@ -35,7 +35,7 @@ Optional per-contract fields:
 Final saved output is SQL-only:
 
 ```text
-model_inputs.position_execution_option_contract_timeseries
+model_inputs.trading_data_06_bundle_position_execution
 ```
 
 Natural key:

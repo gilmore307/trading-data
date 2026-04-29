@@ -27,7 +27,7 @@ Liquidity thresholds and feature windows are intentionally not in this bundle. S
 Final saved output is SQL-only:
 
 ```text
-model_inputs.strategy_selection_symbol_bar_liquidity
+model_inputs.trading_data_03_bundle_strategy_selection
 ```
 
 Natural key:

@@ -42,7 +42,7 @@ Exclude:
 Final saved output is SQL-only:
 
 ```text
-model_inputs.security_selection_us_equity_etf_holding
+model_inputs.trading_data_02_bundle_security_selection
 ```
 
 Natural key:

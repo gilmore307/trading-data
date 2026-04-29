@@ -49,10 +49,10 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
             sql_writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=sql_writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["security_selection_us_equity_etf_holding"], 1)
+            self.assertEqual(result.row_counts["trading_data_02_bundle_security_selection"], 1)
             self.assertEqual(len(sql_writer.calls), 1)
             call = sql_writer.calls[0]
-            self.assertEqual(call["table"], "security_selection_us_equity_etf_holding")
+            self.assertEqual(call["table"], "trading_data_02_bundle_security_selection")
             self.assertEqual(call["key_columns"], ["run_id", "etf_symbol", "as_of_date", "holding_symbol"])
             self.assertEqual(call["columns"], ["run_id", "task_id", "etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
             rows = call["rows"]

@@ -40,7 +40,7 @@ Each event row requires:
 Final saved output is SQL-only:
 
 ```text
-model_inputs.event_overlay_event
+model_inputs.trading_data_07_bundle_event_overlay
 ```
 
 Natural key:

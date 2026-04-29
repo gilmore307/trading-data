@@ -110,7 +110,6 @@ RETIRED_LOCAL_FIELD_PAYLOADS = {
     "fld_OPT010": "greeks",
     "fld_OPT011": "underlying_context",
     "fld_OPT012": "derived",
-    "fld_OPT013": "timestamp",
     "fld_OPT014": "timeframe",
     "fld_OPT015": "open",
     "fld_OPT016": "high",
@@ -213,7 +212,6 @@ IV_CONTEXT = field("fld_OPT009")
 GREEKS_CONTEXT = field("fld_OPT010")
 OPTION_UNDERLYING_CONTEXT = field("fld_OPT011")
 DERIVED_CONTEXT = field("fld_OPT012")
-DATA_TIMESTAMP = field("fld_OPT013")
 QUOTE_BID = field("fld_OPT032")
 QUOTE_ASK = field("fld_OPT033")
 QUOTE_MID = field("fld_OPT034")
@@ -520,7 +518,6 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
             f(OPTION_STRIKE): strike,
             f(OPTION_QUOTE_CONTEXT): _compact(
                 {
-                    f(DATA_TIMESTAMP): _parse_thetadata_timestamp(quote.get("timestamp")),
                     f(QUOTE_BID): bid,
                     f(QUOTE_ASK): ask,
                     f(QUOTE_MID): mid,
@@ -536,14 +533,12 @@ def clean(context: BundleContext, fetched: FetchedSnapshot) -> tuple[StepResult,
             ),
             f(IV_CONTEXT): _compact(
                 {
-                    f(DATA_TIMESTAMP): _parse_thetadata_timestamp(iv.get("timestamp")),
                     f(IMPLIED_VOL): _float(iv.get("implied_vol")),
                     f(IV_ERROR): _float(iv.get("iv_error")),
                 }
             ),
             f(GREEKS_CONTEXT): _compact(
                 {
-                    f(DATA_TIMESTAMP): _parse_thetadata_timestamp(greeks.get("timestamp")),
                     f(GREEK_DELTA): _float(greeks.get("delta")),
                     f(GREEK_THETA): _float(greeks.get("theta")),
                     f(GREEK_VEGA): _float(greeks.get("vega")),

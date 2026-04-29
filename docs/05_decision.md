@@ -1055,3 +1055,24 @@ Console entrypoints import these top-level packages directly. Tests and docs sho
 - Do not recreate `src/trading_data/`.
 - Package paths now mirror owned implementation boundaries without a repository-name wrapper.
 - Registry paths in `trading-main` must use `trading-data/src/<package>/...`.
+
+## D063 - Option snapshot uses snapshot_time instead of component row timestamps
+
+Date: 2026-04-29
+Status: Accepted
+
+### Context
+
+ThetaData option selection snapshots merge quote, implied-volatility, and Greeks snapshot endpoint rows. Those provider rows can carry separate quote/IV/Greeks timestamps. Chentong clarified that for this bundle the meaningful business time is the requested snapshot time: at that moment, the returned quote, IV, and Greeks values are the latest visible data available to the strategy.
+
+### Decision
+
+For `09_source_thetadata_option_selection_snapshot` and downstream `05_bundle_option_expression`, use `snapshot_time` as the point-in-time clock. Do not preserve quote/IV/Greeks provider row timestamps in the source snapshot contract or in the `bundle_05_option_expression` SQL business table.
+
+Keep other fields that are business values or source context, such as quote prices/sizes/exchange/condition, IV, Greeks, underlying price, underlying timestamp, and derived days-to-expiration, unless separately removed by a later contract decision.
+
+### Consequences
+
+- `bundle_05_option_expression` no longer has `quote_timestamp`, `iv_timestamp`, or `greeks_timestamp` columns.
+- Source snapshot nested `quote`, `iv`, and `greeks` contexts no longer include a generic `timestamp` field.
+- The snapshot table semantics are simpler: one requested snapshot clock plus visible contract state.

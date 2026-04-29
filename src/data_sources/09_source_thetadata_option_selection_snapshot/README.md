@@ -30,7 +30,7 @@ The bundle uses ThetaData Terminal v3 snapshot endpoints:
 - `/v3/option/snapshot/greeks/implied_volatility`
 - `/v3/option/snapshot/greeks/first_order`
 
-The request passes the underlying, wildcard expiration, `date`, and ET `ms_of_day` derived from `snapshot_time`. Provider snapshot rows may carry per-contract timestamps that differ slightly from the requested context; the final artifact preserves those per-contract ET timestamps.
+The request passes the underlying, wildcard expiration, `date`, and ET `ms_of_day` derived from `snapshot_time`. The final artifact treats `snapshot_time` as the point-in-time clock and does not preserve quote/IV/Greeks row timestamps from the provider snapshot responses.
 
 ## Development outputs
 

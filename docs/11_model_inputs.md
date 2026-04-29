@@ -36,7 +36,7 @@ Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbo
 
 Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model/strategy candidates without new data acquisition or manifest/view contract.
 
-Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes SQL table `bundle_05_option_expression` as one row per visible option contract per snapshot.
+Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes SQL table `bundle_05_option_expression` as one row per visible option contract per snapshot. `snapshot_time` is the point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted from the business table.
 
 Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `bundle_06_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
 

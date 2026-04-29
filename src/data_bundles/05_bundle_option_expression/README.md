@@ -43,7 +43,6 @@ Columns:
 - `expiration`
 - `option_right_type`
 - `strike`
-- `quote_timestamp`
 - `bid`
 - `ask`
 - `mid`
@@ -55,10 +54,8 @@ Columns:
 - `ask_exchange`
 - `bid_condition`
 - `ask_condition`
-- `iv_timestamp`
 - `implied_vol`
 - `iv_error`
-- `greeks_timestamp`
 - `delta`
 - `theta`
 - `vega`
@@ -71,4 +68,4 @@ Columns:
 
 `option_symbol` uses the same normalized fallback format consumed by Layer 06 when no provider-native symbol is supplied: `<UNDERLYING>_<expiration>_<C|P>_<strike>`.
 
-The final table intentionally has no nested `contracts` JSONB column. Raw ThetaData responses and source snapshot nesting are transient source evidence. `run_id`, `task_id`, and write/audit timestamps live in manifests and completion receipts, not in this business table. No saved bundle CSV is written.
+The final table intentionally has no nested `contracts` JSONB column. Raw ThetaData responses and source snapshot nesting are transient source evidence. `snapshot_time` is the table's point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted. `run_id`, `task_id`, and write/audit timestamps live in manifests and completion receipts, not in this business table. No saved bundle CSV is written.

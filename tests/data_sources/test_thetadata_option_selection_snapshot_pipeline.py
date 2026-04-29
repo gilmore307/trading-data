@@ -93,7 +93,7 @@ class FakeThetaDataClient:
 
 
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
-    def test_run_saves_final_csv_only_with_et_timestamps(self):
+    def test_run_saves_final_csv_only_with_snapshot_clock(self):
         with tempfile.TemporaryDirectory() as tmp:
             output_root = Path(tmp) / "09_source_thetadata_option_selection_snapshot_task_test"
             task_key = {
@@ -124,7 +124,9 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
 
             contract = json.loads(snapshot["contracts"])[0]
             self.assertEqual(contract["option_right_type"], "CALL")
-            self.assertEqual(contract["quote"]["timestamp"], "2026-04-24T09:30:02.260000-04:00")
+            self.assertNotIn("timestamp", contract["quote"])
+            self.assertNotIn("timestamp", contract["iv"])
+            self.assertNotIn("timestamp", contract["greeks"])
             self.assertEqual(contract["quote"]["mid"], 1.2)
             self.assertEqual(contract["quote"]["spread"], 0.10000000000000009)
             self.assertEqual(contract["iv"]["implied_vol"], 0.64)

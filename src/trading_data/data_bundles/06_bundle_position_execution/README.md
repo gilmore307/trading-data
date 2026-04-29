@@ -35,7 +35,7 @@ Optional per-contract fields:
 Final saved output is SQL-only:
 
 ```text
-trading_data.trading_data_06_bundle_position_execution
+trading_data.bundle_06_position_execution
 ```
 
 Natural key:

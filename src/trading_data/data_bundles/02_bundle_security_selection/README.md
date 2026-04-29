@@ -42,7 +42,7 @@ Exclude:
 Final saved output is SQL-only:
 
 ```text
-trading_data.trading_data_02_bundle_security_selection
+trading_data.bundle_02_security_selection
 ```
 
 Natural key:

@@ -82,12 +82,12 @@ class NumberedDataBundleTests(unittest.TestCase):
                 writer = FakeSqlWriter()
                 result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=writer)
                 self.assertEqual(result.status, "succeeded")
-                self.assertEqual(result.row_counts["trading_data_01_bundle_market_regime"], 2)
+                self.assertEqual(result.row_counts["bundle_01_market_regime"], 2)
                 self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_bundle_market_regime.csv").exists())
-                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "trading_data.trading_data_01_bundle_market_regime"])
+                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "trading_data.bundle_01_market_regime"])
                 self.assertEqual(len(writer.calls), 1)
                 call = writer.calls[0]
-                self.assertEqual(call["table"], "trading_data_01_bundle_market_regime")
+                self.assertEqual(call["table"], "bundle_01_market_regime")
                 self.assertEqual(call["key_columns"], ["run_id", "symbol", "timeframe", "timestamp"])
                 rows = sorted(call["rows"], key=lambda row: row["symbol"])
                 self.assertEqual(len(rows), 2)
@@ -112,9 +112,9 @@ class NumberedDataBundleTests(unittest.TestCase):
                 writer = FakeSqlWriter()
                 result = module.run(task_key, run_id="run", client=FakeStrategySelectionClient(), sql_writer=writer)
                 self.assertEqual(result.status, "succeeded")
-                self.assertEqual(result.row_counts["trading_data_03_bundle_strategy_selection"], 1)
+                self.assertEqual(result.row_counts["bundle_03_strategy_selection"], 1)
                 call = writer.calls[0]
-                self.assertEqual(call["table"], "trading_data_03_bundle_strategy_selection")
+                self.assertEqual(call["table"], "bundle_03_strategy_selection")
                 self.assertEqual(call["key_columns"], ["run_id", "symbol", "timeframe", "timestamp"])
                 row = call["rows"][0]
                 self.assertEqual(row["symbol"], "NVDA")
@@ -139,10 +139,10 @@ class NumberedDataBundleTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", client=FakeThetaDataClient(), sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["trading_data_05_bundle_option_expression"], 1)
+            self.assertEqual(result.row_counts["bundle_05_option_expression"], 1)
             self.assertEqual(result.row_counts["option_chain_snapshot_contracts"], 1)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "trading_data_05_bundle_option_expression")
+            self.assertEqual(call["table"], "bundle_05_option_expression")
             self.assertEqual(call["key_columns"], ["run_id", "underlying", "snapshot_time"])
             row = call["rows"][0]
             self.assertEqual(row["underlying"], "AAPL")
@@ -181,9 +181,9 @@ class NumberedDataBundleTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["trading_data_06_bundle_position_execution"], 2)
+            self.assertEqual(result.row_counts["bundle_06_position_execution"], 2)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "trading_data_06_bundle_position_execution")
+            self.assertEqual(call["table"], "bundle_06_position_execution")
             self.assertEqual(call["key_columns"], ["option_symbol", "timeframe", "timestamp"])
             self.assertNotIn("run_id", call["columns"])
             rows = call["rows"]
@@ -235,9 +235,9 @@ class NumberedDataBundleTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["trading_data_07_bundle_event_overlay"], 2)
+            self.assertEqual(result.row_counts["bundle_07_event_overlay"], 2)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "trading_data_07_bundle_event_overlay")
+            self.assertEqual(call["table"], "bundle_07_event_overlay")
             self.assertEqual(call["key_columns"], ["event_id"])
             self.assertNotIn("run_id", call["columns"])
             self.assertEqual({row["information_role_type"] for row in call["rows"]}, {"lagging_evidence", "prior_signal"})

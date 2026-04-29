@@ -771,7 +771,7 @@ The first MarketRegimeModel bundle now fetches ETF bars directly from the config
 
 ### Decision
 
-`01_bundle_market_regime` writes its canonical saved output to SQL table `trading_data_01_bundle_market_regime`. The table is a single long table across symbols and bar grains, keyed by `run_id + symbol + timeframe + timestamp`.
+`01_bundle_market_regime` writes its canonical saved output to SQL table `bundle_01_market_regime`. The table is a single long table across symbols and bar grains, keyed by `run_id + symbol + timeframe + timestamp`.
 
 ### Consequences
 
@@ -791,7 +791,7 @@ After accepting SQL-only output for `01_bundle_market_regime`, the first impleme
 
 Accepted SQL-only model input bundles target a configured PostgreSQL storage target. Tests may inject fake SQL writers, but production bundle semantics must not hard-code SQLite files or local database paths.
 
-`01_bundle_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_data`, and table `trading_data_01_bundle_market_regime`.
+`01_bundle_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_data`, and table `bundle_01_market_regime`.
 
 ### Consequences
 
@@ -832,7 +832,7 @@ Layer 2 was incorrectly treated as a generic model-input artifact manifest, and 
 
 ### Decision
 
-`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `trading_data.trading_data_02_bundle_security_selection`.
+`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `trading_data.bundle_02_security_selection`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -853,7 +853,7 @@ Layer 3 was still represented as a generic artifact-reference manifest. The user
 
 ### Decision
 
-`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `trading_data.trading_data_03_bundle_strategy_selection`.
+`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `trading_data.bundle_03_strategy_selection`.
 
 The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
@@ -876,7 +876,7 @@ The user clarified that `TradeQualityModel` does not require a `trading-data` bu
 
 Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
-`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `trading_data.trading_data_05_bundle_option_expression` with one row per requested snapshot and a nested `contracts` JSONB payload.
+`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `trading_data.bundle_05_option_expression` with one row per requested snapshot and a nested `contracts` JSONB payload.
 
 ### Consequences
 
@@ -910,8 +910,8 @@ Rationale: OptionExpressionModel chooses the theoretically best-return and risk-
 
 Consequences:
 
-- Layer 06 writes `trading_data.trading_data_06_bundle_position_execution`.
-- Layer 07 writes `trading_data.trading_data_07_bundle_event_overlay`.
+- Layer 06 writes `trading_data.bundle_06_position_execution`.
+- Layer 07 writes `trading_data.bundle_07_event_overlay`.
 - `07_bundle_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 
@@ -968,12 +968,12 @@ The numbered data bundles wrote SQL tables with model-layer business names such 
 
 Accepted numbered bundle SQL outputs use bundle-derived table names under the `trading_data` schema:
 
-- `trading_data.trading_data_01_bundle_market_regime`
-- `trading_data.trading_data_02_bundle_security_selection`
-- `trading_data.trading_data_03_bundle_strategy_selection`
-- `trading_data.trading_data_05_bundle_option_expression`
-- `trading_data.trading_data_06_bundle_position_execution`
-- `trading_data.trading_data_07_bundle_event_overlay`
+- `trading_data.bundle_01_market_regime`
+- `trading_data.bundle_02_security_selection`
+- `trading_data.bundle_03_strategy_selection`
+- `trading_data.bundle_05_option_expression`
+- `trading_data.bundle_06_position_execution`
+- `trading_data.bundle_07_event_overlay`
 
 Use snake_case for SQL identifiers; hyphenated names are only for CLI/package presentation where supported.
 
@@ -995,12 +995,12 @@ After bundle table names were changed to follow the producing `trading-data` bun
 
 Accepted numbered bundle SQL outputs live under schema `trading_data`, not `model_inputs`:
 
-- `trading_data.trading_data_01_bundle_market_regime`
-- `trading_data.trading_data_02_bundle_security_selection`
-- `trading_data.trading_data_03_bundle_strategy_selection`
-- `trading_data.trading_data_05_bundle_option_expression`
-- `trading_data.trading_data_06_bundle_position_execution`
-- `trading_data.trading_data_07_bundle_event_overlay`
+- `trading_data.bundle_01_market_regime`
+- `trading_data.bundle_02_security_selection`
+- `trading_data.bundle_03_strategy_selection`
+- `trading_data.bundle_05_option_expression`
+- `trading_data.bundle_06_position_execution`
+- `trading_data.bundle_07_event_overlay`
 
 The default PostgreSQL storage target id is `trading_data_postgres` and its schema is `trading_data`.
 

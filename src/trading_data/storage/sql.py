@@ -146,20 +146,20 @@ class PostgresSqlTableWriter:
 
 
 def _table_ddl(table: str, qualified_table: str) -> str | None:
-    if table == "trading_data_01_bundle_market_regime":
+    if table == "bundle_01_market_regime":
         return _market_regime_table_ddl(qualified_table)
     if table == "model_input_artifact_reference":
         return _model_input_artifact_reference_ddl(qualified_table)
-    if table == "trading_data_02_bundle_security_selection":
-        return _trading_data_02_bundle_security_selection_ddl(qualified_table)
-    if table == "trading_data_03_bundle_strategy_selection":
-        return _trading_data_03_bundle_strategy_selection_ddl(qualified_table)
-    if table == "trading_data_05_bundle_option_expression":
-        return _trading_data_05_bundle_option_expression_ddl(qualified_table)
-    if table == "trading_data_06_bundle_position_execution":
-        return _trading_data_06_bundle_position_execution_ddl(qualified_table)
-    if table == "trading_data_07_bundle_event_overlay":
-        return _trading_data_07_bundle_event_overlay_ddl(qualified_table)
+    if table == "bundle_02_security_selection":
+        return _bundle_02_security_selection_ddl(qualified_table)
+    if table == "bundle_03_strategy_selection":
+        return _bundle_03_strategy_selection_ddl(qualified_table)
+    if table == "bundle_05_option_expression":
+        return _bundle_05_option_expression_ddl(qualified_table)
+    if table == "bundle_06_position_execution":
+        return _bundle_06_position_execution_ddl(qualified_table)
+    if table == "bundle_07_event_overlay":
+        return _bundle_07_event_overlay_ddl(qualified_table)
     return None
 
 
@@ -204,7 +204,7 @@ def _model_input_artifact_reference_ddl(qualified_table: str) -> str:
     """
 
 
-def _trading_data_02_bundle_security_selection_ddl(qualified_table: str) -> str:
+def _bundle_02_security_selection_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         run_id TEXT NOT NULL,
@@ -226,7 +226,7 @@ def _trading_data_02_bundle_security_selection_ddl(qualified_table: str) -> str:
     """
 
 
-def _trading_data_03_bundle_strategy_selection_ddl(qualified_table: str) -> str:
+def _bundle_03_strategy_selection_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         run_id TEXT NOT NULL,
@@ -256,7 +256,7 @@ def _trading_data_03_bundle_strategy_selection_ddl(qualified_table: str) -> str:
     """
 
 
-def _trading_data_05_bundle_option_expression_ddl(qualified_table: str) -> str:
+def _bundle_05_option_expression_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         run_id TEXT NOT NULL,
@@ -270,7 +270,7 @@ def _trading_data_05_bundle_option_expression_ddl(qualified_table: str) -> str:
     """
 
 
-def _trading_data_06_bundle_position_execution_ddl(qualified_table: str) -> str:
+def _bundle_06_position_execution_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         underlying TEXT NOT NULL,
@@ -292,7 +292,7 @@ def _trading_data_06_bundle_position_execution_ddl(qualified_table: str) -> str:
     """
 
 
-def _trading_data_07_bundle_event_overlay_ddl(qualified_table: str) -> str:
+def _bundle_07_event_overlay_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         event_id TEXT NOT NULL,

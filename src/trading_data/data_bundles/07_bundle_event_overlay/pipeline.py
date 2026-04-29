@@ -13,7 +13,7 @@ from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 BUNDLE = "07_bundle_event_overlay"
 MODEL_ID = "event_overlay_model"
-OUTPUT_TABLE = "trading_data_07_bundle_event_overlay"
+OUTPUT_TABLE = "bundle_07_event_overlay"
 ET = ZoneInfo("America/New_York")
 INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
 EVENT_CATEGORIES = {"macro_data", "macro_news", "sector_news", "symbol_news", "sec_filing", "option_abnormal_activity", "equity_abnormal_activity"}

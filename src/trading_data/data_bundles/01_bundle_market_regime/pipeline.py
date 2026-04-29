@@ -17,7 +17,7 @@ from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 BUNDLE = "01_bundle_market_regime"
 MODEL_ID = "market_regime_model"
 OUTPUT_NAME = "01_bundle_market_regime"
-OUTPUT_TABLE = "trading_data_01_bundle_market_regime"
+OUTPUT_TABLE = "bundle_01_market_regime"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
 SQL_FIELDS = ["run_id", "task_id", *FIELDS, "created_at"]

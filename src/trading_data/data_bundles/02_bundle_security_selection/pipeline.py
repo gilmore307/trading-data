@@ -18,7 +18,7 @@ from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 BUNDLE = "02_bundle_security_selection"
 MODEL_ID = "security_selection_model"
-OUTPUT_TABLE = "trading_data_02_bundle_security_selection"
+OUTPUT_TABLE = "bundle_02_security_selection"
 SQL_FIELDS = [
     "run_id",
     "task_id",

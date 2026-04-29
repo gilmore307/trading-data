@@ -24,7 +24,7 @@ Optional task key fields:
 Final saved output is SQL-only:
 
 ```text
-trading_data.trading_data_05_bundle_option_expression
+trading_data.bundle_05_option_expression
 ```
 
 Natural key:

@@ -25,12 +25,12 @@ trading-data-etf-holdings = "trading_data.data_sources.etf_holdings.__main__:mai
 trading-data-thetadata-option-selection-snapshot = "trading_data.data_sources.thetadata_option_selection_snapshot.__main__:main"
 trading-data-thetadata-option-primary-tracking = "trading_data.data_sources.thetadata_option_primary_tracking.__main__:main"
 trading-data-thetadata-option-event-timeline = "trading_data.data_sources.thetadata_option_event_timeline.__main__:main"
-trading-data-bundle-01-market-regime = "trading_data.data_bundles.bundle_01_market_regime.__main__:main"
-trading-data-bundle-02-security-selection = "trading_data.data_bundles.bundle_02_security_selection.__main__:main"
-trading-data-bundle-03-strategy-selection = "trading_data.data_bundles.bundle_03_strategy_selection.__main__:main"
-trading-data-bundle-05-option-expression = "trading_data.data_bundles.bundle_05_option_expression.__main__:main"
-trading-data-bundle-06-position-execution = "trading_data.data_bundles.bundle_06_position_execution.__main__:main"
-trading-data-bundle-07-event-overlay = "trading_data.data_bundles.bundle_07_event_overlay.__main__:main"
+trading-data-01-bundle-market-regime = "trading_data.data_bundles.01_bundle_market_regime.__main__:main"
+trading-data-02-bundle-security-selection = "trading_data.data_bundles.02_bundle_security_selection.__main__:main"
+trading-data-03-bundle-strategy-selection = "trading_data.data_bundles.03_bundle_strategy_selection.__main__:main"
+trading-data-05-bundle-option-expression = "trading_data.data_bundles.05_bundle_option_expression.__main__:main"
+trading-data-06-bundle-position-execution = "trading_data.data_bundles.06_bundle_position_execution.__main__:main"
+trading-data-07-bundle-event-overlay = "trading_data.data_bundles.07_bundle_event_overlay.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -16,17 +16,17 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 | Model layer | Input bundle | Core data products | Notes |
 |---|---|---|---|
-| `MarketRegimeModel` | `bundle_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
-| `SecuritySelectionModel` | `bundle_02_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
-| `StrategySelectionModel` | `bundle_03_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
+| `MarketRegimeModel` | `01_bundle_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
+| `SecuritySelectionModel` | `02_bundle_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
+| `StrategySelectionModel` | `03_bundle_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
 | `TradeQualityModel` | _(no trading-data bundle)_ | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new data acquisition, SQL view, or manifest contract in `trading-data`; `trading-model` consumes upstream SQL outputs directly. |
-| `OptionExpressionModel` | `bundle_05_option_expression` | option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts. Contract-level snapshot revision is pending. |
-| `PositionExecutionModel` | `bundle_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
-| `EventOverlayModel` | `bundle_07_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
+| `OptionExpressionModel` | `05_bundle_option_expression` | option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts. Contract-level snapshot revision is pending. |
+| `PositionExecutionModel` | `06_bundle_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
+| `EventOverlayModel` | `07_bundle_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
 ## Implemented Model Input Bundles
 
-Each accepted model layer that needs new `trading-data` acquisition has a manager-facing bundle under `src/trading_data/data_bundles/bundle_NN_<layer>/`. These bundles fetch/prepare the data needed by the layer; they are not the complete model-input universe.
+Each accepted model layer that needs new `trading-data` acquisition has a manager-facing bundle under `src/trading_data/data_bundles/NN_bundle_<layer>/`. These bundles fetch/prepare the data needed by the layer; they are not the complete model-input universe.
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`.
 
@@ -46,7 +46,7 @@ Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event o
 
 ### `stock_etf_exposure`
 
-Integrated step: `src/trading_data/data_bundles/bundle_02_security_selection/pipeline.py`
+Integrated step: `src/trading_data/data_bundles/02_bundle_security_selection/pipeline.py`
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
@@ -74,9 +74,9 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Bundle: `src/trading_data/data_bundles/bundle_07_event_overlay/equity_abnormal_activity/`
+Bundle: `src/trading_data/data_bundles/07_bundle_event_overlay/equity_abnormal_activity/`
 
-Config: `src/trading_data/data_bundles/bundle_07_event_overlay/equity_abnormal_activity/config.json`
+Config: `src/trading_data/data_bundles/07_bundle_event_overlay/equity_abnormal_activity/config.json`
 
 Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

@@ -1,4 +1,4 @@
-# bundle_02_security_selection
+# 02_bundle_security_selection
 
 Manager-facing SecuritySelectionModel ETF holdings input bundle.
 
@@ -8,7 +8,7 @@ This bundle reads the reviewed ETF universe, collects issuer holdings snapshots 
 
 Required task key fields:
 
-- `bundle`: `bundle_02_security_selection`
+- `bundle`: `02_bundle_security_selection`
 - `task_id`: stable task identifier
 - `params.start`: inclusive holdings/as-of window start date or timestamp
 - `params.end`: inclusive holdings/as-of window end date or timestamp

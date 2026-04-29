@@ -14,7 +14,7 @@ from trading_data.source_availability.http import HttpClient
 from trading_data.source_availability.sanitize import sanitize_value
 from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-BUNDLE = "bundle_05_option_expression"
+BUNDLE = "05_bundle_option_expression"
 MODEL_ID = "option_expression_model"
 OUTPUT_TABLE = "option_expression_option_chain_snapshot"
 SQL_FIELDS = ["run_id", "task_id", "underlying", "snapshot_time", "contract_count", "contracts"]

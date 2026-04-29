@@ -771,11 +771,11 @@ The first MarketRegimeModel bundle now fetches ETF bars directly from the config
 
 ### Decision
 
-`bundle_01_market_regime` writes its canonical saved output to SQL table `market_regime_etf_bar`. The table is a single long table across symbols and bar grains, keyed by `run_id + symbol + timeframe + timestamp`.
+`01_bundle_market_regime` writes its canonical saved output to SQL table `market_regime_etf_bar`. The table is a single long table across symbols and bar grains, keyed by `run_id + symbol + timeframe + timestamp`.
 
 ### Consequences
 
-- Do not write `saved/bundle_01_market_regime.csv` or cleaned JSONL for the final model input output.
+- Do not write `saved/01_bundle_market_regime.csv` or cleaned JSONL for the final model input output.
 - Keep `timeframe` as an explicit column; downstream features must group/filter by `symbol + timeframe`.
 - D019 remains the default for legacy bundles, but is superseded for accepted SQL-only bundle contracts.
 
@@ -785,13 +785,13 @@ Date: 2026-04-28
 
 ### Context
 
-After accepting SQL-only output for `bundle_01_market_regime`, the first implementation used SQLite as a local minimal SQL target. The user clarified that the project should prepare directly for a formal large SQL backend instead of encoding SQLite as the output contract.
+After accepting SQL-only output for `01_bundle_market_regime`, the first implementation used SQLite as a local minimal SQL target. The user clarified that the project should prepare directly for a formal large SQL backend instead of encoding SQLite as the output contract.
 
 ### Decision
 
 Accepted SQL-only model input bundles target a configured PostgreSQL storage target. Tests may inject fake SQL writers, but production bundle semantics must not hard-code SQLite files or local database paths.
 
-`bundle_01_market_regime` uses `storage_target.driver = "postgresql"`, target schema `model_inputs`, and table `market_regime_etf_bar`.
+`01_bundle_market_regime` uses `storage_target.driver = "postgresql"`, target schema `model_inputs`, and table `market_regime_etf_bar`.
 
 ### Consequences
 
@@ -806,7 +806,7 @@ Date: 2026-04-28
 
 ### Context
 
-After `bundle_01_market_regime` became SQL-only, the remaining numbered model input bundles still emitted saved CSV manifest files. That left the seven-bundle model input layer split between formal SQL and temporary local artifacts.
+After `01_bundle_market_regime` became SQL-only, the remaining numbered model input bundles still emitted saved CSV manifest files. That left the seven-bundle model input layer split between formal SQL and temporary local artifacts.
 
 ### Decision
 
@@ -827,11 +827,11 @@ Date: 2026-04-28
 
 ### Context
 
-Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `bundle_01_market_regime`; `bundle_02_security_selection` should produce ETF holdings for security selection.
+Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `01_bundle_market_regime`; `02_bundle_security_selection` should produce ETF holdings for security selection.
 
 ### Decision
 
-`bundle_02_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
+`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `model_inputs.security_selection_us_equity_etf_holding`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -848,11 +848,11 @@ Date: 2026-04-28
 
 ### Context
 
-Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `bundle_03_strategy_selection` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
+Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `03_bundle_strategy_selection` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
 
 ### Decision
 
-`bundle_03_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `model_inputs.strategy_selection_symbol_bar_liquidity`.
+`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `model_inputs.strategy_selection_symbol_bar_liquidity`.
 
 The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
@@ -875,7 +875,7 @@ The user clarified that `TradeQualityModel` does not require a `trading-data` bu
 
 Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
-`bundle_05_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `model_inputs.option_expression_option_chain_snapshot` with one row per requested snapshot and a nested `contracts` JSONB payload.
+`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `model_inputs.option_expression_option_chain_snapshot` with one row per requested snapshot and a nested `contracts` JSONB payload.
 
 ### Consequences
 
@@ -903,7 +903,7 @@ Consequences:
 
 Accepted: 2026-04-28
 
-Decision: Layer 06 is now `PositionExecutionModel` / `bundle_06_position_execution`, and Layer 07 is now `EventOverlayModel` / `bundle_07_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
+Decision: Layer 06 is now `PositionExecutionModel` / `06_bundle_position_execution`, and Layer 07 is now `EventOverlayModel` / `07_bundle_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
 
 Rationale: OptionExpressionModel chooses the theoretically best-return and risk-controllable contracts. The next layer should study how to execute those selected contracts, requiring option contract time-series data from entry through exit plus one hour. Event overlay is a later global context layer and should use one event overview table rather than manifest references.
 
@@ -911,7 +911,7 @@ Consequences:
 
 - Layer 06 writes `model_inputs.position_execution_option_contract_timeseries`.
 - Layer 07 writes `model_inputs.event_overlay_event`.
-- `bundle_07_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
+- `07_bundle_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 
 ## D059 - Retire data-kind preview templates
@@ -938,16 +938,16 @@ The active numbered packages under `src/trading_data/data_bundles/` were named `
 
 ### Decision
 
-Rename active numbered packages to `bundle_NN_<layer>`:
+Rename active numbered packages to `NN_bundle_<layer>`:
 
-- `bundle_01_market_regime`
-- `bundle_02_security_selection`
-- `bundle_03_strategy_selection`
-- `bundle_05_option_expression`
-- `bundle_06_position_execution`
-- `bundle_07_event_overlay`
+- `01_bundle_market_regime`
+- `02_bundle_security_selection`
+- `03_bundle_strategy_selection`
+- `05_bundle_option_expression`
+- `06_bundle_position_execution`
+- `07_bundle_event_overlay`
 
-CLI entrypoints now use `trading-data-bundle-NN-<layer>` names. SQL output tables remain under `model_inputs` because those tables are consumed by model layers.
+CLI entrypoints now use `trading-data-NN-bundle-<layer>` names. SQL output tables remain under `model_inputs` because those tables are consumed by model layers.
 
 ### Consequences
 

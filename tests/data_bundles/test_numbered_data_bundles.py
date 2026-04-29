@@ -61,7 +61,7 @@ class Secret:
 
 class NumberedDataBundleTests(unittest.TestCase):
     def test_market_regime_bundle_fetches_universe_bars_as_one_sql_long_table(self):
-        module = import_module("trading_data.data_bundles.bundle_01_market_regime.pipeline")
+        module = import_module("trading_data.data_bundles.01_bundle_market_regime.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -74,8 +74,8 @@ class NumberedDataBundleTests(unittest.TestCase):
                     encoding="utf-8",
                 )
                 task_key = {
-                    "task_id": "bundle_01_market_regime_task_test",
-                    "bundle": "bundle_01_market_regime",
+                    "task_id": "01_bundle_market_regime_task_test",
+                    "bundle": "01_bundle_market_regime",
                     "params": {"start": "2026-04-24", "end": "2026-04-25", "market_etf_universe_path": str(universe_path), "max_pages": 2},
                     "output_root": str(Path(tmp) / "task"),
                 }
@@ -83,7 +83,7 @@ class NumberedDataBundleTests(unittest.TestCase):
                 result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=writer)
                 self.assertEqual(result.status, "succeeded")
                 self.assertEqual(result.row_counts["market_regime_etf_bar"], 2)
-                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "bundle_01_market_regime.csv").exists())
+                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_bundle_market_regime.csv").exists())
                 self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "model_inputs.market_regime_etf_bar"])
                 self.assertEqual(len(writer.calls), 1)
                 call = writer.calls[0]
@@ -98,14 +98,14 @@ class NumberedDataBundleTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_strategy_selection_bundle_writes_bar_liquidity_sql_rows(self):
-        module = import_module("trading_data.data_bundles.bundle_03_strategy_selection.pipeline")
+        module = import_module("trading_data.data_bundles.03_bundle_strategy_selection.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 task_key = {
-                    "task_id": "bundle_03_strategy_selection_task_test",
-                    "bundle": "bundle_03_strategy_selection",
+                    "task_id": "03_bundle_strategy_selection_task_test",
+                    "bundle": "03_bundle_strategy_selection",
                     "params": {"start": "2026-04-24T13:30:00Z", "end": "2026-04-24T13:31:00Z", "symbols": ["NVDA"]},
                     "output_root": str(Path(tmp) / "task"),
                 }
@@ -128,11 +128,11 @@ class NumberedDataBundleTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_option_expression_bundle_writes_option_snapshot_sql_row(self):
-        module = import_module("trading_data.data_bundles.bundle_05_option_expression.pipeline")
+        module = import_module("trading_data.data_bundles.05_bundle_option_expression.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "bundle_05_option_expression_task_test",
-                "bundle": "bundle_05_option_expression",
+                "task_id": "05_bundle_option_expression_task_test",
+                "bundle": "05_bundle_option_expression",
                 "params": {"underlying": "AAPL", "snapshot_time": "2026-04-24T09:30:02.500000-04:00"},
                 "output_root": str(Path(tmp) / "task"),
             }
@@ -152,11 +152,11 @@ class NumberedDataBundleTests(unittest.TestCase):
             self.assertNotIn("created_at", row)
 
     def test_position_execution_bundle_writes_selected_contract_timeseries(self):
-        module = import_module("trading_data.data_bundles.bundle_06_position_execution.pipeline")
+        module = import_module("trading_data.data_bundles.06_bundle_position_execution.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "bundle_06_position_execution_task_test",
-                "bundle": "bundle_06_position_execution",
+                "task_id": "06_bundle_position_execution_task_test",
+                "bundle": "06_bundle_position_execution",
                 "params": {
                     "selected_contracts": [
                         {
@@ -191,11 +191,11 @@ class NumberedDataBundleTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_bundle_writes_one_row_per_event(self):
-        module = import_module("trading_data.data_bundles.bundle_07_event_overlay.pipeline")
+        module = import_module("trading_data.data_bundles.07_bundle_event_overlay.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "bundle_07_event_overlay_task_test",
-                "bundle": "bundle_07_event_overlay",
+                "task_id": "07_bundle_event_overlay_task_test",
+                "bundle": "07_bundle_event_overlay",
                 "params": {
                     "start": "2026-04-24T09:30:00-04:00",
                     "end": "2026-04-24T16:00:00-04:00",
@@ -244,10 +244,10 @@ class NumberedDataBundleTests(unittest.TestCase):
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
-            module = import_module("trading_data.data_bundles.bundle_01_market_regime.pipeline")
+            module = import_module("trading_data.data_bundles.01_bundle_market_regime.pipeline")
             task_key = {
-                "task_id": "bundle_01_market_regime_task_bad",
-                "bundle": "bundle_01_market_regime",
+                "task_id": "01_bundle_market_regime_task_bad",
+                "bundle": "01_bundle_market_regime",
                 "params": {"end": "2026-04-25"},
                 "output_root": str(Path(tmp) / "task"),
             }

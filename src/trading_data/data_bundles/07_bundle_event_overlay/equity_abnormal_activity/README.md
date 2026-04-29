@@ -1,6 +1,6 @@
-# bundle_07_event_overlay/equity_abnormal_activity
+# 07_bundle_event_overlay/equity_abnormal_activity
 
-Derived event detector inside the `bundle_07_event_overlay` EventOverlayModel layer. This is not a standalone manager-facing numbered data bundle.
+Derived event detector inside the `07_bundle_event_overlay` EventOverlayModel layer. This is not a standalone manager-facing numbered data bundle.
 
 It converts saved equity/ETF bars, optional benchmark bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows that Layer 07 can reference as prior signals.
 

@@ -14,7 +14,7 @@ from trading_data.source_availability.http import HttpClient
 from trading_data.source_availability.sanitize import sanitize_value
 from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-BUNDLE = "bundle_06_position_execution"
+BUNDLE = "06_bundle_position_execution"
 MODEL_ID = "position_execution_model"
 OUTPUT_TABLE = "position_execution_option_contract_timeseries"
 ET = ZoneInfo("America/New_York")

@@ -1,4 +1,4 @@
-# bundle_06_position_execution
+# 06_bundle_position_execution
 
 Manager-facing PositionExecutionModel data bundle.
 
@@ -10,7 +10,7 @@ Stable defaults live in pipeline code; there is no bundle-local `config.json`.
 
 Required task key fields:
 
-- `bundle`: `bundle_06_position_execution`
+- `bundle`: `06_bundle_position_execution`
 - `task_id`: stable task identifier
 - `params.selected_contracts`: non-empty list of contracts selected by OptionExpressionModel
 

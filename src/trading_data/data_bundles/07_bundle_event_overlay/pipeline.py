@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 from trading_data.source_availability.sanitize import sanitize_value
 from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-BUNDLE = "bundle_07_event_overlay"
+BUNDLE = "07_bundle_event_overlay"
 MODEL_ID = "event_overlay_model"
 OUTPUT_TABLE = "event_overlay_event"
 ET = ZoneInfo("America/New_York")

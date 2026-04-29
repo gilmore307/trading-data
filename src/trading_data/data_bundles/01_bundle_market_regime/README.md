@@ -1,4 +1,4 @@
-# bundle_01_market_regime
+# 01_bundle_market_regime
 
 MarketRegimeModel manager-facing ETF bar bundle.
 
@@ -14,7 +14,7 @@ The manager supplies these values in `task_key.params`:
 - `market_etf_universe_path` — optional reviewed override. Normal runs use `/root/projects/trading-main/storage/shared/market_etf_universe.csv`.
 - `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds`, `secret_alias` — optional request/runtime overrides.
 
-The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "bundle_01_market_regime"`, and optional `output_root` for receipts/manifests.
+The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "01_bundle_market_regime"`, and optional `output_root` for receipts/manifests.
 
 ## Universe contract
 

@@ -18,7 +18,7 @@ Optional development/runtime params:
 - `output_root` at task-key top level — development output root. Defaults to `storage/<task_id>`.
 - `thetadata_base_url` — local ThetaData Terminal base URL. Defaults to `http://127.0.0.1:25503`.
 - `timeout_seconds` — request timeout. Defaults to `30`.
-- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-main/scripts/registry/current.csv`.
+- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-main/scripts/current.csv`.
 
 No implicit latest/current snapshot mode is supported. The caller must supply `snapshot_time`.
 

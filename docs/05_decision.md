@@ -576,7 +576,7 @@ The final data-kind CSV/JSON preview files define the output shapes consumed by 
 
 ### Decision
 
-Treat `storage/templates/data_kinds/**/*.preview.csv` and `*.preview.json` as generated materialized output templates. Generate them from `src/template_generators/data_kind_previews.py`, where template specs refer to stable `trading-main` registry ids and resolve current payload field names from `scripts/registry/current.csv`.
+Treat `storage/templates/data_kinds/**/*.preview.csv` and `*.preview.json` as generated materialized output templates. Generate them from `src/template_generators/data_kind_previews.py`, where template specs refer to stable `trading-main` registry ids and resolve current payload field names from `scripts/current.csv`.
 
 ### Rationale
 

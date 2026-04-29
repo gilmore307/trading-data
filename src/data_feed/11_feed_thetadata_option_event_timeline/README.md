@@ -48,7 +48,7 @@ Optional params:
 - `output_root` at task-key top level — development output root. Defaults to `storage/<task_id>`.
 - `thetadata_base_url` — local ThetaData Terminal base URL. Defaults to `http://127.0.0.1:25503`.
 - `timeout_seconds` — request timeout. Defaults to `30`.
-- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-main/scripts/registry/current.csv`.
+- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-main/scripts/current.csv`.
 - `max_events` — cap emitted events for bounded development runs. Defaults to `100`.
 - `iv_context` — optional event-local IV context values. When supplied, `iv_high_cross_section` can trigger and is included in detail artifacts.
 

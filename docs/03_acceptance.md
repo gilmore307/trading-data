@@ -41,7 +41,7 @@ Implementation changes are acceptable only when they:
 - produce development completion receipts under `storage/` until durable receipt contracts are accepted;
 - produce or preserve durable completion receipt, manifest, and ready-signal evidence once those contracts are accepted;
 - use ignored local `storage/` for development outputs and `trading-storage` contracts for durable SQL output placement only once storage contracts exist;
-- route new shared names through `trading-main/scripts/registry/`;
+- route new shared names through `trading-main/scripts/`;
 - document every provider/feed connector before domain pipelines depend on it.
 
 ### For Provider Integrations

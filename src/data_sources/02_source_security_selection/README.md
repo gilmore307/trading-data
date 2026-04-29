@@ -2,7 +2,7 @@
 
 Manager-facing SecuritySelectionModel ETF holdings input source.
 
-This source reads the reviewed ETF universe, collects issuer holdings snapshots for the selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table consumed by SecuritySelectionModel. Stable defaults live in pipeline code; there is no source-local `config.json`.
+This source reads the reviewed ETF universe, keeps only `universe_type = sector_observation_etf`, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table consumed by SecuritySelectionModel. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 ## Input parameters
 
@@ -21,7 +21,7 @@ Optional task key fields:
 - `params.market_etf_universe_path`: reviewed universe override. Normal runs use `/root/projects/trading-storage/main/shared/market_etf_universe.csv`.
 - `output_root`: local receipt/request-manifest root
 
-The universe CSV supplies `symbol`, `issuer_name`, `universe_type`, and `exposure_type`. The holdings source supplies constituent rows.
+The universe CSV supplies `symbol`, `issuer_name`, `universe_type`, and `exposure_type`. Only `sector_observation_etf` rows require holdings analysis; `market_state_etf` rows are Layer 1 regime/bar instruments and are intentionally skipped here. The holdings source supplies constituent rows.
 
 ## Filtering rule
 

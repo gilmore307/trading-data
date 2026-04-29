@@ -833,7 +833,7 @@ Layer 2 was incorrectly treated as a generic model-input artifact manifest, and 
 
 ### Decision
 
-`02_source_security_selection` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
+`02_source_security_selection` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -841,6 +841,7 @@ The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`
 
 - Layer 2 no longer writes the shared `model_input_artifact_reference` manifest as its final output.
 - Layer 2 does not write bars; Layer 1 owns bars.
+- Layer 2 does not fetch holdings for `market_state_etf` rows; those ETFs are regime/bar instruments, not stock-exposure bridge instruments.
 - Filter out cash, money-market, fixed income, futures, swaps, options, funds, non-US local listings, and other non-equity assets unless explicitly reviewed later.
 - Primary key: `etf_symbol + as_of_date + holding_symbol`; run/task metadata lives in manifests and receipts, not business rows.
 

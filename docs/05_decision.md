@@ -139,7 +139,7 @@ Date: 2026-04-25
 
 ### Context
 
-The required docs spine covers scope, context, workflow, acceptance, tasks, decisions, and memory. `trading-source` also needs component-specific guides for data organization and data-source boundaries.
+The required docs spine covers scope, context, workflow, acceptance, tasks, decisions, and memory. `trading-source` also needs component-specific guides for data organization and data-feed boundaries.
 
 ### Decision
 
@@ -152,7 +152,7 @@ Provider, bundle, and data-organization planning is too important to bury inside
 ### Consequences
 
 - `docs/07_data_organization.md` owns the current source/bundle/output organization surface and maps the older market board, instrument, and option domain labels as historical planning language.
-- `docs/08_data_sources.md` owns provider/source connector, API, token, and secret-alias planning boundaries.
+- `docs/08_data_feed.md` owns provider/source connector, API, token, and secret-alias planning boundaries.
 - Optional docs must be listed in `docs/README.md`.
 
 ## D008 - Data work was initially organized into three purpose-driven domains
@@ -188,7 +188,7 @@ Each manager-facing bundle may compose data from one or more providers. Implemen
 
 ### Decision
 
-Treat data-source connection as the first implementation layer. Provider tokens, API keys, and credentials must live outside Git under `/root/secrets/` and be referenced by secret aliases. Shared/durable provider aliases should be registered as `config` rows in `trading-main` when providers are selected.
+Treat data-feed connection as the first implementation layer. Provider tokens, API keys, and credentials must live outside Git under `/root/secrets/` and be referenced by secret aliases. Shared/durable provider aliases should be registered as `config` rows in `trading-main` when providers are selected.
 
 ### Rationale
 
@@ -196,7 +196,7 @@ Provider connections are a boundary risk: secrets, quotas, timestamp semantics, 
 
 ### Consequences
 
-- `docs/08_data_sources.md` owns provider/source connector planning.
+- `docs/08_data_feed.md` owns provider/source connector planning.
 - Default tests must not require live provider credentials.
 - Provider choices and secret aliases remain open gaps until selected and reviewed.
 
@@ -281,7 +281,7 @@ Use source-level secret aliases for FRED, Census, BEA, and BLS. Each source JSON
 
 ### Rationale
 
-These providers match the standard source-level JSON secret pattern and should be available for later data-source connector implementation without exposing key values in Git.
+These providers match the standard source-level JSON secret pattern and should be available for later data-feed connector implementation without exposing key values in Git.
 
 ### Consequences
 
@@ -339,7 +339,7 @@ Date: 2026-04-26
 
 ### Context
 
-The user identified FOMC calendar, official macro release calendars, and ETF holdings constituents/weights as required data-source surfaces. These sources are not necessarily credentialed APIs.
+The user identified FOMC calendar, official macro release calendars, and ETF holdings constituents/weights as required data-feed surfaces. These sources are not necessarily credentialed APIs.
 
 ### Decision
 
@@ -465,7 +465,7 @@ One pipeline file keeps early development simple and makes manager invocation st
 
 ### Consequences
 
-- Future source folder shape is `src/data_sources/<bundle>/README.md` plus `pipeline.py`.
+- Future source folder shape is `src/data_feed/<bundle>/README.md` plus `pipeline.py`.
 - `trading-main/templates/data_tasks/pipeline.py` is the default implementation template.
 - The fetch/clean/save/receipt spec templates remain design documents, not required separate Python files.
 
@@ -618,7 +618,7 @@ Date: 2026-04-27
 
 ### Context
 
-ThetaData `/v3/option/history/ohlc` returns specified-contract 1-second OHLC rows and may include zero-volume placeholder rows. The `10_source_thetadata_option_primary_tracking` bundle must track a contract supplied by the task key without becoming a contract-selection model.
+ThetaData `/v3/option/history/ohlc` returns specified-contract 1-second OHLC rows and may include zero-volume placeholder rows. The `10_feed_thetadata_option_primary_tracking` bundle must track a contract supplied by the task key without becoming a contract-selection model.
 
 ### Decision
 
@@ -630,7 +630,7 @@ The specified contract is an input, so selection remains outside the data bundle
 
 ### Consequences
 
-- `10_source_thetadata_option_primary_tracking` does not select contracts.
+- `10_feed_thetadata_option_primary_tracking` does not select contracts.
 - Cleaned JSONL may exist only as run-local development evidence.
 - Final saved flat output is `option_bar.csv`.
 - VWAP is calculated from active 1Sec close × volume because the source OHLC `vwap` field is not treated as a per-second trade VWAP.
@@ -645,7 +645,7 @@ Date: 2026-04-27
 
 ### Decision
 
-Require `11_source_thetadata_option_event_timeline` task params to include a `current_standard` object with the indicator standards used for that run. The bundle fetches transient ThetaData trade/quote rows, evaluates supplied standards over `America/New_York` evidence windows, emits final `option_activity_event.csv` rows only when an indicator triggers, and writes one compact `<event_id>.json` detail artifact per event containing objective statistics, current standards, and standard context.
+Require `11_feed_thetadata_option_event_timeline` task params to include a `current_standard` object with the indicator standards used for that run. The bundle fetches transient ThetaData trade/quote rows, evaluates supplied standards over `America/New_York` evidence windows, emits final `option_activity_event.csv` rows only when an indicator triggers, and writes one compact `<event_id>.json` detail artifact per event containing objective statistics, current standards, and standard context.
 
 ### Rationale
 
@@ -663,7 +663,7 @@ The data bundle can preserve event-time evidence without pretending to own the m
 
 Financial reports, SEC corporate filings, news, option activity, macro releases, and market anomalies should be studied through a shared event database layer rather than as isolated source-specific tables.
 
-Raw acquisition remains source-specific. Source bundles such as `08_source_sec_company_financials`, `03_source_alpaca_news`, and `11_source_thetadata_option_event_timeline` own official/provider fetches and source-local normalization. Event builders project those outputs into source-neutral `trading_event` rows.
+Raw acquisition remains source-specific. Source bundles such as `08_feed_sec_company_financials`, `03_feed_alpaca_news`, and `11_feed_thetadata_option_event_timeline` own official/provider fetches and source-local normalization. Event builders project those outputs into source-neutral `trading_event` rows.
 
 Long-form agent/model interpretation belongs in artifact files, with `event_analysis_report` indexing the Markdown report and structured JSON sidecar. `trading_event` rows store facts, timing, source references, short summaries, and report URLs only. `event_factor` rows store numeric model-facing scores such as direction, magnitude, surprise, novelty, relevance, credibility, price-in, and observable reaction.
 
@@ -698,15 +698,15 @@ Superseded for active source path on 2026-04-28 by D050: `macro_data` is removed
 
 Alpaca news remains useful for stock-specific provider coverage, but GDELT is the primary broad news/event discovery source for political, economic, technology, geopolitical, sector, industry, theme, and market-impact event candidates.
 
-`05_source_gdelt_news` saves `gdelt_article` source-evidence rows from GDELT BigQuery. These rows are not canonical event identity by themselves. Downstream event extraction/clustering must merge GDELT articles into `trading_event` / `event_factor`, respect official-source priority, and avoid duplicate alpha counting when SEC/company/regulatory disclosures already cover the same event.
+`05_feed_gdelt_news` saves `gdelt_article` source-evidence rows from GDELT BigQuery. These rows are not canonical event identity by themselves. Downstream event extraction/clustering must merge GDELT articles into `trading_event` / `event_factor`, respect official-source priority, and avoid duplicate alpha counting when SEC/company/regulatory disclosures already cover the same event.
 
 ## D047 - GDELT acquisition is U.S./U.S.-market focused by default
 
-The system does not need all global GDELT news. `05_source_gdelt_news` should pre-filter in BigQuery for U.S. and U.S.-market relevance by default, using `focus=us_market`, U.S. location/market terms, and a curated U.S./U.S.-market source-domain allowlist. Broader global queries require an explicit `focus=none` task parameter and should be treated as exceptional research, not the production default.
+The system does not need all global GDELT news. `05_feed_gdelt_news` should pre-filter in BigQuery for U.S. and U.S.-market relevance by default, using `focus=us_market`, U.S. location/market terms, and a curated U.S./U.S.-market source-domain allowlist. Broader global queries require an explicit `focus=none` task parameter and should be treated as exceptional research, not the production default.
 
 ## D048 - GDELT default topics are politics, economy, war, and technology
 
-`05_source_gdelt_news` should not be an open-ended news firehose. Its default query scope is U.S./U.S.-market news in four market-impact categories: politics, economy, war/geopolitics, and technology. If a task omits `query_terms`, the bundle expands those categories into a bounded default term set. Other categories require explicit task parameters and should be reviewed before becoming production defaults.
+`05_feed_gdelt_news` should not be an open-ended news firehose. Its default query scope is U.S./U.S.-market news in four market-impact categories: politics, economy, war/geopolitics, and technology. If a task omits `query_terms`, the bundle expands those categories into a bounded default term set. Other categories require explicit task parameters and should be reviewed before becoming production defaults.
 
 ## D049 - Seven model input bundles organize data products by model layer
 
@@ -751,14 +751,14 @@ Date: 2026-04-28
 
 ### Decision
 
-Remove `macro_data` as an executable `trading-source` acquisition bundle. Macro model inputs should use `07_source_trading_economics_calendar_web` visible-page rows.
+Remove `macro_data` as an executable `trading-source` acquisition bundle. Macro model inputs should use `07_feed_trading_economics_calendar_web` visible-page rows.
 
 Official macro API keys and secret aliases may remain stored and registered for optional future research, but they are not active manager task routes.
 
 ### Consequences
 
 - Do not route manager-issued tasks to `macro_data`.
-- Do not add new `macro_data` source interfaces or tests.
+- Do not add new `macro_data` feed interfaces or tests.
 - Keep Trading Economics constraints: visible page only, no TE API, no Download/export endpoint, and no WAF/captcha/permission bypass.
 - Deprecated registry/template rows may remain as historical references until a broader registry cleanup is explicitly accepted.
 
@@ -772,11 +772,11 @@ The first MarketRegimeModel bundle now fetches ETF bars directly from the config
 
 ### Decision
 
-`01_bundle_market_regime` writes its canonical saved output to SQL table `bundle_01_market_regime`. The table is a single long table across symbols and bar grains, keyed by `symbol + timeframe + timestamp`. Run/task metadata lives in manifests and receipts, not business rows.
+`01_source_market_regime` writes its canonical saved output to SQL table `source_01_market_regime`. The table is a single long table across symbols and bar grains, keyed by `symbol + timeframe + timestamp`. Run/task metadata lives in manifests and receipts, not business rows.
 
 ### Consequences
 
-- Do not write `saved/01_bundle_market_regime.csv` or cleaned JSONL for the final model input output.
+- Do not write `saved/01_source_market_regime.csv` or cleaned JSONL for the final model input output.
 - Keep `timeframe` as an explicit column; downstream features must group/filter by `symbol + timeframe`.
 - D019 remains the default for legacy bundles, but is superseded for accepted SQL-only bundle contracts.
 
@@ -786,13 +786,13 @@ Date: 2026-04-28
 
 ### Context
 
-After accepting SQL-only output for `01_bundle_market_regime`, the first implementation used SQLite as a local minimal SQL target. The user clarified that the project should prepare directly for a formal large SQL backend instead of encoding SQLite as the output contract.
+After accepting SQL-only output for `01_source_market_regime`, the first implementation used SQLite as a local minimal SQL target. The user clarified that the project should prepare directly for a formal large SQL backend instead of encoding SQLite as the output contract.
 
 ### Decision
 
 Accepted SQL-only model input bundles target a configured PostgreSQL storage target. Tests may inject fake SQL writers, but production bundle semantics must not hard-code SQLite files or local database paths.
 
-`01_bundle_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_source`, and table `bundle_01_market_regime`.
+`01_source_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_source`, and table `source_01_market_regime`.
 
 ### Consequences
 
@@ -808,7 +808,7 @@ Status: Superseded by D054-D061 for active numbered bundles
 
 ### Context
 
-After `01_bundle_market_regime` became SQL-only, the remaining numbered model input bundles still emitted saved CSV manifest files. That left the seven-bundle model input layer split between formal SQL and temporary local artifacts.
+After `01_source_market_regime` became SQL-only, the remaining numbered model input bundles still emitted saved CSV manifest files. That left the seven-bundle model input layer split between formal SQL and temporary local artifacts.
 
 ### Decision
 
@@ -829,11 +829,11 @@ Date: 2026-04-28
 
 ### Context
 
-Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `01_bundle_market_regime`; `02_bundle_security_selection` should produce ETF holdings for security selection.
+Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `01_source_market_regime`; `02_source_security_selection` should produce ETF holdings for security selection.
 
 ### Decision
 
-`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `bundle_02_security_selection`.
+`02_source_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -850,11 +850,11 @@ Date: 2026-04-28
 
 ### Context
 
-Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `03_bundle_strategy_selection` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
+Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `03_source_strategy_selection` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
 
 ### Decision
 
-`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `bundle_03_strategy_selection`.
+`03_source_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `source_03_strategy_selection`.
 
 The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
@@ -877,7 +877,7 @@ The user clarified that `TradeQualityModel` does not require a `trading-source` 
 
 Remove active `04_trade_quality_model_inputs` from `trading-source` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
-`05_bundle_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot source interface, and writes SQL table `bundle_05_option_expression` with one row per visible option contract per snapshot.
+`05_source_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot feed interface, and writes SQL table `source_05_option_expression` with one row per visible option contract per snapshot.
 
 ### Consequences
 
@@ -905,15 +905,15 @@ Consequences:
 
 Accepted: 2026-04-28
 
-Decision: Layer 06 is now `PositionExecutionModel` / `06_bundle_position_execution`, and Layer 07 is now `EventOverlayModel` / `07_bundle_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
+Decision: Layer 06 is now `PositionExecutionModel` / `06_source_position_execution`, and Layer 07 is now `EventOverlayModel` / `07_source_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
 
 Rationale: OptionExpressionModel chooses the theoretically best-return and risk-controllable contracts. The next layer should study how to execute those selected contracts, requiring option contract time-series data from entry through exit plus one hour. Event overlay is a later global context layer and should use one event overview table rather than manifest references.
 
 Consequences:
 
-- Layer 06 writes `bundle_06_position_execution`.
-- Layer 07 writes `bundle_07_event_overlay`.
-- `07_bundle_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
+- Layer 06 writes `source_06_position_execution`.
+- Layer 07 writes `source_07_event_overlay`.
+- `07_source_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 
 ## D059 - Retire data-kind preview templates
@@ -936,24 +936,24 @@ Status: Accepted
 
 ### Context
 
-The active numbered packages under `src/data_bundles/` were named `*_model_inputs`, which overstated their boundary. They do not construct every input a model consumes; they only fetch and prepare the data-source-backed portion needed by each model layer.
+The active numbered packages under `src/data_sources/` were named `*_model_inputs`, which overstated their boundary. They do not construct every input a model consumes; they only fetch and prepare the data-feed-backed portion needed by each model layer.
 
 ### Decision
 
 Rename active numbered packages to `NN_bundle_<layer>`:
 
-- `01_bundle_market_regime`
-- `02_bundle_security_selection`
-- `03_bundle_strategy_selection`
-- `05_bundle_option_expression`
-- `06_bundle_position_execution`
-- `07_bundle_event_overlay`
+- `01_source_market_regime`
+- `02_source_security_selection`
+- `03_source_strategy_selection`
+- `05_source_option_expression`
+- `06_source_position_execution`
+- `07_source_event_overlay`
 
 CLI entrypoints now use `trading-source-NN-bundle-<layer>` names. SQL table names are handled separately; bundle outputs must not imply ownership of the complete model input universe.
 
 ### Consequences
 
-- Do not add new active package/module names ending in `_model_inputs` under `data_bundles`.
+- Do not add new active package/module names ending in `_model_inputs` under `data_sources`.
 - Bundle docs should describe the data fetched/prepared from sources, not claim ownership of the complete model-input universe.
 
 ## D061 - Bundle SQL table names follow bundle names
@@ -969,12 +969,12 @@ The numbered data bundles wrote SQL tables with model-layer business names such 
 
 Accepted numbered bundle SQL outputs use bundle-derived table names under the `trading_source` schema:
 
-- `bundle_01_market_regime`
-- `bundle_02_security_selection`
-- `bundle_03_strategy_selection`
-- `bundle_05_option_expression`
-- `bundle_06_position_execution`
-- `bundle_07_event_overlay`
+- `source_01_market_regime`
+- `source_02_security_selection`
+- `source_03_strategy_selection`
+- `source_05_option_expression`
+- `source_06_position_execution`
+- `source_07_event_overlay`
 
 Use snake_case for SQL identifiers; hyphenated names are only for CLI/package presentation where supported.
 
@@ -996,12 +996,12 @@ After bundle table names were changed to follow the producing `trading-source` b
 
 Accepted numbered bundle SQL outputs live under schema `trading_source`, not `model_inputs`:
 
-- `bundle_01_market_regime`
-- `bundle_02_security_selection`
-- `bundle_03_strategy_selection`
-- `bundle_05_option_expression`
-- `bundle_06_position_execution`
-- `bundle_07_event_overlay`
+- `source_01_market_regime`
+- `source_02_security_selection`
+- `source_03_strategy_selection`
+- `source_05_option_expression`
+- `source_06_position_execution`
+- `source_07_event_overlay`
 
 The default PostgreSQL storage target id is `trading_source_postgres` and its schema is `trading_source`.
 
@@ -1036,16 +1036,16 @@ Status: Accepted
 
 ### Context
 
-The repository name already provides the `trading-source` boundary. Keeping all importable code under `src/trading_source/` added a redundant package wrapper before the actual owned boundaries such as `data_bundles`, `data_sources`, `source_interfaces`, `source_availability`, and `storage`.
+The repository name already provides the `trading-source` boundary. Keeping all importable code under `src/trading_source/` added a redundant package wrapper before the actual owned boundaries such as `data_sources`, `data_feed`, `feed_interfaces`, `feed_availability`, and `storage`.
 
 ### Decision
 
 Move importable packages directly under `src/`:
 
-- `src/data_bundles/`
 - `src/data_sources/`
-- `src/source_interfaces/`
-- `src/source_availability/`
+- `src/data_feed/`
+- `src/feed_interfaces/`
+- `src/feed_availability/`
 - `src/storage/`
 
 Console entrypoints import these top-level packages directly. Tests and docs should use the same package paths.
@@ -1067,13 +1067,13 @@ ThetaData option selection snapshots merge quote, implied-volatility, and Greeks
 
 ### Decision
 
-For `09_source_thetadata_option_selection_snapshot` and downstream `05_bundle_option_expression`, use `snapshot_time` as the point-in-time clock. Do not preserve quote/IV/Greeks provider row timestamps in the source snapshot contract or in the `bundle_05_option_expression` SQL business table.
+For `09_feed_thetadata_option_selection_snapshot` and downstream `05_source_option_expression`, use `snapshot_time` as the point-in-time clock. Do not preserve quote/IV/Greeks provider row timestamps in the source snapshot contract or in the `source_05_option_expression` SQL business table.
 
 Keep other fields that are business values or source context, such as quote prices/sizes/exchange/condition, IV, Greeks, underlying price, underlying timestamp, and derived days-to-expiration, unless separately removed by a later contract decision.
 
 ### Consequences
 
-- `bundle_05_option_expression` no longer has `quote_timestamp`, `iv_timestamp`, or `greeks_timestamp` columns.
+- `source_05_option_expression` no longer has `quote_timestamp`, `iv_timestamp`, or `greeks_timestamp` columns.
 - Source snapshot nested `quote`, `iv`, and `greeks` contexts no longer include a generic `timestamp` field.
 - The snapshot table semantics are simpler: one requested snapshot clock plus visible contract state.
 
@@ -1099,3 +1099,34 @@ Together, `trading-source` and `trading-derived` form the training-dataset found
 - Repository docs, package metadata, CLI prefixes, registry paths, and SQL storage defaults use `trading-source` / `trading_source`.
 - Historical decisions that mention `trading-data` are superseded by this boundary rename.
 - Source-backed aggregation is allowed only when it preserves external-observation semantics; generated training artifacts must move to or be created in `trading-derived`.
+
+## D065 - Finest-grain source becomes feed; old bundle becomes source
+
+Date: 2026-04-29
+Status: Accepted
+
+### Context
+
+After D064, `source` is the repository and source-backed output boundary. Continuing to use `source` for the finest-grain provider/API/web/file connector would overload the term and make paths such as `src/data_sources/02_source_alpaca_liquidity` ambiguous.
+
+### Decision
+
+Rename the old finest-grain provider/API/web/file source layer to **feed**:
+
+- package path: `src/data_feed/`
+- feed package pattern: `NN_feed_<provider_or_surface>`
+- examples: `02_feed_alpaca_liquidity`, `09_feed_thetadata_option_selection_snapshot`
+- support packages: `feed_availability` and `feed_interfaces`
+
+Rename the old manager-facing bundle layer to **source**:
+
+- package path: `src/data_sources/`
+- source package pattern: `NN_source_<model_or_output>`
+- examples: `01_source_market_regime`, `05_source_option_expression`
+- SQL tables remain `source_NN_<model_or_output>` under the `trading_source` schema.
+
+### Consequences
+
+- Active docs, tests, CLI entrypoints, registry rows, and paths must use `data_feed` / `feed_*` for provider connectors and `data_sources` / `source_*` for manager-facing source outputs.
+- `trading-main` registry kinds should treat provider connectors as `data_feed` and manager-facing outputs as `data_source`; old `source_capability` rows become `feed_capability`.
+- Earlier decisions that used `bundle` for the manager-facing layer or `source` for finest-grain provider connectors are historical and superseded by this terminology.

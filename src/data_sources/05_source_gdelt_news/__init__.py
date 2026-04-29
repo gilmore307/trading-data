@@ -1,1 +1,0 @@
-"""GDELT news acquisition bundle."""

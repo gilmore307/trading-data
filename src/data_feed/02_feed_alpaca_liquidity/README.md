@@ -1,0 +1,11 @@
+# 02_feed_alpaca_liquidity feed
+
+Fetches Alpaca raw trades/quotes only as transient run inputs and persists
+America/New_York time-bucketed derived aggregate outputs.
+
+Default persisted output:
+
+- `equity_liquidity_bar`
+
+Raw trade/quote rows are not saved by default. Request manifests record sanitized
+endpoint evidence and raw counts only.

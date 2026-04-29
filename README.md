@@ -2,7 +2,7 @@
 
 `trading-source` is the external/source-backed observed-data repository for the trading system.
 
-It owns historical market, options, issuer, filing, news, calendar, and related provider data acquisition, cleaning, validation, and publication for downstream repositories. It executes self-contained task key files from `trading-manager`; legacy bundles may still create ignored local files under runtime `storage/`, while accepted SQL-only bundle outputs write directly to reviewed SQL tables.
+It owns historical market, options, issuer, filing, news, calendar, and related provider data acquisition, cleaning, validation, and publication for downstream repositories. It executes self-contained task key files from `trading-manager`; legacy source pipelines may still create ignored local files under runtime `storage/`, while accepted SQL-only source outputs write directly to reviewed SQL tables.
 
 It does not own shared storage policy, derived labels/samples/signals/outcomes, strategy/backtest generation, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
 
@@ -10,8 +10,8 @@ It does not own shared storage policy, derived labels/samples/signals/outcomes, 
 
 ```text
 docs/        Required docs spine plus component-specific guides for data organization and data sources.
-src/         Importable data-source, source-interface, bundle, storage, and probe implementation packages.
-tests/       First-party tests for data-source pipelines, interface probes, storage, and bundles.
+src/         Importable data-feed, feed-interface, data-source, storage, and probe implementation packages.
+tests/       First-party tests for data-feed pipelines, interface probes, storage, and sources.
 ```
 
 Executable CLIs are package entrypoints that call `src/`. If future operational wrappers are needed, place them under `scripts/`; `src/` must not import `scripts/`.
@@ -28,9 +28,9 @@ docs/
   05_decision.md
   06_memory.md
   07_data_organization.md
-  08_data_sources.md
+  08_data_feed.md
   09_api_templates.md
-  10_source_availability.md
+  10_feed_availability.md
   11_model_inputs.md
 ```
 
@@ -38,7 +38,7 @@ docs/
 
 Input: self-contained historical data task key files from `trading-manager` once the task-key contract is accepted.
 
-Development output: local SQL databases and, for legacy bundles, inspected local files and task completion receipts under runtime-created `storage/` (ignored by Git).
+Development output: local SQL databases and, for legacy source pipelines, inspected local files and task completion receipts under runtime-created `storage/` (ignored by Git).
 
 Durable output: storage-backed SQL/artifact outputs plus manifests and ready signals as cross-repository contracts are accepted.
 
@@ -46,9 +46,9 @@ Durable output: storage-backed SQL/artifact outputs plus manifests and ready sig
 
 ## Data Organization
 
-`trading-source` now organizes work around provider/source adapters, source-backed manager-facing bundles, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
+`trading-source` now organizes work around provider/feed adapters, source-backed manager-facing sources, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
 
-See `docs/07_data_organization.md`. API-specific bundle design guidance is in `docs/09_api_templates.md`; model-layer mapping is in `docs/11_model_inputs.md`.
+See `docs/07_data_organization.md`. API-specific source design guidance is in `docs/09_api_templates.md`; model-layer mapping is in `docs/11_model_inputs.md`.
 
 ## Platform Dependencies
 

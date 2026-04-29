@@ -9,7 +9,7 @@ Acceptance focuses on:
 - repository boundary clarity;
 - manager-driven historical workflow clarity;
 - provider/source boundary clarity;
-- data-organization and bundle/source boundary clarity;
+- data-organization and feed/source boundary clarity;
 - contract compatibility with `trading-main`;
 - development storage compatibility through ignored local `storage/`, and future `trading-storage` compatibility for SQL output destinations and durable completion receipts once contracts are accepted;
 - absence of committed data, logs, notebooks, and secrets;
@@ -25,7 +25,7 @@ Documentation changes are acceptable when they:
 - preserve separation between scope, context, workflow, acceptance, task, decision, and memory;
 - route global helper, template, field, status, type, and shared vocabulary changes to `trading-main`;
 - mark unresolved provider/contract/storage questions as open gaps;
-- preserve the distinction between source connectors, manager-facing bundles, accepted outputs, and downstream model/strategy/execution consumers;
+- preserve the distinction between feed connectors, manager-facing sources, accepted outputs, and downstream model/strategy/execution consumers;
 - avoid pretending that implementation or provider choices are settled before evidence exists.
 
 ### For Data Implementation Changes
@@ -42,7 +42,7 @@ Implementation changes are acceptable only when they:
 - produce or preserve durable completion receipt, manifest, and ready-signal evidence once those contracts are accepted;
 - use ignored local `storage/` for development outputs and `trading-storage` contracts for durable SQL output placement only once storage contracts exist;
 - route new shared names through `trading-main/registry/`;
-- document every provider/source connector before domain pipelines depend on it.
+- document every provider/feed connector before domain pipelines depend on it.
 
 ### For Provider Integrations
 

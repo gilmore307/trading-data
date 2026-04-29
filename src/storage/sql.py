@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, Sequence
 
-from source_availability.secrets import load_secret_alias, public_secret_summary
+from feed_availability.secrets import load_secret_alias, public_secret_summary
 
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 DEFAULT_POSTGRES_STORAGE_TARGET = {
@@ -23,7 +23,7 @@ class SqlStorageError(ValueError):
 
 
 class SqlTableWriter(Protocol):
-    """Minimal SQL writer contract used by data bundles."""
+    """Minimal SQL writer contract used by data sources."""
 
     def write_rows(
         self,
@@ -146,20 +146,20 @@ class PostgresSqlTableWriter:
 
 
 def _table_ddl(table: str, qualified_table: str) -> str | None:
-    if table == "bundle_01_market_regime":
+    if table == "source_01_market_regime":
         return _market_regime_table_ddl(qualified_table)
     if table == "model_input_artifact_reference":
         return _model_input_artifact_reference_ddl(qualified_table)
-    if table == "bundle_02_security_selection":
-        return _bundle_02_security_selection_ddl(qualified_table)
-    if table == "bundle_03_strategy_selection":
-        return _bundle_03_strategy_selection_ddl(qualified_table)
-    if table == "bundle_05_option_expression":
-        return _bundle_05_option_expression_ddl(qualified_table)
-    if table == "bundle_06_position_execution":
-        return _bundle_06_position_execution_ddl(qualified_table)
-    if table == "bundle_07_event_overlay":
-        return _bundle_07_event_overlay_ddl(qualified_table)
+    if table == "source_02_security_selection":
+        return _source_02_security_selection_ddl(qualified_table)
+    if table == "source_03_strategy_selection":
+        return _source_03_strategy_selection_ddl(qualified_table)
+    if table == "source_05_option_expression":
+        return _source_05_option_expression_ddl(qualified_table)
+    if table == "source_06_position_execution":
+        return _source_06_position_execution_ddl(qualified_table)
+    if table == "source_07_event_overlay":
+        return _source_07_event_overlay_ddl(qualified_table)
     return None
 
 
@@ -186,7 +186,7 @@ def _model_input_artifact_reference_ddl(qualified_table: str) -> str:
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         run_id TEXT NOT NULL,
         task_id TEXT NOT NULL,
-        bundle TEXT NOT NULL,
+        source TEXT NOT NULL,
         model_id TEXT NOT NULL,
         as_of TIMESTAMPTZ NOT NULL,
         input_role TEXT NOT NULL,
@@ -196,12 +196,12 @@ def _model_input_artifact_reference_ddl(qualified_table: str) -> str:
         point_in_time BOOLEAN NOT NULL,
         notes TEXT,
         created_at TIMESTAMPTZ NOT NULL,
-        PRIMARY KEY (run_id, bundle, input_role, data_kind, artifact_reference)
+        PRIMARY KEY (run_id, source, input_role, data_kind, artifact_reference)
     )
     """
 
 
-def _bundle_02_security_selection_ddl(qualified_table: str) -> str:
+def _source_02_security_selection_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         etf_symbol TEXT NOT NULL,
@@ -221,7 +221,7 @@ def _bundle_02_security_selection_ddl(qualified_table: str) -> str:
     """
 
 
-def _bundle_03_strategy_selection_ddl(qualified_table: str) -> str:
+def _source_03_strategy_selection_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         symbol TEXT NOT NULL,
@@ -249,7 +249,7 @@ def _bundle_03_strategy_selection_ddl(qualified_table: str) -> str:
     """
 
 
-def _bundle_05_option_expression_ddl(qualified_table: str) -> str:
+def _source_05_option_expression_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         underlying TEXT NOT NULL,
@@ -286,7 +286,7 @@ def _bundle_05_option_expression_ddl(qualified_table: str) -> str:
     """
 
 
-def _bundle_06_position_execution_ddl(qualified_table: str) -> str:
+def _source_06_position_execution_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         underlying TEXT NOT NULL,
@@ -308,7 +308,7 @@ def _bundle_06_position_execution_ddl(qualified_table: str) -> str:
     """
 
 
-def _bundle_07_event_overlay_ddl(qualified_table: str) -> str:
+def _source_07_event_overlay_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         event_id TEXT NOT NULL,

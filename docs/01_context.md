@@ -20,7 +20,7 @@ The trading system depends on reliable external observations. Provider/source co
 
 ## Data Organization
 
-`trading-source` now organizes work around source-backed data bundles and accepted output contracts rather than broad domain labels. The original market-board / instrument / option grouping remains useful historical product language, but concrete runtime boundaries should be provider/source, bundle, table, and downstream contract.
+`trading-source` now organizes work around source-backed data sources and accepted output contracts rather than broad domain labels. The original market-board / instrument / option grouping remains useful historical product language, but concrete runtime boundaries should be provider/feed, source, table, and downstream contract.
 
 `trading-source` owns acquisition, cleaning, validation, and source-backed output production. Generated labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs belong in `trading-derived`; model design, training, and inference belong in `trading-model`.
 
@@ -38,7 +38,7 @@ Potential external interfaces include:
 - symbol/reference-data providers;
 - local or shared storage through `trading-storage` contracts.
 
-OKX is registered in `trading-main` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/08_data_sources.md` for the source-connection boundary.
+OKX is registered in `trading-main` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/08_data_feed.md` for the source-connection boundary.
 
 ## Environment
 

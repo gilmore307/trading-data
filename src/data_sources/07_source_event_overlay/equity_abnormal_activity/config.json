@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "description": "Default parameters for the equity_abnormal_activity source. Task keys may override these values per run.",
+  "bar_grain": "1Min",
+  "lookback_intervals": 20,
+  "min_abs_return_zscore": 3.0,
+  "min_volume_zscore": 3.0,
+  "min_abs_relative_strength_zscore": 3.0,
+  "min_abs_gap_pct": 0.04,
+  "min_liquidity_spread_zscore": 3.0,
+  "model_standard": "equity_abnormal_activity_v0"
+}

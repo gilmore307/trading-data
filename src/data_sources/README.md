@@ -12,8 +12,8 @@ Current numbered data sources:
 
 Note: `TradeQualityModel` currently does not need a `trading-source` source because it consumes upstream SQL outputs and model/strategy candidates without new data acquisition.
 
-- `01_source_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_etf_universe.csv`.
-- `02_source_security_selection` — SQL-only filtered US-listed equity ETF holdings table for SecuritySelectionModel; ETF universe comes from `market_etf_universe.csv`.
+- `01_source_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_regime_etf_universe.csv`.
+- `02_source_security_selection` — SQL-only filtered US-listed equity ETF holdings table for SecuritySelectionModel; ETF universe comes from `market_regime_etf_universe.csv`.
 - `03_source_strategy_selection` — SQL-only manager-selected symbol bar/liquidity table for StrategySelectionModel; defaults to 1Min.
 - `05_source_option_expression` — SQL-only contract-level ThetaData option-chain snapshot table for OptionExpressionModel; one row per visible contract per entry/exit snapshot.
 - `06_source_position_execution` — SQL-only selected option contract time-series table for PositionExecutionModel; covers entry through exit plus one hour.

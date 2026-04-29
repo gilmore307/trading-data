@@ -11,7 +11,7 @@ The manager supplies these values in `task_key.params`:
 - `start` — required. Inclusive provider request start timestamp/date.
 - `end` — required. Exclusive/provider request end timestamp/date.
 - `symbols` — optional debug/review subset. String comma list or JSON list of symbols from the reviewed universe.
-- `market_etf_universe_path` — optional reviewed override. Normal runs use `/root/projects/trading-storage/main/shared/market_etf_universe.csv`.
+- `market_regime_etf_universe_path` — optional reviewed override. Normal runs use `/root/projects/trading-storage/main/shared/market_regime_etf_universe.csv`.
 - `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds`, `secret_alias` — optional request/runtime overrides.
 
 The task key also carries orchestration fields outside `params`, including `task_id`, `source = "01_source_market_regime"`, and optional `output_root` for receipts/manifests.

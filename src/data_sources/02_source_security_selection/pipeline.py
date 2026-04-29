@@ -36,7 +36,7 @@ SQL_FIELDS = [
     "sector_type",
 ]
 KEY_COLUMNS = ["etf_symbol", "as_of_date", "holding_symbol"]
-MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-storage/main/shared/market_etf_universe.csv")
+MARKET_REGIME_ETF_UNIVERSE_PATH = Path("/root/projects/trading-storage/main/shared/market_regime_etf_universe.csv")
 HOLDINGS_UNIVERSE_TYPE = "sector_observation_etf"
 EXCLUDED_ASSET_PATTERNS = re.compile(r"\b(cash|money market|treasury|bond|fixed income|future|futures|swap|option|warrant|fund|etf|preferred)\b", re.I)
 NON_US_MARKER = re.compile(r"\b(adr|gdr|foreign|depositary|ltd|plc|s\.a\.|ag|nv|oyj|asa|spa|se|kk|co ltd|limited)\b", re.I)
@@ -98,7 +98,7 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
     rows = [row for row in rows if row.get("symbol") and row.get("issuer_name")]
     rows = [row for row in rows if row.get("universe_type") == HOLDINGS_UNIVERSE_TYPE]
     if not rows:
-        raise SecuritySelectionInputsError(f"market ETF universe produced zero {HOLDINGS_UNIVERSE_TYPE} rows: {path}")
+        raise SecuritySelectionInputsError(f"market regime ETF universe produced zero {HOLDINGS_UNIVERSE_TYPE} rows: {path}")
     return rows
 
 
@@ -111,7 +111,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     start = _required(params, "start")
     end = _required(params, "end")
-    universe_path = _resolve_path(str(params.get("market_etf_universe_path") or MARKET_ETF_UNIVERSE_PATH))
+    universe_path = _resolve_path(str(params.get("market_regime_etf_universe_path") or params.get("market_etf_universe_path") or MARKET_REGIME_ETF_UNIVERSE_PATH))
     universe_rows = _read_universe(universe_path)
     selected = _selected_symbols(universe_rows, params.get("symbols"))
     feed_payloads = params.get("holding_feed_payloads") or {}
@@ -135,7 +135,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
         "model_id": MODEL_ID,
         "start": start,
         "end": end,
-        "market_etf_universe_path": str(universe_path),
+        "market_regime_etf_universe_path": str(universe_path),
         "universe_type_filter": HOLDINGS_UNIVERSE_TYPE,
         "symbols": sorted(selected),
         "holding_feeds": evidence,

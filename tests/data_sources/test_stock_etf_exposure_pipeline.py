@@ -18,7 +18,7 @@ class FakeSqlWriter:
 class StockEtfExposurePipelineTests(unittest.TestCase):
     def test_security_selection_source_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
-            universe = Path(tmp) / "market_etf_universe.csv"
+            universe = Path(tmp) / "market_regime_etf_universe.csv"
             universe.write_text(
                 "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
                 "SPY,market_state_etf,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"
@@ -40,7 +40,7 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                 "params": {
                     "start": "2026-04-24",
                     "end": "2026-04-25",
-                    "market_etf_universe_path": str(universe),
+                    "market_regime_etf_universe_path": str(universe),
                     "available_time": "2026-04-25T09:30:00-04:00",
                     "holding_feed_payloads": {"SMH": {"csv_path": str(holdings), "as_of_date": "2026-04-24"}},
                 },

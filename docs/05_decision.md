@@ -833,7 +833,7 @@ Layer 2 was incorrectly treated as a generic model-input artifact manifest, and 
 
 ### Decision
 
-`02_source_security_selection` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
+`02_source_security_selection` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_regime_etf_universe.csv` for ETF universe/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -891,7 +891,7 @@ Remove active `04_trade_quality_model_inputs` from `trading-source` runnable bun
 
 Accepted: 2026-04-28
 
-Decision: Remove bundle-local `config.json` files from the accepted 01, 02, 03, and 05 model-input bundles. Stable table contracts, storage defaults, source aliases, and request defaults live in reviewed pipeline code. Manager-supplied values remain in task keys, and reviewed shared universes remain shared artifacts such as `/root/projects/trading-storage/main/shared/market_etf_universe.csv`.
+Decision: Remove bundle-local `config.json` files from the accepted 01, 02, 03, and 05 model-input bundles. Stable table contracts, storage defaults, source aliases, and request defaults live in reviewed pipeline code. Manager-supplied values remain in task keys, and reviewed shared universes remain shared artifacts such as `/root/projects/trading-storage/main/shared/market_regime_etf_universe.csv`.
 
 Rationale: The removed config files duplicated code-level contracts and made table schemas, storage targets, and defaults look operator-tunable when they are actually semantic contracts. Keeping them in code reduces drift and makes contract changes reviewable.
 

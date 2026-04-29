@@ -21,7 +21,7 @@ OUTPUT_TABLE = "source_01_market_regime"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]
 SQL_FIELDS = FIELDS
-MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-storage/main/shared/market_etf_universe.csv")
+MARKET_REGIME_ETF_UNIVERSE_PATH = Path("/root/projects/trading-storage/main/shared/market_regime_etf_universe.csv")
 DEFAULT_LIMIT = 1000
 DEFAULT_MAX_PAGES = 10
 DEFAULT_TIMEOUT_SECONDS = 20
@@ -143,7 +143,7 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
         rows = [{str(k): str(v or "").strip() for k, v in row.items()} for row in csv.DictReader(handle)]
     rows = [row for row in rows if row.get("symbol") and row.get("bar_grain")]
     if not rows:
-        raise MarketRegimeInputsError(f"market ETF universe produced zero rows: {path}")
+        raise MarketRegimeInputsError(f"market regime ETF universe produced zero rows: {path}")
     return rows
 
 
@@ -151,7 +151,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
     params = dict(context.task_key.get("params") or {})
     start = str(_required(params, "start"))
     end = str(_required(params, "end"))
-    universe_path = Path(str(params.get("market_etf_universe_path") or MARKET_ETF_UNIVERSE_PATH))
+    universe_path = Path(str(params.get("market_regime_etf_universe_path") or params.get("market_etf_universe_path") or MARKET_REGIME_ETF_UNIVERSE_PATH))
     if not universe_path.is_absolute():
         universe_path = Path("/root/projects/trading-main") / universe_path
     universe_rows = _read_universe(universe_path)
@@ -189,8 +189,8 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
 
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "market_etf_universe_path": str(universe_path), "symbols": symbols, "bar_requests": evidence, "secret_alias": public_secret_summary(secret), "raw_persistence": "not_persisted_by_default", "fetched_at_utc": _now_utc()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], {"raw_bars_transient": sum(len(rows) for rows in bars_by_symbol.values())}, details={"symbols": symbols, "market_etf_universe_path": str(universe_path)}), SourcePayload(universe_rows, bars_by_symbol, public_secret_summary(secret))
+    manifest.write_text(json.dumps({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "market_regime_etf_universe_path": str(universe_path), "symbols": symbols, "bar_requests": evidence, "secret_alias": public_secret_summary(secret), "raw_persistence": "not_persisted_by_default", "fetched_at_utc": _now_utc()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(manifest)], {"raw_bars_transient": sum(len(rows) for rows in bars_by_symbol.values())}, details={"symbols": symbols, "market_regime_etf_universe_path": str(universe_path)}), SourcePayload(universe_rows, bars_by_symbol, public_secret_summary(secret))
 
 
 def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:

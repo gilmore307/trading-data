@@ -66,7 +66,7 @@ class NumberedDataSourceTests(unittest.TestCase):
         module.load_secret_alias = lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:
-                universe_path = Path(tmp) / "market_etf_universe.csv"
+                universe_path = Path(tmp) / "market_regime_etf_universe.csv"
                 universe_path.write_text(
                     "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
                     "SPY,broad_market,core,1d,SPDR S&P 500 ETF,State Street\n"
@@ -76,7 +76,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                 task_key = {
                     "task_id": "01_source_market_regime_task_test",
                     "source": "01_source_market_regime",
-                    "params": {"start": "2026-04-24", "end": "2026-04-25", "market_etf_universe_path": str(universe_path), "max_pages": 2},
+                    "params": {"start": "2026-04-24", "end": "2026-04-25", "market_regime_etf_universe_path": str(universe_path), "max_pages": 2},
                     "output_root": str(Path(tmp) / "task"),
                 }
                 writer = FakeSqlWriter()

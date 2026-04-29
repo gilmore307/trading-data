@@ -28,9 +28,9 @@ This document maps `trading-source` source-backed outputs to the seven accepted 
 
 Each accepted model layer that needs new `trading-source` acquisition has a manager-facing source-backed source under `src/data_sources/NN_source_<layer>/`. These sources fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
 
-Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
+Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
 
-Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_security_selection`.
+Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_security_selection`.
 
 Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `source_03_strategy_selection`.
 

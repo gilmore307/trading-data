@@ -771,7 +771,7 @@ The first MarketRegimeModel bundle now fetches ETF bars directly from the config
 
 ### Decision
 
-`01_bundle_market_regime` writes its canonical saved output to SQL table `bundle_01_market_regime`. The table is a single long table across symbols and bar grains, keyed by `run_id + symbol + timeframe + timestamp`.
+`01_bundle_market_regime` writes its canonical saved output to SQL table `bundle_01_market_regime`. The table is a single long table across symbols and bar grains, keyed by `symbol + timeframe + timestamp`. Run/task metadata lives in manifests and receipts, not business rows.
 
 ### Consequences
 
@@ -841,7 +841,7 @@ The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`
 - Layer 2 no longer writes the shared `model_input_artifact_reference` manifest as its final output.
 - Layer 2 does not write bars; Layer 1 owns bars.
 - Filter out cash, money-market, fixed income, futures, swaps, options, funds, non-US local listings, and other non-equity assets unless explicitly reviewed later.
-- Primary key: `run_id + etf_symbol + as_of_date + holding_symbol`.
+- Primary key: `etf_symbol + as_of_date + holding_symbol`; run/task metadata lives in manifests and receipts, not business rows.
 
 ## D055 - Strategy selection bundle writes bar plus liquidity inputs
 
@@ -862,7 +862,7 @@ The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average 
 - Layer 3 no longer writes the shared `model_input_artifact_reference` manifest as its final output.
 - Raw trades/quotes remain transient and are not persisted by default.
 - Feature engineering for returns/volatility/trend/gaps remains downstream of this data bundle.
-- Primary key: `run_id + symbol + timeframe + timestamp`.
+- Primary key: `symbol + timeframe + timestamp`; run/task metadata lives in manifests and receipts, not business rows.
 
 ## D056 - Trade quality has no trading-data bundle; option expression writes option snapshot
 
@@ -876,14 +876,14 @@ The user clarified that `TradeQualityModel` does not require a `trading-data` bu
 
 Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
-`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `bundle_05_option_expression` with one row per requested snapshot and a nested `contracts` JSONB payload.
+`05_bundle_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot source interface, and writes SQL table `bundle_05_option_expression` with one row per visible option contract per snapshot.
 
 ### Consequences
 
 - Do not keep a Layer 4 runnable data bundle or SQL manifest/view just for orchestration symmetry.
 - Layer 5 owns option-chain snapshot acquisition for OptionExpressionModel inputs.
-- Raw ThetaData responses remain transient; final durable payload is the normalized SQL row.
-- Primary key for Layer 5: `run_id + underlying + snapshot_time`.
+- Raw ThetaData responses and nested source snapshots remain transient; final durable payload is contract-level SQL rows with explicit option identity, quote, IV, greeks, underlying context, and derived columns.
+- Primary key for Layer 5: `underlying + snapshot_time + snapshot_type + option_symbol`; run/task metadata lives in manifests and receipts, not business rows.
 
 ### D057 — Keep accepted model-input bundle defaults in code, not bundle-local config
 

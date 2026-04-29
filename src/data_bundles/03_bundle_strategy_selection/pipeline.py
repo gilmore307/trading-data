@@ -20,8 +20,6 @@ MODEL_ID = "strategy_selection_model"
 OUTPUT_TABLE = "bundle_03_strategy_selection"
 ET = ZoneInfo("America/New_York")
 SQL_FIELDS = [
-    "run_id",
-    "task_id",
     "symbol",
     "timeframe",
     "timestamp",
@@ -43,7 +41,7 @@ SQL_FIELDS = [
     "last_bid",
     "last_ask",
 ]
-KEY_COLUMNS = ["run_id", "symbol", "timeframe", "timestamp"]
+KEY_COLUMNS = ["symbol", "timeframe", "timestamp"]
 DEFAULT_SECRET_ALIAS = "alpaca"
 DEFAULT_TIMEFRAME = "1Min"
 DEFAULT_ADJUSTMENT = "raw"
@@ -215,8 +213,6 @@ def _row(context: BundleContext, symbol: str, timeframe: str, timestamp: str, ba
     avg_mid = _num(liquidity.get("avg_mid"))
     avg_spread = _num(liquidity.get("avg_spread"))
     return {
-        "run_id": str(context.metadata["run_id"]),
-        "task_id": str(context.task_key.get("task_id") or ""),
         "symbol": symbol,
         "timeframe": timeframe,
         "timestamp": timestamp,

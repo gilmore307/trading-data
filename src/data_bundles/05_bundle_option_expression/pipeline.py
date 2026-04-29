@@ -19,8 +19,41 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 BUNDLE = "05_bundle_option_expression"
 MODEL_ID = "option_expression_model"
 OUTPUT_TABLE = "bundle_05_option_expression"
-SQL_FIELDS = ["run_id", "task_id", "underlying", "snapshot_time", "contract_count", "contracts"]
-KEY_COLUMNS = ["run_id", "underlying", "snapshot_time"]
+SQL_FIELDS = [
+    "underlying",
+    "snapshot_time",
+    "snapshot_type",
+    "option_symbol",
+    "expiration",
+    "option_right_type",
+    "strike",
+    "quote_timestamp",
+    "bid",
+    "ask",
+    "mid",
+    "spread",
+    "spread_pct",
+    "bid_size",
+    "ask_size",
+    "bid_exchange",
+    "ask_exchange",
+    "bid_condition",
+    "ask_condition",
+    "iv_timestamp",
+    "implied_vol",
+    "iv_error",
+    "greeks_timestamp",
+    "delta",
+    "theta",
+    "vega",
+    "rho",
+    "epsilon",
+    "lambda",
+    "underlying_price",
+    "underlying_timestamp",
+    "days_to_expiration",
+]
+KEY_COLUMNS = ["underlying", "snapshot_time", "snapshot_type", "option_symbol"]
 
 
 @dataclass(frozen=True)
@@ -68,8 +101,16 @@ def build_context(task_key: dict[str, Any], run_id: str) -> BundleContext:
     return BundleContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
+def _snapshot_type(params: Mapping[str, Any]) -> str:
+    value = str(params.get("snapshot_type") or "entry").strip().lower()
+    if value not in {"entry", "exit"}:
+        raise OptionExpressionInputsError("params.snapshot_type must be 'entry' or 'exit'")
+    return value
+
+
 def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
+    snapshot_type = _snapshot_type(params)
     source_task = {
         "task_id": f"{context.task_key.get('task_id')}_option_snapshot",
         "bundle": "09_source_thetadata_option_selection_snapshot",
@@ -81,21 +122,97 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     clean_result, snapshot = clean_snapshot(source_context, fetched)
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps(sanitize_value({"bundle": BUNDLE, "model_id": MODEL_ID, "source_bundle": "09_source_thetadata_option_selection_snapshot", "params": {"underlying": params.get("underlying"), "snapshot_time": params.get("snapshot_time")}, "source_fetch": asdict(fetch_result), "source_clean": asdict(clean_result), "raw_persistence": "ThetaData raw responses are transient; final output is SQL JSONB-style contracts payload", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], dict(clean_result.row_counts), details={"underlying": snapshot.get("underlying"), "snapshot_time": snapshot.get("snapshot_time")}), SourcePayload(snapshot, int(clean_result.row_counts.get("option_chain_snapshot_contracts", 0)), fetch_result, clean_result)
+    manifest.write_text(json.dumps(sanitize_value({"bundle": BUNDLE, "model_id": MODEL_ID, "source_bundle": "09_source_thetadata_option_selection_snapshot", "params": {"underlying": params.get("underlying"), "snapshot_time": params.get("snapshot_time"), "snapshot_type": snapshot_type}, "source_fetch": asdict(fetch_result), "source_clean": asdict(clean_result), "raw_persistence": "ThetaData raw responses are transient; final output is contract-level SQL rows", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(manifest)], dict(clean_result.row_counts), details={"underlying": snapshot.get("underlying"), "snapshot_time": snapshot.get("snapshot_time"), "snapshot_type": snapshot_type}), SourcePayload(snapshot, int(clean_result.row_counts.get("option_chain_snapshot_contracts", 0)), fetch_result, clean_result)
+
+
+def _num(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _int(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _option_symbol(underlying: str, expiration: str, right: str, strike: Any) -> str:
+    code = "C" if str(right).upper().startswith("C") else "P" if str(right).upper().startswith("P") else str(right).upper()[:1]
+    strike_value = _num(strike)
+    strike_text = f"{strike_value:g}" if strike_value is not None else str(strike)
+    return f"{underlying.upper()}_{expiration}_{code}_{strike_text}"
+
+
+def _context(contract: Mapping[str, Any], key: str) -> Mapping[str, Any]:
+    value = contract.get(key) or {}
+    return value if isinstance(value, Mapping) else {}
+
+
+def _flatten_contract(underlying: str, snapshot_time: str, snapshot_type: str, contract: Mapping[str, Any]) -> dict[str, Any]:
+    quote = _context(contract, "quote")
+    iv = _context(contract, "iv")
+    greeks = _context(contract, "greeks")
+    derived = _context(contract, "derived")
+    underlying_context = _context(contract, "underlying_context")
+    expiration = str(contract.get("expiration") or "")
+    right = str(contract.get("option_right_type") or "")
+    strike = _num(contract.get("strike"))
+    return {
+        "underlying": underlying,
+        "snapshot_time": snapshot_time,
+        "snapshot_type": snapshot_type,
+        "option_symbol": _option_symbol(underlying, expiration, right, strike if strike is not None else contract.get("strike")),
+        "expiration": expiration,
+        "option_right_type": right,
+        "strike": strike,
+        "quote_timestamp": quote.get("timestamp"),
+        "bid": _num(quote.get("bid")),
+        "ask": _num(quote.get("ask")),
+        "mid": _num(quote.get("mid")),
+        "spread": _num(quote.get("spread")),
+        "spread_pct": _num(quote.get("spread_pct")),
+        "bid_size": _num(quote.get("bid_size")),
+        "ask_size": _num(quote.get("ask_size")),
+        "bid_exchange": _int(quote.get("bid_exchange")),
+        "ask_exchange": _int(quote.get("ask_exchange")),
+        "bid_condition": _int(quote.get("bid_condition")),
+        "ask_condition": _int(quote.get("ask_condition")),
+        "iv_timestamp": iv.get("timestamp"),
+        "implied_vol": _num(iv.get("implied_vol")),
+        "iv_error": _num(iv.get("iv_error")),
+        "greeks_timestamp": greeks.get("timestamp"),
+        "delta": _num(greeks.get("delta")),
+        "theta": _num(greeks.get("theta")),
+        "vega": _num(greeks.get("vega")),
+        "rho": _num(greeks.get("rho")),
+        "epsilon": _num(greeks.get("epsilon")),
+        "lambda": _num(greeks.get("lambda")),
+        "underlying_price": _num(underlying_context.get("underlying_price")),
+        "underlying_timestamp": underlying_context.get("underlying_timestamp"),
+        "days_to_expiration": _int(derived.get("days_to_expiration")),
+    }
 
 
 def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
-    row = {
-        "run_id": str(context.metadata["run_id"]),
-        "task_id": str(context.task_key.get("task_id") or ""),
-        "underlying": str(payload.snapshot.get("underlying") or ""),
-        "snapshot_time": str(payload.snapshot.get("snapshot_time") or ""),
-        "contract_count": int(payload.snapshot.get("contract_count") or payload.contract_count),
-        "contracts": payload.snapshot.get("contracts") or [],
-    }
-    result = StepResult("succeeded", [], {OUTPUT_TABLE: 1, "option_chain_snapshot_contracts": row["contract_count"]}, details={"columns": SQL_FIELDS, "table": OUTPUT_TABLE, "natural_key": KEY_COLUMNS})
-    return result, CleanedPayload([row])
+    params = dict(context.task_key.get("params") or {})
+    underlying = str(payload.snapshot.get("underlying") or "")
+    snapshot_time = str(payload.snapshot.get("snapshot_time") or "")
+    snapshot_type = _snapshot_type(params)
+    contracts = payload.snapshot.get("contracts") or []
+    if not isinstance(contracts, list):
+        raise OptionExpressionInputsError("source snapshot contracts must be a list")
+    rows = [_flatten_contract(underlying, snapshot_time, snapshot_type, contract) for contract in contracts if isinstance(contract, Mapping)]
+    rows.sort(key=lambda row: (row["expiration"], row["option_right_type"], row["strike"] if row["strike"] is not None else -1, row["option_symbol"]))
+    result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows), "option_chain_snapshot_contracts": len(rows)}, details={"columns": SQL_FIELDS, "table": OUTPUT_TABLE, "natural_key": KEY_COLUMNS, "snapshot_type": snapshot_type})
+    return result, CleanedPayload(rows)
 
 
 def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:

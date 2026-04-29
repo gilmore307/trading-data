@@ -20,7 +20,7 @@ OUTPUT_NAME = "01_bundle_market_regime"
 OUTPUT_TABLE = "bundle_01_market_regime"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
-SQL_FIELDS = ["run_id", "task_id", *FIELDS, "created_at"]
+SQL_FIELDS = FIELDS
 MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-main/storage/shared/market_etf_universe.csv")
 DEFAULT_LIMIT = 1000
 DEFAULT_MAX_PAGES = 10
@@ -201,37 +201,13 @@ def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, C
         for bar in payload.bars_by_symbol[symbol]:
             rows.append({"symbol": symbol, "timeframe": timeframe, "timestamp": _et_iso(bar["t"]), "open": bar.get("o"), "high": bar.get("h"), "low": bar.get("l"), "close": bar.get("c"), "volume": bar.get("v"), "vwap": bar.get("vw"), "trade_count": bar.get("n")})
     rows.sort(key=lambda row: (str(row["timeframe"]), str(row["symbol"]), str(row["timestamp"])))
-    result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"columns": SQL_FIELDS, "natural_key": ["run_id", "symbol", "timeframe", "timestamp"], "table": OUTPUT_TABLE})
+    result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"columns": SQL_FIELDS, "natural_key": ["symbol", "timeframe", "timestamp"], "table": OUTPUT_TABLE})
     return result, CleanedPayload(rows)
-
-
-def _build_sql_rows(context: BundleContext, payload: CleanedPayload) -> list[dict[str, Any]]:
-    created_at = _now_utc()
-    task_id = str(context.task_key.get("task_id") or "")
-    run_id = str(context.metadata["run_id"])
-    return [
-        {
-            "run_id": run_id,
-            "task_id": task_id,
-            "symbol": row["symbol"],
-            "timeframe": row["timeframe"],
-            "timestamp": row["timestamp"],
-            "open": row.get("open"),
-            "high": row.get("high"),
-            "low": row.get("low"),
-            "close": row.get("close"),
-            "volume": row.get("volume"),
-            "vwap": row.get("vwap"),
-            "trade_count": row.get("trade_count"),
-            "created_at": created_at,
-        }
-        for row in payload.rows
-    ]
 
 
 def save(context: BundleContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
     writer = sql_writer or PostgresSqlTableWriter.from_config({})
-    metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=_build_sql_rows(context, payload), key_columns=["run_id", "symbol", "timeframe", "timestamp"])
+    metadata = writer.write_rows(table=OUTPUT_TABLE, columns=SQL_FIELDS, rows=payload.rows, key_columns=["symbol", "timeframe", "timestamp"])
     reference = str(metadata.get("qualified_table") or metadata.get("table") or OUTPUT_TABLE)
     return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
 

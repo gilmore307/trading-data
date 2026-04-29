@@ -88,12 +88,13 @@ class NumberedDataBundleTests(unittest.TestCase):
                 self.assertEqual(len(writer.calls), 1)
                 call = writer.calls[0]
                 self.assertEqual(call["table"], "bundle_01_market_regime")
-                self.assertEqual(call["key_columns"], ["run_id", "symbol", "timeframe", "timestamp"])
+                self.assertEqual(call["key_columns"], ["symbol", "timeframe", "timestamp"])
                 rows = sorted(call["rows"], key=lambda row: row["symbol"])
                 self.assertEqual(len(rows), 2)
                 self.assertEqual({row["symbol"]: row["timeframe"] for row in rows}, {"BITW": "30Min", "SPY": "1Day"})
-                self.assertEqual({row["run_id"] for row in rows}, {"run"})
-                self.assertEqual(call["columns"], ["run_id", "task_id", "symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count", "created_at"])
+                self.assertNotIn("run_id", rows[0])
+                self.assertNotIn("task_id", rows[0])
+                self.assertEqual(call["columns"], ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"])
         finally:
             module.load_secret_alias = old_load_secret
 
@@ -115,7 +116,7 @@ class NumberedDataBundleTests(unittest.TestCase):
                 self.assertEqual(result.row_counts["bundle_03_strategy_selection"], 1)
                 call = writer.calls[0]
                 self.assertEqual(call["table"], "bundle_03_strategy_selection")
-                self.assertEqual(call["key_columns"], ["run_id", "symbol", "timeframe", "timestamp"])
+                self.assertEqual(call["key_columns"], ["symbol", "timeframe", "timestamp"])
                 row = call["rows"][0]
                 self.assertEqual(row["symbol"], "NVDA")
                 self.assertEqual(row["timeframe"], "1Min")
@@ -123,6 +124,8 @@ class NumberedDataBundleTests(unittest.TestCase):
                 self.assertEqual(row["dollar_volume"], 100500.0)
                 self.assertAlmostEqual(row["avg_spread"], 0.2)
                 self.assertAlmostEqual(row["spread_bps"], 19.890601690701146)
+                self.assertNotIn("run_id", row)
+                self.assertNotIn("task_id", row)
                 self.assertNotIn("created_at", row)
         finally:
             module.load_secret_alias = old_load_secret
@@ -143,12 +146,18 @@ class NumberedDataBundleTests(unittest.TestCase):
             self.assertEqual(result.row_counts["option_chain_snapshot_contracts"], 1)
             call = writer.calls[0]
             self.assertEqual(call["table"], "bundle_05_option_expression")
-            self.assertEqual(call["key_columns"], ["run_id", "underlying", "snapshot_time"])
+            self.assertEqual(call["key_columns"], ["underlying", "snapshot_time", "snapshot_type", "option_symbol"])
             row = call["rows"][0]
             self.assertEqual(row["underlying"], "AAPL")
             self.assertEqual(row["snapshot_time"], "2026-04-24T09:30:02.500000-04:00")
-            self.assertEqual(row["contract_count"], 1)
-            self.assertEqual(row["contracts"][0]["option_right_type"], "CALL")
+            self.assertEqual(row["snapshot_type"], "entry")
+            self.assertEqual(row["option_right_type"], "CALL")
+            self.assertEqual(row["bid"], 1.15)
+            self.assertEqual(row["implied_vol"], 0.64)
+            self.assertEqual(row["delta"], 0.52)
+            self.assertNotIn("contracts", row)
+            self.assertNotIn("run_id", row)
+            self.assertNotIn("task_id", row)
             self.assertNotIn("created_at", row)
 
     def test_position_execution_bundle_writes_selected_contract_timeseries(self):

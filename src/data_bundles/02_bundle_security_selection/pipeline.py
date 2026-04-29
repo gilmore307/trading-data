@@ -22,8 +22,6 @@ BUNDLE = "02_bundle_security_selection"
 MODEL_ID = "security_selection_model"
 OUTPUT_TABLE = "bundle_02_security_selection"
 SQL_FIELDS = [
-    "run_id",
-    "task_id",
     "etf_symbol",
     "issuer_name",
     "universe_type",
@@ -37,7 +35,7 @@ SQL_FIELDS = [
     "market_value",
     "sector_type",
 ]
-KEY_COLUMNS = ["run_id", "etf_symbol", "as_of_date", "holding_symbol"]
+KEY_COLUMNS = ["etf_symbol", "as_of_date", "holding_symbol"]
 MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-main/storage/shared/market_etf_universe.csv")
 EXCLUDED_ASSET_PATTERNS = re.compile(r"\b(cash|money market|treasury|bond|fixed income|future|futures|swap|option|warrant|fund|etf|preferred)\b", re.I)
 NON_US_MARKER = re.compile(r"\b(adr|gdr|foreign|depositary|ltd|plc|s\.a\.|ag|nv|oyj|asa|spa|se|kk|co ltd|limited)\b", re.I)
@@ -193,8 +191,6 @@ def clean(context: BundleContext, payload: SourcePayload) -> tuple[StepResult, C
             continue
         universe = universe_by_symbol.get(symbol, {})
         rows.append({
-            "run_id": str(context.metadata["run_id"]),
-            "task_id": str(context.task_key.get("task_id") or ""),
             "etf_symbol": symbol,
             "issuer_name": str(universe.get("issuer_name") or raw.get("issuer_name") or ""),
             "universe_type": str(universe.get("universe_type") or ""),

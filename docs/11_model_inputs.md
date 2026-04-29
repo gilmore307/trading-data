@@ -20,7 +20,7 @@ This document maps `trading-data` outputs and derived data products to the seven
 | `SecuritySelectionModel` | `02_bundle_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
 | `StrategySelectionModel` | `03_bundle_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
 | `TradeQualityModel` | _(no trading-data bundle)_ | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new data acquisition, SQL view, or manifest contract in `trading-data`; `trading-model` consumes upstream SQL outputs directly. |
-| `OptionExpressionModel` | `05_bundle_option_expression` | option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts. Contract-level snapshot revision is pending. |
+| `OptionExpressionModel` | `05_bundle_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
 | `PositionExecutionModel` | `06_bundle_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
 | `EventOverlayModel` | `07_bundle_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
@@ -36,7 +36,7 @@ Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbo
 
 Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model/strategy candidates without new data acquisition or manifest/view contract.
 
-Layer 5 currently accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `bundle_05_option_expression`. This is scheduled to become contract-level entry/exit snapshot rows because the model compares contracts.
+Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes SQL table `bundle_05_option_expression` as one row per visible option contract per snapshot.
 
 Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `bundle_06_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
 

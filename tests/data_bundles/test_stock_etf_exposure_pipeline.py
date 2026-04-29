@@ -53,14 +53,16 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
             self.assertEqual(len(sql_writer.calls), 1)
             call = sql_writer.calls[0]
             self.assertEqual(call["table"], "bundle_02_security_selection")
-            self.assertEqual(call["key_columns"], ["run_id", "etf_symbol", "as_of_date", "holding_symbol"])
-            self.assertEqual(call["columns"], ["run_id", "task_id", "etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
+            self.assertEqual(call["key_columns"], ["etf_symbol", "as_of_date", "holding_symbol"])
+            self.assertEqual(call["columns"], ["etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
             rows = call["rows"]
             self.assertEqual(rows[0]["holding_symbol"], "NVDA")
             self.assertEqual(rows[0]["etf_symbol"], "SMH")
             self.assertEqual(rows[0]["universe_type"], "sector_observation_etf")
             self.assertEqual(rows[0]["exposure_type"], "industry_chain")
             self.assertEqual(rows[0]["available_time"], "2026-04-25T09:30:00-04:00")
+            self.assertNotIn("run_id", rows[0])
+            self.assertNotIn("task_id", rows[0])
             self.assertNotIn("created_at", rows[0])
             self.assertNotIn("cusip", rows[0])
             self.assertNotIn("sedol", rows[0])

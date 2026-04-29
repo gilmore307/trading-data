@@ -33,13 +33,11 @@ bundle_03_strategy_selection
 Natural key:
 
 ```text
-run_id + symbol + timeframe + timestamp
+symbol + timeframe + timestamp
 ```
 
 Columns:
 
-- `run_id`
-- `task_id`
 - `symbol`
 - `timeframe`
 - `timestamp`
@@ -61,4 +59,4 @@ Columns:
 - `last_bid`
 - `last_ask`
 
-No saved bundle CSV is written. Task write/audit timestamps belong in the completion receipt, not this business table.
+No saved bundle CSV is written. `run_id`, `task_id`, and task write/audit timestamps belong in manifests and completion receipts, not this business table.

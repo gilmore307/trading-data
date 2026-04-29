@@ -166,8 +166,6 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
 def _market_regime_table_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
-        run_id TEXT NOT NULL,
-        task_id TEXT NOT NULL,
         symbol TEXT NOT NULL,
         timeframe TEXT NOT NULL,
         timestamp TIMESTAMPTZ NOT NULL,
@@ -178,8 +176,7 @@ def _market_regime_table_ddl(qualified_table: str) -> str:
         volume DOUBLE PRECISION,
         vwap DOUBLE PRECISION,
         trade_count BIGINT,
-        created_at TIMESTAMPTZ NOT NULL,
-        PRIMARY KEY (run_id, symbol, timeframe, timestamp)
+        PRIMARY KEY (symbol, timeframe, timestamp)
     )
     """
 
@@ -207,8 +204,6 @@ def _model_input_artifact_reference_ddl(qualified_table: str) -> str:
 def _bundle_02_security_selection_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
-        run_id TEXT NOT NULL,
-        task_id TEXT NOT NULL,
         etf_symbol TEXT NOT NULL,
         issuer_name TEXT NOT NULL,
         universe_type TEXT NOT NULL,
@@ -221,7 +216,7 @@ def _bundle_02_security_selection_ddl(qualified_table: str) -> str:
         shares DOUBLE PRECISION,
         market_value DOUBLE PRECISION,
         sector_type TEXT,
-        PRIMARY KEY (run_id, etf_symbol, as_of_date, holding_symbol)
+        PRIMARY KEY (etf_symbol, as_of_date, holding_symbol)
     )
     """
 
@@ -229,8 +224,6 @@ def _bundle_02_security_selection_ddl(qualified_table: str) -> str:
 def _bundle_03_strategy_selection_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
-        run_id TEXT NOT NULL,
-        task_id TEXT NOT NULL,
         symbol TEXT NOT NULL,
         timeframe TEXT NOT NULL,
         timestamp TIMESTAMPTZ NOT NULL,
@@ -251,7 +244,7 @@ def _bundle_03_strategy_selection_ddl(qualified_table: str) -> str:
         spread_bps DOUBLE PRECISION,
         last_bid DOUBLE PRECISION,
         last_ask DOUBLE PRECISION,
-        PRIMARY KEY (run_id, symbol, timeframe, timestamp)
+        PRIMARY KEY (symbol, timeframe, timestamp)
     )
     """
 
@@ -259,13 +252,39 @@ def _bundle_03_strategy_selection_ddl(qualified_table: str) -> str:
 def _bundle_05_option_expression_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
-        run_id TEXT NOT NULL,
-        task_id TEXT NOT NULL,
         underlying TEXT NOT NULL,
         snapshot_time TIMESTAMPTZ NOT NULL,
-        contract_count BIGINT NOT NULL,
-        contracts JSONB NOT NULL,
-        PRIMARY KEY (run_id, underlying, snapshot_time)
+        snapshot_type TEXT NOT NULL,
+        option_symbol TEXT NOT NULL,
+        expiration DATE NOT NULL,
+        option_right_type TEXT NOT NULL,
+        strike DOUBLE PRECISION NOT NULL,
+        quote_timestamp TIMESTAMPTZ,
+        bid DOUBLE PRECISION,
+        ask DOUBLE PRECISION,
+        mid DOUBLE PRECISION,
+        spread DOUBLE PRECISION,
+        spread_pct DOUBLE PRECISION,
+        bid_size DOUBLE PRECISION,
+        ask_size DOUBLE PRECISION,
+        bid_exchange BIGINT,
+        ask_exchange BIGINT,
+        bid_condition BIGINT,
+        ask_condition BIGINT,
+        iv_timestamp TIMESTAMPTZ,
+        implied_vol DOUBLE PRECISION,
+        iv_error DOUBLE PRECISION,
+        greeks_timestamp TIMESTAMPTZ,
+        delta DOUBLE PRECISION,
+        theta DOUBLE PRECISION,
+        vega DOUBLE PRECISION,
+        rho DOUBLE PRECISION,
+        epsilon DOUBLE PRECISION,
+        lambda DOUBLE PRECISION,
+        underlying_price DOUBLE PRECISION,
+        underlying_timestamp TIMESTAMPTZ,
+        days_to_expiration BIGINT,
+        PRIMARY KEY (underlying, snapshot_time, snapshot_type, option_symbol)
     )
     """
 

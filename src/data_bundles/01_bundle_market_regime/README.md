@@ -39,21 +39,20 @@ Table: `bundle_01_market_regime`
 
 Columns, in order:
 
-1. `run_id`
-2. `task_id`
-3. `symbol`
-4. `timeframe`
-5. `timestamp`
-6. `open`
-7. `high`
-8. `low`
-9. `close`
-10. `volume`
-11. `vwap`
-12. `trade_count`
-13. `created_at`
+1. `symbol`
+2. `timeframe`
+3. `timestamp`
+4. `open`
+5. `high`
+6. `low`
+7. `close`
+8. `volume`
+9. `vwap`
+10. `trade_count`
 
-Natural key: `run_id + symbol + timeframe + timestamp`.
+Natural key: `symbol + timeframe + timestamp`.
+
+`run_id`, `task_id`, and write/audit timestamps live in run manifests and completion receipts, not in this business table.
 
 All configured ETFs and all configured grains are stored in the same long table. Downstream feature code must explicitly group/filter by both `symbol` and `timeframe`; daily and intraday rows must not be rolled together accidentally.
 

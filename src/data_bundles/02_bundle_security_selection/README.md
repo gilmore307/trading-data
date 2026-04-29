@@ -48,13 +48,11 @@ bundle_02_security_selection
 Natural key:
 
 ```text
-run_id + etf_symbol + as_of_date + holding_symbol
+etf_symbol + as_of_date + holding_symbol
 ```
 
 Columns:
 
-- `run_id`
-- `task_id`
 - `etf_symbol`
 - `issuer_name`
 - `universe_type`
@@ -68,4 +66,4 @@ Columns:
 - `market_value`
 - `sector_type`
 
-`available_time` is the time the holdings row is allowed to become visible to model logic. Task write/audit time belongs in the completion receipt, not in this business table.
+`available_time` is the time the holdings row is allowed to become visible to model logic. `run_id`, `task_id`, and task write/audit time belong in manifests and completion receipts, not in this business table.

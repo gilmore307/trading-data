@@ -57,7 +57,7 @@ flowchart TD
 - Validation evidence belongs in completion receipts/manifests, not only logs.
 - Downstream repositories should consume storage-backed outputs and receipts/manifests, not provider internals.
 - Legacy development file outputs must stay under ignored `storage/`; accepted SQL-only source outputs may use reviewed SQL table contracts and guarded integration paths.
-- Shared fields, statuses, and type names must come from `trading-main/registry/`.
+- Shared fields, statuses, and type names must come from `trading-main/scripts/registry/`.
 - Live provider calls should be minimized in tests; prefer fixtures, recorded examples, or provider adapters with controlled mocks.
 
 

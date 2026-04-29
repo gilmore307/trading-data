@@ -44,7 +44,7 @@ For each source bundle, design in this order:
 When implementation starts, each bundle should eventually have a folder like:
 
 ```text
-src/trading_data/data_sources/<bundle>/
+src/data_sources/<bundle>/
   README.md
   pipeline.py
 ```
@@ -104,7 +104,7 @@ ThetaData option acquisition is intentionally split by use case, not endpoint fa
 
 ## Implemented bundle CLIs
 
-- `trading-data-alpaca-bars` / `python -m trading_data.data_sources.alpaca_bars` runs the Alpaca bars pipeline.
-- `trading-data-alpaca-liquidity` / `python -m trading_data.data_sources.alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
-- `trading-data-alpaca-news` / `python -m trading_data.data_sources.alpaca_news` runs the Alpaca news pipeline.
-- `trading-data-okx-crypto-market-data` / `python -m trading_data.data_sources.okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.
+- `trading-data-alpaca-bars` / `python -m data_sources.alpaca_bars` runs the Alpaca bars pipeline.
+- `trading-data-alpaca-liquidity` / `python -m data_sources.alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
+- `trading-data-alpaca-news` / `python -m data_sources.alpaca_news` runs the Alpaca news pipeline.
+- `trading-data-okx-crypto-market-data` / `python -m data_sources.okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.

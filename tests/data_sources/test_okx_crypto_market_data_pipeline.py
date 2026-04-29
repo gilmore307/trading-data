@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.source_availability.http import HttpResult
-from trading_data.data_sources.okx_crypto_market_data.pipeline import (
+from source_availability.http import HttpResult
+from data_sources.okx_crypto_market_data.pipeline import (
     aggregate_liquidity_bars,
     normalize_bars,
     normalize_trades,

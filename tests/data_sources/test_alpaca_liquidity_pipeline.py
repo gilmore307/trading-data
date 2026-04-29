@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.alpaca_liquidity.pipeline import aggregate_liquidity_bars, aggregate_quotes, aggregate_trades, run
-from trading_data.source_availability.http import HttpResult
+from data_sources.alpaca_liquidity.pipeline import aggregate_liquidity_bars, aggregate_quotes, aggregate_trades, run
+from source_availability.http import HttpResult
 
 
 class FakeAlpacaClient:
@@ -65,7 +65,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
                 'output_root': str(Path(tmp) / 'alpaca_liquidity_task_test'),
             }
             # Patch secrets by monkeypatching module loader.
-            import trading_data.data_sources.alpaca_liquidity.pipeline as pipeline
+            import data_sources.alpaca_liquidity.pipeline as pipeline
             class Secret:
                 alias='alpaca'; path=Path('/root/secrets/alpaca.json'); present=True; keys_present=('api_key','secret_key'); values={'api_key':'k','secret_key':'s','data_endpoint':'https://data.alpaca.markets'}
             old = pipeline.load_secret_alias

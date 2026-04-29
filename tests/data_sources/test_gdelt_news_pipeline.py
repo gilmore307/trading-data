@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.gdelt_news.pipeline import run
+from data_sources.gdelt_news.pipeline import run
 
 
 class FakeBigQueryResult:

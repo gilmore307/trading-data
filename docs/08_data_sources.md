@@ -35,7 +35,7 @@ No source package exists yet. When implementation starts, the first source area 
 A likely Python package shape is:
 
 ```text
-src/trading_data/
+src/
   sources/          Provider adapters and source capability descriptors.
   domains/          Domain assembly for market_board_data, instrument_data, option_data.
   normalize/        Provider-to-output normalization logic.

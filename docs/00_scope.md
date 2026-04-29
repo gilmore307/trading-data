@@ -23,8 +23,8 @@ This repository exists to make data production explicit, testable, and reusable 
 - Expose component-local tests for data parsing, validation, and fixture-based provider behavior.
 - Track data-provider limitations, quotas, and quality caveats that affect this repository.
 - Build provider/source connector layer boundaries before domain pipelines depend on live APIs.
-- Keep `src/trading_data/data_sources/` limited to smallest-unit provider/source acquisition and normalization interfaces.
-- Keep manager-facing task execution and model-input generation in `src/trading_data/data_bundles/`, with config-backed parameters for reusable baskets, issuers, grains, and detector defaults.
+- Keep `src/data_sources/` limited to smallest-unit provider/source acquisition and normalization interfaces.
+- Keep manager-facing task execution and model-input generation in `src/data_bundles/`, with config-backed parameters for reusable baskets, issuers, grains, and detector defaults.
 
 ## Out of Scope
 

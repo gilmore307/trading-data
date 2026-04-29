@@ -4,8 +4,8 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 ## Principles
 
-- Keep raw/source acquisition in smallest-unit modules under `src/trading_data/data_sources/`.
-- Keep manager-facing model-input orchestration under `src/trading_data/data_bundles/`.
+- Keep raw/source acquisition in smallest-unit modules under `src/data_sources/`.
+- Keep manager-facing model-input orchestration under `src/data_bundles/`.
 - Keep task inputs in manager task keys, stable bundle contracts/defaults in code, and shared reviewed universes in shared artifacts; avoid bundle-local config files unless operators must routinely change the value outside code review.
 - Keep final model-facing outputs SQL-only for accepted numbered data bundles.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
@@ -26,27 +26,27 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 ## Implemented Model Input Bundles
 
-Each accepted model layer that needs new `trading-data` acquisition has a manager-facing bundle under `src/trading_data/data_bundles/NN_bundle_<layer>/`. These bundles fetch/prepare the data needed by the layer; they are not the complete model-input universe.
+Each accepted model layer that needs new `trading-data` acquisition has a manager-facing bundle under `src/data_bundles/NN_bundle_<layer>/`. These bundles fetch/prepare the data needed by the layer; they are not the complete model-input universe.
 
-Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `trading_data.bundle_01_market_regime`.
+Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `bundle_01_market_regime`.
 
-Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `trading_data.bundle_02_security_selection`.
+Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope/issuer/exposure labels, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `bundle_02_security_selection`.
 
-Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `trading_data.bundle_03_strategy_selection`.
+Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `bundle_03_strategy_selection`.
 
 Layer 4 has no `trading-data` bundle: it consumes upstream SQL outputs and model/strategy candidates without new data acquisition or manifest/view contract.
 
-Layer 5 currently accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `trading_data.bundle_05_option_expression`. This is scheduled to become contract-level entry/exit snapshot rows because the model compares contracts.
+Layer 5 currently accepts manager-supplied `params.underlying` and `params.snapshot_time`, calls the ThetaData option selection snapshot interface, and writes SQL table `bundle_05_option_expression`. This is scheduled to become contract-level entry/exit snapshot rows because the model compares contracts.
 
-Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `trading_data.bundle_06_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
+Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `bundle_06_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
 
-Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `trading_data.bundle_07_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
+Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `bundle_07_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
 
 ## Derived Data Products Added for Model Needs
 
 ### `stock_etf_exposure`
 
-Integrated step: `src/trading_data/data_bundles/02_bundle_security_selection/pipeline.py`
+Integrated step: `src/data_bundles/02_bundle_security_selection/pipeline.py`
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
@@ -70,13 +70,13 @@ Boundary:
 
 - Derived feature artifact, not a raw provider table.
 - Must preserve `available_time`; do not assume a holdings file is usable before it was visible.
-- Superseded as the primary Layer 2 bundle output by `trading_data.bundle_02_security_selection`. Future stock-level exposure features should derive from the SQL holdings table plus reviewed ETF/sector/theme scores.
+- Superseded as the primary Layer 2 bundle output by `bundle_02_security_selection`. Future stock-level exposure features should derive from the SQL holdings table plus reviewed ETF/sector/theme scores.
 
 ### `equity_abnormal_activity_event`
 
-Bundle: `src/trading_data/data_bundles/07_bundle_event_overlay/equity_abnormal_activity/`
+Bundle: `src/data_bundles/07_bundle_event_overlay/equity_abnormal_activity/`
 
-Config: `src/trading_data/data_bundles/07_bundle_event_overlay/equity_abnormal_activity/config.json`
+Config: `src/data_bundles/07_bundle_event_overlay/equity_abnormal_activity/config.json`
 
 Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

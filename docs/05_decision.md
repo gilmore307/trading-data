@@ -464,7 +464,7 @@ One pipeline file keeps early development simple and makes manager invocation st
 
 ### Consequences
 
-- Future source folder shape is `src/trading_data/data_sources/<bundle>/README.md` plus `pipeline.py`.
+- Future source folder shape is `src/data_sources/<bundle>/README.md` plus `pipeline.py`.
 - `trading-main/templates/data_tasks/pipeline.py` is the default implementation template.
 - The fetch/clean/save/receipt spec templates remain design documents, not required separate Python files.
 
@@ -575,7 +575,7 @@ The final data-kind CSV/JSON preview files define the output shapes consumed by 
 
 ### Decision
 
-Treat `storage/templates/data_kinds/**/*.preview.csv` and `*.preview.json` as generated materialized output templates. Generate them from `src/trading_data/template_generators/data_kind_previews.py`, where template specs refer to stable `trading-main` registry ids and resolve current payload field names from `registry/current.csv`.
+Treat `storage/templates/data_kinds/**/*.preview.csv` and `*.preview.json` as generated materialized output templates. Generate them from `src/template_generators/data_kind_previews.py`, where template specs refer to stable `trading-main` registry ids and resolve current payload field names from `registry/current.csv`.
 
 ### Rationale
 
@@ -832,7 +832,7 @@ Layer 2 was incorrectly treated as a generic model-input artifact manifest, and 
 
 ### Decision
 
-`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `trading_data.bundle_02_security_selection`.
+`02_bundle_security_selection` accepts `params.start` and `params.end`, uses `storage/shared/market_etf_universe.csv` for ETF universe/issuer/exposure labels, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `bundle_02_security_selection`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -853,7 +853,7 @@ Layer 3 was still represented as a generic artifact-reference manifest. The user
 
 ### Decision
 
-`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `trading_data.bundle_03_strategy_selection`.
+`03_bundle_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `bundle_03_strategy_selection`.
 
 The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
@@ -876,7 +876,7 @@ The user clarified that `TradeQualityModel` does not require a `trading-data` bu
 
 Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
-`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `trading_data.bundle_05_option_expression` with one row per requested snapshot and a nested `contracts` JSONB payload.
+`05_bundle_option_expression` is a real data bundle. It accepts `underlying` and `snapshot_time`, calls the ThetaData option selection snapshot source interface, and writes SQL table `bundle_05_option_expression` with one row per requested snapshot and a nested `contracts` JSONB payload.
 
 ### Consequences
 
@@ -910,8 +910,8 @@ Rationale: OptionExpressionModel chooses the theoretically best-return and risk-
 
 Consequences:
 
-- Layer 06 writes `trading_data.bundle_06_position_execution`.
-- Layer 07 writes `trading_data.bundle_07_event_overlay`.
+- Layer 06 writes `bundle_06_position_execution`.
+- Layer 07 writes `bundle_07_event_overlay`.
 - `07_bundle_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 
@@ -919,7 +919,7 @@ Consequences:
 
 Accepted: 2026-04-28
 
-The old `storage/templates/data_kinds/` preview catalog and `trading_data.template_generators.data_kind_previews` generator are retired. Dedicated SQL storage definitions and bundle/source README contracts now own accepted output shapes.
+The old `storage/templates/data_kinds/` preview catalog and `template_generators.data_kind_previews` generator are retired. Dedicated SQL storage definitions and bundle/source README contracts now own accepted output shapes.
 
 Consequences:
 
@@ -935,7 +935,7 @@ Status: Accepted
 
 ### Context
 
-The active numbered packages under `src/trading_data/data_bundles/` were named `*_model_inputs`, which overstated their boundary. They do not construct every input a model consumes; they only fetch and prepare the data-source-backed portion needed by each model layer.
+The active numbered packages under `src/data_bundles/` were named `*_model_inputs`, which overstated their boundary. They do not construct every input a model consumes; they only fetch and prepare the data-source-backed portion needed by each model layer.
 
 ### Decision
 
@@ -968,12 +968,12 @@ The numbered data bundles wrote SQL tables with model-layer business names such 
 
 Accepted numbered bundle SQL outputs use bundle-derived table names under the `trading_data` schema:
 
-- `trading_data.bundle_01_market_regime`
-- `trading_data.bundle_02_security_selection`
-- `trading_data.bundle_03_strategy_selection`
-- `trading_data.bundle_05_option_expression`
-- `trading_data.bundle_06_position_execution`
-- `trading_data.bundle_07_event_overlay`
+- `bundle_01_market_regime`
+- `bundle_02_security_selection`
+- `bundle_03_strategy_selection`
+- `bundle_05_option_expression`
+- `bundle_06_position_execution`
+- `bundle_07_event_overlay`
 
 Use snake_case for SQL identifiers; hyphenated names are only for CLI/package presentation where supported.
 
@@ -995,12 +995,12 @@ After bundle table names were changed to follow the producing `trading-data` bun
 
 Accepted numbered bundle SQL outputs live under schema `trading_data`, not `model_inputs`:
 
-- `trading_data.bundle_01_market_regime`
-- `trading_data.bundle_02_security_selection`
-- `trading_data.bundle_03_strategy_selection`
-- `trading_data.bundle_05_option_expression`
-- `trading_data.bundle_06_position_execution`
-- `trading_data.bundle_07_event_overlay`
+- `bundle_01_market_regime`
+- `bundle_02_security_selection`
+- `bundle_03_strategy_selection`
+- `bundle_05_option_expression`
+- `bundle_06_position_execution`
+- `bundle_07_event_overlay`
 
 The default PostgreSQL storage target id is `trading_data_postgres` and its schema is `trading_data`.
 
@@ -1027,3 +1027,30 @@ Remove the committed `storage/` directory from `trading-data`. Keep `storage/` i
 - There is no tracked `trading-data/storage/` tree.
 - Accepted contracts live in reviewed SQL definitions, bundle/source READMEs, and docs.
 - Runtime local artifacts under `storage/` are disposable and ignored.
+
+## D061 - Remove redundant `src/trading_data` package wrapper
+
+Date: 2026-04-28
+Status: Accepted
+
+### Context
+
+The repository name already provides the `trading-data` boundary. Keeping all importable code under `src/trading_data/` added a redundant package wrapper before the actual owned boundaries such as `data_bundles`, `data_sources`, `source_interfaces`, `source_availability`, and `storage`.
+
+### Decision
+
+Move importable packages directly under `src/`:
+
+- `src/data_bundles/`
+- `src/data_sources/`
+- `src/source_interfaces/`
+- `src/source_availability/`
+- `src/storage/`
+
+Console entrypoints import these top-level packages directly. Tests and docs should use the same package paths.
+
+### Consequences
+
+- Do not recreate `src/trading_data/`.
+- Package paths now mirror owned implementation boundaries without a repository-name wrapper.
+- Registry paths in `trading-main` must use `trading-data/src/<package>/...`.

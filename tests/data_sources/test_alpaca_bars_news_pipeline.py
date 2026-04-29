@@ -1,7 +1,7 @@
 from __future__ import annotations
 import csv,json,tempfile,unittest
 from pathlib import Path
-from trading_data.source_availability.http import HttpResult
+from source_availability.http import HttpResult
 
 class FakeBarsClient:
     def get(self,url,*,params=None,headers=None):
@@ -14,7 +14,7 @@ class Secret:
 
 class AlpacaBarsNewsPipelineTests(unittest.TestCase):
     def test_bars_pipeline_et_timestamp(self):
-        import trading_data.data_sources.alpaca_bars.pipeline as p
+        import data_sources.alpaca_bars.pipeline as p
         old=p.load_secret_alias; p.load_secret_alias=lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:
@@ -27,7 +27,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 self.assertFalse((Path(tk['output_root'])/'runs/alpaca_bars_run_test/saved/equity_bar.jsonl').exists())
         finally: p.load_secret_alias=old
     def test_news_pipeline_et_timestamps(self):
-        import trading_data.data_sources.alpaca_news.pipeline as p
+        import data_sources.alpaca_news.pipeline as p
         old=p.load_secret_alias; p.load_secret_alias=lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:

@@ -1,2 +1,0 @@
-"""Trading data implementation package."""
-

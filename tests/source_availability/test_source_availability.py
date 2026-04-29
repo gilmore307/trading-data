@@ -8,11 +8,11 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from trading_data.source_availability.__main__ import main
-from trading_data.source_availability.http import HttpResult
-from trading_data.source_availability.probes import probe_bls
-from trading_data.source_availability.report import ProbeResult, report_payload, write_report
-from trading_data.source_availability.sanitize import sanitize_url, sanitize_value
+from source_availability.__main__ import main
+from source_availability.http import HttpResult
+from source_availability.probes import probe_bls
+from source_availability.report import ProbeResult, report_payload, write_report
+from source_availability.sanitize import sanitize_url, sanitize_value
 
 
 class FakeClient:
@@ -62,7 +62,7 @@ class SourceAvailabilityTests(unittest.TestCase):
 
     def test_bls_probe_uses_mock_transport_and_sanitized_shape(self):
         with patch(
-            "trading_data.source_availability.probes.load_secret_alias"
+            "source_availability.probes.load_secret_alias"
         ) as load_secret:
             load_secret.return_value.values = {}
             load_secret.return_value.alias = "bls"

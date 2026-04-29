@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.trading_economics_calendar_web.pipeline import run
+from data_sources.trading_economics_calendar_web.pipeline import run
 
 
 class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):

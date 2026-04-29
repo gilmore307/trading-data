@@ -6,10 +6,10 @@ import unittest
 from contextlib import redirect_stdout
 from unittest.mock import patch
 
-from trading_data.source_availability.http import HttpResult
-from trading_data.source_interfaces.__main__ import main
-from trading_data.source_interfaces.catalog import INTERFACES
-from trading_data.source_interfaces.probes import probe_interface
+from source_availability.http import HttpResult
+from source_interfaces.__main__ import main
+from source_interfaces.catalog import INTERFACES
+from source_interfaces.probes import probe_interface
 
 
 class FakeClient:
@@ -53,7 +53,7 @@ class SourceInterfaceTests(unittest.TestCase):
             present = True
             keys_present = ("api_key", "secret_key")
             values = {"api_key": "key", "secret_key": "secret", "endpoint": "https://data.alpaca.markets"}
-        with patch("trading_data.source_interfaces.probes.load_secret_alias", return_value=Secret()):
+        with patch("source_interfaces.probes.load_secret_alias", return_value=Secret()):
             result = probe_interface(INTERFACES["equity_bar"], FakeClient(), sec_user_agent="test")
         self.assertEqual(result.status, "ok")
         self.assertEqual(result.secret_alias["keys_present"], ["api_key", "secret_key"])

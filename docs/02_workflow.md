@@ -49,8 +49,8 @@ flowchart TD
 - Data acquisition is historical by default; realtime collection is out of scope for this repository.
 - Data requests originate from `trading-manager`, not ad hoc local script calls.
 - A task key file must be self-contained: no script may depend on missing chat context or implicit operator memory.
-- `src/trading_data/data_sources/` owns smallest-unit provider/source access and source-output normalization.
-- `src/trading_data/data_bundles/` owns manager-facing task execution, bundle config, cross-source orchestration, and model-input generation.
+- `src/data_sources/` owns smallest-unit provider/source access and source-output normalization.
+- `src/data_bundles/` owns manager-facing task execution, bundle config, cross-source orchestration, and model-input generation.
 - Bundles may call multiple data sources in one run, but outputs should remain separable by table/data type.
 - Data requests should be idempotent where practical.
 - Provider responses should be normalized before downstream exposure.
@@ -133,7 +133,7 @@ SQL writes are canonical only for bundles with an explicit SQL output contract; 
 
 ## Historical Source Interfaces and Data Bundles
 
-Initial source interfaces are organized around source-level output types. Manager-facing orchestration should live in `src/trading_data/data_bundles/`; the source entries below are the smallest-unit source modules those bundles can call.
+Initial source interfaces are organized around source-level output types. Manager-facing orchestration should live in `src/data_bundles/`; the source entries below are the smallest-unit source modules those bundles can call.
 
 | Script / bundle | Source | Intended contents | Notes |
 |---|---|---|---|

@@ -4,7 +4,7 @@ import unittest
 from importlib import import_module
 from pathlib import Path
 
-from trading_data.source_availability.http import HttpResult
+from source_availability.http import HttpResult
 
 class FakeBarsClient:
     def get(self, url, *, params=None, headers=None):
@@ -48,7 +48,7 @@ class FakeSqlWriter:
 
     def write_rows(self, *, table, columns, rows, key_columns):
         self.calls.append({"table": table, "columns": list(columns), "rows": list(rows), "key_columns": list(key_columns)})
-        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"trading_data.{table}", "rows_written": len(rows)}
+        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
 
 
 class Secret:
@@ -61,7 +61,7 @@ class Secret:
 
 class NumberedDataBundleTests(unittest.TestCase):
     def test_market_regime_bundle_fetches_universe_bars_as_one_sql_long_table(self):
-        module = import_module("trading_data.data_bundles.01_bundle_market_regime.pipeline")
+        module = import_module("data_bundles.01_bundle_market_regime.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -84,7 +84,7 @@ class NumberedDataBundleTests(unittest.TestCase):
                 self.assertEqual(result.status, "succeeded")
                 self.assertEqual(result.row_counts["bundle_01_market_regime"], 2)
                 self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_bundle_market_regime.csv").exists())
-                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "trading_data.bundle_01_market_regime"])
+                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "bundle_01_market_regime"])
                 self.assertEqual(len(writer.calls), 1)
                 call = writer.calls[0]
                 self.assertEqual(call["table"], "bundle_01_market_regime")
@@ -98,7 +98,7 @@ class NumberedDataBundleTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_strategy_selection_bundle_writes_bar_liquidity_sql_rows(self):
-        module = import_module("trading_data.data_bundles.03_bundle_strategy_selection.pipeline")
+        module = import_module("data_bundles.03_bundle_strategy_selection.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -128,7 +128,7 @@ class NumberedDataBundleTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_option_expression_bundle_writes_option_snapshot_sql_row(self):
-        module = import_module("trading_data.data_bundles.05_bundle_option_expression.pipeline")
+        module = import_module("data_bundles.05_bundle_option_expression.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "05_bundle_option_expression_task_test",
@@ -152,7 +152,7 @@ class NumberedDataBundleTests(unittest.TestCase):
             self.assertNotIn("created_at", row)
 
     def test_position_execution_bundle_writes_selected_contract_timeseries(self):
-        module = import_module("trading_data.data_bundles.06_bundle_position_execution.pipeline")
+        module = import_module("data_bundles.06_bundle_position_execution.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "06_bundle_position_execution_task_test",
@@ -191,7 +191,7 @@ class NumberedDataBundleTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_bundle_writes_one_row_per_event(self):
-        module = import_module("trading_data.data_bundles.07_bundle_event_overlay.pipeline")
+        module = import_module("data_bundles.07_bundle_event_overlay.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "07_bundle_event_overlay_task_test",
@@ -244,7 +244,7 @@ class NumberedDataBundleTests(unittest.TestCase):
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
-            module = import_module("trading_data.data_bundles.01_bundle_market_regime.pipeline")
+            module = import_module("data_bundles.01_bundle_market_regime.pipeline")
             task_key = {
                 "task_id": "01_bundle_market_regime_task_bad",
                 "bundle": "01_bundle_market_regime",

@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from trading_data.data_sources.sec_company_financials.pipeline import run
-from trading_data.source_availability.http import HttpResult
+from data_sources.sec_company_financials.pipeline import run
+from source_availability.http import HttpResult
 
 
 class FakeSecClient:

@@ -1,4 +1,4 @@
-# 03_strategy_selection_model_inputs
+# bundle_03_strategy_selection
 
 Manager-facing StrategySelectionModel bar/liquidity input bundle.
 
@@ -8,7 +8,7 @@ This bundle accepts manager-selected symbols over a requested time range, fetche
 
 Required task key fields:
 
-- `bundle`: `03_strategy_selection_model_inputs`
+- `bundle`: `bundle_03_strategy_selection`
 - `task_id`: stable task identifier
 - `params.start`: inclusive request start timestamp/date
 - `params.end`: exclusive request end timestamp/date

@@ -1,4 +1,4 @@
-# 07_event_overlay_model_inputs
+# bundle_07_event_overlay
 
 Manager-facing EventOverlayModel data bundle.
 
@@ -10,7 +10,7 @@ Stable defaults live in pipeline code; there is no bundle-local `config.json`.
 
 Required task key fields:
 
-- `bundle`: `07_event_overlay_model_inputs`
+- `bundle`: `bundle_07_event_overlay`
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date

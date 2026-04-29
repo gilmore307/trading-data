@@ -1,14 +1,14 @@
-# 02_security_selection_model_inputs
+# bundle_02_security_selection
 
 Manager-facing SecuritySelectionModel ETF holdings input bundle.
 
-This bundle reads the reviewed ETF universe, collects issuer holdings snapshots for the selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the final model input to SQL. Stable defaults live in pipeline code; there is no bundle-local `config.json`.
+This bundle reads the reviewed ETF universe, collects issuer holdings snapshots for the selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table consumed by SecuritySelectionModel. Stable defaults live in pipeline code; there is no bundle-local `config.json`.
 
 ## Input parameters
 
 Required task key fields:
 
-- `bundle`: `02_security_selection_model_inputs`
+- `bundle`: `bundle_02_security_selection`
 - `task_id`: stable task identifier
 - `params.start`: inclusive holdings/as-of window start date or timestamp
 - `params.end`: inclusive holdings/as-of window end date or timestamp

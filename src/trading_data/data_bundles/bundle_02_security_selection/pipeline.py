@@ -16,7 +16,7 @@ from trading_data.data_sources.etf_holdings.pipeline import FIELDS as RAW_HOLDIN
 from trading_data.source_availability.sanitize import sanitize_value
 from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-BUNDLE = "02_security_selection_model_inputs"
+BUNDLE = "bundle_02_security_selection"
 MODEL_ID = "security_selection_model"
 OUTPUT_TABLE = "security_selection_us_equity_etf_holding"
 SQL_FIELDS = [

@@ -19,7 +19,7 @@ from typing import Any, Mapping
 from trading_data.data_bundles.config import load_bundle_config
 from trading_data.source_availability.sanitize import sanitize_value
 
-BUNDLE = "07_event_overlay_model_inputs.equity_abnormal_activity"
+BUNDLE = "bundle_07_event_overlay.equity_abnormal_activity"
 FIELDS = [
     "event_id",
     "symbol",

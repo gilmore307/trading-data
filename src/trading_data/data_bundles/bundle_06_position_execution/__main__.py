@@ -1,4 +1,4 @@
-"""CLI runner for the 07 EventOverlayModel input bundle."""
+"""CLI runner for the bundle_06_position_execution data bundle."""
 from __future__ import annotations
 
 import argparse
@@ -9,8 +9,8 @@ from .pipeline import run
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m trading_data.data_bundles.07_event_overlay_model_inputs")
-    parser.add_argument("task_key", type=Path, help="Path to a 07_event_overlay_model_inputs task key JSON file")
+    parser = argparse.ArgumentParser(prog="python -m trading_data.data_bundles.bundle_06_position_execution")
+    parser.add_argument("task_key", type=Path, help="Path to a bundle_06_position_execution task key JSON file")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
     result = run(json.loads(args.task_key.read_text(encoding="utf-8")), run_id=args.run_id)

@@ -7,7 +7,7 @@ This document maps `trading-data` outputs and derived data products to the seven
 - Keep raw/source acquisition in smallest-unit modules under `src/trading_data/data_sources/`.
 - Keep manager-facing model-input orchestration under `src/trading_data/data_bundles/`.
 - Keep task inputs in manager task keys, stable bundle contracts/defaults in code, and shared reviewed universes in shared artifacts; avoid bundle-local config files unless operators must routinely change the value outside code review.
-- Keep final model-facing outputs SQL-only for accepted numbered model-input bundles.
+- Keep final model-facing outputs SQL-only for accepted numbered data bundles.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
 - Use derived model-input tables only when they clarify layer boundaries or avoid repeated feature construction.
 - Register reusable names through `trading-main` before other repositories depend on them.
@@ -16,17 +16,17 @@ This document maps `trading-data` outputs and derived data products to the seven
 
 | Model layer | Input bundle | Core data products | Notes |
 |---|---|---|---|
-| `MarketRegimeModel` | `01_market_regime_model_inputs` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
-| `SecuritySelectionModel` | `02_security_selection_model_inputs` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
-| `StrategySelectionModel` | `03_strategy_selection_model_inputs` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
+| `MarketRegimeModel` | `bundle_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
+| `SecuritySelectionModel` | `bundle_02_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
+| `StrategySelectionModel` | `bundle_03_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
 | `TradeQualityModel` | _(no trading-data bundle)_ | candidate strategy signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new data acquisition, SQL view, or manifest contract in `trading-data`; `trading-model` consumes upstream SQL outputs directly. |
-| `OptionExpressionModel` | `05_option_expression_model_inputs` | option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts. Contract-level snapshot revision is pending. |
-| `PositionExecutionModel` | `06_position_execution_model_inputs` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
-| `EventOverlayModel` | `07_event_overlay_model_inputs` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
+| `OptionExpressionModel` | `bundle_05_option_expression` | option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts. Contract-level snapshot revision is pending. |
+| `PositionExecutionModel` | `bundle_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
+| `EventOverlayModel` | `bundle_07_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
 ## Implemented Model Input Bundles
 
-Each accepted model layer has a manager-facing bundle under `src/trading_data/data_bundles/NN_<model_id>_inputs/` unless the layer requires no new `trading-data` acquisition.
+Each accepted model layer that needs new `trading-data` acquisition has a manager-facing bundle under `src/trading_data/data_bundles/bundle_NN_<layer>/`. These bundles fetch/prepare the data needed by the layer; they are not the complete model-input universe.
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `model_inputs.market_regime_etf_bar`.
 
@@ -46,7 +46,7 @@ Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event o
 
 ### `stock_etf_exposure`
 
-Integrated step: `src/trading_data/data_bundles/02_security_selection_model_inputs/pipeline.py`
+Integrated step: `src/trading_data/data_bundles/bundle_02_security_selection/pipeline.py`
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
@@ -74,9 +74,9 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Bundle: `src/trading_data/data_bundles/07_event_overlay_model_inputs/equity_abnormal_activity/`
+Bundle: `src/trading_data/data_bundles/bundle_07_event_overlay/equity_abnormal_activity/`
 
-Config: `src/trading_data/data_bundles/07_event_overlay_model_inputs/equity_abnormal_activity/config.json`
+Config: `src/trading_data/data_bundles/bundle_07_event_overlay/equity_abnormal_activity/config.json`
 
 Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

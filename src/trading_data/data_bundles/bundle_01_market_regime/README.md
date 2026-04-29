@@ -1,4 +1,4 @@
-# 01_market_regime_model_inputs
+# bundle_01_market_regime
 
 MarketRegimeModel manager-facing ETF bar bundle.
 
@@ -14,7 +14,7 @@ The manager supplies these values in `task_key.params`:
 - `market_etf_universe_path` — optional reviewed override. Normal runs use `/root/projects/trading-main/storage/shared/market_etf_universe.csv`.
 - `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds`, `secret_alias` — optional request/runtime overrides.
 
-The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "01_market_regime_model_inputs"`, and optional `output_root` for receipts/manifests.
+The task key also carries orchestration fields outside `params`, including `task_id`, `bundle = "bundle_01_market_regime"`, and optional `output_root` for receipts/manifests.
 
 ## Universe contract
 
@@ -62,4 +62,4 @@ Run metadata:
 - request manifest: `<output_root>/runs/<run_id>/request_manifest.json`
 - completion receipt: `<output_root>/completion_receipt.json`
 
-No CSV, cleaned JSONL, or SQLite database is written for the saved model input output.
+No CSV, cleaned JSONL, or SQLite database is written for this accepted SQL output.

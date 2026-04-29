@@ -14,7 +14,7 @@ from trading_data.source_availability.sanitize import sanitize_url, sanitize_val
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
 from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-BUNDLE = "03_strategy_selection_model_inputs"
+BUNDLE = "bundle_03_strategy_selection"
 MODEL_ID = "strategy_selection_model"
 OUTPUT_TABLE = "strategy_selection_symbol_bar_liquidity"
 ET = ZoneInfo("America/New_York")

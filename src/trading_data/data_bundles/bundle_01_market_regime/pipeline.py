@@ -14,9 +14,9 @@ from trading_data.source_availability.sanitize import sanitize_url
 from trading_data.source_availability.secrets import load_secret_alias, public_secret_summary
 from trading_data.storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-BUNDLE = "01_market_regime_model_inputs"
+BUNDLE = "bundle_01_market_regime"
 MODEL_ID = "market_regime_model"
-OUTPUT_NAME = "01_market_regime_model_inputs"
+OUTPUT_NAME = "bundle_01_market_regime"
 OUTPUT_TABLE = "market_regime_etf_bar"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]

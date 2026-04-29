@@ -1,4 +1,4 @@
-# 05_option_expression_model_inputs
+# bundle_05_option_expression
 
 Manager-facing OptionExpressionModel option-chain snapshot input bundle.
 
@@ -8,7 +8,7 @@ This bundle accepts a manager-selected underlying and explicit snapshot time, ca
 
 Required task key fields:
 
-- `bundle`: `05_option_expression_model_inputs`
+- `bundle`: `bundle_05_option_expression`
 - `task_id`: stable task identifier
 - `params.underlying`: underlying equity symbol
 - `params.snapshot_time`: explicit point-in-time option-chain snapshot timestamp

@@ -14,11 +14,7 @@ htmlcov/
 !.env.example
 
 # Local/generated storage and artifacts
-storage/*
-!storage/
-!storage/README.md
-!storage/templates/
-!storage/templates/**
+storage/
 artifacts/
 outputs/
 runs/

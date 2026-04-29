@@ -1008,3 +1008,22 @@ The default PostgreSQL storage target id is `trading_data_postgres` and its sche
 
 - Do not use `model_inputs` for source-backed `trading-data` bundle outputs.
 - Future model/training repositories can own their own model-input or training-data schemas without semantic collision.
+
+## D060 - Remove the committed storage directory
+
+Date: 2026-04-28
+Status: Accepted
+
+### Context
+
+The committed `storage/README.md` kept a tracked `storage/` directory in the repository after the old preview-template catalog had already been retired. Current accepted bundle outputs are SQL contracts, while remaining legacy/local task artifacts are runtime-created and ignored.
+
+### Decision
+
+Remove the committed `storage/` directory from `trading-data`. Keep `storage/` ignored in `.gitignore` so legacy tasks, source probes, and local runs may still create runtime artifacts without adding them to Git.
+
+### Consequences
+
+- There is no tracked `trading-data/storage/` tree.
+- Accepted contracts live in reviewed SQL definitions, bundle/source READMEs, and docs.
+- Runtime local artifacts under `storage/` are disposable and ignored.

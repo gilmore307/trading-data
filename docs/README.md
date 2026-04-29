@@ -21,4 +21,4 @@ Optional docs are allowed when they have a clear component-specific boundary and
 
 ## Related Contracts
 
-Accepted model-input/data contracts now live in dedicated SQL storage definitions and bundle/source README files. The old `storage/templates/data_kinds/` preview catalog has been retired.
+Accepted model-input/data contracts now live in dedicated SQL storage definitions and bundle/source README files. The old committed `storage/` tree, including `storage/templates/data_kinds/`, has been retired; runtime `storage/` remains ignored when legacy tasks create local artifacts.

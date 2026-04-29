@@ -2,7 +2,7 @@
 
 `trading-data` is the data upstream repository for the trading system.
 
-It owns historical market and related data ingestion, normalization, validation, and data-output production for downstream trading repositories. It executes self-contained task key files from `trading-manager`; legacy bundles may still write inspected local files under ignored `storage/`, while accepted SQL-only bundle outputs write directly to reviewed SQL tables.
+It owns historical market and related data ingestion, normalization, validation, and data-output production for downstream trading repositories. It executes self-contained task key files from `trading-manager`; legacy bundles may still create ignored local files under runtime `storage/`, while accepted SQL-only bundle outputs write directly to reviewed SQL tables.
 
 It does not own shared storage policy, strategy logic, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
 
@@ -12,7 +12,6 @@ It does not own shared storage policy, strategy logic, model research, execution
 docs/        Required docs spine plus component-specific guides for data domains and data sources.
 src/         Importable data-source, source-interface, bundle, storage, and probe implementation packages.
 tests/       First-party tests for data-source pipelines, interface probes, storage, and bundles.
-storage/     Ignored local development storage root for task receipts, inspected legacy files, and run-local artifacts.
 ```
 
 Executable CLIs are package entrypoints that call `src/`. If future operational wrappers are needed, place them under `scripts/`; `src/` must not import `scripts/`.
@@ -37,7 +36,7 @@ docs/
 
 Input: self-contained historical data task key files from `trading-manager` once the task-key contract is accepted.
 
-Development output: local SQL databases and, for legacy bundles, inspected local files and task completion receipts under `storage/` (ignored by Git).
+Development output: local SQL databases and, for legacy bundles, inspected local files and task completion receipts under runtime-created `storage/` (ignored by Git).
 
 Durable output: storage-backed SQL/artifact outputs plus manifests and ready signals as cross-repository contracts are accepted.
 

@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import json
+from importlib import import_module
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
-from data_sources.alpaca_liquidity.pipeline import aggregate_liquidity_bars
+aggregate_liquidity_bars = import_module("data_sources.02_source_alpaca_liquidity.pipeline").aggregate_liquidity_bars
 from source_availability.http import HttpClient, HttpResult
 from source_availability.sanitize import sanitize_url, sanitize_value
 from source_availability.secrets import load_secret_alias, public_secret_summary

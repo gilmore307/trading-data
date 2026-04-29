@@ -4,15 +4,17 @@ from __future__ import annotations
 import csv
 import json
 import re
+from importlib import import_module
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from data_sources.etf_holdings.pipeline import clean as clean_holding_source
-from data_sources.etf_holdings.pipeline import fetch as fetch_holding_source
-from data_sources.etf_holdings.pipeline import build_context as build_holding_context
-from data_sources.etf_holdings.pipeline import FIELDS as RAW_HOLDING_FIELDS
+_holding_source = import_module("data_sources.06_source_etf_holdings.pipeline")
+clean_holding_source = _holding_source.clean
+fetch_holding_source = _holding_source.fetch
+build_holding_context = _holding_source.build_context
+RAW_HOLDING_FIELDS = _holding_source.FIELDS
 from source_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
@@ -160,7 +162,7 @@ def _fetch_one_holding_source(context: BundleContext, universe_row: Mapping[str,
     issuer = str(universe_row["issuer_name"])
     params = {**dict(payload_params), "etf_symbol": symbol, "issuer_name": issuer}
     params.setdefault("as_of_date", start[:10])
-    source_task = {"task_id": f"{context.task_key.get('task_id')}_{symbol}_holdings", "bundle": "etf_holdings", "params": params, "output_root": str(context.run_dir / "source" / symbol)}
+    source_task = {"task_id": f"{context.task_key.get('task_id')}_{symbol}_holdings", "bundle": "06_source_etf_holdings", "params": params, "output_root": str(context.run_dir / "source" / symbol)}
     source_context = build_holding_context(source_task, str(context.metadata["run_id"]))
     fetch_result, source_payload = fetch_holding_source(source_context)
     clean_result = clean_holding_source(source_context, source_payload)

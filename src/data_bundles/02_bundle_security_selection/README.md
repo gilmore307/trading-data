@@ -12,7 +12,7 @@ Required task key fields:
 - `task_id`: stable task identifier
 - `params.start`: inclusive holdings/as-of window start date or timestamp
 - `params.end`: inclusive holdings/as-of window end date or timestamp
-- `params.holding_source_payloads`: object keyed by ETF symbol. Each value is an `etf_holdings` source payload parameter object such as `csv_path`, `csv_text`, `html_path`, `html`, `json_path`, or `json_text`.
+- `params.holding_source_payloads`: object keyed by ETF symbol. Each value is an `06_source_etf_holdings` source payload parameter object such as `csv_path`, `csv_text`, `html_path`, `html`, `json_path`, or `json_text`.
 
 Optional task key fields:
 

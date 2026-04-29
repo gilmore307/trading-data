@@ -79,7 +79,7 @@ Current registered provider config and source-of-truth surfaces:
 | BEA | `https://apps.bea.gov/API/docs/index.htm` | Economic accounts and macroeconomic data acquisition. | `BEA_SECRET_ALIAS` | source alias `bea`; JSON path `/root/secrets/bea.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bea.json` and must not be copied into this repository. |
 | BLS | `https://www.bls.gov/developers/api_signature_v2.htm` | Labor and economic data acquisition. | `BLS_SECRET_ALIAS` | source alias `bls`; JSON path `/root/secrets/bls.json`; JSON key `api_key` | Secret value lives in `/root/secrets/bls.json` and must not be copied into this repository. |
 | U.S. Treasury Fiscal Data | `https://fiscaldata.treasury.gov/api-documentation/` | Federal finance datasets including debt, revenue, spending, interest rates, and savings bonds. | None; provider term `US_TREASURY_FISCAL_DATA` is registered. | No secret alias currently; official docs describe the API as open and not requiring a user account or token. | Connector design must still document dataset coverage, pagination, rate/usage behavior, timestamp semantics, and fixture policy. |
-| SEC EDGAR | `https://www.sec.gov/search-filings/edgar-application-programming-interfaces` | Public company submissions, XBRL facts, company financial reporting data, and filing metadata. | None; provider term `SEC_EDGAR` and bundle term `SEC_COMPANY_FINANCIALS` are registered. | No credential required; SEC automated access still requires fair-access behavior including an identifying User-Agent. | Preferred bundle key: `sec_company_financials`. Use official SEC endpoints such as company facts and submissions, preserve source filing dates/accession metadata, use America/New_York for research timestamps, and persist only final cleaned outputs. |
+| SEC EDGAR | `https://www.sec.gov/search-filings/edgar-application-programming-interfaces` | Public company submissions, XBRL facts, company financial reporting data, and filing metadata. | None; provider term `SEC_EDGAR` and bundle term `SEC_COMPANY_FINANCIALS` are registered. | No credential required; SEC automated access still requires fair-access behavior including an identifying User-Agent. | Preferred bundle key: `08_source_sec_company_financials`. Use official SEC endpoints such as company facts and submissions, preserve source filing dates/accession metadata, use America/New_York for research timestamps, and persist only final cleaned outputs. |
 | FOMC Calendar | `https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm` | FOMC meeting calendar and related monetary policy event information. | None; source term `FOMC_CALENDAR` is registered. | No credential required. | Official Federal Reserve page is the source of truth. Connector work must preserve source URL and retrieval timestamp. |
 | Official macro release calendars | Web search to current official agency pages. | Release dates/times for macroeconomic publications relevant to market context. | None; source term `OFFICIAL_MACRO_RELEASE_CALENDAR` is registered. | No general credential rule; use official agency sources. | Use web search for discovery, then confirm official government/issuing-agency domains. Third-party calendars are secondary only unless explicitly approved. |
 | ETF issuer holdings | Issuer websites or issuer-published holdings files. | ETF constituent stocks and portfolio weights/proportions. | None; source term `ETF_ISSUER_HOLDINGS` is registered. | Usually no credential; issuer-specific access rules remain open. | Issuer website is the source of truth. Preserve issuer URL, as-of date, retrieval timestamp, holdings file format, and any cash/derivative rows. |
@@ -115,7 +115,7 @@ These are historical acquisition boundaries. Realtime streaming and execution-ti
 
 ## SEC Company Financials Bundle Rule
 
-The SEC company financials bundle key is `sec_company_financials`.
+The SEC company financials bundle key is `08_source_sec_company_financials`.
 
 This bundle should fetch public company financial report data from official SEC EDGAR APIs, starting with company facts and submissions/filing metadata. It should not use third-party SEC mirror APIs as the source of truth unless separately reviewed.
 
@@ -126,7 +126,7 @@ Bundle design must document:
 - requested company identifiers, filing form filters such as 10-K/10-Q, fiscal period/year filters, taxonomy/tag selection, and revision/amendment handling;
 - source filing dates, accession numbers, report periods, fiscal year/period fields, and retrieval timestamps;
 - timestamp handling in America/New_York for stock-research workflow metadata;
-- stable random ID prefixes: `sec_company_financials_task_...` and `sec_company_financials_run_...`;
+- stable random ID prefixes: `08_source_sec_company_financials_task_...` and `08_source_sec_company_financials_run_...`;
 - segment fetch-clean-save behavior so large company/history ranges can resume without saving bulky raw intermediates;
 - final cleaned development outputs only, with durable SQL mapping deferred to storage contracts;
 - development-only tiny sanitized SEC response fixtures, removed or replaced with minimal synthetic contract fixtures before production hardening.
@@ -138,15 +138,15 @@ News is intentionally separated from Alpaca liquidity market events.
 
 Accepted Alpaca bundle keys are:
 
-- `alpaca_bars` for bars;
-- `alpaca_liquidity` for liquidity bars;
-- `alpaca_news` for news.
+- `01_source_alpaca_bars` for bars;
+- `02_source_alpaca_liquidity` for liquidity bars;
+- `03_source_alpaca_news` for news.
 
-`alpaca_news` must document article timestamps in America/New_York for research workflow metadata, provider publication timestamp semantics, symbols/entities covered, source/publisher fields, pagination, and rate-limit behavior. Task/run IDs should use `alpaca_news_task_...` and `alpaca_news_run_...` prefixes. Development should persist only final cleaned news outputs; tiny sanitized provider response fixtures are allowed only during development and should be replaced before production hardening.
+`03_source_alpaca_news` must document article timestamps in America/New_York for research workflow metadata, provider publication timestamp semantics, symbols/entities covered, source/publisher fields, pagination, and rate-limit behavior. Task/run IDs should use `03_source_alpaca_news_task_...` and `03_source_alpaca_news_run_...` prefixes. Development should persist only final cleaned news outputs; tiny sanitized provider response fixtures are allowed only during development and should be replaced before production hardening.
 
 ## Macro Data Source Rule
 
-`macro_data` is removed as an executable acquisition bundle. Macro calendar/value rows for model inputs now use `trading_economics_calendar_web` as the accepted source surface.
+`macro_data` is removed as an executable acquisition bundle. Macro calendar/value rows for model inputs now use `07_source_trading_economics_calendar_web` as the accepted source surface.
 
 The Trading Economics path is deliberately constrained:
 

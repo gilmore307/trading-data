@@ -617,7 +617,7 @@ Date: 2026-04-27
 
 ### Context
 
-ThetaData `/v3/option/history/ohlc` returns specified-contract 1-second OHLC rows and may include zero-volume placeholder rows. The `thetadata_option_primary_tracking` bundle must track a contract supplied by the task key without becoming a contract-selection model.
+ThetaData `/v3/option/history/ohlc` returns specified-contract 1-second OHLC rows and may include zero-volume placeholder rows. The `10_source_thetadata_option_primary_tracking` bundle must track a contract supplied by the task key without becoming a contract-selection model.
 
 ### Decision
 
@@ -629,7 +629,7 @@ The specified contract is an input, so selection remains outside the data bundle
 
 ### Consequences
 
-- `thetadata_option_primary_tracking` does not select contracts.
+- `10_source_thetadata_option_primary_tracking` does not select contracts.
 - Cleaned JSONL may exist only as run-local development evidence.
 - Final saved flat output is `option_bar.csv`.
 - VWAP is calculated from active 1Sec close × volume because the source OHLC `vwap` field is not treated as a per-second trade VWAP.
@@ -644,7 +644,7 @@ Date: 2026-04-27
 
 ### Decision
 
-Require `thetadata_option_event_timeline` task params to include a `current_standard` object with the indicator standards used for that run. The bundle fetches transient ThetaData trade/quote rows, evaluates supplied standards over `America/New_York` evidence windows, emits final `option_activity_event.csv` rows only when an indicator triggers, and writes one compact `<event_id>.json` detail artifact per event containing objective statistics, current standards, and standard context.
+Require `11_source_thetadata_option_event_timeline` task params to include a `current_standard` object with the indicator standards used for that run. The bundle fetches transient ThetaData trade/quote rows, evaluates supplied standards over `America/New_York` evidence windows, emits final `option_activity_event.csv` rows only when an indicator triggers, and writes one compact `<event_id>.json` detail artifact per event containing objective statistics, current standards, and standard context.
 
 ### Rationale
 
@@ -662,7 +662,7 @@ The data bundle can preserve event-time evidence without pretending to own the m
 
 Financial reports, SEC corporate filings, news, option activity, macro releases, and market anomalies should be studied through a shared event database layer rather than as isolated source-specific tables.
 
-Raw acquisition remains source-specific. Source bundles such as `sec_company_financials`, `alpaca_news`, and `thetadata_option_event_timeline` own official/provider fetches and source-local normalization. Event builders project those outputs into source-neutral `trading_event` rows.
+Raw acquisition remains source-specific. Source bundles such as `08_source_sec_company_financials`, `03_source_alpaca_news`, and `11_source_thetadata_option_event_timeline` own official/provider fetches and source-local normalization. Event builders project those outputs into source-neutral `trading_event` rows.
 
 Long-form agent/model interpretation belongs in artifact files, with `event_analysis_report` indexing the Markdown report and structured JSON sidecar. `trading_event` rows store facts, timing, source references, short summaries, and report URLs only. `event_factor` rows store numeric model-facing scores such as direction, magnitude, surprise, novelty, relevance, credibility, price-in, and observable reaction.
 
@@ -697,15 +697,15 @@ Superseded for active source path on 2026-04-28 by D050: `macro_data` is removed
 
 Alpaca news remains useful for stock-specific provider coverage, but GDELT is the primary broad news/event discovery source for political, economic, technology, geopolitical, sector, industry, theme, and market-impact event candidates.
 
-`gdelt_news` saves `gdelt_article` source-evidence rows from GDELT BigQuery. These rows are not canonical event identity by themselves. Downstream event extraction/clustering must merge GDELT articles into `trading_event` / `event_factor`, respect official-source priority, and avoid duplicate alpha counting when SEC/company/regulatory disclosures already cover the same event.
+`05_source_gdelt_news` saves `gdelt_article` source-evidence rows from GDELT BigQuery. These rows are not canonical event identity by themselves. Downstream event extraction/clustering must merge GDELT articles into `trading_event` / `event_factor`, respect official-source priority, and avoid duplicate alpha counting when SEC/company/regulatory disclosures already cover the same event.
 
 ## D047 - GDELT acquisition is U.S./U.S.-market focused by default
 
-The system does not need all global GDELT news. `gdelt_news` should pre-filter in BigQuery for U.S. and U.S.-market relevance by default, using `focus=us_market`, U.S. location/market terms, and a curated U.S./U.S.-market source-domain allowlist. Broader global queries require an explicit `focus=none` task parameter and should be treated as exceptional research, not the production default.
+The system does not need all global GDELT news. `05_source_gdelt_news` should pre-filter in BigQuery for U.S. and U.S.-market relevance by default, using `focus=us_market`, U.S. location/market terms, and a curated U.S./U.S.-market source-domain allowlist. Broader global queries require an explicit `focus=none` task parameter and should be treated as exceptional research, not the production default.
 
 ## D048 - GDELT default topics are politics, economy, war, and technology
 
-`gdelt_news` should not be an open-ended news firehose. Its default query scope is U.S./U.S.-market news in four market-impact categories: politics, economy, war/geopolitics, and technology. If a task omits `query_terms`, the bundle expands those categories into a bounded default term set. Other categories require explicit task parameters and should be reviewed before becoming production defaults.
+`05_source_gdelt_news` should not be an open-ended news firehose. Its default query scope is U.S./U.S.-market news in four market-impact categories: politics, economy, war/geopolitics, and technology. If a task omits `query_terms`, the bundle expands those categories into a bounded default term set. Other categories require explicit task parameters and should be reviewed before becoming production defaults.
 
 ## D049 - Seven model input bundles organize data products by model layer
 
@@ -750,7 +750,7 @@ Date: 2026-04-28
 
 ### Decision
 
-Remove `macro_data` as an executable `trading-data` acquisition bundle. Macro model inputs should use `trading_economics_calendar_web` visible-page rows.
+Remove `macro_data` as an executable `trading-data` acquisition bundle. Macro model inputs should use `07_source_trading_economics_calendar_web` visible-page rows.
 
 Official macro API keys and secret aliases may remain stored and registered for optional future research, but they are not active manager task routes.
 

@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import csv
 import json
+from importlib import import_module
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
-from data_sources.thetadata_option_primary_tracking.pipeline import run as run_option_tracking
+run_option_tracking = import_module("data_sources.10_source_thetadata_option_primary_tracking.pipeline").run
 from source_availability.http import HttpClient
 from source_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
@@ -146,7 +147,7 @@ def _fetch_contract_rows(context: BundleContext, contract: Mapping[str, Any], *,
     timeframe = str(contract.get("timeframe") or DEFAULT_TIMEFRAME)
     source_task = {
         "task_id": f"{context.task_key.get('task_id')}_{_option_symbol(contract)}_tracking",
-        "bundle": "thetadata_option_primary_tracking",
+        "bundle": "10_source_thetadata_option_primary_tracking",
         "params": {
             "underlying": str(_required(contract, "underlying")).upper(),
             "expiration": str(_required(contract, "expiration")),

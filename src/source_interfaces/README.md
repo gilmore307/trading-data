@@ -11,7 +11,7 @@ Commands:
 PYTHONPATH=src python3 -m source_interfaces --list
 PYTHONPATH=src python3 -m source_interfaces --source alpaca
 PYTHONPATH=src python3 -m source_interfaces --source okx
-PYTHONPATH=src python3 -m source_interfaces --source sec_company_financials
+PYTHONPATH=src python3 -m source_interfaces --source 08_source_sec_company_financials
 PYTHONPATH=src python3 -m source_interfaces --source thetadata
 ```
 

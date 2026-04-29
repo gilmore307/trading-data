@@ -29,7 +29,7 @@ class SourceInterfaceTests(unittest.TestCase):
     def test_trading_economics_is_macro_calendar_source(self):
         interface = INTERFACES["trading_economics_calendar_event"]
         self.assertEqual(interface.source, "trading_economics")
-        self.assertEqual(interface.bundle, "trading_economics_calendar_web")
+        self.assertEqual(interface.bundle, "07_source_trading_economics_calendar_web")
         self.assertEqual(interface.access, "web/login")
 
     def test_cli_list_no_network(self):

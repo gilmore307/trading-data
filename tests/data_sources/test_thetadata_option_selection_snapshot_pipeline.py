@@ -4,7 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from data_sources.thetadata_option_selection_snapshot.pipeline import run
+from importlib import import_module
+
+run = import_module("data_sources.09_source_thetadata_option_selection_snapshot.pipeline").run
 from source_availability.http import HttpResult
 
 
@@ -93,10 +95,10 @@ class FakeThetaDataClient:
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_only_with_et_timestamps(self):
         with tempfile.TemporaryDirectory() as tmp:
-            output_root = Path(tmp) / "thetadata_option_selection_snapshot_task_test"
+            output_root = Path(tmp) / "09_source_thetadata_option_selection_snapshot_task_test"
             task_key = {
-                "task_id": "thetadata_option_selection_snapshot_task_test",
-                "bundle": "thetadata_option_selection_snapshot",
+                "task_id": "09_source_thetadata_option_selection_snapshot_task_test",
+                "bundle": "09_source_thetadata_option_selection_snapshot",
                 "params": {
                     "underlying": "AAPL",
                     "snapshot_time": "2026-04-24T09:30:02.500000-04:00",
@@ -104,10 +106,10 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="thetadata_option_selection_snapshot_run_test", client=FakeThetaDataClient())
+            result = run(task_key, run_id="09_source_thetadata_option_selection_snapshot_run_test", client=FakeThetaDataClient())
 
             self.assertEqual(result.status, "succeeded")
-            saved_path = output_root / "runs" / "thetadata_option_selection_snapshot_run_test" / "saved" / "option_chain_snapshot.csv"
+            saved_path = output_root / "runs" / "09_source_thetadata_option_selection_snapshot_run_test" / "saved" / "option_chain_snapshot.csv"
             self.assertTrue(saved_path.exists())
             self.assertFalse((saved_path.parent / "option_chain_snapshot.csv.tmp").exists())
             self.assertFalse((saved_path.parent / "option_chain_snapshot.jsonl").exists())
@@ -133,19 +135,19 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             )
             self.assertEqual(contract["derived"]["days_to_expiration"], 21)
 
-            manifest = json.loads((output_root / "runs" / "thetadata_option_selection_snapshot_run_test" / "request_manifest.json").read_text())
+            manifest = json.loads((output_root / "runs" / "09_source_thetadata_option_selection_snapshot_run_test" / "request_manifest.json").read_text())
             self.assertEqual(manifest["raw_persistence"], "not_persisted_by_default")
             self.assertEqual(manifest["params"]["ms_of_day"], "34202500")
 
             receipt = json.loads((output_root / "completion_receipt.json").read_text())
-            self.assertEqual(receipt["bundle"], "thetadata_option_selection_snapshot")
+            self.assertEqual(receipt["bundle"], "09_source_thetadata_option_selection_snapshot")
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_chain_snapshot_contracts"], 1)
 
     def test_requires_explicit_snapshot_time(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "thetadata_option_selection_snapshot_task_test",
-                "bundle": "thetadata_option_selection_snapshot",
+                "task_id": "09_source_thetadata_option_selection_snapshot_task_test",
+                "bundle": "09_source_thetadata_option_selection_snapshot",
                 "params": {"underlying": "AAPL"},
                 "output_root": str(Path(tmp) / "task"),
             }

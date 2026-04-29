@@ -19,7 +19,7 @@ from .probes import interface_payload, probe_many
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m source_interfaces")
     parser.add_argument("--list", action="store_true", help="List provider/data-kind interfaces without network calls.")
-    parser.add_argument("--source", help="Filter by source, e.g. alpaca, okx, thetadata, sec_company_financials.")
+    parser.add_argument("--source", help="Filter by source, e.g. alpaca, okx, thetadata, 08_source_sec_company_financials.")
     parser.add_argument("--data-kind", action="append", choices=sorted(INTERFACES), help="Probe one data_kind; repeatable.")
     parser.add_argument("--timeout-seconds", type=int, default=8)
     parser.add_argument("--report-root", type=Path, default=Path("storage/source_interfaces"))

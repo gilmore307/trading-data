@@ -79,32 +79,32 @@ Every bundle design should answer:
 
 Initial bundle planning names remain:
 
-- `alpaca_bars`
-- `alpaca_liquidity`
-- `alpaca_news`
-- `thetadata_option_primary_tracking`
-- `thetadata_option_event_timeline`
-- `thetadata_option_selection_snapshot`
-- `okx_crypto_market_data`
-- `trading_economics_calendar_web`
+- `01_source_alpaca_bars`
+- `02_source_alpaca_liquidity`
+- `03_source_alpaca_news`
+- `10_source_thetadata_option_primary_tracking`
+- `11_source_thetadata_option_event_timeline`
+- `09_source_thetadata_option_selection_snapshot`
+- `04_source_okx_crypto_market_data`
+- `07_source_trading_economics_calendar_web`
 - `calendar_discovery`
-- `etf_holdings`
-- `sec_company_financials`
+- `06_source_etf_holdings`
+- `08_source_sec_company_financials`
 
 
 ThetaData option acquisition is intentionally split by use case, not endpoint family:
 
-- `thetadata_option_primary_tracking` supplements equity bars/liquidity by selecting one primary option contract and tracking it at the same research grain.
-- `thetadata_option_event_timeline` produces news-like timestamped option activity events.
-- `thetadata_option_selection_snapshot` captures point-in-time option-chain information visible when an equity signal needs to choose a contract.
+- `10_source_thetadata_option_primary_tracking` supplements equity bars/liquidity by selecting one primary option contract and tracking it at the same research grain.
+- `11_source_thetadata_option_event_timeline` produces news-like timestamped option activity events.
+- `09_source_thetadata_option_selection_snapshot` captures point-in-time option-chain information visible when an equity signal needs to choose a contract.
 
-`macro_data` has been removed as an executable macro acquisition bundle. Macro model inputs now use the conservative `trading_economics_calendar_web` visible-page interface; official macro API secret aliases may remain stored but are not active manager task routes.
+`macro_data` has been removed as an executable macro acquisition bundle. Macro model inputs now use the conservative `07_source_trading_economics_calendar_web` visible-page interface; official macro API secret aliases may remain stored but are not active manager task routes.
 
-`sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `sec_company_financials_task_...` and `sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.
+`08_source_sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `08_source_sec_company_financials_task_...` and `08_source_sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.
 
 ## Implemented bundle CLIs
 
-- `trading-data-alpaca-bars` / `python -m data_sources.alpaca_bars` runs the Alpaca bars pipeline.
-- `trading-data-alpaca-liquidity` / `python -m data_sources.alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
-- `trading-data-alpaca-news` / `python -m data_sources.alpaca_news` runs the Alpaca news pipeline.
-- `trading-data-okx-crypto-market-data` / `python -m data_sources.okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.
+- `trading-data-01-source-alpaca-bars` / `python -m data_sources.01_source_alpaca_bars` runs the Alpaca bars pipeline.
+- `trading-data-02-source-alpaca-liquidity` / `python -m data_sources.02_source_alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
+- `trading-data-03-source-alpaca-news` / `python -m data_sources.03_source_alpaca_news` runs the Alpaca news pipeline.
+- `trading-data-04-source-okx-crypto-market-data` / `python -m data_sources.04_source_okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.

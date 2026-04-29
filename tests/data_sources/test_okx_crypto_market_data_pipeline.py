@@ -3,13 +3,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from importlib import import_module
+
 from source_availability.http import HttpResult
-from data_sources.okx_crypto_market_data.pipeline import (
-    aggregate_liquidity_bars,
-    normalize_bars,
-    normalize_trades,
-    run,
-)
+
+_okx_pipeline = import_module("data_sources.04_source_okx_crypto_market_data.pipeline")
+aggregate_liquidity_bars = _okx_pipeline.aggregate_liquidity_bars
+normalize_bars = _okx_pipeline.normalize_bars
+normalize_trades = _okx_pipeline.normalize_trades
+run = _okx_pipeline.run
 
 
 class FakeOkxClient:
@@ -61,13 +63,13 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
     def test_run_saves_csv_only(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                'task_id': 'okx_crypto_market_data_task_test',
-                'bundle': 'okx_crypto_market_data',
+                'task_id': '04_source_okx_crypto_market_data_task_test',
+                'bundle': '04_source_okx_crypto_market_data',
                 'params': {'instId': 'BTC-USDT', 'timeframe': '1Min', 'limit': 2},
-                'output_root': str(Path(tmp) / 'okx_crypto_market_data_task_test'),
+                'output_root': str(Path(tmp) / '04_source_okx_crypto_market_data_task_test'),
             }
-            result = run(task_key, run_id='okx_crypto_market_data_run_test', client=FakeOkxClient())
-            saved = Path(task_key['output_root']) / 'runs' / 'okx_crypto_market_data_run_test' / 'saved'
+            result = run(task_key, run_id='04_source_okx_crypto_market_data_run_test', client=FakeOkxClient())
+            saved = Path(task_key['output_root']) / 'runs' / '04_source_okx_crypto_market_data_run_test' / 'saved'
             self.assertEqual(result.row_counts['crypto_bar'], 1)
             self.assertNotIn('crypto_trade', result.row_counts)
             self.assertEqual(result.row_counts['crypto_liquidity_bar'], 1)
@@ -75,9 +77,9 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
                 self.assertTrue((saved / f'{name}.csv').exists())
                 self.assertFalse((saved / f'{name}.jsonl').exists())
             self.assertFalse((saved / 'crypto_trade.csv').exists())
-            self.assertTrue((Path(task_key['output_root']) / 'runs' / 'okx_crypto_market_data_run_test' / 'cleaned' / 'crypto_trade_transient.jsonl').exists())
+            self.assertTrue((Path(task_key['output_root']) / 'runs' / '04_source_okx_crypto_market_data_run_test' / 'cleaned' / 'crypto_trade_transient.jsonl').exists())
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
-            self.assertEqual(receipt['bundle'], 'okx_crypto_market_data')
+            self.assertEqual(receipt['bundle'], '04_source_okx_crypto_market_data')
 
 
 if __name__ == '__main__':

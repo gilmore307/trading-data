@@ -72,7 +72,7 @@ def probe_interface(interface: DataKindInterface, client: HttpClient, *, sec_use
         return _probe_okx(interface, client)
     if interface.source == "thetadata":
         return _probe_thetadata(interface, client)
-    if interface.source == "sec_company_financials":
+    if interface.source == "08_source_sec_company_financials":
         return _probe_sec(interface, client, sec_user_agent=sec_user_agent)
     if interface.source == "fomc_calendar":
         return _probe_fomc(interface, client)

@@ -224,7 +224,7 @@ class NumberedDataBundleTests(unittest.TestCase):
                             "scope_type": "macro",
                             "title": "US durable goods release",
                             "summary": "Macro calendar release overview.",
-                            "source_name": "trading_economics_calendar_web",
+                            "source_name": "07_source_trading_economics_calendar_web",
                             "reference_type": "web_url",
                             "reference": "https://tradingeconomics.com/united-states/calendar",
                         },

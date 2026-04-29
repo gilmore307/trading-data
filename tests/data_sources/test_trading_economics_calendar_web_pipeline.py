@@ -4,7 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from data_sources.trading_economics_calendar_web.pipeline import run
+from importlib import import_module
+
+run = import_module("data_sources.07_source_trading_economics_calendar_web.pipeline").run
 
 
 class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
@@ -18,7 +20,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "te_calendar_task_test",
-                "bundle": "trading_economics_calendar_web",
+                "bundle": "07_source_trading_economics_calendar_web",
                 "params": {"html": html, "start_date": "2026-04-01", "end_date": "2026-04-30", "importance": "3"},
                 "output_root": str(Path(tmp) / "task"),
             }
@@ -38,7 +40,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "te_calendar_task_no_fetch",
-                "bundle": "trading_economics_calendar_web",
+                "bundle": "07_source_trading_economics_calendar_web",
                 "params": {"start_date": "2026-04-01", "end_date": "2026-04-30"},
                 "output_root": str(Path(tmp) / "task"),
             }

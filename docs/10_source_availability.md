@@ -81,7 +81,7 @@ Common commands:
 PYTHONPATH=src python3 -m source_interfaces --list
 PYTHONPATH=src python3 -m source_interfaces --source alpaca
 PYTHONPATH=src python3 -m source_interfaces --source okx
-PYTHONPATH=src python3 -m source_interfaces --source sec_company_financials
+PYTHONPATH=src python3 -m source_interfaces --source 08_source_sec_company_financials
 PYTHONPATH=src python3 -m source_interfaces --source thetadata
 ```
 
@@ -122,7 +122,7 @@ Exact source-specific parameter dictionaries remain open work. They should be de
 
 ## Alpaca liquidity implementation
 
-`src/data_sources/alpaca_liquidity/` now contains the first aggregate-only implementation. It requests Alpaca trades and quotes with bounded pagination, treats raw rows as transient run inputs, aligns intervals in `America/New_York`, and persists only derived aggregate outputs:
+`src/data_sources/02_source_alpaca_liquidity/` now contains the first aggregate-only implementation. It requests Alpaca trades and quotes with bounded pagination, treats raw rows as transient run inputs, aligns intervals in `America/New_York`, and persists only derived aggregate outputs:
 
 - `equity_liquidity_bar` — one ET-aligned interval row combining trade count/volume/VWAP/OHLC, quote count/spread/mid/depth summaries, and trade-vs-quote liquidity features such as VWAP minus average mid.
 
@@ -130,20 +130,20 @@ Current implementation supports `1Min`, `5Min`, `15Min`, `1Hour`, and `1Day` buc
 
 ## Alpaca bars and news implementations
 
-`src/data_sources/alpaca_bars/` now fetches Alpaca stock/ETF bars, normalizes timestamps to `America/New_York`, and saves cleaned `equity_bar` CSV outputs.
+`src/data_sources/01_source_alpaca_bars/` now fetches Alpaca stock/ETF bars, normalizes timestamps to `America/New_York`, and saves cleaned `equity_bar` CSV outputs.
 
-`src/data_sources/alpaca_news/` now fetches Alpaca news, normalizes `created_at`/`updated_at` to `America/New_York`, and saves cleaned `equity_news` CSV outputs.
+`src/data_sources/03_source_alpaca_news/` now fetches Alpaca news, normalizes `created_at`/`updated_at` to `America/New_York`, and saves cleaned `equity_news` CSV outputs.
 
 Both bundles use bounded pagination, sanitized request manifests, completion receipts, and no default full raw provider payload persistence.
 
 ## ThetaData option primary tracking implementation
 
-`src/data_sources/thetadata_option_primary_tracking/` now fetches specified-contract ThetaData option OHLC rows from the local Terminal v3 `/v3/option/history/ohlc` endpoint. It requires the caller to pass the contract (`underlying`, `expiration`, `right`, `strike`), `start_date`, `end_date`, and `timeframe`; it does not choose contracts.
+`src/data_sources/10_source_thetadata_option_primary_tracking/` now fetches specified-contract ThetaData option OHLC rows from the local Terminal v3 `/v3/option/history/ohlc` endpoint. It requires the caller to pass the contract (`underlying`, `expiration`, `right`, `strike`), `start_date`, `end_date`, and `timeframe`; it does not choose contracts.
 
 The bundle treats raw 1Sec OHLC rows as transient, skips zero-volume/count placeholders, aggregates active rows to the requested `America/New_York` timeframe, and persists only final `option_bar.csv` rows under `saved/`.
 
 ## ThetaData option event timeline implementation
 
-`src/data_sources/thetadata_option_event_timeline/` now fetches specified-contract ThetaData trade/quote rows from the local Terminal v3 `/v3/option/history/trade_quote` endpoint. It requires the caller to pass the contract, date range, event evidence-window `timeframe`, and a task/model `current_standard` object; the bundle carries that event-time standard into each detail JSON rather than owning a global fixed threshold.
+`src/data_sources/11_source_thetadata_option_event_timeline/` now fetches specified-contract ThetaData trade/quote rows from the local Terminal v3 `/v3/option/history/trade_quote` endpoint. It requires the caller to pass the contract, date range, event evidence-window `timeframe`, and a task/model `current_standard` object; the bundle carries that event-time standard into each detail JSON rather than owning a global fixed threshold.
 
 The bundle groups transient trade/quote rows by ET evidence window, emits only windows where at least one supplied indicator standard is satisfied, saves final `option_activity_event.csv`, and writes one compact `<event_id>.json` `option_activity_event_detail` artifact per event. Raw provider rows and process/window state are not persisted by default.

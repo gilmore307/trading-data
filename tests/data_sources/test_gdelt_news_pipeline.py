@@ -6,7 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from data_sources.gdelt_news.pipeline import run
+from importlib import import_module
+
+run = import_module("data_sources.05_source_gdelt_news.pipeline").run
 
 
 class FakeBigQueryResult:
@@ -25,7 +27,7 @@ class FakeBigQueryClient:
 
 
 class GdeltNewsPipelineTests(unittest.TestCase):
-    def test_gdelt_news_fetch_clean_save_receipt(self):
+    def test_05_source_gdelt_news_fetch_clean_save_receipt(self):
         rows = [
             {
                 "article_id": "20260427123000-1",
@@ -42,13 +44,13 @@ class GdeltNewsPipelineTests(unittest.TestCase):
         ]
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "gdelt_news_task_test",
-                "bundle": "gdelt_news",
+                "task_id": "05_source_gdelt_news_task_test",
+                "bundle": "05_source_gdelt_news",
                 "params": {"query_terms": ["inflation", "semiconductor"], "start_date": "2026-04-27", "end_date": "2026-04-27", "max_rows": 10},
-                "output_root": str(Path(tmp) / "gdelt_news_task_test"),
+                "output_root": str(Path(tmp) / "05_source_gdelt_news_task_test"),
             }
             client = FakeBigQueryClient(rows)
-            result = run(task_key, run_id="gdelt_news_run_test", client=client)
+            result = run(task_key, run_id="05_source_gdelt_news_run_test", client=client)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["gdelt_article"], 1)
             sql, max_results, maximum_bytes_billed, dry_run = client.requests[0]
@@ -58,7 +60,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             self.assertEqual(max_results, 10)
             self.assertIsNone(maximum_bytes_billed)
             self.assertFalse(dry_run)
-            saved = Path(task_key["output_root"]) / "runs" / "gdelt_news_run_test" / "saved" / "gdelt_article.csv"
+            saved = Path(task_key["output_root"]) / "runs" / "05_source_gdelt_news_run_test" / "saved" / "gdelt_article.csv"
             with saved.open(newline="") as handle:
                 row = next(csv.DictReader(handle))
             self.assertEqual(row["article_id"], "20260427123000-1")
@@ -70,7 +72,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
     def test_default_topics_allow_omitting_query_terms(self):
         rows = [{"article_id": "a", "gdelt_date": "20260427123000", "source_domain": "reuters.com", "event_link_url": "https://reuters.com/a"}]
         with tempfile.TemporaryDirectory() as tmp:
-            task_key = {"task_id": "gdelt_news_task_default", "bundle": "gdelt_news", "params": {"max_rows": 1}, "output_root": str(Path(tmp) / "task")}
+            task_key = {"task_id": "05_source_gdelt_news_task_default", "bundle": "05_source_gdelt_news", "params": {"max_rows": 1}, "output_root": str(Path(tmp) / "task")}
             client = FakeBigQueryClient(rows)
             result = run(task_key, run_id="run", client=client)
             self.assertEqual(result.status, "succeeded")
@@ -82,7 +84,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
 
     def test_bad_topic_category_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
-            task_key = {"task_id": "gdelt_news_task_bad", "bundle": "gdelt_news", "params": {"topic_categories": ["sports"]}, "output_root": str(Path(tmp) / "task")}
+            task_key = {"task_id": "05_source_gdelt_news_task_bad", "bundle": "05_source_gdelt_news", "params": {"topic_categories": ["sports"]}, "output_root": str(Path(tmp) / "task")}
             result = run(task_key, run_id="run", client=FakeBigQueryClient([]))
             self.assertEqual(result.status, "failed")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())

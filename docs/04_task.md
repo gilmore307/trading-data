@@ -48,15 +48,15 @@
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind for SecuritySelectionModel.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.
 - Added `docs/11_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input bundles.
-- Implemented `thetadata_option_event_timeline` for triggered option-activity events: explicit contract + date range + evidence-window `timeframe` + task/model `current_standard` input, local ThetaData Terminal trade_quote endpoint, event-only CSV rows, compact per-event detail JSON artifacts, and no raw provider response persistence.
-- Implemented `thetadata_option_primary_tracking` for specified-contract option bars: explicit contract + date range + `timeframe` input, local ThetaData Terminal OHLC endpoint, zero-volume placeholder filtering, requested-timeframe aggregation, final `option_bar.csv` save, and completion receipt without raw provider response persistence.
-- Implemented `thetadata_option_selection_snapshot` as the first ThetaData option final-output bundle: explicit `underlying` + `snapshot_time` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
+- Implemented `11_source_thetadata_option_event_timeline` for triggered option-activity events: explicit contract + date range + evidence-window `timeframe` + task/model `current_standard` input, local ThetaData Terminal trade_quote endpoint, event-only CSV rows, compact per-event detail JSON artifacts, and no raw provider response persistence.
+- Implemented `10_source_thetadata_option_primary_tracking` for specified-contract option bars: explicit contract + date range + `timeframe` input, local ThetaData Terminal OHLC endpoint, zero-volume placeholder filtering, requested-timeframe aggregation, final `option_bar.csv` save, and completion receipt without raw provider response persistence.
+- Implemented `09_source_thetadata_option_selection_snapshot` as the first ThetaData option final-output bundle: explicit `underlying` + `snapshot_time` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
 - Standardized final saved bundle outputs on CSV only; JSONL may remain a transient cleaned/run-local format but is no longer duplicated into saved outputs.
 - Retired the old `storage/templates/data_kinds/` preview catalog after dedicated SQL storage contracts became the accepted data-output boundary.
-- Implemented `alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` CSV without full raw payload persistence.
-- Implemented `alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` CSV without full raw payload persistence.
-- Implemented `alpaca_liquidity` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` CSV, and writes completion receipts without raw trade/quote persistence.
-- Decided raw high-volume Alpaca trade/quote rows must not be persisted by default; `alpaca_liquidity` should save ET-aligned aggregate/derived outputs and discard transient raw segments after aggregation unless a bounded debug artifact is explicitly approved.
+- Implemented `03_source_alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` CSV without full raw payload persistence.
+- Implemented `01_source_alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` CSV without full raw payload persistence.
+- Implemented `02_source_alpaca_liquidity` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` CSV, and writes completion receipts without raw trade/quote persistence.
+- Decided raw high-volume Alpaca trade/quote rows must not be persisted by default; `02_source_alpaca_liquidity` should save ET-aligned aggregate/derived outputs and discard transient raw segments after aggregation unless a bounded debug artifact is explicitly approved.
 - Added provider/data-kind source interface catalog and smoke runner under `src/source_interfaces/`; live checks now confirm Alpaca equity bars/trades/quotes/snapshots/news, OKX crypto bars/trades/tickers/books, and SEC submissions/companyfacts/companyconcept/frames; ThetaData option endpoint families are cataloged but blocked until local Theta Terminal is reachable.
 - Removed the executable `macro_data` official macro API acquisition bundle after accepting Trading Economics visible-page rows as the macro model-input source.
 - Added `src/source_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `storage/source_availability/` and default tests use mocks/fixtures only.
@@ -64,8 +64,8 @@
 - Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.
 - Previously consolidated macro acquisition into `macro_data`; this was later superseded by Trading Economics visible-page macro inputs.
 - Added `data_bundle` as a registry kind and registered current acquisition bundle keys there.
-- Split Alpaca news into standalone `alpaca_news` and renamed liquidity bundle planning to `alpaca_liquidity`.
-- Added `sec_company_financials` for official SEC EDGAR company financial report data.
+- Split Alpaca news into standalone `03_source_alpaca_news` and renamed liquidity bundle planning to `02_source_alpaca_liquidity`.
+- Added `08_source_sec_company_financials` for official SEC EDGAR company financial report data.
 - Confirmed all stock research timestamps use America/New_York unless a later storage contract explicitly requires another representation for a field.
 - Clarified stable random `task_id` and `run_id` with bundle-specific prefixes.
 - Clarified persistence policy: do not retain bulky raw/intermediate outputs by default; persist final cleaned outputs, with production headed toward SQL.

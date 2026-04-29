@@ -137,22 +137,22 @@ Initial source interfaces are organized around source-level output types. Manage
 
 | Script / bundle | Source | Intended contents | Notes |
 |---|---|---|---|
-| `alpaca_bars` | Alpaca | Historical stock/ETF bars. | Keep separate because bar retrieval has distinct parameters and table shape. |
-| `alpaca_liquidity` | Alpaca | Liquidity bars. | News is intentionally split out because request shape, cadence, and downstream usage differ from market microstructure events. |
-| `alpaca_news` | Alpaca | Stock/ETF news. | Standalone bundle for news retrieval, article metadata, source/timestamp handling, and final cleaned news outputs. |
-| `thetadata_option_primary_tracking` | ThetaData | One selected primary/main option contract tracked alongside equity bars/liquidity at the same research grain. | Supplements equity bars/liquidity after contract selection; raw trade/quote/NBBO inputs should aggregate into final tracking rows. |
-| `thetadata_option_event_timeline` | ThetaData | News-like timeline records for unusual option contract activity. | Event-oriented output, similar to news: timestamped option activity signals rather than bulk raw ticks. |
-| `thetadata_option_selection_snapshot` | ThetaData | Point-in-time option-chain snapshot visible at signal/selection time. | Simulates what the strategy could know when choosing a contract; preserve timestamp and visible contract context. |
-| `okx_crypto_market_data` | OKX | Historical crypto bars/trades/liquidity. | Quote-derived liquidity fields may be blank when no sampled order-book snapshots exist. |
-| `trading_economics_calendar_web` | Trading Economics visible calendar page | U.S. high-impact macro calendar rows with Actual, Previous, Consensus, and Forecast. | Accepted replacement for the former `macro_data` official macro API bundle. Visible page only; no TE API/download/export. |
+| `01_source_alpaca_bars` | Alpaca | Historical stock/ETF bars. | Keep separate because bar retrieval has distinct parameters and table shape. |
+| `02_source_alpaca_liquidity` | Alpaca | Liquidity bars. | News is intentionally split out because request shape, cadence, and downstream usage differ from market microstructure events. |
+| `03_source_alpaca_news` | Alpaca | Stock/ETF news. | Standalone bundle for news retrieval, article metadata, source/timestamp handling, and final cleaned news outputs. |
+| `10_source_thetadata_option_primary_tracking` | ThetaData | One selected primary/main option contract tracked alongside equity bars/liquidity at the same research grain. | Supplements equity bars/liquidity after contract selection; raw trade/quote/NBBO inputs should aggregate into final tracking rows. |
+| `11_source_thetadata_option_event_timeline` | ThetaData | News-like timeline records for unusual option contract activity. | Event-oriented output, similar to news: timestamped option activity signals rather than bulk raw ticks. |
+| `09_source_thetadata_option_selection_snapshot` | ThetaData | Point-in-time option-chain snapshot visible at signal/selection time. | Simulates what the strategy could know when choosing a contract; preserve timestamp and visible contract context. |
+| `04_source_okx_crypto_market_data` | OKX | Historical crypto bars/trades/liquidity. | Quote-derived liquidity fields may be blank when no sampled order-book snapshots exist. |
+| `07_source_trading_economics_calendar_web` | Trading Economics visible calendar page | U.S. high-impact macro calendar rows with Actual, Previous, Consensus, and Forecast. | Accepted replacement for the former `macro_data` official macro API bundle. Visible page only; no TE API/download/export. |
 | `calendar_discovery` | Official web sources discovered by search | FOMC and future calendar scheduling where execution needs it. | Historical macro values now use Trading Economics calendar rows instead of official macro API acquisition. |
-| `etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |
+| `06_source_etf_holdings` | ETF issuer websites/files | ETF constituent stocks and weights. | Preserve issuer URL, as-of date, retrieval timestamp, and file format. |
 
 These names are planning names until accepted through registry/contract review.
 
 ## Macro Data Source Rule
 
-`macro_data` is removed as an executable acquisition bundle. Macro calendar/value rows for model inputs now come from `trading_economics_calendar_web`, using visible Trading Economics page data only.
+`macro_data` is removed as an executable acquisition bundle. Macro calendar/value rows for model inputs now come from `07_source_trading_economics_calendar_web`, using visible Trading Economics page data only.
 
 BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-data` should not route manager tasks to the removed `macro_data` bundle.
 

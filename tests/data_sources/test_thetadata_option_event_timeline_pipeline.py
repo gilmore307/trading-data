@@ -4,7 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from data_sources.thetadata_option_event_timeline.pipeline import run
+from importlib import import_module
+
+run = import_module("data_sources.11_source_thetadata_option_event_timeline.pipeline").run
 from source_availability.http import HttpResult
 
 
@@ -54,10 +56,10 @@ class FakeThetaDataClient:
 class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
     def test_run_saves_event_csv_and_detail_csv(self):
         with tempfile.TemporaryDirectory() as tmp:
-            output_root = Path(tmp) / "thetadata_option_event_timeline_task_test"
+            output_root = Path(tmp) / "11_source_thetadata_option_event_timeline_task_test"
             task_key = {
-                "task_id": "thetadata_option_event_timeline_task_test",
-                "bundle": "thetadata_option_event_timeline",
+                "task_id": "11_source_thetadata_option_event_timeline_task_test",
+                "bundle": "11_source_thetadata_option_event_timeline",
                 "params": {
                     "underlying": "AAPL",
                     "expiration": "2026-05-15",
@@ -85,10 +87,10 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="thetadata_option_event_timeline_run_test", client=FakeThetaDataClient())
+            result = run(task_key, run_id="11_source_thetadata_option_event_timeline_run_test", client=FakeThetaDataClient())
 
             self.assertEqual(result.status, "succeeded")
-            saved_dir = output_root / "runs" / "thetadata_option_event_timeline_run_test" / "saved"
+            saved_dir = output_root / "runs" / "11_source_thetadata_option_event_timeline_run_test" / "saved"
             csv_path = saved_dir / "option_activity_event.csv"
             self.assertTrue(csv_path.exists())
             self.assertFalse((saved_dir / "option_activity_event.csv.tmp").exists())
@@ -122,18 +124,18 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             self.assertEqual(json.loads(detail["quote_context"])["ask"], 1.25)
             self.assertEqual(json.loads(detail["source_references"])["raw_persistence"], "not_persisted_by_default")
 
-            self.assertTrue((output_root / "runs" / "thetadata_option_event_timeline_run_test" / "cleaned" / "option_activity_event.jsonl").exists())
+            self.assertTrue((output_root / "runs" / "11_source_thetadata_option_event_timeline_run_test" / "cleaned" / "option_activity_event.jsonl").exists())
             self.assertFalse((saved_dir / "option_activity_event.jsonl").exists())
             receipt = json.loads((output_root / "completion_receipt.json").read_text())
-            self.assertEqual(receipt["bundle"], "thetadata_option_event_timeline")
+            self.assertEqual(receipt["bundle"], "11_source_thetadata_option_event_timeline")
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_activity_event"], 1)
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_activity_event_detail"], 1)
 
     def test_requires_current_standard(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "thetadata_option_event_timeline_task_test",
-                "bundle": "thetadata_option_event_timeline",
+                "task_id": "11_source_thetadata_option_event_timeline_task_test",
+                "bundle": "11_source_thetadata_option_event_timeline",
                 "params": {
                     "underlying": "AAPL",
                     "expiration": "2026-05-15",

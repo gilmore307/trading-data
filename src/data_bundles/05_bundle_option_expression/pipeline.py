@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import json
+from importlib import import_module
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from data_sources.thetadata_option_selection_snapshot.pipeline import build_context as build_snapshot_context
-from data_sources.thetadata_option_selection_snapshot.pipeline import clean as clean_snapshot
-from data_sources.thetadata_option_selection_snapshot.pipeline import fetch as fetch_snapshot
+_snapshot_source = import_module("data_sources.09_source_thetadata_option_selection_snapshot.pipeline")
+build_snapshot_context = _snapshot_source.build_context
+clean_snapshot = _snapshot_source.clean
+fetch_snapshot = _snapshot_source.fetch
 from source_availability.http import HttpClient
 from source_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
@@ -70,7 +72,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     params = dict(context.task_key.get("params") or {})
     source_task = {
         "task_id": f"{context.task_key.get('task_id')}_option_snapshot",
-        "bundle": "thetadata_option_selection_snapshot",
+        "bundle": "09_source_thetadata_option_selection_snapshot",
         "params": params,
         "output_root": str(context.run_dir / "source" / "option_chain_snapshot"),
     }
@@ -79,7 +81,7 @@ def fetch(context: BundleContext, *, client: HttpClient | None = None) -> tuple[
     clean_result, snapshot = clean_snapshot(source_context, fetched)
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps(sanitize_value({"bundle": BUNDLE, "model_id": MODEL_ID, "source_bundle": "thetadata_option_selection_snapshot", "params": {"underlying": params.get("underlying"), "snapshot_time": params.get("snapshot_time")}, "source_fetch": asdict(fetch_result), "source_clean": asdict(clean_result), "raw_persistence": "ThetaData raw responses are transient; final output is SQL JSONB-style contracts payload", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest.write_text(json.dumps(sanitize_value({"bundle": BUNDLE, "model_id": MODEL_ID, "source_bundle": "09_source_thetadata_option_selection_snapshot", "params": {"underlying": params.get("underlying"), "snapshot_time": params.get("snapshot_time")}, "source_fetch": asdict(fetch_result), "source_clean": asdict(clean_result), "raw_persistence": "ThetaData raw responses are transient; final output is SQL JSONB-style contracts payload", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(manifest)], dict(clean_result.row_counts), details={"underlying": snapshot.get("underlying"), "snapshot_time": snapshot.get("snapshot_time")}), SourcePayload(snapshot, int(clean_result.row_counts.get("option_chain_snapshot_contracts", 0)), fetch_result, clean_result)
 
 

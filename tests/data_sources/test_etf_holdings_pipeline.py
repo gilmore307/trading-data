@@ -4,7 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from data_sources.etf_holdings.pipeline import run
+from importlib import import_module
+
+run = import_module("data_sources.06_source_etf_holdings.pipeline").run
 
 
 class EtfHoldingsPipelineTests(unittest.TestCase):
@@ -15,8 +17,8 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
 """
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "etf_holdings_task_test",
-                "bundle": "etf_holdings",
+                "task_id": "06_source_etf_holdings_task_test",
+                "bundle": "06_source_etf_holdings",
                 "params": {
                     "etf_symbol": "VGT",
                     "issuer_name": "vanguard",
@@ -48,8 +50,8 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
         """
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "etf_holdings_html_test",
-                "bundle": "etf_holdings",
+                "task_id": "06_source_etf_holdings_html_test",
+                "bundle": "06_source_etf_holdings",
                 "params": {"etf_symbol": "VGT", "issuer_name": "vanguard", "as_of_date": "2026-04-24", "html": html},
                 "output_root": str(Path(tmp) / "task"),
             }

@@ -4,7 +4,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from data_sources.thetadata_option_primary_tracking.pipeline import run
+from importlib import import_module
+
+run = import_module("data_sources.10_source_thetadata_option_primary_tracking.pipeline").run
 from source_availability.http import HttpResult
 
 
@@ -72,10 +74,10 @@ class FakeThetaDataClient:
 class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_and_skips_zero_volume_placeholders(self):
         with tempfile.TemporaryDirectory() as tmp:
-            output_root = Path(tmp) / "thetadata_option_primary_tracking_task_test"
+            output_root = Path(tmp) / "10_source_thetadata_option_primary_tracking_task_test"
             task_key = {
-                "task_id": "thetadata_option_primary_tracking_task_test",
-                "bundle": "thetadata_option_primary_tracking",
+                "task_id": "10_source_thetadata_option_primary_tracking_task_test",
+                "bundle": "10_source_thetadata_option_primary_tracking",
                 "params": {
                     "underlying": "AAPL",
                     "expiration": "2026-05-15",
@@ -88,10 +90,10 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="thetadata_option_primary_tracking_run_test", client=FakeThetaDataClient())
+            result = run(task_key, run_id="10_source_thetadata_option_primary_tracking_run_test", client=FakeThetaDataClient())
 
             self.assertEqual(result.status, "succeeded")
-            saved_path = output_root / "runs" / "thetadata_option_primary_tracking_run_test" / "saved" / "option_bar.csv"
+            saved_path = output_root / "runs" / "10_source_thetadata_option_primary_tracking_run_test" / "saved" / "option_bar.csv"
             self.assertTrue(saved_path.exists())
             self.assertFalse((saved_path.parent / "option_bar.csv.tmp").exists())
             self.assertFalse((saved_path.parent / "option_bar.jsonl").exists())
@@ -116,23 +118,23 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             self.assertEqual(rows[0]["vwap"], "9.3333333333")
             self.assertEqual(rows[1]["timestamp"], "2026-04-24T09:31:00-04:00")
 
-            cleaned_jsonl = output_root / "runs" / "thetadata_option_primary_tracking_run_test" / "cleaned" / "option_bar.jsonl"
+            cleaned_jsonl = output_root / "runs" / "10_source_thetadata_option_primary_tracking_run_test" / "cleaned" / "option_bar.jsonl"
             self.assertTrue(cleaned_jsonl.exists())
-            manifest = json.loads((output_root / "runs" / "thetadata_option_primary_tracking_run_test" / "request_manifest.json").read_text())
+            manifest = json.loads((output_root / "runs" / "10_source_thetadata_option_primary_tracking_run_test" / "request_manifest.json").read_text())
             self.assertEqual(manifest["raw_persistence"], "not_persisted_by_default")
             self.assertEqual(manifest["params"]["aggregation_timeframe"], "1Min")
             self.assertEqual(manifest["params"]["strike"], "270.000")
 
             receipt = json.loads((output_root / "completion_receipt.json").read_text())
-            self.assertEqual(receipt["bundle"], "thetadata_option_primary_tracking")
+            self.assertEqual(receipt["bundle"], "10_source_thetadata_option_primary_tracking")
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_bar"], 2)
             self.assertEqual(receipt["runs"][0]["row_counts"]["active_option_ohlc_rows_transient"], 3)
 
     def test_requires_timeframe(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "thetadata_option_primary_tracking_task_test",
-                "bundle": "thetadata_option_primary_tracking",
+                "task_id": "10_source_thetadata_option_primary_tracking_task_test",
+                "bundle": "10_source_thetadata_option_primary_tracking",
                 "params": {
                     "underlying": "AAPL",
                     "expiration": "2026-05-15",

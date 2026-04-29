@@ -211,9 +211,9 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
         if activity:
             event_id = f"eq_abn_{symbol}_{ts.replace('-', '').replace(':', '').replace('+', '').replace('T', '_')[:24]}"
             evidence_window = {"timeframe": timeframe, "event_time": ts, "lookback_intervals": lookback_intervals}
-            refs = [f"alpaca_bars:{symbol}:{ts}"]
+            refs = [f"01_source_alpaca_bars:{symbol}:{ts}"]
             if liq:
-                refs.append(f"alpaca_liquidity:{symbol}:{ts}")
+                refs.append(f"02_source_alpaca_liquidity:{symbol}:{ts}")
             if benchmark_ret is not None:
                 refs.append(f"benchmark_return:{ts}")
             taxonomy = {"detector": model_standard, "benchmark_present": benchmark_ret is not None}

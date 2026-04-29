@@ -94,7 +94,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                 self.assertEqual({row["symbol"]: row["timeframe"] for row in rows}, {"BITW": "30Min", "SPY": "1Day"})
                 self.assertNotIn("run_id", rows[0])
                 self.assertNotIn("task_id", rows[0])
-                self.assertEqual(call["columns"], ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"])
+                self.assertEqual(call["columns"], ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
         finally:
             module.load_secret_alias = old_load_secret
 
@@ -184,9 +184,9 @@ class NumberedDataSourceTests(unittest.TestCase):
                             "exit_time": "2026-04-24T09:31:00-04:00",
                             "timeframe": "1Min",
                             "option_rows": [
-                                {"timestamp": "2026-04-24T09:30:00-04:00", "open": 1.1, "high": 1.3, "low": 1.0, "close": 1.2, "volume": 10, "trade_count": 2, "vwap": 1.18},
-                                {"timestamp": "2026-04-24T10:31:00-04:00", "open": 1.4, "high": 1.5, "low": 1.3, "close": 1.35, "volume": 8, "trade_count": 1, "vwap": 1.38},
-                                {"timestamp": "2026-04-24T10:32:00-04:00", "open": 1.6, "high": 1.7, "low": 1.5, "close": 1.65, "volume": 3, "trade_count": 1, "vwap": 1.62},
+                                {"timestamp": "2026-04-24T09:30:00-04:00", "bar_open": 1.1, "bar_high": 1.3, "bar_low": 1.0, "bar_close": 1.2, "bar_volume": 10, "bar_trade_count": 2, "bar_vwap": 1.18},
+                                {"timestamp": "2026-04-24T10:31:00-04:00", "bar_open": 1.4, "bar_high": 1.5, "bar_low": 1.3, "bar_close": 1.35, "bar_volume": 8, "bar_trade_count": 1, "bar_vwap": 1.38},
+                                {"timestamp": "2026-04-24T10:32:00-04:00", "bar_open": 1.6, "bar_high": 1.7, "bar_low": 1.5, "bar_close": 1.65, "bar_volume": 3, "bar_trade_count": 1, "bar_vwap": 1.62},
                             ],
                         }
                     ]

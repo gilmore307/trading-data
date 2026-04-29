@@ -124,7 +124,7 @@ Exact source-specific parameter dictionaries remain open work. They should be de
 
 `src/data_feed/02_feed_alpaca_liquidity/` now contains the first aggregate-only implementation. It requests Alpaca trades and quotes with bounded pagination, treats raw rows as transient run inputs, aligns intervals in `America/New_York`, and persists only derived aggregate outputs:
 
-- `equity_liquidity_bar` — one ET-aligned interval row combining trade count/volume/VWAP/OHLC, quote count/spread/mid/depth summaries, and trade-vs-quote liquidity features such as VWAP minus average mid.
+- `equity_liquidity_bar` — one ET-aligned interval row combining `bar_trade_count`/`bar_volume`/`bar_vwap`/bar OHLC, quote count/spread/mid/depth summaries, and trade-vs-quote liquidity features such as `bar_vwap_minus_avg_mid`.
 
 Current implementation supports `1Min`, `5Min`, `15Min`, `1Hour`, and `1Day` buckets. Raw Alpaca trades/quotes are not written as saved outputs.
 

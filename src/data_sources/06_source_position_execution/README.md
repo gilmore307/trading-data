@@ -53,12 +53,12 @@ Columns:
 - `strike`
 - `timeframe`
 - `timestamp`
-- `open`
-- `high`
-- `low`
-- `close`
-- `volume`
-- `trade_count`
-- `vwap`
+- `bar_open`
+- `bar_high`
+- `bar_low`
+- `bar_close`
+- `bar_volume`
+- `bar_trade_count`
+- `bar_vwap`
 
 The table contains market data only. It does not include position sizing, order decisions, risk scores, PnL labels, or execution recommendations. Task/run lineage stays in the completion receipt.

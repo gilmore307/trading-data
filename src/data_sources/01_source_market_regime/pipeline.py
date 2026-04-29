@@ -19,7 +19,7 @@ MODEL_ID = "market_regime_model"
 OUTPUT_NAME = "01_source_market_regime"
 OUTPUT_TABLE = "source_01_market_regime"
 ET = ZoneInfo("America/New_York")
-FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
+FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]
 SQL_FIELDS = FIELDS
 MARKET_ETF_UNIVERSE_PATH = Path("/root/projects/trading-main/storage/shared/market_etf_universe.csv")
 DEFAULT_LIMIT = 1000
@@ -199,7 +199,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
     for symbol in sorted(payload.bars_by_symbol):
         timeframe = _normalize_timeframe(str(universe_by_symbol[symbol].get("bar_grain") or "1Day"))
         for bar in payload.bars_by_symbol[symbol]:
-            rows.append({"symbol": symbol, "timeframe": timeframe, "timestamp": _et_iso(bar["t"]), "open": bar.get("o"), "high": bar.get("h"), "low": bar.get("l"), "close": bar.get("c"), "volume": bar.get("v"), "vwap": bar.get("vw"), "trade_count": bar.get("n")})
+            rows.append({"symbol": symbol, "timeframe": timeframe, "timestamp": _et_iso(bar["t"]), "bar_open": bar.get("o"), "bar_high": bar.get("h"), "bar_low": bar.get("l"), "bar_close": bar.get("c"), "bar_volume": bar.get("v"), "bar_vwap": bar.get("vw"), "bar_trade_count": bar.get("n")})
     rows.sort(key=lambda row: (str(row["timeframe"]), str(row["symbol"]), str(row["timestamp"])))
     result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"columns": SQL_FIELDS, "natural_key": ["symbol", "timeframe", "timestamp"], "table": OUTPUT_TABLE})
     return result, CleanedPayload(rows)

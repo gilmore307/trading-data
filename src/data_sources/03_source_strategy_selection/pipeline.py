@@ -23,13 +23,13 @@ SQL_FIELDS = [
     "symbol",
     "timeframe",
     "timestamp",
-    "open",
-    "high",
-    "low",
-    "close",
-    "volume",
-    "vwap",
-    "trade_count",
+    "bar_open",
+    "bar_high",
+    "bar_low",
+    "bar_close",
+    "bar_volume",
+    "bar_vwap",
+    "bar_trade_count",
     "dollar_volume",
     "quote_count",
     "avg_bid",
@@ -208,21 +208,21 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
 
 
 def _row(context: SourceContext, symbol: str, timeframe: str, timestamp: str, bar: Mapping[str, Any], liquidity: Mapping[str, Any]) -> dict[str, Any]:
-    close = _num(bar.get("c", liquidity.get("close")))
-    volume = _num(bar.get("v", liquidity.get("volume")))
+    close = _num(bar.get("c", liquidity.get("bar_close", liquidity.get("close"))))
+    volume = _num(bar.get("v", liquidity.get("bar_volume", liquidity.get("volume"))))
     avg_mid = _num(liquidity.get("avg_mid"))
     avg_spread = _num(liquidity.get("avg_spread"))
     return {
         "symbol": symbol,
         "timeframe": timeframe,
         "timestamp": timestamp,
-        "open": _num(bar.get("o", liquidity.get("open"))),
-        "high": _num(bar.get("h", liquidity.get("high"))),
-        "low": _num(bar.get("l", liquidity.get("low"))),
-        "close": close,
-        "volume": volume,
-        "vwap": _num(bar.get("vw", liquidity.get("vwap"))),
-        "trade_count": _int(bar.get("n", liquidity.get("trade_count"))),
+        "bar_open": _num(bar.get("o", liquidity.get("bar_open", liquidity.get("open")))),
+        "bar_high": _num(bar.get("h", liquidity.get("bar_high", liquidity.get("high")))),
+        "bar_low": _num(bar.get("l", liquidity.get("bar_low", liquidity.get("low")))),
+        "bar_close": close,
+        "bar_volume": volume,
+        "bar_vwap": _num(bar.get("vw", liquidity.get("bar_vwap", liquidity.get("vwap")))),
+        "bar_trade_count": _int(bar.get("n", liquidity.get("bar_trade_count", liquidity.get("trade_count")))),
         "dollar_volume": close * volume if close is not None and volume is not None else None,
         "quote_count": _int(liquidity.get("quote_count")),
         "avg_bid": _num(liquidity.get("avg_bid")),

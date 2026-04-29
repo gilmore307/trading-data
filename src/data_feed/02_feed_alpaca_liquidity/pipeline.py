@@ -17,7 +17,7 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
-EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
+EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start", "bar_trade_count", "quote_count", "bar_volume", "bar_vwap", "bar_open", "bar_high", "bar_low", "bar_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "bar_vwap_minus_avg_mid"]
 DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
 
@@ -252,14 +252,14 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
             "symbol": symbol,
             "timeframe": timeframe,
             "interval_start": key,
-            "trade_count": t.get("trade_count", 0),
+            "bar_trade_count": t.get("trade_count", 0),
             "quote_count": q.get("quote_count", 0),
-            "volume": t.get("volume", 0),
-            "vwap": vwap,
-            "open": t.get("open"),
-            "high": t.get("high"),
-            "low": t.get("low"),
-            "close": t.get("close"),
+            "bar_volume": t.get("volume", 0),
+            "bar_vwap": vwap,
+            "bar_open": t.get("open"),
+            "bar_high": t.get("high"),
+            "bar_low": t.get("low"),
+            "bar_close": t.get("close"),
             "avg_bid": q.get("avg_bid"),
             "avg_ask": q.get("avg_ask"),
             "avg_mid": avg_mid,
@@ -272,7 +272,7 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
             "last_ask": q.get("last_ask"),
             "last_mid": q.get("last_mid"),
             "last_trade_price": t.get("close"),
-            "vwap_minus_avg_mid": round(vwap - avg_mid, 10) if isinstance(vwap, (int, float)) and isinstance(avg_mid, (int, float)) else None,
+            "bar_vwap_minus_avg_mid": round(vwap - avg_mid, 10) if isinstance(vwap, (int, float)) and isinstance(avg_mid, (int, float)) else None,
         })
     return rows
 

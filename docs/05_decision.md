@@ -856,7 +856,7 @@ Layer 3 was still represented as a generic artifact-reference manifest. The user
 
 `03_source_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `source_03_strategy_selection`.
 
-The output includes OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
+The output includes bar-prefixed OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
 ### Consequences
 

@@ -155,7 +155,7 @@ def _returns_by_timestamp(rows: list[dict[str, str]]) -> dict[str, float]:
     out: dict[str, float] = {}
     prev_close: float | None = None
     for row in sorted(rows, key=lambda item: str(item.get("timestamp") or item.get("interval_start") or "")):
-        close = _float(row.get("close"))
+        close = _float(row.get("bar_close", row.get("close")))
         timestamp = str(row.get("timestamp") or row.get("interval_start") or "")
         if close is not None and prev_close not in (None, 0) and timestamp:
             out[timestamp] = close / float(prev_close) - 1.0
@@ -178,9 +178,9 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
     events: list[dict[str, str]] = []
     for row in sorted_bars:
         ts = str(row.get("timestamp") or "")
-        close = _float(row.get("close"))
-        open_ = _float(row.get("open"))
-        volume = _float(row.get("volume"))
+        close = _float(row.get("bar_close", row.get("close")))
+        open_ = _float(row.get("bar_open", row.get("open")))
+        volume = _float(row.get("bar_volume", row.get("volume")))
         if not ts or close is None:
             continue
         ret = close / prev_close - 1.0 if prev_close not in (None, 0) else None

@@ -123,13 +123,13 @@ RETIRED_LOCAL_FIELD_PAYLOADS = {
     "fld_OPT012": "derived",
     "fld_OPT013": "timestamp",
     "fld_OPT014": "timeframe",
-    "fld_OPT015": "open",
-    "fld_OPT016": "high",
-    "fld_OPT017": "low",
-    "fld_OPT018": "close",
-    "fld_OPT019": "volume",
-    "fld_OPT020": "trade_count",
-    "fld_OPT021": "vwap",
+    "fld_OPT015": "bar_open",
+    "fld_OPT016": "bar_high",
+    "fld_OPT017": "bar_low",
+    "fld_OPT018": "bar_close",
+    "fld_OPT019": "bar_volume",
+    "fld_OPT020": "bar_trade_count",
+    "fld_OPT021": "bar_vwap",
     "fld_OPT032": "bid",
     "fld_OPT033": "ask",
     "fld_OPT034": "mid",
@@ -218,14 +218,14 @@ OPTION_EXPIRATION = field("fld_OPT002")
 OPTION_RIGHT_TYPE = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
 DATA_TIMESTAMP = field("fld_OPT013")
-DATA_TIMEFRAME = field("fld_OPT014")
-OPEN_PRICE = field("fld_OPT015")
-HIGH_PRICE = field("fld_OPT016")
-LOW_PRICE = field("fld_OPT017")
-CLOSE_PRICE = field("fld_OPT018")
-VOLUME = field("fld_OPT019")
-TRADE_COUNT = field("fld_OPT020")
-VWAP = field("fld_OPT021")
+TIMEFRAME = field("fld_OPT014")
+BAR_OPEN = field("fld_OPT015")
+BAR_HIGH = field("fld_OPT016")
+BAR_LOW = field("fld_OPT017")
+BAR_CLOSE = field("fld_OPT018")
+BAR_VOLUME = field("fld_OPT019")
+BAR_TRADE_COUNT = field("fld_OPT020")
+BAR_VWAP = field("fld_OPT021")
 OPTION_BAR = data_kind("dki_OPBAR001")
 
 
@@ -234,15 +234,15 @@ CSV_FIELD_REFS = [
     OPTION_EXPIRATION,
     OPTION_RIGHT_TYPE,
     OPTION_STRIKE,
-    DATA_TIMEFRAME,
+    TIMEFRAME,
     DATA_TIMESTAMP,
-    OPEN_PRICE,
-    HIGH_PRICE,
-    LOW_PRICE,
-    CLOSE_PRICE,
-    VOLUME,
-    TRADE_COUNT,
-    VWAP,
+    BAR_OPEN,
+    BAR_HIGH,
+    BAR_LOW,
+    BAR_CLOSE,
+    BAR_VOLUME,
+    BAR_TRADE_COUNT,
+    BAR_VWAP,
 ]
 
 
@@ -503,38 +503,38 @@ def _aggregate_rows(names: RegistryNames, fetched: FetchedOhlc) -> tuple[list[di
                 f(OPTION_EXPIRATION): fetched.expiration,
                 f(OPTION_RIGHT_TYPE): fetched.right,
                 f(OPTION_STRIKE): fetched.strike,
-                f(DATA_TIMEFRAME): fetched.timeframe,
+                f(TIMEFRAME): fetched.timeframe,
                 f(DATA_TIMESTAMP): bucket_timestamp,
-                f(OPEN_PRICE): open_price,
-                f(HIGH_PRICE): high_price,
-                f(LOW_PRICE): low_price,
-                f(CLOSE_PRICE): close_price,
-                f(VOLUME): 0,
-                f(TRADE_COUNT): 0,
+                f(BAR_OPEN): open_price,
+                f(BAR_HIGH): high_price,
+                f(BAR_LOW): low_price,
+                f(BAR_CLOSE): close_price,
+                f(BAR_VOLUME): 0,
+                f(BAR_TRADE_COUNT): 0,
                 "_notional": 0.0,
             },
         )
-        if bucket[f(OPEN_PRICE)] in (None, 0) and open_price not in (None, 0):
-            bucket[f(OPEN_PRICE)] = open_price
+        if bucket[f(BAR_OPEN)] in (None, 0) and open_price not in (None, 0):
+            bucket[f(BAR_OPEN)] = open_price
         if high_price not in (None, 0):
-            current_high = bucket.get(f(HIGH_PRICE))
-            bucket[f(HIGH_PRICE)] = high_price if current_high in (None, 0) else max(float(current_high), high_price)
+            current_high = bucket.get(f(BAR_HIGH))
+            bucket[f(BAR_HIGH)] = high_price if current_high in (None, 0) else max(float(current_high), high_price)
         if low_price not in (None, 0):
-            current_low = bucket.get(f(LOW_PRICE))
-            bucket[f(LOW_PRICE)] = low_price if current_low in (None, 0) else min(float(current_low), low_price)
+            current_low = bucket.get(f(BAR_LOW))
+            bucket[f(BAR_LOW)] = low_price if current_low in (None, 0) else min(float(current_low), low_price)
         if close_price not in (None, 0):
-            bucket[f(CLOSE_PRICE)] = close_price
-        bucket[f(VOLUME)] = int(bucket[f(VOLUME)]) + volume
-        bucket[f(TRADE_COUNT)] = int(bucket[f(TRADE_COUNT)]) + count
+            bucket[f(BAR_CLOSE)] = close_price
+        bucket[f(BAR_VOLUME)] = int(bucket[f(BAR_VOLUME)]) + volume
+        bucket[f(BAR_TRADE_COUNT)] = int(bucket[f(BAR_TRADE_COUNT)]) + count
         if price_for_vwap is not None and volume:
             bucket["_notional"] = float(bucket["_notional"]) + price_for_vwap * volume
 
     output_rows: list[dict[str, Any]] = []
     for bucket_timestamp in sorted(buckets):
         row = buckets[bucket_timestamp]
-        volume = int(row[f(VOLUME)])
+        volume = int(row[f(BAR_VOLUME)])
         notional = float(row.pop("_notional"))
-        row[f(VWAP)] = _round_price(notional / volume) if volume else None
+        row[f(BAR_VWAP)] = _round_price(notional / volume) if volume else None
         output_rows.append(row)
     return output_rows, active_count
 

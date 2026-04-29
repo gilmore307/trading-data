@@ -29,13 +29,13 @@ SQL_FIELDS = [
     "strike",
     "timeframe",
     "timestamp",
-    "open",
-    "high",
-    "low",
-    "close",
-    "volume",
-    "trade_count",
-    "vwap",
+    "bar_open",
+    "bar_high",
+    "bar_low",
+    "bar_close",
+    "bar_volume",
+    "bar_trade_count",
+    "bar_vwap",
 ]
 KEY_COLUMNS = ["option_symbol", "timeframe", "timestamp"]
 
@@ -232,13 +232,13 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
             "strike": _num(row.get("strike")),
             "timeframe": str(row.get("timeframe") or DEFAULT_TIMEFRAME),
             "timestamp": timestamp.isoformat(),
-            "open": _num(row.get("open")),
-            "high": _num(row.get("high")),
-            "low": _num(row.get("low")),
-            "close": _num(row.get("close")),
-            "volume": _num(row.get("volume")),
-            "trade_count": _int(row.get("trade_count") or row.get("count")),
-            "vwap": _num(row.get("vwap")),
+            "bar_open": _num(row.get("bar_open", row.get("open"))),
+            "bar_high": _num(row.get("bar_high", row.get("high"))),
+            "bar_low": _num(row.get("bar_low", row.get("low"))),
+            "bar_close": _num(row.get("bar_close", row.get("close"))),
+            "bar_volume": _num(row.get("bar_volume", row.get("volume"))),
+            "bar_trade_count": _int(row.get("bar_trade_count") or row.get("trade_count") or row.get("count")),
+            "bar_vwap": _num(row.get("bar_vwap", row.get("vwap"))),
         }
         if not cleaned["option_symbol"]:
             cleaned["option_symbol"] = _option_symbol(cleaned)

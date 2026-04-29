@@ -19,9 +19,9 @@ DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
 OKX_BAR_MAP = {"1Min": "1m", "5Min": "5m", "15Min": "15m", "1Hour": "1H", "1Day": "1D"}
 
-CRYPTO_BAR_FIELDS = ["symbol", "timeframe", "timestamp", "open", "high", "low", "close", "volume", "vwap", "trade_count"]
+CRYPTO_BAR_FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]
 CRYPTO_TRADE_FIELDS = ["data_kind", "source", "symbol", "timestamp_utc", "timestamp", "trade_id", "side", "price", "size", "notional"]
-CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start", "trade_count", "quote_count", "volume", "vwap", "open", "high", "low", "close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "vwap_minus_avg_mid"]
+CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start", "bar_trade_count", "quote_count", "bar_volume", "bar_vwap", "bar_open", "bar_high", "bar_low", "bar_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "bar_vwap_minus_avg_mid"]
 
 
 @dataclass(frozen=True)
@@ -150,8 +150,8 @@ def normalize_bars(symbol: str, candles: list[list[Any]], timeframe: str) -> lis
         rows.append({
             "symbol": symbol, "timeframe": timeframe,
             "timestamp": _et_iso(ts),
-            "open": float(candle[1]), "high": float(candle[2]), "low": float(candle[3]), "close": float(candle[4]),
-            "volume": float(candle[5]), "vwap": None, "trade_count": None,
+            "bar_open": float(candle[1]), "bar_high": float(candle[2]), "bar_low": float(candle[3]), "bar_close": float(candle[4]),
+            "bar_volume": float(candle[5]), "bar_vwap": None, "bar_trade_count": None,
         })
     return sorted(rows, key=lambda row: row["timestamp"])
 
@@ -180,23 +180,23 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], timefram
         size = float(trade["size"])
         row = buckets.setdefault(key, {
             "symbol": symbol, "timeframe": timeframe,
-            "interval_start": key, "trade_count": 0, "volume": 0.0, "trade_notional": 0.0,
-            "open": price, "high": price, "low": price, "close": price,
+            "interval_start": key, "bar_trade_count": 0, "bar_volume": 0.0, "trade_notional": 0.0,
+            "bar_open": price, "bar_high": price, "bar_low": price, "bar_close": price,
             "quote_count": None, "avg_bid": None, "avg_ask": None, "avg_mid": None, "avg_spread": None,
-            "last_bid": None, "last_ask": None, "last_mid": None, "vwap_minus_avg_mid": None,
+            "last_bid": None, "last_ask": None, "last_mid": None, "bar_vwap_minus_avg_mid": None,
         })
-        row["trade_count"] += 1
-        row["volume"] += size
+        row["bar_trade_count"] += 1
+        row["bar_volume"] += size
         row["trade_notional"] += price * size
-        row["high"] = max(row["high"], price)
-        row["low"] = min(row["low"], price)
-        row["close"] = price
+        row["bar_high"] = max(row["bar_high"], price)
+        row["bar_low"] = min(row["bar_low"], price)
+        row["bar_close"] = price
     out = []
     for key in sorted(buckets):
         row = buckets[key]
-        row["volume"] = round(row["volume"], 12)
+        row["bar_volume"] = round(row["bar_volume"], 12)
         row["trade_notional"] = round(row["trade_notional"], 12)
-        row["vwap"] = round(row["trade_notional"] / row["volume"], 10) if row["volume"] else None
+        row["bar_vwap"] = round(row["trade_notional"] / row["bar_volume"], 10) if row["bar_volume"] else None
         out.append(row)
     return out
 

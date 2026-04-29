@@ -124,13 +124,13 @@ RETIRED_LOCAL_FIELD_PAYLOADS = {
     "fld_OPT012": "derived",
     "fld_OPT013": "timestamp",
     "fld_OPT014": "timeframe",
-    "fld_OPT015": "open",
-    "fld_OPT016": "high",
-    "fld_OPT017": "low",
-    "fld_OPT018": "close",
-    "fld_OPT019": "volume",
-    "fld_OPT020": "trade_count",
-    "fld_OPT021": "vwap",
+    "fld_OPT015": "bar_open",
+    "fld_OPT016": "bar_high",
+    "fld_OPT017": "bar_low",
+    "fld_OPT018": "bar_close",
+    "fld_OPT019": "bar_volume",
+    "fld_OPT020": "bar_trade_count",
+    "fld_OPT021": "bar_vwap",
     "fld_OPT032": "bid",
     "fld_OPT033": "ask",
     "fld_OPT034": "mid",
@@ -222,7 +222,7 @@ OPTION_EXPIRATION = field("fld_OPT002")
 OPTION_RIGHT_TYPE = field("fld_OPT003")
 OPTION_STRIKE = field("fld_OPT004")
 DATA_TIMESTAMP = field("fld_OPT013")
-DATA_TIMEFRAME = field("fld_OPT014")
+TIMEFRAME = field("fld_OPT014")
 QUOTE_BID = field("fld_OPT032")
 QUOTE_ASK = field("fld_OPT033")
 QUOTE_MID = field("fld_OPT034")
@@ -759,7 +759,7 @@ def _build_event(
         },
         f(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS): triggered,
         f(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW): {
-            f(DATA_TIMEFRAME): fetched.timeframe,
+            f(TIMEFRAME): fetched.timeframe,
             f(WINDOW_START): window_start.isoformat(),
             f(WINDOW_END): window_end.isoformat(),
         },

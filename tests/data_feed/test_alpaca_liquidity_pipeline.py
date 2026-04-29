@@ -60,7 +60,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
 
     def test_liquidity_bar_combines_interval_rows(self):
         rows = aggregate_liquidity_bars('AAPL', [{'t': '2024-01-02T14:30:00Z', 'p': 11, 's': 1}], [{'t': '2024-01-02T14:30:00Z', 'bp': 10, 'bs': 1, 'ap': 12, 'as': 1}], '1Min')
-        self.assertEqual(rows[0]['vwap_minus_avg_mid'], 0.0)
+        self.assertEqual(rows[0]['bar_vwap_minus_avg_mid'], 0.0)
 
     def test_pipeline_saves_only_derived_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:

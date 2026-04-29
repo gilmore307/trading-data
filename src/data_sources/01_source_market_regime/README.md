@@ -42,13 +42,13 @@ Columns, in order:
 1. `symbol`
 2. `timeframe`
 3. `timestamp`
-4. `open`
-5. `high`
-6. `low`
-7. `close`
-8. `volume`
-9. `vwap`
-10. `trade_count`
+4. `bar_open`
+5. `bar_high`
+6. `bar_low`
+7. `bar_close`
+8. `bar_volume`
+9. `bar_vwap`
+10. `bar_trade_count`
 
 Natural key: `symbol + timeframe + timestamp`.
 

@@ -58,7 +58,7 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
         self.assertNotIn('data_kind', rows[0])
         self.assertNotIn('source', rows[0])
         self.assertIsNone(rows[0]['avg_bid'])
-        self.assertEqual(rows[0]['trade_count'], 2)
+        self.assertEqual(rows[0]['bar_trade_count'], 2)
 
     def test_run_saves_csv_only(self):
         with tempfile.TemporaryDirectory() as tmp:

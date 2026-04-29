@@ -62,13 +62,13 @@ Fields include:
 - `strike`
 - `timeframe`
 - `timestamp`
-- `open`
-- `high`
-- `low`
-- `close`
-- `volume`
-- `count`
-- `vwap`
+- `bar_open`
+- `bar_high`
+- `bar_low`
+- `bar_close`
+- `bar_volume`
+- `bar_trade_count`
+- `bar_vwap`
 
 ## Failure and retry
 

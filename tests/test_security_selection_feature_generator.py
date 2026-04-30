@@ -103,10 +103,16 @@ class SecuritySelectionFeatureGeneratorTests(unittest.TestCase):
 
         rows = generator.generate_rows(inputs, [snapshot])
 
-        self.assertEqual(len(rows), 2)
+        self.assertEqual(len(rows), 3)
         pair_ids = {row["rotation_pair_id"] for row in rows}
-        self.assertEqual(pair_ids, {"xlk_spy", "smh_xlk"})
+        self.assertEqual(pair_ids, {"sector_observation_breadth", "xlk_spy", "smh_xlk"})
         self.assertNotIn("qqq_spy", pair_ids)
+
+        summary_row = next(row for row in rows if row["rotation_pair_id"] == "sector_observation_breadth")
+        self.assertEqual(summary_row["candidate_symbol"], "SECTOR_OBSERVATION_UNIVERSE")
+        self.assertEqual(summary_row["candidate_type"], "sector_rotation_summary")
+        self.assertIn("sector_observation_positive_return_1d_pct", summary_row)
+        self.assertIn("sector_observation_return_20d_dispersion", summary_row)
 
         xlk_row = next(row for row in rows if row["rotation_pair_id"] == "xlk_spy")
         self.assertEqual(xlk_row["candidate_symbol"], "XLK")
@@ -171,8 +177,9 @@ class SecuritySelectionFeatureGeneratorTests(unittest.TestCase):
 
         rows = generator.generate_rows(inputs, [datetime(2026, 1, 2, 16, 0, tzinfo=ET)])
 
-        self.assertEqual(len(rows), 30)
-        self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation", "daily_context"})
+        self.assertEqual(len(rows), 31)
+        self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation_summary", "sector_rotation", "daily_context"})
+        self.assertIn("sector_observation_breadth", {row["rotation_pair_id"] for row in rows})
         self.assertIn("xlk_spy", {row["rotation_pair_id"] for row in rows})
         self.assertIn("smh_xlk", {row["rotation_pair_id"] for row in rows})
 

@@ -103,7 +103,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertIn("qqq_spy_return_corr_20d", row)
         self.assertFalse(any(key.startswith("xlk_spy") for key in row))
         self.assertIn("market_state_avg_return_corr_20d", row)
-        self.assertIn("sector_observation_positive_return_1d_pct", row)
+        self.assertFalse(any(key.startswith("sector_observation_") for key in row))
         self.assertFalse(any(key.startswith("rs_") for key in row))
 
     def test_daily_bars_are_not_available_before_regular_close(self) -> None:
@@ -170,7 +170,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         row = generator.generate_row(inputs, datetime(2026, 1, 2, 16, 0, tzinfo=ET))
 
-        self.assertEqual(len(row), 968)
+        self.assertEqual(len(row), 960)
         self.assertFalse(any(key.startswith("xlk_spy") for key in row))
         self.assertFalse(any(key.startswith("smh_xlk") for key in row))
         self.assertTrue(any(key.startswith("qqq_spy") for key in row))

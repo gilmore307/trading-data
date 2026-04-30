@@ -8,7 +8,7 @@ candidate ETF, comparison ETF, and reviewed rotation pair id.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from statistics import mean
+from statistics import mean, pstdev
 from typing import Any, Iterable, Mapping, Sequence
 
 from data_feature.feature_01_market_regime import generator as market_features
@@ -42,9 +42,34 @@ def generate_rows(inputs: MarketRegimeInputs, snapshot_times: Sequence[str | dat
     snapshots = [market_features._parse_timestamp(value) if not isinstance(value, datetime) else value.astimezone(ET) for value in (snapshot_times or infer_snapshot_times(inputs))]
     rows: list[dict[str, Any]] = []
     for snapshot_time in sorted(snapshots):
+        rows.append(generate_sector_rotation_summary_row(inputs, snapshot_time))
         for combo in rotation_combinations(inputs):
             rows.append(generate_row(inputs, combo, snapshot_time))
     return rows
+
+
+def generate_sector_rotation_summary_row(inputs: MarketRegimeInputs, snapshot_time: datetime) -> dict[str, Any]:
+    snapshot_time = snapshot_time.astimezone(ET)
+    row: dict[str, Any] = {
+        "snapshot_time": snapshot_time.isoformat(),
+        "candidate_symbol": "SECTOR_OBSERVATION_UNIVERSE",
+        "candidate_type": "sector_rotation_summary",
+        "comparison_symbol": "MARKET",
+        "rotation_pair_id": "sector_observation_breadth",
+        "rotation_pair_type": "sector_rotation_summary",
+        "feature_bar_grain": "mixed",
+    }
+
+    daily_cache: dict[str, list[market_features.Bar]] = {}
+
+    def daily(symbol: str) -> list[market_features.Bar]:
+        key = symbol.upper()
+        if key not in daily_cache:
+            daily_cache[key] = market_features._daily_bars_at(inputs.bars_by_symbol.get(key, []), snapshot_time)
+        return daily_cache[key]
+
+    _add_sector_observation_breadth(row, inputs, daily)
+    return row
 
 
 def generate_row(inputs: MarketRegimeInputs, combo: Combination, snapshot_time: datetime) -> dict[str, Any]:
@@ -137,3 +162,54 @@ def relative_strength_signal_average(row: Mapping[str, Any]) -> float | None:
     values = [market_features._safe_float(row.get(key)) for key in ("relative_strength_return", "relative_strength_distance_to_ma20", "relative_strength_ma_alignment_score")]
     clean = [value for value in values if value is not None]
     return mean(clean) if clean else None
+
+
+def _add_sector_observation_breadth(row: dict[str, Any], inputs: MarketRegimeInputs, daily: Any) -> None:
+    returns1: list[float] = []
+    returns5: list[float] = []
+    above20 = above50 = above200 = 0
+    above20_count = above50_count = above200_count = 0
+    distance20: list[float] = []
+    returns20: list[float] = []
+
+    for symbol in inputs.sector_observation_symbols:
+        bars = daily(symbol)
+        closes = market_features._daily_close_series(bars)
+        r1 = market_features._log_return_from_daily_bars(bars, 1)
+        r5 = market_features._log_return_from_daily_bars(bars, 5)
+        r20 = market_features._log_return_from_daily_bars(bars, 20)
+        if r1 is not None:
+            returns1.append(r1)
+        if r5 is not None:
+            returns5.append(r5)
+        if r20 is not None:
+            returns20.append(r20)
+        current = closes[-1] if closes else None
+        for window in market_features.MA_WINDOWS:
+            ma = market_features._moving_average(closes, window)
+            if current is not None and ma is not None:
+                if window == 20:
+                    above20_count += 1
+                    above20 += 1 if current > ma else 0
+                    distance20.append(current / ma - 1)
+                elif window == 50:
+                    above50_count += 1
+                    above50 += 1 if current > ma else 0
+                elif window == 200:
+                    above200_count += 1
+                    above200 += 1 if current > ma else 0
+
+    row["sector_observation_positive_return_1d_pct"] = _positive_pct(returns1)
+    row["sector_observation_positive_return_5d_pct"] = _positive_pct(returns5)
+    row["sector_observation_above_ma20_pct"] = market_features._safe_div(above20, above20_count)
+    row["sector_observation_above_ma50_pct"] = market_features._safe_div(above50, above50_count)
+    row["sector_observation_above_ma200_pct"] = market_features._safe_div(above200, above200_count)
+    row["sector_observation_distance_to_ma20_avg"] = mean(distance20) if distance20 else None
+    row["sector_observation_distance_to_ma20_dispersion"] = pstdev(distance20) if len(distance20) >= 2 else None
+    row["sector_observation_return_20d_dispersion"] = pstdev(returns20) if len(returns20) >= 2 else None
+
+
+def _positive_pct(values: Sequence[float]) -> float | None:
+    if not values:
+        return None
+    return sum(1 for value in values if value > 0) / len(values)

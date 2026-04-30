@@ -5,8 +5,8 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 ## Principles
 
 - Keep raw/source acquisition in smallest-unit modules under `src/data_feed/`.
-- Keep manager-facing model-input orchestration under `src/data_source/`.
-- Keep task inputs in manager task keys, stable source contracts/defaults in code, and shared reviewed universes in shared artifacts; avoid source-local config files unless operators must routinely change the value outside code review.
+- Keep control-plane-facing model-input orchestration under `src/data_source/`.
+- Keep task inputs in control-plane task keys, stable source contracts/defaults in code, and shared reviewed universes in shared artifacts; avoid source-local config files unless operators must routinely change the value outside code review.
 - Keep final model-facing outputs SQL-only for accepted numbered data sources.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
 - Keep model outputs, model-evaluation labels, training runs, strategy/backtest artifacts, and promotion decisions outside `trading-data`. This repository may perform feed acquisition, source construction, and deterministic point-in-time feature construction needed by models.
@@ -26,7 +26,7 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 
 ## Implemented Model Input Sources
 
-Each accepted model layer that needs new `trading-data` acquisition has a manager-facing source-backed source under `src/data_source/NN_source_<layer>/`. These sources fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
+Each accepted model layer that needs new `trading-data` acquisition has a control-plane-facing source-backed source under `src/data_source/NN_source_<layer>/`. These sources fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
 
@@ -34,7 +34,7 @@ Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_regi
 
 Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `source_03_strategy_selection`.
 
-Layer 4 has no manager-facing `trading-data` source: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
+Layer 4 has no control-plane-facing `trading-data` source: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
 
 Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes SQL table `source_05_option_expression` as one row per visible option contract per snapshot. `snapshot_time` is the point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted from the business table.
 

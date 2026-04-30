@@ -11,14 +11,14 @@ It describes how approved source-data requests become validated source-backed SQ
 `trading-data` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
 
 ```text
-manager task key file -> validate key -> select data source -> load source config -> call smallest-unit data feeds -> normalize/clean -> validate -> write accepted SQL output or legacy development files -> write task receipt
+control-plane task key file -> validate key -> select data source -> load source config -> call smallest-unit data feeds -> normalize/clean -> validate -> write accepted SQL output or legacy development files -> write task receipt
 ```
 
 Where:
 
-- **manager task key file** is the manager-issued request/control file that contains enough information to complete the task without hidden chat context;
+- **control-plane task key file** is the manager-issued request/control file that contains enough information to complete the task without hidden chat context;
 - **validate key** checks task identity, schema version, requested script/source, required parameters, destination expectations, idempotency key, and credential/source references;
-- **select data source** invokes the manager-facing source-backed source named by the task key;
+- **select data source** invokes the control-plane-facing source-backed source named by the task key;
 - **load source config** resolves stable project parameters such as ETF lists, issuer labels, grains, and detector defaults;
 - **call smallest-unit data feeds** calls external providers, official web sources, issuer websites, or approved local feed-output interfaces through documented feed connectors;
 - **normalize/clean** converts provider-specific responses and source-backed joins into accepted table-oriented data shapes;
@@ -32,7 +32,7 @@ Legacy development file outputs use ignored runtime `storage/` paths when a sour
 
 ```mermaid
 flowchart TD
-  A[trading-manager Creates Data Task Key File] --> B[trading-data Validates Task Key]
+  A[trading-main Control Plane Creates Data Task Key File] --> B[trading-data Validates Task Key]
   B --> C[Select Data Source]
   C --> D[Load Source Config and Resolve Source Metadata]
   D --> E[Call Smallest-Unit Data Feeds]
@@ -40,17 +40,17 @@ flowchart TD
   F --> G[Validate Dataset]
   G --> H[Write Cleaned Development Files under storage]
   H --> I[Write Development Task Receipt under storage]
-  I --> J[trading-manager Lifecycle]
+  I --> J[trading-main Control-Plane Lifecycle]
   I --> K[trading-data / trading-model / trading-dashboard via accepted contracts]
 ```
 
 ## Operating Principles
 
 - Data acquisition is historical by default; realtime collection is out of scope for this repository.
-- Data requests originate from `trading-manager`, not ad hoc local script calls.
+- Data requests originate from the `trading-main` control plane, not ad hoc local script calls.
 - A task key file must be self-contained: no script may depend on missing chat context or implicit operator memory.
 - `src/data_feed/` owns smallest-unit provider/source access and source-output normalization.
-- `src/data_source/` owns manager-facing source task execution, source config, cross-source orchestration, and source-backed table generation.
+- `src/data_source/` owns control-plane-facing source task execution, source config, cross-source orchestration, and source-backed table generation.
 - Sources may call multiple data feeds in one run, but outputs should remain separable by table/data type.
 - Data requests should be idempotent where practical.
 - Provider responses should be normalized before downstream exposure.
@@ -154,7 +154,7 @@ These names are feed-module planning names until accepted through registry/contr
 
 `macro_data` is removed as an executable acquisition feed. Macro calendar/value rows for model inputs now come from `07_feed_trading_economics_calendar_web`, using visible Trading Economics page data only.
 
-BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-data` should not route manager tasks to the removed `macro_data` route.
+BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-data` should not route control-plane tasks to the removed `macro_data` route.
 
 ## Completion Receipt Requirements
 

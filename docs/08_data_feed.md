@@ -2,7 +2,7 @@
 
 `trading-data` must connect to external and approved local data feeds before it can produce cleaned data outputs.
 
-This file defines the feed-connection boundary: where provider adapters belong, how credentials are referenced, and what must be documented before a source becomes part of a manager-facing source.
+This file defines the feed-connection boundary: where provider adapters belong, how credentials are referenced, and what must be documented before a source becomes part of a control-plane-facing source.
 
 ## Feed Layer Purpose
 
@@ -96,7 +96,7 @@ High-volume raw trade and quote kinds are requestable source inputs, not default
 
 ## Acquisition Script Boundary
 
-Feed connector scripts should be split by historical data type and usage source so `trading-manager` can freely compose data tasks through task key files. Accepted feed keys are registered in `trading-main` as `kind=data_feed`. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
+Feed connector scripts should be split by historical data type and usage source so the `trading-main` control plane can freely compose data tasks through task key files. Accepted feed keys are registered in `trading-main` as `kind=data_feed`. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
 
 - Alpaca bars: one bars-only script/source.
 - Alpaca liquidity: one feed for liquidity bars, excluding news.

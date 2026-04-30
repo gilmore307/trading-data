@@ -11,7 +11,7 @@ The trading system depends on reliable external observations. Provider/source co
 | System | Relationship |
 |---|---|
 | `trading-main` | Owns global architecture, registry, templates, shared helpers, and cross-repository contracts. |
-| `trading-manager` | Sends or schedules structured data requests and consumes manifests/ready signals for lifecycle decisions. |
+| `trading-main` control plane | Sends or schedules structured data requests and consumes manifests/ready signals for lifecycle decisions. |
 | `trading-storage` | Owns durable storage layout, retention, archive, backup, restore, and artifact placement rules. |
 | `trading-data` | Consumes `trading-data` observations and produces internally generated datasets such as labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs. |
 | `trading-model` | Consumes `trading-data` plus `trading-data` data foundations for market-state research, training, and later evaluation flows. |

@@ -184,7 +184,7 @@ Date: 2026-04-25
 
 ### Context
 
-Each manager-facing bundle may compose data from one or more providers. Implementation should first establish source connector boundaries, authentication, quotas, and provider capabilities before bundles depend on live APIs.
+Each control-plane-facing bundle may compose data from one or more providers. Implementation should first establish source connector boundaries, authentication, quotas, and provider capabilities before bundles depend on live APIs.
 
 ### Decision
 
@@ -355,7 +355,7 @@ Calendar and holdings data are easy to corrupt through secondary aggregators. Th
 - Connectors must preserve source URL, retrieval timestamp, as-of/effective date, and file/page format.
 - Default tests must use fixtures or mocks rather than live web search or issuer website calls.
 
-## D017 - Data tasks are manager-driven historical acquisitions
+## D017 - Data tasks are control-plane-driven historical acquisitions
 
 Date: 2026-04-26
 
@@ -365,7 +365,7 @@ The user clarified that current data acquisition work is historical data only. R
 
 ### Decision
 
-`trading-data` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the output destination. During development, `trading-data` writes cleaned data and a task completion receipt under `storage/`; durable storage SQL destinations and storage-resident receipts wait for accepted `trading-storage` contracts.
+`trading-data` will treat control-plane task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the output destination. During development, `trading-data` writes cleaned data and a task completion receipt under `storage/`; durable storage SQL destinations and storage-resident receipts wait for accepted `trading-storage` contracts.
 
 ### Rationale
 
@@ -392,7 +392,7 @@ This decision was superseded later on 2026-04-26. The current accepted bundle is
 
 ### Rationale
 
-Release-time alignment matters for historical market context and avoids accidental lookahead or stale-data mixing. Separate bundles also make manager task keys more precise and easier to replay.
+Release-time alignment matters for historical market context and avoids accidental lookahead or stale-data mixing. Separate bundles also make control-plane task keys more precise and easier to replay.
 
 ### Consequences
 
@@ -461,7 +461,7 @@ Each bundle should start with one `pipeline.py` file containing `run(...)`, `fet
 
 ### Rationale
 
-One pipeline file keeps early development simple and makes manager invocation straightforward. Internal step functions preserve replay, test, and failure-evidence boundaries.
+One pipeline file keeps early development simple and makes control-plane invocation straightforward. Internal step functions preserve replay, test, and failure-evidence boundaries.
 
 ### Consequences
 
@@ -483,7 +483,7 @@ Keep task key and completion receipt JSON minimal. Runtime JSON should include o
 
 ### Rationale
 
-This prevents over-designed templates and keeps manager-generated task keys easy to produce and validate.
+This prevents over-designed templates and keeps control-plane-generated task keys easy to produce and validate.
 
 ### Consequences
 
@@ -753,7 +753,7 @@ Date: 2026-04-28
 
 Remove `macro_data` as an executable `trading-data` acquisition bundle. Macro model inputs should use `07_feed_trading_economics_calendar_web` visible-page rows.
 
-Official macro API keys and secret aliases may remain stored and registered for optional future research, but they are not active manager task routes.
+Official macro API keys and secret aliases may remain stored and registered for optional future research, but they are not active control-plane task routes.
 
 ### Consequences
 
@@ -1115,7 +1115,7 @@ Rename the old finest-grain provider/API/web/file source layer to **feed**:
 - examples: `02_feed_alpaca_liquidity`, `09_feed_thetadata_option_selection_snapshot`
 - support packages: `feed_availability` and `feed_interfaces`
 
-Rename the old manager-facing bundle layer to **source**:
+Rename the old control-plane-facing bundle layer to **source**:
 
 - package path: `src/data_source/`
 - source package pattern: `NN_source_<model_or_output>`
@@ -1124,9 +1124,9 @@ Rename the old manager-facing bundle layer to **source**:
 
 ### Consequences
 
-- Active docs, tests, CLI entrypoints, registry rows, and paths must use `data_feed` / `feed_*` for provider connectors and `data_source` / `source_*` for manager-facing source outputs.
-- `trading-main` registry kinds should treat provider connectors as `data_feed` and manager-facing outputs as `data_source`; old `source_capability` rows become `feed_capability`.
-- Earlier decisions that used `bundle` for the manager-facing layer or `source` for finest-grain provider connectors are historical and superseded by this terminology.
+- Active docs, tests, CLI entrypoints, registry rows, and paths must use `data_feed` / `feed_*` for provider connectors and `data_source` / `source_*` for control-plane-facing source outputs.
+- `trading-main` registry kinds should treat provider connectors as `data_feed` and control-plane-facing outputs as `data_source`; old `source_capability` rows become `feed_capability`.
+- Earlier decisions that used `bundle` for the control-plane-facing layer or `source` for finest-grain provider connectors are historical and superseded by this terminology.
 
 
 ## D066 - Merge source and derived data production into trading-data

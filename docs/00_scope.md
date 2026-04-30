@@ -14,7 +14,7 @@ This repository exists to make external data production explicit, testable, and 
 - Connect to approved market data, macro data, calendar, options, and related data sources once providers are chosen.
 - Normalize provider responses into documented data shapes for market board data, instrument data, and option data.
 - Validate data completeness, schema expectations, timestamps, market calendars, and known provider quirks.
-- Execute `trading-manager` task key files for historical data acquisition.
+- Execute `trading-main` control-plane task key files for historical data acquisition.
 - During development, prefer SQL outputs for accepted SQL-only source contracts; legacy source pipelines may still write inspected task files and receipts under ignored local `storage/`.
 - Move durable outputs to specified storage SQL/artifact targets as `trading-storage` contracts are accepted.
 - Produce source-backed data artifacts for downstream repositories.
@@ -24,7 +24,7 @@ This repository exists to make external data production explicit, testable, and 
 - Track data-provider limitations, quotas, and quality caveats that affect this repository.
 - Build provider/feed connector layer boundaries before domain pipelines depend on live APIs.
 - Keep `src/data_feed/` limited to smallest-unit provider/source acquisition and normalization interfaces.
-- Keep manager-facing source task execution in `src/data_source/`, with config-backed parameters for reusable baskets, issuers, grains, and source-cleaning defaults.
+- Keep control-plane-facing source task execution in `src/data_source/`, with config-backed parameters for reusable baskets, issuers, grains, and source-cleaning defaults.
 
 ## Out of Scope
 
@@ -35,7 +35,7 @@ This repository exists to make external data production explicit, testable, and 
 - Live or paper trade execution.
 - Realtime market data feeds, streaming ingestion, or execution-time data handling unless explicitly re-scoped by a later cross-repository contract.
 - Dashboard frontend or backend implementation.
-- Promotion, scheduling, retry policy, task-key creation, or lifecycle orchestration owned by `trading-manager`.
+- Promotion, scheduling, retry policy, task-key creation, or lifecycle orchestration owned by the `trading-main` control plane.
 - Storing generated data, raw provider dumps, logs, notebooks, credentials, or secrets in Git.
 - General-purpose data platform work unrelated to the trading system.
 
@@ -50,7 +50,7 @@ The repository should prefer explicit provider boundaries, deterministic normali
 - `trading-data` owns historical feed acquisition, model-scoped source-output production, and deterministic feature-output production; in development legacy outputs may live under ignored local `storage/`; it does not own realtime execution feeds or model interpretation.
 - Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-main`.
 - Durable storage layout and retention belong in `trading-storage`; SQL table contracts should be explicit before a source treats them as canonical output.
-- Scheduling, retries, and lifecycle routing belong in `trading-manager`.
+- Scheduling, retries, and lifecycle routing belong in the `trading-main` control plane.
 - Generated data and provider responses are runtime artifacts, not source files.
 - Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.
 - Shared helpers, templates, and registrable fields discovered here must be recorded through `trading-main` before other repositories depend on them.

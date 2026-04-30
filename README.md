@@ -2,7 +2,7 @@
 
 `trading-data` is the unified data-production repository for the trading system.
 
-It owns historical market, options, issuer, filing, news, calendar, and related provider data acquisition, cleaning, validation, and publication for downstream repositories. It executes self-contained task key files from `trading-manager`; legacy source pipelines may still create ignored local files under runtime `storage/`, while accepted SQL-only source outputs write directly to reviewed SQL tables.
+It owns historical market, options, issuer, filing, news, calendar, and related provider data acquisition, cleaning, validation, and publication for downstream repositories. It executes self-contained task key files from the `trading-main` control plane; legacy source pipelines may still create ignored local files under runtime `storage/`, while accepted SQL-only source outputs write directly to reviewed SQL tables.
 
 It does not own shared storage policy, model training/evaluation labels, strategy/backtest generation, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
 
@@ -36,7 +36,7 @@ docs/
 
 ## Input And Output
 
-Input: self-contained historical data task key files from `trading-manager` once the task-key contract is accepted.
+Input: self-contained historical data task key files from the `trading-main` control plane once the task-key contract is accepted.
 
 Development output: local SQL databases and, for legacy source pipelines, inspected local files and task completion receipts under runtime-created `storage/` (ignored by Git).
 
@@ -54,6 +54,6 @@ See `docs/07_data_organization.md`. API-specific source design guidance is in `d
 
 - `trading-main` owns global contracts, registry, shared helpers, and templates.
 - `trading-storage` owns durable storage layout, retention, archive, backup, and restore rules.
-- `trading-manager` owns scheduling, request generation, lifecycle, retries, and promotion decisions.
+- `trading-main` owns control-plane scheduling, request generation, lifecycle, retries, and promotion decisions.
 
 Any new global helper, template, shared field, status, type, or reusable vocabulary discovered while developing `trading-data` must be routed back to `trading-main` for documentation and registry review before other repositories depend on it.

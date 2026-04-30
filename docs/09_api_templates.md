@@ -2,7 +2,7 @@
 
 `trading-data` should design each historical acquisition feed from the API/source requirements before writing connector code.
 
-Reusable template files live in `trading-main/templates/data_tasks/`. This file explains how `trading-data` should apply them to API-specific feeds and manager-facing sources.
+Reusable template files live in `trading-main/templates/data_tasks/`. This file explains how `trading-data` should apply them to API-specific feeds and control-plane-facing sources.
 
 ## Template Sources
 
@@ -19,7 +19,7 @@ Reusable template files live in `trading-main/templates/data_tasks/`. This file 
 
 These templates are drafts, not accepted schemas. Stable field names, statuses, task types, receipt shapes, and storage contracts still require `trading-main` registry/contract review.
 
-Accepted acquisition feed names belong in the `trading-main` registry as `kind=data_feed`; manager-facing source outputs belong as `kind=data_source`, not as generic terminology rows.
+Accepted acquisition feed names belong in the `trading-main` registry as `kind=data_feed`; control-plane-facing source outputs belong as `kind=data_source`, not as generic terminology rows.
 
 ## Runtime JSON Minimalism
 
@@ -56,7 +56,7 @@ src/data_feed/<feed>/
 - `save(...)` writes development outputs under `storage/`; durable SQL waits for storage contracts.
 - `write_receipt(...)` emits success/failure completion receipts.
 
-A shared runner should call feed/source `run(...)` from a task key so `trading-manager` does not need to know feed/source internals. Split the step functions into separate modules only when a feed/source becomes too large for one file.
+A shared runner should call feed/source `run(...)` from a task key so the `trading-main` control plane does not need to know feed/source internals. Split the step functions into separate modules only when a feed/source becomes too large for one file.
 
 ## API-Specific Checklist
 
@@ -98,7 +98,7 @@ ThetaData option acquisition is intentionally split by use case, not endpoint fa
 - `11_feed_thetadata_option_event_timeline` produces news-like timestamped option activity events.
 - `09_feed_thetadata_option_selection_snapshot` captures point-in-time option-chain information visible when an equity signal needs to choose a contract.
 
-`macro_data` has been removed as an executable macro acquisition feed. Macro model inputs now use the conservative `07_feed_trading_economics_calendar_web` visible-page interface; official macro API secret aliases may remain stored but are not active manager task routes.
+`macro_data` has been removed as an executable macro acquisition feed. Macro model inputs now use the conservative `07_feed_trading_economics_calendar_web` visible-page interface; official macro API secret aliases may remain stored but are not active control-plane task routes.
 
 `08_feed_sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `08_feed_sec_company_financials_task_...` and `08_feed_sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.
 

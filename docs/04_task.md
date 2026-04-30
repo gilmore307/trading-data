@@ -6,7 +6,7 @@
 
 ## Queued Tasks
 
-- Define initial manager-issued data task key file schema with `trading-main` and `trading-manager`.
+- Define initial control-plane-issued data task key file schema in `trading-main`.
 - Fill API-specific templates for the first implementation feed before writing connector code.
 - Define strict Trading Economics macro calendar task/config vocabulary for accepted visible-page macro model inputs.
 - Define source-specific task/run ID prefix rules in implementation helpers.
@@ -20,7 +20,7 @@
 
 ## Open Gaps
 
-- Exact manager task key file/request schema beyond the current minimal template.
+- Exact control-plane task key file/request schema beyond the current minimal template.
 - Exact feed connector package layout beyond the implemented source slices.
 - Exact source invocation contract and runner interface beyond current CLIs.
 - Exact development output subdirectory/file layout under `storage/` beyond task/run grouping.
@@ -76,7 +76,7 @@
 - Updated feed/source implementation guidance to default to one `pipeline.py` file with four internal step functions and source-specific README details.
 - Added API template application guide for data data sources and linked `trading-main/templates/data_tasks/`.
 - Changed development-stage task outputs from SQL writes to ignored local files under `storage/`.
-- Formalized manager-driven historical data task workflow: task key file in, specified historical script executes, development output/receipt files are written under `storage/`, and durable SQL/storage receipts remain future contract work.
+- Formalized control-plane-driven historical data task workflow: task key file in, specified historical script executes, development output/receipt files are written under `storage/`, and durable SQL/storage receipts remain future contract work.
 - Recorded FOMC calendar, official macro release calendar discovery, and ETF issuer holdings source-of-truth rules.
 - Recorded U.S. Treasury Fiscal Data as an open/no-key provider term with documentation path.
 - Added provider documentation URLs to data-feed planning docs, matching registry provider term paths.

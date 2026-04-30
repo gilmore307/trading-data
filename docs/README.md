@@ -13,7 +13,7 @@ This directory is the authoritative documentation set for `trading-data`: the re
 - `06_memory.md` — durable local continuity that does not fit narrower docs.
 - `07_data_organization.md` — optional guide for source-backed sources, outputs, and the historical domain-label mapping.
 - `08_data_feed.md` — optional guide for data-feed connectors, provider credentials, and API/token boundaries.
-- `09_api_templates.md` — optional guide for applying `trading-main/templates/data_tasks/` to API-specific feeds and manager-facing sources.
+- `09_api_templates.md` — optional guide for applying `trading-main/templates/data_tasks/` to API-specific feeds and control-plane-facing sources.
 - `10_feed_availability.md` — optional inventory of verified feed availability and registered data-kind groups.
 - `11_model_inputs.md` — optional mapping from `trading-data` source-backed outputs and derived products to model-layer data sources.
 

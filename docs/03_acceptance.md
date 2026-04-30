@@ -10,7 +10,7 @@ Acceptance focuses on:
 - control-plane-driven historical workflow clarity;
 - provider/source boundary clarity;
 - data-organization and feed/source boundary clarity;
-- contract compatibility with `trading-main`;
+- contract compatibility with `trading-manager`;
 - development storage compatibility through ignored local `storage/`, and future `trading-storage` compatibility for SQL output destinations and durable completion receipts once contracts are accepted;
 - absence of committed data, logs, notebooks, and secrets;
 - evidence-backed parsing, normalization, validation, and artifact writing once code exists.
@@ -23,7 +23,7 @@ Documentation changes are acceptable when they:
 
 - update the narrowest authoritative file;
 - preserve separation between scope, context, workflow, acceptance, task, decision, and memory;
-- route global helper, template, field, status, type, and shared vocabulary changes to `trading-main`;
+- route global helper, template, field, status, type, and shared vocabulary changes to `trading-manager`;
 - mark unresolved provider/contract/storage questions as open gaps;
 - preserve the distinction between feed connectors, control-plane-facing sources, accepted outputs, and downstream model/strategy/execution consumers;
 - avoid pretending that implementation or provider choices are settled before evidence exists.
@@ -41,7 +41,7 @@ Implementation changes are acceptable only when they:
 - produce development completion receipts under `storage/` until durable receipt contracts are accepted;
 - produce or preserve durable completion receipt, manifest, and ready-signal evidence once those contracts are accepted;
 - use ignored local `storage/` for development outputs and `trading-storage` contracts for durable SQL output placement only once storage contracts exist;
-- route new shared names through `trading-main/scripts/`;
+- route new shared names through `trading-manager/scripts/`;
 - document every provider/feed connector before domain pipelines depend on it.
 
 ### For Provider Integrations
@@ -49,7 +49,7 @@ Implementation changes are acceptable only when they:
 Provider integrations are acceptable when they document:
 
 - authentication method using secret aliases, not secret values;
-- the local secret-store alias shape and any `trading-main` config registration needed before shared use;
+- the local secret-store alias shape and any `trading-manager` config registration needed before shared use;
 - supported instruments, markets, date ranges, and granularities;
 - rate limits, quota risks, and retry behavior;
 - timestamp/timezone semantics;
@@ -106,12 +106,12 @@ A change must be rejected or returned if it:
 
 - commits generated datasets, raw dumps, logs, notebooks, or credentials;
 - adds strategy/model/execution/dashboard behavior;
-- invents shared fields/statuses/types without `trading-main` registry review;
+- invents shared fields/statuses/types without `trading-manager` registry review;
 - stores secret values or provider keys;
 - makes live provider calls in default tests without guardrails;
 - ignores provider rate limits;
 - writes artifacts or SQL rows to undocumented destinations;
 - writes to SQL during normal development/default tests instead of ignored local `storage/`;
 - claims acceptance without test or inspection evidence;
-- duplicates global contract definitions locally instead of referencing `trading-main`;
+- duplicates global contract definitions locally instead of referencing `trading-manager`;
 - introduces realtime feed/execution behavior into `trading-data`.

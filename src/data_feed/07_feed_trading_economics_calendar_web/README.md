@@ -12,7 +12,7 @@ Boundary:
 Run:
 
 ```bash
-PYTHONPATH=src:/root/projects/trading-main/src python3 -m data_feed.07_feed_trading_economics_calendar_web task.json --run-id te_calendar_run_<id>
+PYTHONPATH=src:/root/projects/trading-manager/src python3 -m data_feed.07_feed_trading_economics_calendar_web task.json --run-id te_calendar_run_<id>
 ```
 
 Params:

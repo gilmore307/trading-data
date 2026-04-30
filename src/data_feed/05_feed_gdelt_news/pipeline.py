@@ -255,7 +255,7 @@ def _default_client() -> QueryClient:
     try:
         from trading_bigquery import BigQueryClient
     except ModuleNotFoundError as exc:
-        raise GdeltNewsError("trading_bigquery helper is required; set PYTHONPATH to include /root/projects/trading-main/src") from exc
+        raise GdeltNewsError("trading_bigquery helper is required; set PYTHONPATH to include /root/projects/trading-manager/src") from exc
     return BigQueryClient()
 
 

@@ -2,7 +2,7 @@
 
 `trading-data` should design each historical acquisition feed from the API/source requirements before writing connector code.
 
-Reusable template files live in `trading-main/templates/data_tasks/`. This file explains how `trading-data` should apply them to API-specific feeds and control-plane-facing sources.
+Reusable template files live in `trading-manager/templates/data_tasks/`. This file explains how `trading-data` should apply them to API-specific feeds and control-plane-facing sources.
 
 ## Template Sources
 
@@ -17,9 +17,9 @@ Reusable template files live in `trading-main/templates/data_tasks/`. This file 
 | `templates/data_tasks/completion_receipt.json` | Draft success/failure receipt evidence. |
 | `templates/data_tasks/fixture_policy.md` | Capture fixture, mock, and live-call guardrails. |
 
-These templates are drafts, not accepted schemas. Stable field names, statuses, task types, receipt shapes, and storage contracts still require `trading-main` registry/contract review.
+These templates are drafts, not accepted schemas. Stable field names, statuses, task types, receipt shapes, and storage contracts still require `trading-manager` registry/contract review.
 
-Accepted acquisition feed names belong in the `trading-main` registry as `kind=data_feed`; control-plane-facing source outputs belong as `kind=data_source`, not as generic terminology rows.
+Accepted acquisition feed names belong in the `trading-manager` registry as `kind=data_feed`; control-plane-facing source outputs belong as `kind=data_source`, not as generic terminology rows.
 
 ## Runtime JSON Minimalism
 
@@ -56,7 +56,7 @@ src/data_feed/<feed>/
 - `save(...)` writes development outputs under `storage/`; durable SQL waits for storage contracts.
 - `write_receipt(...)` emits success/failure completion receipts.
 
-A shared runner should call feed/source `run(...)` from a task key so the `trading-main` control plane does not need to know feed/source internals. Split the step functions into separate modules only when a feed/source becomes too large for one file.
+A shared runner should call feed/source `run(...)` from a task key so the `trading-manager` control plane does not need to know feed/source internals. Split the step functions into separate modules only when a feed/source becomes too large for one file.
 
 ## API-Specific Checklist
 

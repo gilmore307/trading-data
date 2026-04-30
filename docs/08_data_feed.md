@@ -42,7 +42,7 @@ src/
 tests/                Component tests for sources, interfaces, storage, and sources.
 ```
 
-Shared helpers belong in `trading-main`, not in a local `helpers/` folder.
+Shared helpers belong in `trading-manager`, not in a local `helpers/` folder.
 
 Any source layout change must update docs and tests in the same change.
 
@@ -56,7 +56,7 @@ Credential material belongs outside Git under one source-level JSON file per pro
 /root/secrets/<source>.json
 ```
 
-Shared or reviewed references should be stored as source aliases, not values. When a provider credential becomes a cross-repository or durable config dependency, register a `config` row in `trading-main` whose payload is the source alias and whose `path` mirrors the local source JSON file.
+Shared or reviewed references should be stored as source aliases, not values. When a provider credential becomes a cross-repository or durable config dependency, register a `config` row in `trading-manager` whose payload is the source alias and whose `path` mirrors the local source JSON file.
 
 Provider `term` rows may use their `path` field for canonical public documentation URLs. Secret `config` rows keep their `path` field pointed at local source JSON files.
 
@@ -82,13 +82,13 @@ Current registered provider config and source-of-truth surfaces:
 | Official macro release calendars | Web search to current official agency pages. | Release dates/times for macroeconomic publications relevant to market context. | None; source term `OFFICIAL_MACRO_RELEASE_CALENDAR` is registered. | No general credential rule; use official agency sources. | Use web search for discovery, then confirm official government/issuing-agency domains. Third-party calendars are secondary only unless explicitly approved. |
 | ETF issuer holdings | Issuer websites or issuer-published holdings files. | ETF constituent stocks and portfolio weights/proportions. | None; source term `ETF_ISSUER_HOLDINGS` is registered. | Usually no credential; issuer-specific access rules remain open. | Issuer website is the source of truth. Preserve issuer URL, as-of date, retrieval timestamp, holdings file format, and any cash/derivative rows. |
 
-`trading-main` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-data` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
+`trading-manager` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-data` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
 
 
 
 ## Data Kind Registry Rule
 
-Every obtainable data category accepted after source/API availability review should be registered in `trading-main` as `kind=data_kind` before implementation depends on it.
+Every obtainable data category accepted after source/API availability review should be registered in `trading-manager` as `kind=data_kind` before implementation depends on it.
 
 `data_kind` rows are for concrete data categories such as bars, quotes, option Greeks, SEC company facts, CPI, GDP, or Treasury datasets. They are separate from `data_feed` rows: feeds choose the acquisition runner boundary, while data kinds identify what data can be requested, validated, routed, and eventually mapped to storage.
 
@@ -96,7 +96,7 @@ High-volume raw trade and quote kinds are requestable source inputs, not default
 
 ## Acquisition Script Boundary
 
-Feed connector scripts should be split by historical data type and usage source so the `trading-main` control plane can freely compose data tasks through task key files. Accepted feed keys are registered in `trading-main` as `kind=data_feed`. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
+Feed connector scripts should be split by historical data type and usage source so the `trading-manager` control plane can freely compose data tasks through task key files. Accepted feed keys are registered in `trading-manager` as `kind=data_feed`. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
 
 - Alpaca bars: one bars-only script/source.
 - Alpaca liquidity: one feed for liquidity bars, excluding news.
@@ -201,14 +201,14 @@ A provider/feed connector is acceptable only when:
 - rate-limit behavior is documented before automation loops are introduced;
 - timestamp and timezone behavior is documented;
 - provider response examples are sanitized if fixtures are committed;
-- any shared config keys or provider-independent vocabulary are routed through `trading-main`.
+- any shared config keys or provider-independent vocabulary are routed through `trading-manager`.
 
 ## Open Provider Decisions
 
 - Which additional non-OKX/non-economic provider(s), if any, support broad-market or market-regime sources?
 - Which non-Alpaca provider(s), if any, support equity/instrument source inputs?
 - ThetaData connector/JAR/credential layout for options feed interfaces and option-expression/position-execution sources.
-- Which additional source-level secret aliases should be registered in `trading-main`?
+- Which additional source-level secret aliases should be registered in `trading-manager`?
 - U.S. Treasury Fiscal Data dataset and endpoint coverage for federal finance context.
 - Macro release event inventory, release-key naming, and per-release source boundaries.
 - FOMC and official macro release calendar discovery/update cadence.

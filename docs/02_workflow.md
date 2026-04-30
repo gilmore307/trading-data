@@ -26,13 +26,13 @@ Where:
 - **write accepted SQL output or legacy development files** stores canonical SQL tables for SQL-only sources and keeps older file-manifest sources under ignored local runtime `storage/` until migrated;
 - **write task receipt** records task status and evidence so runs remain inspectable and disposable during development.
 
-Legacy development file outputs use ignored runtime `storage/` paths when a source has not migrated to accepted SQL-only output. The exact task key file schema and durable completion receipt schema remain cross-repository contract work with `trading-main` and `trading-storage`.
+Legacy development file outputs use ignored runtime `storage/` paths when a source has not migrated to accepted SQL-only output. The exact task key file schema and durable completion receipt schema remain cross-repository contract work with `trading-manager` and `trading-storage`.
 
 ## Collaboration Flow
 
 ```mermaid
 flowchart TD
-  A[trading-main Control Plane Creates Data Task Key File] --> B[trading-data Validates Task Key]
+  A[trading-manager Control Plane Creates Data Task Key File] --> B[trading-data Validates Task Key]
   B --> C[Select Data Source]
   C --> D[Load Source Config and Resolve Source Metadata]
   D --> E[Call Smallest-Unit Data Feeds]
@@ -40,14 +40,14 @@ flowchart TD
   F --> G[Validate Dataset]
   G --> H[Write Cleaned Development Files under storage]
   H --> I[Write Development Task Receipt under storage]
-  I --> J[trading-main Control-Plane Lifecycle]
+  I --> J[trading-manager Control-Plane Lifecycle]
   I --> K[trading-data / trading-model / trading-dashboard via accepted contracts]
 ```
 
 ## Operating Principles
 
 - Data acquisition is historical by default; realtime collection is out of scope for this repository.
-- Data requests originate from the `trading-main` control plane, not ad hoc local script calls.
+- Data requests originate from the `trading-manager` control plane, not ad hoc local script calls.
 - A task key file must be self-contained: no script may depend on missing chat context or implicit operator memory.
 - `src/data_feed/` owns smallest-unit provider/source access and source-output normalization.
 - `src/data_source/` owns control-plane-facing source task execution, source config, cross-source orchestration, and source-backed table generation.
@@ -57,7 +57,7 @@ flowchart TD
 - Validation evidence belongs in completion receipts/manifests, not only logs.
 - Downstream repositories should consume storage-backed outputs and receipts/manifests, not provider internals.
 - Legacy development file outputs must stay under ignored `storage/`; accepted SQL-only source outputs may use reviewed SQL table contracts and guarded integration paths.
-- Shared fields, statuses, and type names must come from `trading-main/scripts/`.
+- Shared fields, statuses, and type names must come from `trading-manager/scripts/`.
 - Live provider calls should be minimized in tests; prefer fixtures, recorded examples, or provider adapters with controlled mocks.
 
 
@@ -79,13 +79,13 @@ The manager-issued task key file should eventually include at least:
 - task-level development completion receipt destination under `storage/<task-id>/completion_receipt.json`, plus future durable receipt destination when contracts exist;
 - priority, deadline, cancellation, and retry expectations when manager scheduling supports them.
 
-The task key file is a contract surface, not an implementation shortcut. Its exact schema must be accepted through `trading-main` before code treats it as stable.
+The task key file is a contract surface, not an implementation shortcut. Its exact schema must be accepted through `trading-manager` before code treats it as stable.
 
 
 
 ## API Template Design Gate
 
-Before implementation creates a data source folder, the source should be designed from `trading-main/templates/data_tasks/`:
+Before implementation creates a data source folder, the source should be designed from `trading-manager/templates/data_tasks/`:
 
 - task key shape;
 - source README boundary;

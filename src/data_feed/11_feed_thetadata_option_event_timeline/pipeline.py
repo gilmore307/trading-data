@@ -24,7 +24,7 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
-DEFAULT_REGISTRY_CSV = Path("/root/projects/trading-main/scripts/current.csv")
+DEFAULT_REGISTRY_CSV = Path("/root/projects/trading-manager/scripts/current.csv")
 FEED = "11_feed_thetadata_option_event_timeline"
 SUPPORTED_TIMEFRAMES = {
     "1Min": 60,

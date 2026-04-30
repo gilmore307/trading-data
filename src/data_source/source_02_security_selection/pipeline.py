@@ -104,7 +104,7 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
 
 def _resolve_path(value: str) -> Path:
     path = Path(value)
-    return path if path.is_absolute() else Path("/root/projects/trading-main") / path
+    return path if path.is_absolute() else Path("/root/projects/trading-manager") / path
 
 
 def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:

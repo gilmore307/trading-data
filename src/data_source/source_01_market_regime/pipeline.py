@@ -153,7 +153,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
     end = str(_required(params, "end"))
     universe_path = Path(str(params.get("market_regime_etf_universe_path") or params.get("market_etf_universe_path") or MARKET_REGIME_ETF_UNIVERSE_PATH))
     if not universe_path.is_absolute():
-        universe_path = Path("/root/projects/trading-main") / universe_path
+        universe_path = Path("/root/projects/trading-manager") / universe_path
     universe_rows = _read_universe(universe_path)
     symbols = sorted({row["symbol"].upper() for row in universe_rows})
     universe_by_symbol = {row["symbol"].upper(): row for row in universe_rows}

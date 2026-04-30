@@ -10,7 +10,7 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 - Keep final model-facing outputs SQL-only for accepted numbered data sources.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
 - Keep model outputs, model-evaluation labels, training runs, strategy/backtest artifacts, and promotion decisions outside `trading-data`. This repository may perform feed acquisition, source construction, and deterministic point-in-time feature construction needed by models.
-- Register reusable names through `trading-main` before other repositories depend on them.
+- Register reusable names through `trading-manager` before other repositories depend on them.
 
 ## Layer Input Sources
 

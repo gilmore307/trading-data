@@ -10,8 +10,8 @@ The trading system depends on reliable external observations. Provider/source co
 
 | System | Relationship |
 |---|---|
-| `trading-main` | Owns global architecture, registry, templates, shared helpers, and cross-repository contracts. |
-| `trading-main` control plane | Sends or schedules structured data requests and consumes manifests/ready signals for lifecycle decisions. |
+| `trading-manager` | Owns global architecture, registry, templates, shared helpers, and cross-repository contracts. |
+| `trading-manager` control plane | Sends or schedules structured data requests and consumes manifests/ready signals for lifecycle decisions. |
 | `trading-storage` | Owns durable storage layout, retention, archive, backup, restore, and artifact placement rules. |
 | `trading-data` | Consumes `trading-data` observations and produces internally generated datasets such as labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs. |
 | `trading-model` | Consumes `trading-data` plus `trading-data` data foundations for market-state research, training, and later evaluation flows. |
@@ -38,16 +38,16 @@ Potential external interfaces include:
 - symbol/reference-data providers;
 - local or shared storage through `trading-storage` contracts.
 
-OKX is registered in `trading-main` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/08_data_feed.md` for the source-connection boundary.
+OKX is registered in `trading-manager` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/08_data_feed.md` for the source-connection boundary.
 
 ## Environment
 
 Development is server-hosted under `/root/projects/trading-data`.
 
-The shared Python environment is anchored by `trading-main` at:
+The shared Python environment is anchored by `trading-manager` at:
 
 ```text
-/root/projects/trading-main/.venv
+/root/projects/trading-manager/.venv
 ```
 
 `trading-data` should not create an independent virtual environment unless a documented exception is accepted.
@@ -58,15 +58,15 @@ US Eastern time is the default project planning time. Data contracts may require
 
 Current system-level dependencies:
 
-- `trading-main/docs/08_registry.md` for registry operating rules;
-- `trading-main/templates/contracts/` for artifact, manifest, ready-signal, and request drafting templates;
-- `trading-main/helpers/` for approved shared helper surfaces;
+- `trading-manager/docs/08_registry.md` for registry operating rules;
+- `trading-manager/templates/contracts/` for artifact, manifest, ready-signal, and request drafting templates;
+- `trading-manager/helpers/` for approved shared helper surfaces;
 - `trading-storage` for persistent layout and retention contracts;
 - external data providers once chosen.
 
 ## Global Registration Discipline
 
-If data work introduces a name that other repositories may consume, route it back to `trading-main` before treating it as stable.
+If data work introduces a name that other repositories may consume, route it back to `trading-manager` before treating it as stable.
 
 This includes:
 
@@ -88,4 +88,4 @@ Temporary names may appear in local drafts, but they must be recorded and review
 - Keep downstream derived-data, strategy/backtest, and model interpretation out of this repository.
 - Prefer fixture-backed provider tests before live provider calls.
 - Respect provider quotas and rate limits; do not build tight unaudited polling loops.
-- Exact artifact, manifest, request, and ready-signal schemas remain open until accepted through `trading-main` contracts.
+- Exact artifact, manifest, request, and ready-signal schemas remain open until accepted through `trading-manager` contracts.

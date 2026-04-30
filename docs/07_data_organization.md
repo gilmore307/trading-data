@@ -20,7 +20,7 @@ The older three-domain language — market board data / 盘面数据, instrument
 - Keep control-plane-facing orchestration in `src/data_source/`.
 - Keep final model-facing outputs SQL-only for accepted numbered sources unless a reviewed exception exists.
 - Do not use profitability, strategy returns, model labels, or execution outcomes as upstream data-production inputs.
-- Register reusable feed, source, field, status, table, and parameter names through `trading-main` before other repositories depend on them.
+- Register reusable feed, source, field, status, table, and parameter names through `trading-manager` before other repositories depend on them.
 
 ## Historical Domain Mapping
 

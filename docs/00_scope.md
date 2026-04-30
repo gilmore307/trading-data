@@ -14,11 +14,11 @@ This repository exists to make external data production explicit, testable, and 
 - Connect to approved market data, macro data, calendar, options, and related data sources once providers are chosen.
 - Normalize provider responses into documented data shapes for market board data, instrument data, and option data.
 - Validate data completeness, schema expectations, timestamps, market calendars, and known provider quirks.
-- Execute `trading-main` control-plane task key files for historical data acquisition.
+- Execute `trading-manager` control-plane task key files for historical data acquisition.
 - During development, prefer SQL outputs for accepted SQL-only source contracts; legacy source pipelines may still write inspected task files and receipts under ignored local `storage/`.
 - Move durable outputs to specified storage SQL/artifact targets as `trading-storage` contracts are accepted.
 - Produce source-backed data artifacts for downstream repositories.
-- Produce run manifests and ready signals using `trading-main` contracts once concrete schemas are accepted.
+- Produce run manifests and ready signals using `trading-manager` contracts once concrete schemas are accepted.
 - Coordinate with `trading-storage` for future durable output placement, SQL contracts, receipt storage, and retention rules.
 - Expose component-local tests for data parsing, validation, and fixture-based provider behavior.
 - Track data-provider limitations, quotas, and quality caveats that affect this repository.
@@ -35,7 +35,7 @@ This repository exists to make external data production explicit, testable, and 
 - Live or paper trade execution.
 - Realtime market data feeds, streaming ingestion, or execution-time data handling unless explicitly re-scoped by a later cross-repository contract.
 - Dashboard frontend or backend implementation.
-- Promotion, scheduling, retry policy, task-key creation, or lifecycle orchestration owned by the `trading-main` control plane.
+- Promotion, scheduling, retry policy, task-key creation, or lifecycle orchestration owned by the `trading-manager` control plane.
 - Storing generated data, raw provider dumps, logs, notebooks, credentials, or secrets in Git.
 - General-purpose data platform work unrelated to the trading system.
 
@@ -48,12 +48,12 @@ The repository should prefer explicit provider boundaries, deterministic normali
 ## Boundary Rules
 
 - `trading-data` owns historical feed acquisition, model-scoped source-output production, and deterministic feature-output production; in development legacy outputs may live under ignored local `storage/`; it does not own realtime execution feeds or model interpretation.
-- Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-main`.
+- Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-manager`.
 - Durable storage layout and retention belong in `trading-storage`; SQL table contracts should be explicit before a source treats them as canonical output.
-- Scheduling, retries, and lifecycle routing belong in the `trading-main` control plane.
+- Scheduling, retries, and lifecycle routing belong in the `trading-manager` control plane.
 - Generated data and provider responses are runtime artifacts, not source files.
 - Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.
-- Shared helpers, templates, and registrable fields discovered here must be recorded through `trading-main` before other repositories depend on them.
+- Shared helpers, templates, and registrable fields discovered here must be recorded through `trading-manager` before other repositories depend on them.
 - Source-backed aggregations may be emitted by `data_source`, not mixed into `data_feed`.
 - Model-evaluation labels, training runs, model outputs, strategy/backtest outputs, and promotion decisions belong outside `trading-data`, primarily in `trading-model` or downstream strategy/execution repositories.
 - Data features emitted here must be market/data-feed based. Strategy returns or strategy performance must not feed source data production.
@@ -65,7 +65,7 @@ A request should be rejected or re-scoped if it asks `trading-data` to:
 - implement strategy, model, execution, or dashboard logic;
 - commit generated datasets, raw dumps, logs, or notebooks;
 - store secrets or credentials;
-- define global contracts without routing them through `trading-main`;
+- define global contracts without routing them through `trading-manager`;
 - invent shared field/status/type names without registry review;
 - bypass `trading-storage` for durable layout policy;
 - use strategy performance to define upstream market data features;

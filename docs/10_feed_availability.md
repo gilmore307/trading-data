@@ -5,13 +5,13 @@ This file records the first public-docs availability inventory for `trading-data
 The inventory exists to support two decisions before connector implementation:
 
 1. which data categories are actually obtainable from approved APIs or official web sources;
-2. which `trading-main` `data_kind` rows should be available for task params, validation, output routing, and future storage mapping.
+2. which `trading-manager` `data_kind` rows should be available for task params, validation, output routing, and future storage mapping.
 
 ## Availability Rules
 
 - Verify feed availability from official documentation or source pages before implementation depends on a data source category.
 - Use `python -m feed_availability` for bounded smoke probes after documentation review; default tests for this probe package must not require network access or secrets.
-- Register accepted obtainable categories as `kind=data_kind` in `trading-main`.
+- Register accepted obtainable categories as `kind=data_kind` in `trading-manager`.
 - Keep `data_source` and `data_kind` separate: sources route execution; data kinds name requested/produced data categories.
 - Use one canonical source per economic measure. FRED is limited to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups.
 - Do not store provider credentials, full raw responses, or generated datasets in this repository.
@@ -104,7 +104,7 @@ ThetaData v3 requires Java 21+ and a local Theta Terminal. The local runtime is 
 
 ## Registered Data Kind Groups
 
-Initial `data_kind` rows are registered in `trading-main` for:
+Initial `data_kind` rows are registered in `trading-manager` for:
 
 - equity market data;
 - crypto market data;

@@ -5,7 +5,7 @@
 Run:
 
 ```bash
-PYTHONPATH=src:/root/projects/trading-main/src python3 -m data_feed.05_feed_gdelt_news task.json --run-id 05_feed_gdelt_news_run_<id>
+PYTHONPATH=src:/root/projects/trading-manager/src python3 -m data_feed.05_feed_gdelt_news task.json --run-id 05_feed_gdelt_news_run_<id>
 ```
 
 Required params:

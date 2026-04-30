@@ -32,6 +32,7 @@ trading-data-source-05-option-expression = "data_source.source_05_option_express
 trading-data-source-06-position-execution = "data_source.source_06_position_execution.__main__:main"
 trading-data-source-07-event-overlay = "data_source.source_07_event_overlay.__main__:main"
 trading-data-feature-01-market-regime = "data_feature.feature_01_market_regime.__main__:main"
+trading-data-feature-02-security-selection = "data_feature.feature_02_security_selection.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo("America/New_York")
 MARKET_STATE_TYPE = "market_state_etf"
 SECTOR_OBSERVATION_TYPE = "sector_observation_etf"
+MODEL2_ROTATION_COMBINATION_TYPES = {"sector_rotation", "daily_context"}
 RETURN_LOOKBACKS = ("30m", "1d", "5d", "20d")
 REALIZED_VOL_LOOKBACKS = (5, 20, 60)
 MA_WINDOWS = (20, 50, 200)
@@ -97,6 +98,7 @@ class Bar:
 @dataclass(frozen=True)
 class Combination:
     combination_id: str
+    combination_type: str
     numerator_symbol: str
     denominator_symbol: str
     feature_bar_grain: str
@@ -139,7 +141,15 @@ def build_inputs(
         numerator = str(row.get("numerator_symbol") or "").strip().upper()
         denominator = str(row.get("denominator_symbol") or "").strip().upper()
         if combination_id and numerator and denominator:
-            combinations.append(Combination(combination_id, numerator, denominator, str(row.get("feature_bar_grain") or "").strip().lower()))
+            combinations.append(
+                Combination(
+                    combination_id=combination_id,
+                    combination_type=str(row.get("combination_type") or "").strip().lower(),
+                    numerator_symbol=numerator,
+                    denominator_symbol=denominator,
+                    feature_bar_grain=str(row.get("feature_bar_grain") or "").strip().lower(),
+                )
+            )
 
     bars_by_symbol: dict[str, list[Bar]] = {}
     for row in bar_rows:
@@ -314,8 +324,12 @@ def _add_return_features(row: dict[str, Any], subject: str, close_at: Any, symbo
         row[f"{subject}_return_{lookback}"] = _log_return_from_daily_bars(daily_bars, periods)
 
 
+def _market_regime_combinations(inputs: MarketRegimeInputs) -> list[Combination]:
+    return [combo for combo in inputs.combinations if combo.combination_type not in MODEL2_ROTATION_COMBINATION_TYPES]
+
+
 def _add_relative_strength_features(row: dict[str, Any], inputs: MarketRegimeInputs, close_at: Any, daily: Any, snapshot_time: datetime) -> None:
-    for combo in inputs.combinations:
+    for combo in _market_regime_combinations(inputs):
         if combo.feature_bar_grain == "30m":
             current = _safe_div(close_at(combo.numerator_symbol, snapshot_time), close_at(combo.denominator_symbol, snapshot_time))
             previous = _safe_div(close_at(combo.numerator_symbol, snapshot_time - timedelta(minutes=30)), close_at(combo.denominator_symbol, snapshot_time - timedelta(minutes=30)))
@@ -419,7 +433,7 @@ def _garman_klass_vol(bars: Sequence[Bar], window: int) -> float | None:
 
 def _add_cross_asset_volatility_ratios(row: dict[str, Any], inputs: MarketRegimeInputs, daily: Any) -> None:
     vol_cache: dict[str, float | None] = {}
-    for combo in inputs.combinations:
+    for combo in _market_regime_combinations(inputs):
         for symbol in (combo.numerator_symbol, combo.denominator_symbol):
             vol_cache.setdefault(symbol, _rolling_realized_vol(_daily_log_returns(daily(symbol)), 20))
         row[f"{combo.combination_id}_realized_vol_20d_ratio"] = _safe_div(vol_cache[combo.numerator_symbol], vol_cache[combo.denominator_symbol])
@@ -431,7 +445,7 @@ def _add_single_symbol_ma_features(row: dict[str, Any], subject: str, daily_bars
 
 
 def _add_ratio_ma_features(row: dict[str, Any], inputs: MarketRegimeInputs, daily: Any) -> None:
-    for combo in inputs.combinations:
+    for combo in _market_regime_combinations(inputs):
         ratio = _ratio_series(_daily_close_series(daily(combo.numerator_symbol)), _daily_close_series(daily(combo.denominator_symbol)))
         _add_ma_feature_set(row, combo.combination_id, ratio, include_ma_values=True)
 
@@ -456,8 +470,9 @@ def _add_ma_feature_set(row: dict[str, Any], subject: str, values: Sequence[floa
 
 
 def _add_correlation_features(row: dict[str, Any], inputs: MarketRegimeInputs, daily: Any) -> None:
-    returns_cache = {symbol: _daily_log_returns(daily(symbol)) for combo in inputs.combinations for symbol in (combo.numerator_symbol, combo.denominator_symbol)}
-    for combo in inputs.combinations:
+    combinations = _market_regime_combinations(inputs)
+    returns_cache = {symbol: _daily_log_returns(daily(symbol)) for combo in combinations for symbol in (combo.numerator_symbol, combo.denominator_symbol)}
+    for combo in combinations:
         corr20 = _sample_corr(returns_cache[combo.numerator_symbol], returns_cache[combo.denominator_symbol], 20)
         corr60 = _sample_corr(returns_cache[combo.numerator_symbol], returns_cache[combo.denominator_symbol], 60)
         row[f"{combo.combination_id}_return_corr_20d"] = corr20

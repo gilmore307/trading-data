@@ -54,10 +54,18 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         combinations = [
             {
                 "combination_id": "qqq_spy",
+                "combination_type": "primary",
                 "numerator_symbol": "QQQ",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "30m",
-            }
+            },
+            {
+                "combination_id": "xlk_spy",
+                "combination_type": "sector_rotation",
+                "numerator_symbol": "XLK",
+                "denominator_symbol": "SPY",
+                "feature_bar_grain": "30m",
+            },
         ]
         start = date(2025, 1, 1)
         bars: list[dict[str, str]] = []
@@ -93,6 +101,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertIn("qqq_spy_ma20", row)
         self.assertIn("qqq_spy_distance_to_ma20", row)
         self.assertIn("qqq_spy_return_corr_20d", row)
+        self.assertFalse(any(key.startswith("xlk_spy") for key in row))
         self.assertIn("market_state_avg_return_corr_20d", row)
         self.assertIn("sector_observation_positive_return_1d_pct", row)
         self.assertFalse(any(key.startswith("rs_") for key in row))
@@ -161,7 +170,10 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         row = generator.generate_row(inputs, datetime(2026, 1, 2, 16, 0, tzinfo=ET))
 
-        self.assertEqual(len(row), 1478)
+        self.assertEqual(len(row), 968)
+        self.assertFalse(any(key.startswith("xlk_spy") for key in row))
+        self.assertFalse(any(key.startswith("smh_xlk") for key in row))
+        self.assertTrue(any(key.startswith("qqq_spy") for key in row))
 
 
 if __name__ == "__main__":

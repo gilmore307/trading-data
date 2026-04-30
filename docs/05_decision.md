@@ -1156,7 +1156,7 @@ Status: Accepted
 
 ### Context
 
-A development database smoke test attempted to materialize all `feature_01_market_regime` generated feature columns as physical `DOUBLE PRECISION` columns. PostgreSQL rejected dense rows with `row is too big: size 8768, maximum size 8160`. The V1 feature generator currently emits 1,477 generated feature values per snapshot, so a physically wide table is not safe once rows become dense.
+A development database smoke test attempted to materialize all `feature_01_market_regime` generated feature columns as physical `DOUBLE PRECISION` columns. PostgreSQL rejected dense rows with `row is too big: size 8768, maximum size 8160`. The V1 feature generator originally emitted 1,477 generated feature values per snapshot, and after the sector-rotation split it emits 967 Layer 1 generated feature values per snapshot. A physically wide table is still not the durable contract for dense model-local feature surfaces.
 
 The generated features are model-local and intentionally not individually registered in the global registry.
 
@@ -1176,3 +1176,32 @@ The logical contract remains one point-in-time feature row per `snapshot_time`; 
 - PostgreSQL row-size limits no longer block dense Layer 1 feature rows.
 - Generated feature names such as `spy_return_30m` remain unregistered model-local payload keys governed by the reviewed generator/config, not global registry fields.
 - If a generated feature becomes a cross-repository contract, promote that specific feature to an explicit reviewed schema/registry surface later.
+
+
+## D068 - Move sector rotation feature surface to SecuritySelectionModel
+
+Date: 2026-04-30
+Status: Accepted
+
+### Context
+
+`feature_01_market_regime` originally generated relative-strength, moving-average, volatility-ratio, and correlation payload keys for every reviewed ETF combination, including `combination_type = sector_rotation` and `daily_context`. After the modeling boundary was clarified, sector/industry rotation became a Model 2 `SecuritySelectionModel` feature problem rather than a Layer 1 broad-market feature problem.
+
+### Decision
+
+Exclude `sector_rotation` and `daily_context` combination-derived pair features from `feature_01_market_regime`. Add `feature_02_security_selection` as the Layer 2 feature surface for those combinations.
+
+`feature_02_security_selection` emits candidate-comparison rows keyed by:
+
+```text
+snapshot_time + candidate_symbol + comparison_symbol + rotation_pair_id
+```
+
+Each row stores relative-strength return, trend, volatility-ratio, and correlation evidence in `feature_payload_json`.
+
+### Consequences
+
+- Layer 1 feature rows keep broad market-state evidence and market-wide aggregate structure, but no longer carry candidate-facing sector/industry rotation pair keys such as `xlk_spy_*` or `smh_xlk_*`.
+- Layer 2 now owns sector/industry rotation evidence for candidate parameterization.
+- Current shared-contract width for `feature_01_market_regime` is 968 dictionary fields including `snapshot_time` (967 payload keys).
+- Current shared-contract row count for `feature_02_security_selection` is 30 candidate-comparison rows per snapshot: 17 `sector_rotation` rows plus 13 `daily_context` rows.

@@ -42,7 +42,7 @@ Development output: local SQL databases and, for legacy source pipelines, inspec
 
 Durable output: storage-backed SQL/artifact outputs plus manifests and ready signals as cross-repository contracts are accepted.
 
-`trading-data` owns the data chain from provider feeds to model-scoped sources to deterministic point-in-time feature tables. Realtime execution feeds belong to `trading-execution`; model outputs, evaluation labels, training runs, and promotion decisions belong to `trading-model`.
+`trading-data` owns the data chain from provider feeds to model-scoped sources to deterministic point-in-time feature tables. For high-dimensional generated feature surfaces such as `feature_01_market_regime`, SQL storage may use one row per point-in-time key with generated feature values inside JSONB payloads instead of one physical column per feature. Realtime execution feeds belong to `trading-execution`; model outputs, evaluation labels, training runs, and promotion decisions belong to `trading-model`.
 
 ## Data Organization
 

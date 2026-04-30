@@ -1148,3 +1148,31 @@ trading_data.source_01_market_regime
 → trading_data.feature_01_market_regime
 → trading_model.model_01_market_regime
 ```
+
+## D067 - Store generated MarketRegimeModel features as JSONB payload
+
+Date: 2026-04-30
+Status: Accepted
+
+### Context
+
+A development database smoke test attempted to materialize all `feature_01_market_regime` generated feature columns as physical `DOUBLE PRECISION` columns. PostgreSQL rejected dense rows with `row is too big: size 8768, maximum size 8160`. The V1 feature generator currently emits 1,477 generated feature values per snapshot, so a physically wide table is not safe once rows become dense.
+
+The generated features are model-local and intentionally not individually registered in the global registry.
+
+### Decision
+
+Keep `feature_01_market_regime` as the Layer 1 feature table, but store generated features inside a JSONB payload column:
+
+```text
+snapshot_time TIMESTAMPTZ PRIMARY KEY
+feature_payload_json JSONB NOT NULL DEFAULT '{}'::jsonb
+```
+
+The logical contract remains one point-in-time feature row per `snapshot_time`; the physical storage no longer creates one PostgreSQL column per generated feature. Downstream model code expands `feature_payload_json` into in-memory feature dictionaries before factor generation.
+
+### Consequences
+
+- PostgreSQL row-size limits no longer block dense Layer 1 feature rows.
+- Generated feature names such as `spy_return_30m` remain unregistered model-local payload keys governed by the reviewed generator/config, not global registry fields.
+- If a generated feature becomes a cross-repository contract, promote that specific feature to an explicit reviewed schema/registry surface later.

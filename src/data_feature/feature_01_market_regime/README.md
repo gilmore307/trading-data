@@ -1,13 +1,13 @@
 # feature_01_market_regime
 
-Deterministic generator for the Layer 1 MarketRegimeModel V1 wide table.
+Deterministic generator for the Layer 1 MarketRegimeModel V1 feature table.
 
 ## Boundary
 
 - Input: cleaned `source_01_market_regime` bar rows plus reviewed shared CSVs:
   - `market_regime_etf_universe.csv`
   - `market_regime_relative_strength_combinations.csv`
-- Output: in-memory rows for the single `feature_01_market_regime` table.
+- Output: in-memory feature rows for the single `feature_01_market_regime` table. SQL storage keeps one row per `snapshot_time` and stores generated feature values in `feature_payload_json` JSONB to avoid PostgreSQL row-size limits.
 - No provider calls.
 - Runtime SQL writes are isolated in `sql.py`; `scripts/generate_feature_01_market_regime.py` is a compatibility wrapper and unit tests do not touch a durable database.
 - No generated artifacts committed to Git.

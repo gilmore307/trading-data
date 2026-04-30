@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import json
 import os
 import re
 from pathlib import Path
@@ -95,45 +96,30 @@ def write_feature_rows_sql(
     if not rows:
         return
 
-    columns: list[str] = []
     for row in rows:
-        for key in row:
-            if key not in columns:
-                columns.append(key)
-    if "snapshot_time" not in columns:
-        raise ValueError("feature rows must include snapshot_time")
+        if "snapshot_time" not in row:
+            raise ValueError("feature rows must include snapshot_time")
 
     qualified_table = _qualified(target_schema, target_table)
     cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(target_schema)}")
     cursor.execute(
         f"""
         CREATE TABLE IF NOT EXISTS {qualified_table} (
-          "snapshot_time" TIMESTAMPTZ PRIMARY KEY
+          "snapshot_time" TIMESTAMPTZ PRIMARY KEY,
+          "feature_payload_json" JSONB NOT NULL DEFAULT '{{}}'::jsonb
         )
         """
     )
 
-    for column in columns:
-        if column == "snapshot_time":
-            continue
-        cursor.execute(
-            f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS {_quote_identifier(column)} DOUBLE PRECISION"
-        )
-
-    quoted_columns = [_quote_identifier(column) for column in columns]
-    placeholders = ", ".join(["%s"] * len(columns))
-    update_columns = [column for column in columns if column != "snapshot_time"]
-    update_sql = ", ".join(
-        f"{_quote_identifier(column)} = EXCLUDED.{_quote_identifier(column)}" for column in update_columns
-    )
-    conflict_sql = f"DO UPDATE SET {update_sql}" if update_sql else "DO NOTHING"
     insert_sql = f"""
-        INSERT INTO {qualified_table} ({", ".join(quoted_columns)})
-        VALUES ({placeholders})
-        ON CONFLICT ("snapshot_time") {conflict_sql}
+        INSERT INTO {qualified_table} ("snapshot_time", "feature_payload_json")
+        VALUES (%s, %s::jsonb)
+        ON CONFLICT ("snapshot_time") DO UPDATE SET
+          "feature_payload_json" = EXCLUDED."feature_payload_json"
     """
     for row in rows:
-        cursor.execute(insert_sql, [row.get(column) for column in columns])
+        payload = {key: value for key, value in row.items() if key != "snapshot_time"}
+        cursor.execute(insert_sql, [row.get("snapshot_time"), json.dumps(payload, sort_keys=True, default=str)])
 
 
 def generate_sql(

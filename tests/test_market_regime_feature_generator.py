@@ -105,7 +105,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         self.assertNotEqual(row_before_close["spy_return_1d"], row_at_close["spy_return_1d"])
 
-    def test_sql_writer_preserves_discovered_columns(self) -> None:
+    def test_sql_writer_stores_generated_features_in_jsonb_payload(self) -> None:
         class FakeCursor:
             def __init__(self) -> None:
                 self.calls: list[tuple[str, list[object] | None]] = []
@@ -131,9 +131,13 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         joined_sql = "\n".join(sql for sql, _params in cursor.calls)
         self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_01_market_regime"', joined_sql)
-        self.assertIn('ADD COLUMN IF NOT EXISTS "spy_return_30m" DOUBLE PRECISION', joined_sql)
-        self.assertIn('ADD COLUMN IF NOT EXISTS "qqq_spy_return_corr_20d" DOUBLE PRECISION', joined_sql)
+        self.assertIn('"feature_payload_json" JSONB NOT NULL DEFAULT', joined_sql)
+        self.assertNotIn('ADD COLUMN IF NOT EXISTS "spy_return_30m" DOUBLE PRECISION', joined_sql)
         self.assertIn('ON CONFLICT ("snapshot_time") DO UPDATE SET', joined_sql)
+        insert_params = cursor.calls[-1][1]
+        self.assertIsNotNone(insert_params)
+        self.assertEqual(insert_params[0], "2026-01-02T16:00:00-05:00")
+        self.assertIn('"spy_return_30m": 0.01', insert_params[1])
 
     def test_inferred_snapshots_use_30_minute_decision_surface(self) -> None:
         inputs, snapshot = self._inputs()

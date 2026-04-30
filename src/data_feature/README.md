@@ -8,4 +8,4 @@ Feature packages transform accepted feed/source data into model-facing feature t
 
 ## Packages
 
-- `feature_01_market_regime/` — Layer 1 MarketRegimeModel V1 feature generator and SQL runner for `trading_data.feature_01_market_regime`.
+- `feature_01_market_regime/` — Layer 1 MarketRegimeModel V1 feature generator and SQL runner for `trading_data.feature_01_market_regime`; generated feature values are stored in `feature_payload_json` JSONB under the `snapshot_time` row key.

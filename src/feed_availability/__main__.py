@@ -15,7 +15,7 @@ from .report import ProbeResult, report_payload, write_report
 
 
 DEFAULT_SEC_USER_AGENT = (
-    "trading-source-feed-availability/0.1 "
+    "trading-data-feed-availability/0.1 "
     "contact=local-research@example.invalid"
 )
 
@@ -23,7 +23,7 @@ DEFAULT_SEC_USER_AGENT = (
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m feed_availability",
-        description="Run bounded smoke probes for registered trading-source feeds.",
+        description="Run bounded smoke probes for registered trading-data feeds.",
     )
     parser.add_argument("--list", action="store_true", help="List registered feed probes.")
     parser.add_argument("--dry-run", action="store_true", help="Emit planned probes without network calls.")

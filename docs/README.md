@@ -1,6 +1,6 @@
 # Docs
 
-This directory is the authoritative documentation set for `trading-source`: the required docs spine plus optional component-specific guides.
+This directory is the authoritative documentation set for `trading-data`: the required docs spine plus optional component-specific guides.
 
 ## Files
 
@@ -15,7 +15,7 @@ This directory is the authoritative documentation set for `trading-source`: the 
 - `08_data_feed.md` — optional guide for data-feed connectors, provider credentials, and API/token boundaries.
 - `09_api_templates.md` — optional guide for applying `trading-main/templates/data_tasks/` to API-specific feeds and manager-facing sources.
 - `10_feed_availability.md` — optional inventory of verified feed availability and registered data-kind groups.
-- `11_model_inputs.md` — optional mapping from `trading-source` source-backed outputs and derived products to model-layer data sources.
+- `11_model_inputs.md` — optional mapping from `trading-data` source-backed outputs and derived products to model-layer data sources.
 
 Optional docs are allowed when they have a clear component-specific boundary and do not duplicate the required spine. Do not place generated data, notebooks, logs, credentials, or implementation artifacts in this directory.
 

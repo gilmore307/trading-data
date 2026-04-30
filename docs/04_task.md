@@ -47,7 +47,7 @@
 - Registered seven model input organization sources originally; current accepted numbered set has no 04 data source, with 06 as position execution and 07 as event overlay.
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind for SecuritySelectionModel.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.
-- Added `docs/11_model_inputs.md` as the current mapping from `trading-source` source outputs and derived products to the seven `trading-model` layer input sources.
+- Added `docs/11_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input sources.
 - Implemented `11_feed_thetadata_option_event_timeline` for triggered option-activity events: explicit contract + date range + evidence-window `timeframe` + task/model `current_standard` input, local ThetaData Terminal trade_quote endpoint, event-only CSV rows, compact per-event detail JSON artifacts, and no raw provider response persistence.
 - Implemented `10_feed_thetadata_option_primary_tracking` for specified-contract option bars: explicit contract + date range + `timeframe` input, local ThetaData Terminal OHLC endpoint, zero-volume placeholder filtering, requested-timeframe aggregation, final `option_bar.csv` save, and completion receipt without raw provider response persistence.
 - Implemented `09_feed_thetadata_option_selection_snapshot` as the first ThetaData option final-output feed: explicit `underlying` + `snapshot_time` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
@@ -85,5 +85,5 @@
 - Recorded Alpaca as first registered stock/ETF data provider config surface using source-level secret alias `alpaca`.
 - Recorded OKX as first registered crypto provider config surface using a `trading-main` source-level secret alias and non-secret metadata.
 - Added optional data-organization and data-feed docs for feed/source/output planning and provider connection boundaries.
-- Created initial `trading-source` docs spine and repository boundary.
+- Created initial `trading-data` docs spine and repository boundary.
 - Added initial `.gitignore` for local environments, generated data, artifacts, logs, and secrets.

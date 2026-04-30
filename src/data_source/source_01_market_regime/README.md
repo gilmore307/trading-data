@@ -33,7 +33,7 @@ Final saved artifact is SQL-only:
 source_01_market_regime
 ```
 
-Driver: PostgreSQL using the shared trading-source SQL storage target. Tests inject a fake writer; local SQLite is not the accepted production contract.
+Driver: PostgreSQL using the shared trading-data SQL storage target. Tests inject a fake writer; local SQLite is not the accepted production contract.
 
 Table: `source_01_market_regime`
 

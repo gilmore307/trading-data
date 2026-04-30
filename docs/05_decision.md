@@ -1,6 +1,6 @@
 # Decision
 
-## D001 - `trading-source` owns upstream data production
+## D001 - `trading-data` owns upstream data production
 
 Date: 2026-04-25
 
@@ -10,7 +10,7 @@ The trading system needs a clear boundary for data acquisition and normalization
 
 ### Decision
 
-`trading-source` owns component-local data ingestion, normalization, validation, artifact production, manifests, and ready signals for data outputs.
+`trading-data` owns component-local data ingestion, normalization, validation, artifact production, manifests, and ready signals for data outputs.
 
 ### Rationale
 
@@ -32,7 +32,7 @@ Data outputs, raw provider responses, logs, and runs may become large, sensitive
 
 ### Decision
 
-Generated data, raw dumps, run outputs, logs, notebooks, and provider credentials must not be committed to `trading-source`.
+Generated data, raw dumps, run outputs, logs, notebooks, and provider credentials must not be committed to `trading-data`.
 
 ### Rationale
 
@@ -50,11 +50,11 @@ Date: 2026-04-25
 
 ### Context
 
-`trading-source` will produce durable artifacts, but shared persistence policy is a separate system concern.
+`trading-data` will produce durable artifacts, but shared persistence policy is a separate system concern.
 
 ### Decision
 
-`trading-source` may write artifacts, but durable layout, retention, archive, backup, restore, and rehydrate rules are owned by `trading-storage`.
+`trading-data` may write artifacts, but durable layout, retention, archive, backup, restore, and rehydrate rules are owned by `trading-storage`.
 
 ### Rationale
 
@@ -64,7 +64,7 @@ Keeping storage policy separate prevents each producer from inventing incompatib
 
 - Data artifact writing must follow accepted `trading-storage` contracts once available.
 - Until storage contracts exist, implementation must treat artifact paths as open gaps.
-- `trading-source` docs should not claim final storage paths prematurely.
+- `trading-data` docs should not claim final storage paths prematurely.
 
 ## D004 - Shared names route through `trading-main`
 
@@ -121,7 +121,7 @@ Date: 2026-04-25
 
 ### Decision
 
-`trading-source` should use the shared trading environment unless an explicit exception is accepted.
+`trading-data` should use the shared trading environment unless an explicit exception is accepted.
 
 ### Rationale
 
@@ -139,7 +139,7 @@ Date: 2026-04-25
 
 ### Context
 
-The required docs spine covers scope, context, workflow, acceptance, tasks, decisions, and memory. `trading-source` also needs component-specific guides for data organization and data-feed boundaries.
+The required docs spine covers scope, context, workflow, acceptance, tasks, decisions, and memory. `trading-data` also needs component-specific guides for data organization and data-feed boundaries.
 
 ### Decision
 
@@ -173,7 +173,7 @@ Organizing by research purpose keeps provider composition and cleaning requireme
 
 ### Consequences
 
-- `trading-source` owns acquisition, cleaning, validation, and output production for these planning domains.
+- `trading-data` owns acquisition, cleaning, validation, and output production for these planning domains.
 - `trading-model` owns later model training, labels, inference, and model evaluation.
 - Exact domain keys are not cross-repository contract values until registered through `trading-main` if needed.
 - This decision is historical planning context. Current docs should prefer source-backed bundles, accepted SQL outputs, and model-layer mappings over broad domain labels.
@@ -221,7 +221,7 @@ Provider access needs to be explicit before source connectors depend on it, but 
 - Registered source-level alias is `okx`, pointing to `/root/secrets/okx.json`; JSON keys are `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, and `api_key_remark_name`.
 - OKX credential JSON includes `allowed_ip_address` for `66.206.20.138` and `api_key_remark_name` for `OpenClaw`; these are part of the source-level OKX credential bundle.
 - Default tests must still avoid live OKX calls unless explicitly guarded.
-- Trading behavior remains outside `trading-source`; execution usage belongs to `trading-execution`.
+- Trading behavior remains outside `trading-data`; execution usage belongs to `trading-execution`.
 
 ## D011 - Alpaca is the first registered stock and ETF data provider config surface
 
@@ -263,7 +263,7 @@ ThetaData's terminal-based credential requirement is different from source-level
 
 ### Consequences
 
-- `trading-source` may plan options data around ThetaData.
+- `trading-data` may plan options data around ThetaData.
 - No ThetaData credentials or `creds.txt` are stored in this repository.
 - Implementation remains blocked on connector/JAR/credential layout policy.
 
@@ -361,19 +361,19 @@ Date: 2026-04-26
 
 ### Context
 
-The user clarified that current data acquisition work is historical data only. Realtime data belongs to trade execution later. Data acquisition should be initiated by `trading-manager` through a task key file containing all information needed for `trading-source` to complete the task.
+The user clarified that current data acquisition work is historical data only. Realtime data belongs to trade execution later. Data acquisition should be initiated by `trading-manager` through a task key file containing all information needed for `trading-data` to complete the task.
 
 ### Decision
 
-`trading-source` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the output destination. During development, `trading-source` writes cleaned data and a task completion receipt under `storage/`; durable storage SQL destinations and storage-resident receipts wait for accepted `trading-storage` contracts.
+`trading-data` will treat manager task key files as its workflow input. A task key names the historical acquisition script/bundle, parameters, source references, credential aliases or no-key confirmations, and the output destination. During development, `trading-data` writes cleaned data and a task completion receipt under `storage/`; durable storage SQL destinations and storage-resident receipts wait for accepted `trading-storage` contracts.
 
 ### Rationale
 
-This keeps orchestration in `trading-manager`, historical data acquisition in `trading-source`, durable storage in `trading-storage`, and realtime execution behavior out of the data repository.
+This keeps orchestration in `trading-manager`, historical data acquisition in `trading-data`, durable storage in `trading-storage`, and realtime execution behavior out of the data repository.
 
 ### Consequences
 
-- Realtime feeds are out of scope for `trading-source`.
+- Realtime feeds are out of scope for `trading-data`.
 - Script boundaries are organized by data type / usage bundle.
 - The exact task key schema, development output layout, SQL table contract, and durable completion receipt schema remain pending cross-repository contract work.
 - Default tests must use fixtures/mocks and must not require live provider calls.
@@ -412,7 +412,7 @@ The previous workflow described writing cleaned historical data rows to storage 
 
 ### Decision
 
-During development, `trading-source` task outputs and development completion receipts should be written as ignored local files under `storage/`. SQL writes are deferred until a durable `trading-storage` contract is accepted or an explicitly guarded integration path is approved.
+During development, `trading-data` task outputs and development completion receipts should be written as ignored local files under `storage/`. SQL writes are deferred until a durable `trading-storage` contract is accepted or an explicitly guarded integration path is approved.
 
 ### Rationale
 
@@ -553,7 +553,7 @@ The user clarified that the same economic measure should use one unified, consis
 
 Use official agency sources as canonical for their own measures. Use FRED only for FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups.
 
-Superseded for active `trading-source` manager routing on 2026-04-28 by D050: official macro APIs and FRED/ALFRED aliases may remain stored, but macro model inputs now use Trading Economics visible calendar rows.
+Superseded for active `trading-data` manager routing on 2026-04-28 by D050: official macro APIs and FRED/ALFRED aliases may remain stored, but macro model inputs now use Trading Economics visible calendar rows.
 
 ### Rationale
 
@@ -595,7 +595,7 @@ Date: 2026-04-27
 
 ### Context
 
-`option_chain_snapshot` is a nested final artifact: one snapshot contains a complete option-chain structure with many contracts and nested quote, IV, Greeks, derived, and underlying context. During development, `trading-source` still writes local ignored files under `storage/`, while production durability will move to SQL contracts owned by `trading-storage`.
+`option_chain_snapshot` is a nested final artifact: one snapshot contains a complete option-chain structure with many contracts and nested quote, IV, Greeks, derived, and underlying context. During development, `trading-data` still writes local ignored files under `storage/`, while production durability will move to SQL contracts owned by `trading-storage`.
 
 ### Decision
 
@@ -641,7 +641,7 @@ Date: 2026-04-27
 
 ### Context
 
-`option_activity_event` is a news-like final output and should contain only triggered event rows. The triggering standard is model/run-specific and must not become a hidden global constant inside `trading-source`.
+`option_activity_event` is a news-like final output and should contain only triggered event rows. The triggering standard is model/run-specific and must not become a hidden global constant inside `trading-data`.
 
 ### Decision
 
@@ -653,7 +653,7 @@ The data bundle can preserve event-time evidence without pretending to own the m
 
 ### Consequences
 
-- `current_standard` values are task/model inputs, not global `trading-source` constants.
+- `current_standard` values are task/model inputs, not global `trading-data` constants.
 - `summary` contains only triggered abnormal indicator type names.
 - Raw trade/quote rows and window process state remain transient.
 - Event ids and standard ids use semantic prefixes with random suffixes only; they do not encode timestamp, contract, or trigger semantics.
@@ -718,7 +718,7 @@ The accepted `trading-model` architecture now has seven layers. Source acquisiti
 
 ### Decision
 
-`trading-source` will organize model-facing inputs into seven registered input bundles:
+`trading-data` will organize model-facing inputs into seven registered input bundles:
 
 1. `market_regime_model_inputs`
 2. `security_selection_model_inputs`
@@ -739,7 +739,7 @@ Model needs should drive data organization. This prevents raw-source tables from
 - `docs/11_model_inputs.md` owns the current mapping from source outputs to model input bundles.
 - `SecuritySelectionModel` requires `stock_etf_exposure` derived from ETF holdings and ETF/sector/style scores.
 - `EventOverlayModel` requires `equity_abnormal_activity_event` in addition to GDELT, SEC, Trading Economics, macro, and option activity data.
-- `PortfolioRiskModel` depends partly on portfolio/account state that may be execution/account-owned rather than pure `trading-source`.
+- `PortfolioRiskModel` depends partly on portfolio/account state that may be execution/account-owned rather than pure `trading-data`.
 
 ## D050 - Trading Economics replaces macro_data for macro model inputs
 
@@ -751,7 +751,7 @@ Date: 2026-04-28
 
 ### Decision
 
-Remove `macro_data` as an executable `trading-source` acquisition bundle. Macro model inputs should use `07_feed_trading_economics_calendar_web` visible-page rows.
+Remove `macro_data` as an executable `trading-data` acquisition bundle. Macro model inputs should use `07_feed_trading_economics_calendar_web` visible-page rows.
 
 Official macro API keys and secret aliases may remain stored and registered for optional future research, but they are not active manager task routes.
 
@@ -792,7 +792,7 @@ After accepting SQL-only output for `source_01_market_regime`, the first impleme
 
 Accepted SQL-only model input bundles target a configured PostgreSQL storage target. Tests may inject fake SQL writers, but production bundle semantics must not hard-code SQLite files or local database paths.
 
-`source_01_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_source`, and table `source_01_market_regime`.
+`source_01_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_data`, and table `source_01_market_regime`.
 
 ### Consequences
 
@@ -812,7 +812,7 @@ After `source_01_market_regime` became SQL-only, the remaining numbered model in
 
 ### Decision
 
-Historical decision: model input bundle manifests for layers 2-7 were SQL-only and wrote to `model_inputs.model_input_artifact_reference`; Layer 1 remained a specialized bar table. This manifest approach has been superseded by specific bundle output tables under the `trading_source` schema.
+Historical decision: model input bundle manifests for layers 2-7 were SQL-only and wrote to `model_inputs.model_input_artifact_reference`; Layer 1 remained a specialized bar table. This manifest approach has been superseded by specific bundle output tables under the `trading_data` schema.
 
 The old shared manifest table stored point-in-time artifact references keyed by `run_id + bundle + input_role + data_kind + artifact_reference`.
 
@@ -866,17 +866,17 @@ The output includes bar-prefixed OHLCV/VWAP/trade count, dollar volume, quote co
 - Feature engineering for returns/volatility/trend/gaps remains downstream of this data bundle.
 - Primary key: `symbol + timeframe + timestamp`; run/task metadata lives in manifests and receipts, not business rows.
 
-## D056 - Trade quality has no trading-source bundle; option expression writes option snapshot
+## D056 - Trade quality has no trading-data bundle; option expression writes option snapshot
 
 Date: 2026-04-28
 
 ### Context
 
-The user clarified that `TradeQualityModel` does not require a `trading-source` bundle, SQL view, or manifest contract because it does not fetch new data. It consumes upstream SQL outputs and model/strategy candidates. The next model-input acquisition need is `OptionExpressionModel`, which needs a point-in-time option snapshot.
+The user clarified that `TradeQualityModel` does not require a `trading-data` bundle, SQL view, or manifest contract because it does not fetch new data. It consumes upstream SQL outputs and model/strategy candidates. The next model-input acquisition need is `OptionExpressionModel`, which needs a point-in-time option snapshot.
 
 ### Decision
 
-Remove active `04_trade_quality_model_inputs` from `trading-source` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
+Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
 `source_05_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot feed interface, and writes SQL table `source_05_option_expression` with one row per visible option contract per snapshot.
 
@@ -926,7 +926,7 @@ The old `storage/templates/data_kinds/` preview catalog and `template_generators
 Consequences:
 
 - Do not add new `*.preview.csv` or preview JSON files under `storage/templates/data_kinds/`.
-- Do not run or depend on the removed `trading-source-generate-data-kind-templates` command.
+- Do not run or depend on the removed `trading-data-generate-data-kind-templates` command.
 - Field registration should target final SQL tables and still-valid shared/task/receipt/registry artifacts, not historical preview files.
 - Older D026 is superseded for current development; it remains historical context only.
 
@@ -937,7 +937,7 @@ Status: Accepted
 
 ### Context
 
-The active numbered packages under `src/data_sources/` were named `*_model_inputs`, which overstated their boundary. They do not construct every input a model consumes; they only fetch and prepare the data-feed-backed portion needed by each model layer.
+The active numbered packages under `src/data_source/` were named `*_model_inputs`, which overstated their boundary. They do not construct every input a model consumes; they only fetch and prepare the data-feed-backed portion needed by each model layer.
 
 ### Decision
 
@@ -950,11 +950,11 @@ Rename active numbered packages to `NN_bundle_<layer>`:
 - `source_06_position_execution`
 - `source_07_event_overlay`
 
-CLI entrypoints now use `trading-source-NN-bundle-<layer>` names. SQL table names are handled separately; bundle outputs must not imply ownership of the complete model input universe.
+CLI entrypoints now use `trading-data-NN-bundle-<layer>` names. SQL table names are handled separately; bundle outputs must not imply ownership of the complete model input universe.
 
 ### Consequences
 
-- Do not add new active package/module names ending in `_model_inputs` under `data_sources`.
+- Do not add new active package/module names ending in `_model_inputs` under `data_source`.
 - Bundle docs should describe the data fetched/prepared from sources, not claim ownership of the complete model-input universe.
 
 ## D061 - Bundle SQL table names follow bundle names
@@ -964,11 +964,11 @@ Status: Accepted
 
 ### Context
 
-The numbered data bundles wrote SQL tables with model-layer business names such as `market_regime_etf_bar` and `event_overlay_event`. Chentong clarified that this will become ambiguous once downstream training-data tables exist: these SQL outputs are `trading-source` bundle outputs, not complete model/training-data universes.
+The numbered data bundles wrote SQL tables with model-layer business names such as `market_regime_etf_bar` and `event_overlay_event`. Chentong clarified that this will become ambiguous once downstream training-data tables exist: these SQL outputs are `trading-data` bundle outputs, not complete model/training-data universes.
 
 ### Decision
 
-Accepted numbered bundle SQL outputs use bundle-derived table names under the `trading_source` schema:
+Accepted numbered bundle SQL outputs use bundle-derived table names under the `trading_data` schema:
 
 - `source_01_market_regime`
 - `source_02_security_selection`
@@ -981,21 +981,21 @@ Use snake_case for SQL identifiers; hyphenated names are only for CLI/package pr
 
 ### Consequences
 
-- Bundle output table names identify the producing `trading-source` bundle.
+- Bundle output table names identify the producing `trading-data` bundle.
 - Downstream training/model tables can later use their own precise names without colliding with source-backed bundle outputs.
 
-## D062 - Bundle SQL outputs use trading_source schema, not model_inputs
+## D062 - Bundle SQL outputs use trading_data schema, not model_inputs
 
 Date: 2026-04-28
 Status: Accepted
 
 ### Context
 
-After bundle table names were changed to follow the producing `trading-source` bundle, Chentong clarified that the SQL schema name `model_inputs` is still wrong. A bundle output is not the model's full input set; models also consume upstream model outputs, candidate artifacts, feature tables, portfolio/execution state, and later training-data tables.
+After bundle table names were changed to follow the producing `trading-data` bundle, Chentong clarified that the SQL schema name `model_inputs` is still wrong. A bundle output is not the model's full input set; models also consume upstream model outputs, candidate artifacts, feature tables, portfolio/execution state, and later training-data tables.
 
 ### Decision
 
-Accepted numbered bundle SQL outputs live under schema `trading_source`, not `model_inputs`:
+Accepted numbered bundle SQL outputs live under schema `trading_data`, not `model_inputs`:
 
 - `source_01_market_regime`
 - `source_02_security_selection`
@@ -1004,11 +1004,11 @@ Accepted numbered bundle SQL outputs live under schema `trading_source`, not `mo
 - `source_06_position_execution`
 - `source_07_event_overlay`
 
-The default PostgreSQL storage target id is `trading_source_postgres` and its schema is `trading_source`.
+The default PostgreSQL storage target id is `trading_data_postgres` and its schema is `trading_data`.
 
 ### Consequences
 
-- Do not use `model_inputs` for source-backed `trading-source` bundle outputs.
+- Do not use `model_inputs` for source-backed `trading-data` bundle outputs.
 - Future model/training repositories can own their own model-input or training-data schemas without semantic collision.
 
 ## D060 - Remove the committed storage directory
@@ -1022,28 +1022,28 @@ The committed `storage/README.md` kept a tracked `storage/` directory in the rep
 
 ### Decision
 
-Remove the committed `storage/` directory from `trading-source`. Keep `storage/` ignored in `.gitignore` so legacy tasks, source probes, and local runs may still create runtime artifacts without adding them to Git.
+Remove the committed `storage/` directory from `trading-data`. Keep `storage/` ignored in `.gitignore` so legacy tasks, source probes, and local runs may still create runtime artifacts without adding them to Git.
 
 ### Consequences
 
-- There is no tracked `trading-source/storage/` tree.
+- There is no tracked `trading-data/storage/` tree.
 - Accepted contracts live in reviewed SQL definitions, bundle/source READMEs, and docs.
 - Runtime local artifacts under `storage/` are disposable and ignored.
 
-## D061 - Remove redundant `src/trading_source` package wrapper
+## D061 - Remove redundant `src/trading_data` package wrapper
 
 Date: 2026-04-28
 Status: Accepted
 
 ### Context
 
-The repository name already provides the `trading-source` boundary. Keeping all importable code under `src/trading_source/` added a redundant package wrapper before the actual owned boundaries such as `data_sources`, `data_feed`, `feed_interfaces`, `feed_availability`, and `storage`.
+The repository name already provides the `trading-data` boundary. Keeping all importable code under `src/trading_data/` added a redundant package wrapper before the actual owned boundaries such as `data_source`, `data_feed`, `feed_interfaces`, `feed_availability`, and `storage`.
 
 ### Decision
 
 Move importable packages directly under `src/`:
 
-- `src/data_sources/`
+- `src/data_source/`
 - `src/data_feed/`
 - `src/feed_interfaces/`
 - `src/feed_availability/`
@@ -1053,9 +1053,9 @@ Console entrypoints import these top-level packages directly. Tests and docs sho
 
 ### Consequences
 
-- Do not recreate `src/trading_source/`.
+- Do not recreate `src/trading_data/`.
 - Package paths now mirror owned implementation boundaries without a repository-name wrapper.
-- Registry paths in `trading-main` must use `trading-source/src/<package>/...`.
+- Registry paths in `trading-main` must use `trading-data/src/<package>/...`.
 
 ## D063 - Option snapshot uses snapshot_time instead of component row timestamps
 
@@ -1078,28 +1078,24 @@ Keep other fields that are business values or source context, such as quote pric
 - Source snapshot nested `quote`, `iv`, and `greeks` contexts no longer include a generic `timestamp` field.
 - The snapshot table semantics are simpler: one requested snapshot clock plus visible contract state.
 
-## D064 - Repository boundary is trading-source
+## D064 - Historical split into trading-source and trading-derived
 
 Date: 2026-04-29
-Status: Accepted
+Status: Superseded by D066
 
 ### Context
 
-Chentong clarified that the old `trading-data` name was too broad. The repository's first responsibility is external/source-backed observed data from providers such as Alpaca, ThetaData, OKX, SEC, GDELT, issuer files, and approved web sources. Internally generated data belongs in a separate repository.
+The platform briefly split external/source-backed observed data into `trading-source` and internally generated deterministic derived data into `trading-derived`. That separation clarified provider-feed boundaries, but it made the feed → source → feature line harder to operate as one coherent data-production layer.
 
 ### Decision
 
-Rename and redefine this repository as `trading-source`.
-
-`trading-source` owns external/source-backed observed data acquisition, cleaning, normalization, validation, and publication. Accepted SQL outputs use the `trading_source` schema. Internally generated labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs belong to `trading-derived`.
-
-Together, `trading-source` and `trading-derived` form the training-dataset foundation consumed by downstream model work.
+This decision is retained only as historical context. D066 supersedes it: `trading-data` is now the unified repository for provider feeds, model-scoped sources, and deterministic point-in-time feature tables.
 
 ### Consequences
 
-- Repository docs, package metadata, CLI prefixes, registry paths, and SQL storage defaults use `trading-source` / `trading_source`.
-- Historical decisions that mention `trading-data` are superseded by this boundary rename.
-- Source-backed aggregation is allowed only when it preserves external-observation semantics; generated training artifacts must move to or be created in `trading-derived`.
+- Do not create new active contracts under `trading-source` or `trading-derived`.
+- Active data-production registry paths should point to `trading-data`.
+- Model outputs, model-evaluation labels, evaluation runs/metrics, config proposals, promotion, and rollback remain `trading-model` responsibilities.
 
 ## D065 - Finest-grain source becomes feed; old bundle becomes source
 
@@ -1108,7 +1104,7 @@ Status: Accepted
 
 ### Context
 
-After D064, `source` is the repository and source-backed output boundary. Continuing to use `source` for the finest-grain provider/API/web/file connector would overload the term and make paths such as `src/data_sources/02_source_alpaca_liquidity` ambiguous.
+After D064, `source` is the repository and source-backed output boundary. Continuing to use `source` for the finest-grain provider/API/web/file connector would overload the term and make paths such as `src/data_source/02_source_alpaca_liquidity` ambiguous.
 
 ### Decision
 
@@ -1121,13 +1117,34 @@ Rename the old finest-grain provider/API/web/file source layer to **feed**:
 
 Rename the old manager-facing bundle layer to **source**:
 
-- package path: `src/data_sources/`
+- package path: `src/data_source/`
 - source package pattern: `NN_source_<model_or_output>`
 - examples: `source_01_market_regime`, `source_05_option_expression`
-- SQL tables remain `source_NN_<model_or_output>` under the `trading_source` schema.
+- SQL tables remain `source_NN_<model_or_output>` under the `trading_data` schema.
 
 ### Consequences
 
-- Active docs, tests, CLI entrypoints, registry rows, and paths must use `data_feed` / `feed_*` for provider connectors and `data_sources` / `source_*` for manager-facing source outputs.
+- Active docs, tests, CLI entrypoints, registry rows, and paths must use `data_feed` / `feed_*` for provider connectors and `data_source` / `source_*` for manager-facing source outputs.
 - `trading-main` registry kinds should treat provider connectors as `data_feed` and manager-facing outputs as `data_source`; old `source_capability` rows become `feed_capability`.
 - Earlier decisions that used `bundle` for the manager-facing layer or `source` for finest-grain provider connectors are historical and superseded by this terminology.
+
+
+## D066 - Merge source and derived data production into trading-data
+
+Chentong decided that the feed → source → derived/feature sequence is one continuous data-production line and should live in a single repository. The old `trading-source` / `trading-derived` split is superseded for deterministic model-input data construction.
+
+Accepted canonical chain:
+
+```text
+feed_* → source_NN_<layer> → feature_NN_<layer> → model_NN_<layer>
+```
+
+`trading-data` owns provider/feed adapters, model-scoped source tables, and deterministic point-in-time feature tables. `trading-model` owns model outputs, model evaluation labels, evaluation runs/metrics, config proposals, promotion, and rollback.
+
+For Layer 1, the accepted SQL chain is:
+
+```text
+trading_data.source_01_market_regime
+→ trading_data.feature_01_market_regime
+→ trading_model.model_01_market_regime
+```

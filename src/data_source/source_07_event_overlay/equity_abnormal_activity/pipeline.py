@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from data_sources.config import load_source_config
+from data_source.config import load_source_config
 from feed_availability.sanitize import sanitize_value
 
 SOURCE = "source_07_event_overlay.equity_abnormal_activity"

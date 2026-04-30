@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 pipeline = importlib.import_module(
-    "data_sources.source_07_event_overlay.equity_abnormal_activity.pipeline"
+    "data_source.source_07_event_overlay.equity_abnormal_activity.pipeline"
 )
 detect_events = pipeline.detect_events
 run = pipeline.run

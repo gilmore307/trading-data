@@ -1,8 +1,8 @@
 # API Templates
 
-`trading-source` should design each historical acquisition feed from the API/source requirements before writing connector code.
+`trading-data` should design each historical acquisition feed from the API/source requirements before writing connector code.
 
-Reusable template files live in `trading-main/templates/data_tasks/`. This file explains how `trading-source` should apply them to API-specific feeds and manager-facing sources.
+Reusable template files live in `trading-main/templates/data_tasks/`. This file explains how `trading-data` should apply them to API-specific feeds and manager-facing sources.
 
 ## Template Sources
 
@@ -104,7 +104,7 @@ ThetaData option acquisition is intentionally split by use case, not endpoint fa
 
 ## Implemented feed CLIs
 
-- `trading-source-01-feed-alpaca-bars` / `python -m data_feed.01_feed_alpaca_bars` runs the Alpaca bars pipeline.
-- `trading-source-02-feed-alpaca-liquidity` / `python -m data_feed.02_feed_alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
-- `trading-source-03-feed-alpaca-news` / `python -m data_feed.03_feed_alpaca_news` runs the Alpaca news pipeline.
-- `trading-source-04-feed-okx-crypto-market-data` / `python -m data_feed.04_feed_okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.
+- `trading-data-01-feed-alpaca-bars` / `python -m data_feed.01_feed_alpaca_bars` runs the Alpaca bars pipeline.
+- `trading-data-02-feed-alpaca-liquidity` / `python -m data_feed.02_feed_alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
+- `trading-data-03-feed-alpaca-news` / `python -m data_feed.03_feed_alpaca_news` runs the Alpaca news pipeline.
+- `trading-data-04-feed-okx-crypto-market-data` / `python -m data_feed.04_feed_okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.

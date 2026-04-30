@@ -12,7 +12,7 @@ class FakeSqlWriter:
 
     def write_rows(self, *, table, columns, rows, key_columns):
         self.calls.append({"table": table, "columns": list(columns), "rows": list(rows), "key_columns": list(key_columns)})
-        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_source", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
+        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
 
 
 class StockEtfExposurePipelineTests(unittest.TestCase):
@@ -46,7 +46,7 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            module = import_module("data_sources.source_02_security_selection.pipeline")
+            module = import_module("data_source.source_02_security_selection.pipeline")
             sql_writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=sql_writer)
             self.assertEqual(result.status, "succeeded")

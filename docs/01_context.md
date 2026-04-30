@@ -2,9 +2,9 @@
 
 ## Why This Repository Exists
 
-The trading system depends on reliable external observations. Provider/source collection and normalization are intentionally isolated in `trading-source` so that downstream derived-data, model, execution, and dashboard repositories consume documented outputs instead of provider-specific implementation details.
+The trading system depends on reliable external observations. Provider/source collection and normalization are intentionally isolated in `trading-data` so that downstream derived-data, model, execution, and dashboard repositories consume documented outputs instead of provider-specific implementation details.
 
-`trading-source` provides the component boundary between external data providers and the rest of the trading platform.
+`trading-data` provides the component boundary between external data providers and the rest of the trading platform.
 
 ## Related Systems
 
@@ -13,16 +13,16 @@ The trading system depends on reliable external observations. Provider/source co
 | `trading-main` | Owns global architecture, registry, templates, shared helpers, and cross-repository contracts. |
 | `trading-manager` | Sends or schedules structured data requests and consumes manifests/ready signals for lifecycle decisions. |
 | `trading-storage` | Owns durable storage layout, retention, archive, backup, restore, and artifact placement rules. |
-| `trading-derived` | Consumes `trading-source` observations and produces internally generated datasets such as labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs. |
-| `trading-model` | Consumes `trading-source` plus `trading-derived` data foundations for market-state research, training, and later evaluation flows. |
+| `trading-data` | Consumes `trading-data` observations and produces internally generated datasets such as labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs. |
+| `trading-model` | Consumes `trading-data` plus `trading-data` data foundations for market-state research, training, and later evaluation flows. |
 | `trading-dashboard` | Displays already-produced data outputs and metadata; it should not become a data source of truth. |
 
 
 ## Data Organization
 
-`trading-source` now organizes work around source-backed data sources and accepted output contracts rather than broad domain labels. The original market-board / instrument / option grouping remains useful historical product language, but concrete runtime boundaries should be provider/feed, source, table, and downstream contract.
+`trading-data` now organizes work around source-backed data sources and accepted output contracts rather than broad domain labels. The original market-board / instrument / option grouping remains useful historical product language, but concrete runtime boundaries should be provider/feed, source, table, and downstream contract.
 
-`trading-source` owns acquisition, cleaning, validation, and source-backed output production. Generated labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs belong in `trading-derived`; model design, training, and inference belong in `trading-model`.
+`trading-data` owns acquisition, cleaning, validation, source-output production, and deterministic point-in-time feature-output production. Model design, training, inference, evaluation labels, evaluation runs, and promotion belong in `trading-model`.
 
 See `docs/07_data_organization.md` and `docs/11_model_inputs.md`.
 
@@ -42,7 +42,7 @@ OKX is registered in `trading-main` as the first crypto data/trading provider co
 
 ## Environment
 
-Development is server-hosted under `/root/projects/trading-source`.
+Development is server-hosted under `/root/projects/trading-data`.
 
 The shared Python environment is anchored by `trading-main` at:
 
@@ -50,7 +50,7 @@ The shared Python environment is anchored by `trading-main` at:
 /root/projects/trading-main/.venv
 ```
 
-`trading-source` should not create an independent virtual environment unless a documented exception is accepted.
+`trading-data` should not create an independent virtual environment unless a documented exception is accepted.
 
 US Eastern time is the default project planning time. Data contracts may require UTC timestamps for artifact content; exact timestamp rules remain an open contract detail.
 

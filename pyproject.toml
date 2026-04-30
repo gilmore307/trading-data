@@ -3,34 +3,35 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "trading-source"
+name = "trading-data"
 version = "0.1.0"
-description = "API-backed feed probes and source-data generation pipelines for trading-source."
+description = "Feed, source, and feature data-production pipelines for trading-data."
 requires-python = ">=3.11"
 dependencies = [
     "psycopg[binary]>=3.2",
 ]
 
 [project.scripts]
-trading-source-feed-availability = "feed_availability.__main__:main"
-trading-source-02-feed-alpaca-liquidity = "data_feed.02_feed_alpaca_liquidity.__main__:main"
-trading-source-04-feed-okx-crypto-market-data = "data_feed.04_feed_okx_crypto_market_data.__main__:main"
-trading-source-feed-interfaces = "feed_interfaces.__main__:main"
-trading-source-01-feed-alpaca-bars = "data_feed.01_feed_alpaca_bars.__main__:main"
-trading-source-03-feed-alpaca-news = "data_feed.03_feed_alpaca_news.__main__:main"
-trading-source-08-feed-sec-company-financials = "data_feed.08_feed_sec_company_financials.__main__:main"
-trading-source-05-feed-gdelt-news = "data_feed.05_feed_gdelt_news.__main__:main"
-trading-source-07-feed-trading-economics-calendar-web = "data_feed.07_feed_trading_economics_calendar_web.__main__:main"
-trading-source-06-feed-etf-holdings = "data_feed.06_feed_etf_holdings.__main__:main"
-trading-source-09-feed-thetadata-option-selection-snapshot = "data_feed.09_feed_thetadata_option_selection_snapshot.__main__:main"
-trading-source-10-feed-thetadata-option-primary-tracking = "data_feed.10_feed_thetadata_option_primary_tracking.__main__:main"
-trading-source-11-feed-thetadata-option-event-timeline = "data_feed.11_feed_thetadata_option_event_timeline.__main__:main"
-trading-source-source-01-market-regime = "data_sources.source_01_market_regime.__main__:main"
-trading-source-source-02-security-selection = "data_sources.source_02_security_selection.__main__:main"
-trading-source-source-03-strategy-selection = "data_sources.source_03_strategy_selection.__main__:main"
-trading-source-source-05-option-expression = "data_sources.source_05_option_expression.__main__:main"
-trading-source-source-06-position-execution = "data_sources.source_06_position_execution.__main__:main"
-trading-source-source-07-event-overlay = "data_sources.source_07_event_overlay.__main__:main"
+trading-data-feed-availability = "feed_availability.__main__:main"
+trading-data-02-feed-alpaca-liquidity = "data_feed.02_feed_alpaca_liquidity.__main__:main"
+trading-data-04-feed-okx-crypto-market-data = "data_feed.04_feed_okx_crypto_market_data.__main__:main"
+trading-data-feed-interfaces = "feed_interfaces.__main__:main"
+trading-data-01-feed-alpaca-bars = "data_feed.01_feed_alpaca_bars.__main__:main"
+trading-data-03-feed-alpaca-news = "data_feed.03_feed_alpaca_news.__main__:main"
+trading-data-08-feed-sec-company-financials = "data_feed.08_feed_sec_company_financials.__main__:main"
+trading-data-05-feed-gdelt-news = "data_feed.05_feed_gdelt_news.__main__:main"
+trading-data-07-feed-trading-economics-calendar-web = "data_feed.07_feed_trading_economics_calendar_web.__main__:main"
+trading-data-06-feed-etf-holdings = "data_feed.06_feed_etf_holdings.__main__:main"
+trading-data-09-feed-thetadata-option-selection-snapshot = "data_feed.09_feed_thetadata_option_selection_snapshot.__main__:main"
+trading-data-10-feed-thetadata-option-primary-tracking = "data_feed.10_feed_thetadata_option_primary_tracking.__main__:main"
+trading-data-11-feed-thetadata-option-event-timeline = "data_feed.11_feed_thetadata_option_event_timeline.__main__:main"
+trading-data-source-01-market-regime = "data_source.source_01_market_regime.__main__:main"
+trading-data-source-02-security-selection = "data_source.source_02_security_selection.__main__:main"
+trading-data-source-03-strategy-selection = "data_source.source_03_strategy_selection.__main__:main"
+trading-data-source-05-option-expression = "data_source.source_05_option_expression.__main__:main"
+trading-data-source-06-position-execution = "data_source.source_06_position_execution.__main__:main"
+trading-data-source-07-event-overlay = "data_source.source_07_event_overlay.__main__:main"
+trading-data-feature-01-market-regime = "data_feature.feature_01_market_regime.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

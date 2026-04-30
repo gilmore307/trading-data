@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This file defines the intended source-data production workflow for `trading-source`.
+This file defines the intended source-data production workflow for `trading-data`.
 
 It describes how approved source-data requests become validated source-backed SQL outputs/artifacts, manifests, and ready signals without leaking provider-specific details into downstream repositories.
 
 ## Data Production Flow
 
-`trading-source` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
+`trading-data` is a historical-data acquisition component. Realtime feeds, live market streaming, and execution-time data handling belong to `trading-execution` unless a later reviewed contract explicitly re-scopes that boundary.
 
 ```text
 manager task key file -> validate key -> select data source -> load source config -> call smallest-unit data feeds -> normalize/clean -> validate -> write accepted SQL output or legacy development files -> write task receipt
@@ -32,7 +32,7 @@ Legacy development file outputs use ignored runtime `storage/` paths when a sour
 
 ```mermaid
 flowchart TD
-  A[trading-manager Creates Data Task Key File] --> B[trading-source Validates Task Key]
+  A[trading-manager Creates Data Task Key File] --> B[trading-data Validates Task Key]
   B --> C[Select Data Source]
   C --> D[Load Source Config and Resolve Source Metadata]
   D --> E[Call Smallest-Unit Data Feeds]
@@ -41,7 +41,7 @@ flowchart TD
   G --> H[Write Cleaned Development Files under storage]
   H --> I[Write Development Task Receipt under storage]
   I --> J[trading-manager Lifecycle]
-  I --> K[trading-derived / trading-model / trading-dashboard via accepted contracts]
+  I --> K[trading-data / trading-model / trading-dashboard via accepted contracts]
 ```
 
 ## Operating Principles
@@ -50,7 +50,7 @@ flowchart TD
 - Data requests originate from `trading-manager`, not ad hoc local script calls.
 - A task key file must be self-contained: no script may depend on missing chat context or implicit operator memory.
 - `src/data_feed/` owns smallest-unit provider/source access and source-output normalization.
-- `src/data_sources/` owns manager-facing source task execution, source config, cross-source orchestration, and source-backed table generation.
+- `src/data_source/` owns manager-facing source task execution, source config, cross-source orchestration, and source-backed table generation.
 - Sources may call multiple data feeds in one run, but outputs should remain separable by table/data type.
 - Data requests should be idempotent where practical.
 - Provider responses should be normalized before downstream exposure.
@@ -133,7 +133,7 @@ SQL writes are canonical only for sources with an explicit SQL output contract; 
 
 ## Historical Source Interfaces and Data Sources
 
-Initial feed interfaces are organized around feed-level output types. Manager-facing orchestration should live in `src/data_sources/`; the feed entries below are the smallest-unit feed modules those sources can call.
+Initial feed interfaces are organized around feed-level output types. Manager-facing orchestration should live in `src/data_source/`; the feed entries below are the smallest-unit feed modules those sources can call.
 
 | Script / feed | Source | Intended contents | Notes |
 |---|---|---|---|
@@ -154,11 +154,11 @@ These names are feed-module planning names until accepted through registry/contr
 
 `macro_data` is removed as an executable acquisition feed. Macro calendar/value rows for model inputs now come from `07_feed_trading_economics_calendar_web`, using visible Trading Economics page data only.
 
-BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-source` should not route manager tasks to the removed `macro_data` route.
+BLS, BEA, Census, Treasury, FRED, and ALFRED API keys/secret aliases may remain registered and stored for future optional research, but `trading-data` should not route manager tasks to the removed `macro_data` route.
 
 ## Completion Receipt Requirements
 
-After each task attempt during development, `trading-source` should write a local completion receipt under `storage/`. Once durable contracts are accepted, this receipt can move through `trading-storage`. The receipt should eventually record:
+After each task attempt during development, `trading-data` should write a local completion receipt under `storage/`. Once durable contracts are accepted, this receipt can move through `trading-storage`. The receipt should eventually record:
 
 - task key reference and idempotency/replay key;
 - selected script/source and code version;

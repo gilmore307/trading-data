@@ -8,7 +8,7 @@ from pathlib import Path
 from .pipeline import run
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m data_sources.source_02_security_selection")
+    parser = argparse.ArgumentParser(prog="python -m data_source.source_02_security_selection")
     parser.add_argument("task_key", type=Path, help="Path to a source_02_security_selection task key JSON file")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)

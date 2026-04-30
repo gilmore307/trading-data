@@ -48,7 +48,7 @@ class FakeSqlWriter:
 
     def write_rows(self, *, table, columns, rows, key_columns):
         self.calls.append({"table": table, "columns": list(columns), "rows": list(rows), "key_columns": list(key_columns)})
-        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_source", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
+        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
 
 
 class Secret:
@@ -61,7 +61,7 @@ class Secret:
 
 class NumberedDataSourceTests(unittest.TestCase):
     def test_market_regime_source_fetches_universe_bars_as_one_sql_long_table(self):
-        module = import_module("data_sources.source_01_market_regime.pipeline")
+        module = import_module("data_source.source_01_market_regime.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -99,7 +99,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_strategy_selection_source_writes_bar_liquidity_sql_rows(self):
-        module = import_module("data_sources.source_03_strategy_selection.pipeline")
+        module = import_module("data_source.source_03_strategy_selection.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -131,7 +131,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_option_expression_source_writes_option_snapshot_sql_row(self):
-        module = import_module("data_sources.source_05_option_expression.pipeline")
+        module = import_module("data_source.source_05_option_expression.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "source_05_option_expression_task_test",
@@ -167,7 +167,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertNotIn("created_at", row)
 
     def test_position_execution_source_writes_selected_contract_timeseries(self):
-        module = import_module("data_sources.source_06_position_execution.pipeline")
+        module = import_module("data_source.source_06_position_execution.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "source_06_position_execution_task_test",
@@ -206,7 +206,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_source_writes_one_row_per_event(self):
-        module = import_module("data_sources.source_07_event_overlay.pipeline")
+        module = import_module("data_source.source_07_event_overlay.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "source_07_event_overlay_task_test",
@@ -259,7 +259,7 @@ class NumberedDataSourceTests(unittest.TestCase):
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
-            module = import_module("data_sources.source_01_market_regime.pipeline")
+            module = import_module("data_source.source_01_market_regime.pipeline")
             task_key = {
                 "task_id": "source_01_market_regime_task_bad",
                 "source": "source_01_market_regime",

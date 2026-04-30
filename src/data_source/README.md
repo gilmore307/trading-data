@@ -1,16 +1,16 @@
-# data_sources
+# data_source
 
 Manager-facing task sources live here.
 
 Boundary:
 
 - `data_feed.*` owns the smallest reusable data acquisition / source normalization interfaces.
-- `data_sources.*` accepts manager-issued task keys, chooses the required feed interfaces, applies reviewed code-level contracts/defaults, and writes task-run outputs/receipts.
+- `data_source.*` accepts manager-issued task keys, chooses the required feed interfaces, applies reviewed code-level contracts/defaults, and writes task-run outputs/receipts.
 - Model-layer data acquisition/preparation belongs here, not in `data_feed`, because it composes source outputs around manager-facing source boundaries.
 
 Current numbered data sources:
 
-Note: `TradeQualityModel` currently does not need a `trading-source` source because it consumes upstream SQL outputs and model/strategy candidates without new data acquisition.
+Note: `TradeQualityModel` currently does not need a `trading-data` source because it consumes upstream SQL outputs and model/strategy candidates without new data acquisition.
 
 - `source_01_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_regime_etf_universe.csv`.
 - `source_02_security_selection` — SQL-only filtered US-listed equity ETF holdings table for SecuritySelectionModel; ETF universe comes from `market_regime_etf_universe.csv`.

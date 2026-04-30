@@ -8,6 +8,6 @@ Boundary:
 - It should expose reusable fetch/clean/save primitives for that feed-level output.
 - It should not own model-input orchestration, cross-source feature assembly, or manager-facing model feed logic.
 
-Manager-facing orchestration belongs in `data_sources`.
+Manager-facing orchestration belongs in `data_source`.
 
-Current caveat: several historical acquisition runners still expose CLIs here for compatibility. New model-input generation must go under `data_sources`, and existing feed CLIs should be wrapped/migrated behind feed runners as their manager contracts are hardened.
+Current caveat: several historical acquisition runners still expose CLIs here for compatibility. New model-input generation must go under `data_source`, and existing feed CLIs should be wrapped/migrated behind feed runners as their manager contracts are hardened.

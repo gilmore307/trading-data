@@ -1,6 +1,6 @@
 # Data Organization
 
-`trading-source` organizes work around source-backed, manager-facing data sources and accepted SQL outputs.
+`trading-data` organizes work around source-backed, manager-facing data sources and accepted SQL outputs.
 
 The older three-domain language — market board data / 盘面数据, instrument data / 标的数据, and option data / 期权数据 — remains useful as historical intent, but it is no longer the primary docs boundary. It was too broad once concrete model-layer sources and feed interfaces appeared.
 
@@ -17,7 +17,7 @@ The older three-domain language — market board data / 盘面数据, instrument
 
 - Start from the accepted manager task key or source contract, not from a broad domain label.
 - Keep provider/source details in `src/data_feed/` and source/source README files.
-- Keep manager-facing orchestration in `src/data_sources/`.
+- Keep manager-facing orchestration in `src/data_source/`.
 - Keep final model-facing outputs SQL-only for accepted numbered sources unless a reviewed exception exists.
 - Do not use profitability, strategy returns, model labels, or execution outcomes as upstream data-production inputs.
 - Register reusable feed, source, field, status, table, and parameter names through `trading-main` before other repositories depend on them.
@@ -48,6 +48,6 @@ A data source may compose multiple feeds. Before implementation depends on a com
 
 ## Output Rule
 
-`trading-source` does not store generated datasets in Git.
+`trading-data` does not store generated datasets in Git.
 
 Accepted outputs should be reviewed SQL tables or explicitly reviewed development artifacts. Runtime receipts and legacy local files remain under ignored `storage/` unless and until `trading-storage` accepts a durable contract.

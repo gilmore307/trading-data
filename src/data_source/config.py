@@ -21,7 +21,7 @@ class SourceConfigError(ValueError):
 def load_source_config(source: str, *, config_path: str | None = None) -> dict[str, Any]:
     """Load a source-local config file.
 
-    ``source`` is the data_sources package name, e.g. ``stock_etf_exposure``.
+    ``source`` is the data_source package name, e.g. ``stock_etf_exposure``.
     ``config_path`` is an optional task-key override for tests or reviewed one-off
     runs. Normal production use should prefer the packaged source config.
     """
@@ -36,7 +36,7 @@ def load_source_config(source: str, *, config_path: str | None = None) -> dict[s
     safe = source.replace("/", "_").replace("\\", "_").strip()
     if not safe:
         raise SourceConfigError("source name is required")
-    resource = files(f"data_sources.{safe}").joinpath("config.json")
+    resource = files(f"data_source.{safe}").joinpath("config.json")
     try:
         return json.loads(resource.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:

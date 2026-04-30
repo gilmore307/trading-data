@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`trading-source` is the external/source-backed observed-data repository for the trading system.
+`trading-data` is the unified data-production repository for the trading system.
 
 It owns the component-level work required to acquire, clean, normalize, validate, and publish provider/source observations for downstream trading repositories. It turns approved source-data requests into source-backed SQL outputs, artifacts, manifests, and ready signals.
 
@@ -24,7 +24,7 @@ This repository exists to make external data production explicit, testable, and 
 - Track data-provider limitations, quotas, and quality caveats that affect this repository.
 - Build provider/feed connector layer boundaries before domain pipelines depend on live APIs.
 - Keep `src/data_feed/` limited to smallest-unit provider/source acquisition and normalization interfaces.
-- Keep manager-facing source task execution in `src/data_sources/`, with config-backed parameters for reusable baskets, issuers, grains, and source-cleaning defaults.
+- Keep manager-facing source task execution in `src/data_source/`, with config-backed parameters for reusable baskets, issuers, grains, and source-cleaning defaults.
 
 ## Out of Scope
 
@@ -41,26 +41,26 @@ This repository exists to make external data production explicit, testable, and 
 
 ## Owner Intent
 
-`trading-source` should become a disciplined source-data component: narrow enough to be auditable, but strong enough that downstream repositories can trust its artifacts and manifests.
+`trading-data` should become a disciplined source-data component: narrow enough to be auditable, but strong enough that downstream repositories can trust its artifacts and manifests.
 
 The repository should prefer explicit provider boundaries, deterministic normalization, fixture-backed tests, and documented quality checks over ad hoc scripts.
 
 ## Boundary Rules
 
-- `trading-source` owns historical external/source-backed acquisition and source-output production; in development legacy outputs may live under ignored local `storage/`; it does not own realtime execution feeds or downstream interpretation.
+- `trading-data` owns historical feed acquisition, model-scoped source-output production, and deterministic feature-output production; in development legacy outputs may live under ignored local `storage/`; it does not own realtime execution feeds or model interpretation.
 - Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-main`.
 - Durable storage layout and retention belong in `trading-storage`; SQL table contracts should be explicit before a source treats them as canonical output.
 - Scheduling, retries, and lifecycle routing belong in `trading-manager`.
 - Generated data and provider responses are runtime artifacts, not source files.
 - Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.
 - Shared helpers, templates, and registrable fields discovered here must be recorded through `trading-main` before other repositories depend on them.
-- Source-backed aggregations may be emitted by `data_sources`, not mixed into `data_feed`.
-- Internally generated labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs belong to `trading-derived`.
+- Source-backed aggregations may be emitted by `data_source`, not mixed into `data_feed`.
+- Model-evaluation labels, training runs, model outputs, strategy/backtest outputs, and promotion decisions belong outside `trading-data`, primarily in `trading-model` or downstream strategy/execution repositories.
 - Data features emitted here must be market/data-feed based. Strategy returns or strategy performance must not feed source data production.
 
 ## Out-of-Scope Signals
 
-A request should be rejected or re-scoped if it asks `trading-source` to:
+A request should be rejected or re-scoped if it asks `trading-data` to:
 
 - implement strategy, model, execution, or dashboard logic;
 - commit generated datasets, raw dumps, logs, or notebooks;

@@ -2,15 +2,15 @@
 
 ## Durable Local Notes
 
-- `trading-source` is the upstream data producer, not a strategy/model/execution/dashboard repository.
+- `trading-data` is the upstream data producer, not a strategy/model/execution/dashboard repository.
 - Generated datasets, provider dumps, logs, notebooks, credentials, and secrets must stay out of Git.
 - Shared fields, statuses, type values, data kinds, helper surfaces, and reusable templates discovered here must be routed to `trading-main` for registry/docs review.
 - Durable storage layout and retention are owned by `trading-storage`; do not hard-code final layout assumptions before those contracts exist.
 - Default tests should avoid live provider calls unless explicitly guarded.
-- Market-state discovery belongs in `trading-model`; `trading-source` may emit market/data-feed features but must not use strategy returns or profitability as upstream data inputs.
+- Market-state discovery belongs in `trading-model`; `trading-data` may emit market/data-feed features but must not use strategy returns or profitability as upstream data inputs.
 - Historical planning labels were market board data / 盘面数据, instrument data / 标的数据, and option data / 期权数据. Current docs should prefer source-backed sources, accepted SQL outputs, and model-layer mappings over broad `data_domain` language.
 - Data-feed connectors are the first implementation layer; provider tokens/API keys live under `/root/secrets/` and are referenced by aliases, not stored in this repository.
-- `trading-source` input is a task instruction from `trading-manager`; output is cleaned data artifacts plus manifests/ready signals after contracts are accepted.
+- `trading-data` input is a task instruction from `trading-manager`; output is cleaned data artifacts plus manifests/ready signals after contracts are accepted.
 - OKX is the first registered crypto provider config surface. Use `trading-main` config alias `okx` / `OKX_SECRET_ALIAS`, backed by `/root/secrets/okx.json` with fields `api_key`, `secret_key`, `passphrase`, `allowed_ip_address`, and `api_key_remark_name`; do not copy secret values into this repo.
 - Alpaca is the first registered stock/ETF data provider config surface for bars, quotes, trades, and news. Use `trading-main` config alias `alpaca` / `ALPACA_SECRET_ALIAS`, backed by `/root/secrets/alpaca.json` with fields `api_key`, `secret_key`, and `endpoint`; do not copy secret values into this repo.
 - ThetaData is the registered options-data provider term for chain timeline, quote, trade, OHLC, Greeks, and related options datasets. Use `trading-main` config alias `thetadata` / `THETADATA_SECRET_ALIAS`, backed by `/root/secrets/thetadata.json`; never commit ThetaData credentials. ThetaTerminal JAR/runtime placement remains deferred until connector design.
@@ -18,7 +18,7 @@
 - Registered provider term `path` values hold public documentation URLs; `*_SECRET_ALIAS` config `path` values still point to local source-secret JSON files.
 - U.S. Treasury Fiscal Data is registered as provider term `US_TREASURY_FISCAL_DATA` with docs path `https://fiscaldata.treasury.gov/api-documentation/`; no secret alias is registered because the official docs describe the API as open/no-token.
 - FOMC calendar uses the official Federal Reserve page. Official macro release calendars are found via web search but must resolve to official government/issuing-agency pages. ETF holdings stocks and weights must come from issuer websites or issuer-published holdings files.
-- Workflow decision: `trading-source` handles historical data only. `trading-manager` issues a self-contained data task key file, and `trading-source` invokes the specified historical acquisition script with its parameters. During development, outputs and receipts go under ignored `storage/`; durable SQL targets and storage-resident receipts wait for accepted `trading-storage` contracts. Realtime data remains `trading-execution` scope.
+- Workflow decision: `trading-data` handles historical data only. `trading-manager` issues a self-contained data task key file, and `trading-data` invokes the specified historical acquisition script with its parameters. During development, outputs and receipts go under ignored `storage/`; durable SQL targets and storage-resident receipts wait for accepted `trading-storage` contracts. Realtime data remains `trading-execution` scope.
 - `macro_data` has been removed as an executable macro acquisition feed. Macro model inputs now use `07_feed_trading_economics_calendar_web` visible-page rows; official macro API secret aliases may remain stored for optional future research but are not active manager task routes.
 - Development-stage data task outputs and receipts should be local files under ignored `storage/`, not SQL writes. SQL/durable storage is deferred until `trading-storage` contracts are accepted or an explicitly guarded integration path is approved.
 - API-specific data sources should be designed from `trading-main/templates/data_tasks/` before code: task key, source README, fetch spec, clean spec, save spec, completion receipt, and fixture policy. `docs/09_api_templates.md` owns the local application guide.

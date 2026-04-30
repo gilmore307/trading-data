@@ -1,6 +1,6 @@
 # Data Feed
 
-`trading-source` must connect to external and approved local data feeds before it can produce cleaned data outputs.
+`trading-data` must connect to external and approved local data feeds before it can produce cleaned data outputs.
 
 This file defines the feed-connection boundary: where provider adapters belong, how credentials are referenced, and what must be documented before a source becomes part of a manager-facing source.
 
@@ -36,7 +36,7 @@ The accepted feed and source implementation packages are:
 src/
   data_feed/       Smallest-unit feed/provider acquisition and normalization interfaces.
   feed_interfaces/  Approved local feed-output interfaces consumed by sources.
-  data_sources/       Manager-facing source orchestration for accepted acquisition/model-input routes.
+  data_source/       Manager-facing source orchestration for accepted acquisition/model-input routes.
   storage/            Local SQL/output helpers for reviewed source outputs.
   feed_availability/ Bounded feed availability probes and inventory support.
 tests/                Component tests for sources, interfaces, storage, and sources.
@@ -82,7 +82,7 @@ Current registered provider config and source-of-truth surfaces:
 | Official macro release calendars | Web search to current official agency pages. | Release dates/times for macroeconomic publications relevant to market context. | None; source term `OFFICIAL_MACRO_RELEASE_CALENDAR` is registered. | No general credential rule; use official agency sources. | Use web search for discovery, then confirm official government/issuing-agency domains. Third-party calendars are secondary only unless explicitly approved. |
 | ETF issuer holdings | Issuer websites or issuer-published holdings files. | ETF constituent stocks and portfolio weights/proportions. | None; source term `ETF_ISSUER_HOLDINGS` is registered. | Usually no credential; issuer-specific access rules remain open. | Issuer website is the source of truth. Preserve issuer URL, as-of date, retrieval timestamp, holdings file format, and any cash/derivative rows. |
 
-`trading-main` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-source` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
+`trading-main` owns provider term rows, documentation paths, source-level aliases, registered JSON key names, and non-secret metadata. `trading-data` may use an alias once implementation has a connector boundary and default tests do not require live credentials.
 
 
 
@@ -109,7 +109,7 @@ Feed connector scripts should be split by historical data type and usage source 
 - ETF holdings: one issuer-site/source-file workflow for constituent stocks and weights.
 - SEC company financials: one official SEC EDGAR workflow for public-company financial report facts, filings/submissions metadata, and future normalized statement outputs.
 
-These are historical acquisition boundaries. Realtime streaming and execution-time feeds remain out of scope for `trading-source`. Each feed should start as one `pipeline.py` file with `fetch`, `clean`, `save`, and `write_receipt` functions; split files only when complexity justifies it. Source-specific API details belong in the source README.
+These are historical acquisition boundaries. Realtime streaming and execution-time feeds remain out of scope for `trading-data`. Each feed should start as one `pipeline.py` file with `fetch`, `clean`, `save`, and `write_receipt` functions; split files only when complexity justifies it. Source-specific API details belong in the source README.
 
 ## SEC Company Financials Feed Rule
 

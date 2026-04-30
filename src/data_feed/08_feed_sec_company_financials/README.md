@@ -1,6 +1,6 @@
 # 08_feed_sec_company_financials feed
 
-`08_feed_sec_company_financials` fetches official SEC EDGAR JSON APIs for public-company filing metadata and XBRL facts. It is a historical data feed for `trading-source`.
+`08_feed_sec_company_financials` fetches official SEC EDGAR JSON APIs for public-company filing metadata and XBRL facts. It is a historical data feed for `trading-data`.
 
 Run a task key with:
 

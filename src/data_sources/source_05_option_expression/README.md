@@ -1,4 +1,4 @@
-# 05_source_option_expression
+# source_05_option_expression
 
 Manager-facing OptionExpressionModel option-chain snapshot input source.
 
@@ -8,7 +8,7 @@ This source accepts a manager-selected underlying, explicit snapshot time, and e
 
 Required task key fields:
 
-- `source`: `05_source_option_expression`
+- `source`: `source_05_option_expression`
 - `task_id`: stable task identifier
 - `params.underlying`: underlying equity symbol
 - `params.snapshot_time`: explicit point-in-time option-chain snapshot timestamp

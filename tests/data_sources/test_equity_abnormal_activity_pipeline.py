@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 pipeline = importlib.import_module(
-    "data_sources.07_source_event_overlay.equity_abnormal_activity.pipeline"
+    "data_sources.source_07_event_overlay.equity_abnormal_activity.pipeline"
 )
 detect_events = pipeline.detect_events
 run = pipeline.run
@@ -50,7 +50,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
                 writer.writerows(rows)
             task_key = {
                 "task_id": "equity_abnormal_activity_task_test",
-                "source": "07_source_event_overlay.equity_abnormal_activity",
+                "source": "source_07_event_overlay.equity_abnormal_activity",
                 "params": {
                     "bars_csv_path": str(bars_path),
                     "lookback_intervals": 5,

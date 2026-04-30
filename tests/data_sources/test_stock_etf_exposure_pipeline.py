@@ -35,8 +35,8 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                     {"Ticker": "SAP", "Name": "SAP SE", "Weight": "1", "Asset Class": "Equity", "Sector": "Technology"},
                 ])
             task_key = {
-                "task_id": "02_source_security_selection_task_test",
-                "source": "02_source_security_selection",
+                "task_id": "source_02_security_selection_task_test",
+                "source": "source_02_security_selection",
                 "params": {
                     "start": "2026-04-24",
                     "end": "2026-04-25",
@@ -46,7 +46,7 @@ class StockEtfExposurePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            module = import_module("data_sources.02_source_security_selection.pipeline")
+            module = import_module("data_sources.source_02_security_selection.pipeline")
             sql_writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=sql_writer)
             self.assertEqual(result.status, "succeeded")

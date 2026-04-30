@@ -43,7 +43,7 @@
 ## Recently Accepted
 
 - Implemented `stock_etf_exposure` derived source aggregation over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
-- Implemented `07_source_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
+- Implemented `source_07_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
 - Registered seven model input organization sources originally; current accepted numbered set has no 04 data source, with 06 as position execution and 07 as event overlay.
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind for SecuritySelectionModel.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.

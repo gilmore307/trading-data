@@ -16,13 +16,13 @@ This document maps `trading-source` source-backed outputs to the seven accepted 
 
 | Model layer | Input source | Core data products | Notes |
 |---|---|---|---|
-| `MarketRegimeModel` | `01_source_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
-| `SecuritySelectionModel` | `02_source_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
-| `StrategySelectionModel` | `03_source_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
+| `MarketRegimeModel` | `source_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
+| `SecuritySelectionModel` | `source_02_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
+| `StrategySelectionModel` | `source_03_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
 | `TradeQualityModel` | _(no trading-data source)_ | candidate signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-source`; generated candidates/outcomes/labels belong to `trading-derived`. |
-| `OptionExpressionModel` | `05_source_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
-| `PositionExecutionModel` | `06_source_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
-| `EventOverlayModel` | `07_source_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
+| `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
+| `PositionExecutionModel` | `source_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
+| `EventOverlayModel` | `source_07_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
 ## Implemented Model Input Sources
 
@@ -46,7 +46,7 @@ Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event o
 
 ### `stock_etf_exposure`
 
-Integrated step: `src/data_sources/02_source_security_selection/pipeline.py`
+Integrated step: `src/data_sources/source_02_security_selection/pipeline.py`
 
 Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
 
@@ -75,9 +75,9 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Source: `src/data_sources/07_source_event_overlay/equity_abnormal_activity/`
+Source: `src/data_sources/source_07_event_overlay/equity_abnormal_activity/`
 
-Config: `src/data_sources/07_source_event_overlay/equity_abnormal_activity/config.json`
+Config: `src/data_sources/source_07_event_overlay/equity_abnormal_activity/config.json`
 
 Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

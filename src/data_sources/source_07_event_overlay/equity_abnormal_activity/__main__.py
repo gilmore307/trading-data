@@ -9,14 +9,14 @@ from pathlib import Path
 
 def _run(task_key: dict, *, run_id: str):
     module = importlib.import_module(
-        "data_sources.07_source_event_overlay.equity_abnormal_activity.pipeline"
+        "data_sources.source_07_event_overlay.equity_abnormal_activity.pipeline"
     )
     return module.run(task_key, run_id=run_id)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m data_sources.07_source_event_overlay.equity_abnormal_activity"
+        prog="python -m data_sources.source_07_event_overlay.equity_abnormal_activity"
     )
     parser.add_argument("task_key", type=Path, help="Path to an equity abnormal activity detector task key JSON file")
     parser.add_argument("--run-id", required=True)

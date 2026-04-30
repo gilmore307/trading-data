@@ -16,7 +16,7 @@ from feed_availability.http import HttpClient
 from feed_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "05_source_option_expression"
+SOURCE = "source_05_option_expression"
 MODEL_ID = "option_expression_model"
 OUTPUT_TABLE = "source_05_option_expression"
 SQL_FIELDS = [

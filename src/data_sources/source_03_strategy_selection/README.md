@@ -1,4 +1,4 @@
-# 03_source_strategy_selection
+# source_03_strategy_selection
 
 Manager-facing StrategySelectionModel bar/liquidity input source.
 
@@ -8,7 +8,7 @@ This source accepts manager-selected symbols over a requested time range, fetche
 
 Required task key fields:
 
-- `source`: `03_source_strategy_selection`
+- `source`: `source_03_strategy_selection`
 - `task_id`: stable task identifier
 - `params.start`: inclusive request start timestamp/date
 - `params.end`: exclusive request end timestamp/date

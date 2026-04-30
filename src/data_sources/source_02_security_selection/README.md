@@ -1,4 +1,4 @@
-# 02_source_security_selection
+# source_02_security_selection
 
 Manager-facing SecuritySelectionModel ETF holdings input source.
 
@@ -8,7 +8,7 @@ This source reads the reviewed ETF universe, keeps only `universe_type = sector_
 
 Required task key fields:
 
-- `source`: `02_source_security_selection`
+- `source`: `source_02_security_selection`
 - `task_id`: stable task identifier
 - `params.start`: inclusive holdings/as-of window start date or timestamp
 - `params.end`: inclusive holdings/as-of window end date or timestamp

@@ -1,4 +1,4 @@
-# 06_source_position_execution
+# source_06_position_execution
 
 Manager-facing PositionExecutionModel data source.
 
@@ -10,7 +10,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `06_source_position_execution`
+- `source`: `source_06_position_execution`
 - `task_id`: stable task identifier
 - `params.selected_contracts`: non-empty list of contracts selected by OptionExpressionModel
 

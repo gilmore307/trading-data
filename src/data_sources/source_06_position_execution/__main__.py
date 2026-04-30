@@ -1,4 +1,4 @@
-"""CLI runner for the 05_source_option_expression data source."""
+"""CLI runner for the source_06_position_execution data source."""
 from __future__ import annotations
 
 import argparse
@@ -7,14 +7,16 @@ from pathlib import Path
 
 from .pipeline import run
 
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m data_sources.05_source_option_expression")
-    parser.add_argument("task_key", type=Path, help="Path to a 05_source_option_expression task key JSON file")
+    parser = argparse.ArgumentParser(prog="python -m data_sources.source_06_position_execution")
+    parser.add_argument("task_key", type=Path, help="Path to a source_06_position_execution task key JSON file")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
     result = run(json.loads(args.task_key.read_text(encoding="utf-8")), run_id=args.run_id)
     print(json.dumps(result.__dict__, indent=2, sort_keys=True))
     return 0 if result.status == "succeeded" else 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

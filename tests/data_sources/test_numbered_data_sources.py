@@ -61,7 +61,7 @@ class Secret:
 
 class NumberedDataSourceTests(unittest.TestCase):
     def test_market_regime_source_fetches_universe_bars_as_one_sql_long_table(self):
-        module = import_module("data_sources.01_source_market_regime.pipeline")
+        module = import_module("data_sources.source_01_market_regime.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -74,8 +74,8 @@ class NumberedDataSourceTests(unittest.TestCase):
                     encoding="utf-8",
                 )
                 task_key = {
-                    "task_id": "01_source_market_regime_task_test",
-                    "source": "01_source_market_regime",
+                    "task_id": "source_01_market_regime_task_test",
+                    "source": "source_01_market_regime",
                     "params": {"start": "2026-04-24", "end": "2026-04-25", "market_regime_etf_universe_path": str(universe_path), "max_pages": 2},
                     "output_root": str(Path(tmp) / "task"),
                 }
@@ -83,7 +83,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                 result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=writer)
                 self.assertEqual(result.status, "succeeded")
                 self.assertEqual(result.row_counts["source_01_market_regime"], 2)
-                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "01_source_market_regime.csv").exists())
+                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "source_01_market_regime.csv").exists())
                 self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "source_01_market_regime"])
                 self.assertEqual(len(writer.calls), 1)
                 call = writer.calls[0]
@@ -99,14 +99,14 @@ class NumberedDataSourceTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_strategy_selection_source_writes_bar_liquidity_sql_rows(self):
-        module = import_module("data_sources.03_source_strategy_selection.pipeline")
+        module = import_module("data_sources.source_03_strategy_selection.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 task_key = {
-                    "task_id": "03_source_strategy_selection_task_test",
-                    "source": "03_source_strategy_selection",
+                    "task_id": "source_03_strategy_selection_task_test",
+                    "source": "source_03_strategy_selection",
                     "params": {"start": "2026-04-24T13:30:00Z", "end": "2026-04-24T13:31:00Z", "symbols": ["NVDA"]},
                     "output_root": str(Path(tmp) / "task"),
                 }
@@ -131,11 +131,11 @@ class NumberedDataSourceTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_option_expression_source_writes_option_snapshot_sql_row(self):
-        module = import_module("data_sources.05_source_option_expression.pipeline")
+        module = import_module("data_sources.source_05_option_expression.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "05_source_option_expression_task_test",
-                "source": "05_source_option_expression",
+                "task_id": "source_05_option_expression_task_test",
+                "source": "source_05_option_expression",
                 "params": {"underlying": "AAPL", "snapshot_time": "2026-04-24T09:30:02.500000-04:00"},
                 "output_root": str(Path(tmp) / "task"),
             }
@@ -167,11 +167,11 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertNotIn("created_at", row)
 
     def test_position_execution_source_writes_selected_contract_timeseries(self):
-        module = import_module("data_sources.06_source_position_execution.pipeline")
+        module = import_module("data_sources.source_06_position_execution.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "06_source_position_execution_task_test",
-                "source": "06_source_position_execution",
+                "task_id": "source_06_position_execution_task_test",
+                "source": "source_06_position_execution",
                 "params": {
                     "selected_contracts": [
                         {
@@ -206,11 +206,11 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_source_writes_one_row_per_event(self):
-        module = import_module("data_sources.07_source_event_overlay.pipeline")
+        module = import_module("data_sources.source_07_event_overlay.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "07_source_event_overlay_task_test",
-                "source": "07_source_event_overlay",
+                "task_id": "source_07_event_overlay_task_test",
+                "source": "source_07_event_overlay",
                 "params": {
                     "start": "2026-04-24T09:30:00-04:00",
                     "end": "2026-04-24T16:00:00-04:00",
@@ -259,10 +259,10 @@ class NumberedDataSourceTests(unittest.TestCase):
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
-            module = import_module("data_sources.01_source_market_regime.pipeline")
+            module = import_module("data_sources.source_01_market_regime.pipeline")
             task_key = {
-                "task_id": "01_source_market_regime_task_bad",
-                "source": "01_source_market_regime",
+                "task_id": "source_01_market_regime_task_bad",
+                "source": "source_01_market_regime",
                 "params": {"end": "2026-04-25"},
                 "output_root": str(Path(tmp) / "task"),
             }

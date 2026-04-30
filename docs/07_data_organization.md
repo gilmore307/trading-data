@@ -9,7 +9,7 @@ The older three-domain language — market board data / 盘面数据, instrument
 | Layer | Owns | Examples |
 |---|---|---|
 | Data feeds | Smallest-unit provider or approved local source access and normalization. | Alpaca bars/quotes/trades/news, ThetaData option snapshots, official calendar or agency pages, ETF issuer holdings. |
-| Data sources | Manager-facing orchestration for one accepted model-input or acquisition route. | `01_source_market_regime`, `02_source_security_selection`, `03_source_strategy_selection`, `05_source_option_expression`, `07_source_event_overlay`. |
+| Data sources | Manager-facing orchestration for one accepted model-input or acquisition route. | `source_01_market_regime`, `source_02_security_selection`, `source_03_strategy_selection`, `source_05_option_expression`, `source_07_event_overlay`. |
 | Storage/output contracts | Reviewed SQL tables, development receipts, and future durable handoff references. | `source_01_market_regime`, `source_02_security_selection`, completion receipts under ignored runtime storage where still used. |
 | Downstream consumers | Model, strategy, dashboard, and execution repositories consume accepted outputs without depending on provider internals. | `trading-model` layer inputs; later strategy/execution/dashboard reads. |
 
@@ -28,9 +28,9 @@ The original planning categories map roughly to current source/layer organizatio
 
 | Historical planning label | Current home |
 |---|---|
-| Market board data / 盘面数据 | Market-regime and broad-market source-backed sources, especially `01_source_market_regime`. |
-| Instrument data / 标的数据 | Symbol, ETF holdings, liquidity, event, and security-selection sources such as `02_source_security_selection`, `03_source_strategy_selection`, and `07_source_event_overlay`. |
-| Option data / 期权数据 | Options feed interfaces and option model sources such as `05_source_option_expression` and `06_source_position_execution`. |
+| Market board data / 盘面数据 | Market-regime and broad-market source-backed sources, especially `source_01_market_regime`. |
+| Instrument data / 标的数据 | Symbol, ETF holdings, liquidity, event, and security-selection sources such as `source_02_security_selection`, `source_03_strategy_selection`, and `source_07_event_overlay`. |
+| Option data / 期权数据 | Options feed interfaces and option model sources such as `source_05_option_expression` and `source_06_position_execution`. |
 
 Use the historical labels only when discussing original product intent or Chinese/English conceptual grouping. Do not introduce new runtime keys, registry rows, storage paths, or package names from those labels without review.
 

@@ -14,9 +14,9 @@ from feed_availability.sanitize import sanitize_url
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "01_source_market_regime"
+SOURCE = "source_01_market_regime"
 MODEL_ID = "market_regime_model"
-OUTPUT_NAME = "01_source_market_regime"
+OUTPUT_NAME = "source_01_market_regime"
 OUTPUT_TABLE = "source_01_market_regime"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]

@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "07_source_event_overlay"
+SOURCE = "source_07_event_overlay"
 MODEL_ID = "event_overlay_model"
 OUTPUT_TABLE = "source_07_event_overlay"
 ET = ZoneInfo("America/New_York")

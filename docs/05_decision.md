@@ -772,11 +772,11 @@ The first MarketRegimeModel bundle now fetches ETF bars directly from the config
 
 ### Decision
 
-`01_source_market_regime` writes its canonical saved output to SQL table `source_01_market_regime`. The table is a single long table across symbols and bar grains, keyed by `symbol + timeframe + timestamp`. Run/task metadata lives in manifests and receipts, not business rows.
+`source_01_market_regime` writes its canonical saved output to SQL table `source_01_market_regime`. The table is a single long table across symbols and bar grains, keyed by `symbol + timeframe + timestamp`. Run/task metadata lives in manifests and receipts, not business rows.
 
 ### Consequences
 
-- Do not write `saved/01_source_market_regime.csv` or cleaned JSONL for the final model input output.
+- Do not write `saved/source_01_market_regime.csv` or cleaned JSONL for the final model input output.
 - Keep `timeframe` as an explicit column; downstream features must group/filter by `symbol + timeframe`.
 - D019 remains the default for legacy bundles, but is superseded for accepted SQL-only bundle contracts.
 
@@ -786,13 +786,13 @@ Date: 2026-04-28
 
 ### Context
 
-After accepting SQL-only output for `01_source_market_regime`, the first implementation used SQLite as a local minimal SQL target. The user clarified that the project should prepare directly for a formal large SQL backend instead of encoding SQLite as the output contract.
+After accepting SQL-only output for `source_01_market_regime`, the first implementation used SQLite as a local minimal SQL target. The user clarified that the project should prepare directly for a formal large SQL backend instead of encoding SQLite as the output contract.
 
 ### Decision
 
 Accepted SQL-only model input bundles target a configured PostgreSQL storage target. Tests may inject fake SQL writers, but production bundle semantics must not hard-code SQLite files or local database paths.
 
-`01_source_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_source`, and table `source_01_market_regime`.
+`source_01_market_regime` uses `storage_target.driver = "postgresql"`, target schema `trading_source`, and table `source_01_market_regime`.
 
 ### Consequences
 
@@ -808,7 +808,7 @@ Status: Superseded by D054-D061 for active numbered bundles
 
 ### Context
 
-After `01_source_market_regime` became SQL-only, the remaining numbered model input bundles still emitted saved CSV manifest files. That left the seven-bundle model input layer split between formal SQL and temporary local artifacts.
+After `source_01_market_regime` became SQL-only, the remaining numbered model input bundles still emitted saved CSV manifest files. That left the seven-bundle model input layer split between formal SQL and temporary local artifacts.
 
 ### Decision
 
@@ -829,11 +829,11 @@ Date: 2026-04-28
 
 ### Context
 
-Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `01_source_market_regime`; `02_source_security_selection` should produce ETF holdings for security selection.
+Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `source_01_market_regime`; `source_02_security_selection` should produce ETF holdings for security selection.
 
 ### Decision
 
-`02_source_security_selection` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_regime_etf_universe.csv` for ETF universe/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
+`source_02_security_selection` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_regime_etf_universe.csv` for ETF universe/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -851,11 +851,11 @@ Date: 2026-04-28
 
 ### Context
 
-Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `03_source_strategy_selection` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
+Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `source_03_strategy_selection` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
 
 ### Decision
 
-`03_source_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `source_03_strategy_selection`.
+`source_03_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `source_03_strategy_selection`.
 
 The output includes bar-prefixed OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
@@ -878,7 +878,7 @@ The user clarified that `TradeQualityModel` does not require a `trading-source` 
 
 Remove active `04_trade_quality_model_inputs` from `trading-source` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
 
-`05_source_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot feed interface, and writes SQL table `source_05_option_expression` with one row per visible option contract per snapshot.
+`source_05_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot feed interface, and writes SQL table `source_05_option_expression` with one row per visible option contract per snapshot.
 
 ### Consequences
 
@@ -906,7 +906,7 @@ Consequences:
 
 Accepted: 2026-04-28
 
-Decision: Layer 06 is now `PositionExecutionModel` / `06_source_position_execution`, and Layer 07 is now `EventOverlayModel` / `07_source_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
+Decision: Layer 06 is now `PositionExecutionModel` / `source_06_position_execution`, and Layer 07 is now `EventOverlayModel` / `source_07_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
 
 Rationale: OptionExpressionModel chooses the theoretically best-return and risk-controllable contracts. The next layer should study how to execute those selected contracts, requiring option contract time-series data from entry through exit plus one hour. Event overlay is a later global context layer and should use one event overview table rather than manifest references.
 
@@ -914,7 +914,7 @@ Consequences:
 
 - Layer 06 writes `source_06_position_execution`.
 - Layer 07 writes `source_07_event_overlay`.
-- `07_source_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
+- `source_07_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 
 ## D059 - Retire data-kind preview templates
@@ -943,12 +943,12 @@ The active numbered packages under `src/data_sources/` were named `*_model_input
 
 Rename active numbered packages to `NN_bundle_<layer>`:
 
-- `01_source_market_regime`
-- `02_source_security_selection`
-- `03_source_strategy_selection`
-- `05_source_option_expression`
-- `06_source_position_execution`
-- `07_source_event_overlay`
+- `source_01_market_regime`
+- `source_02_security_selection`
+- `source_03_strategy_selection`
+- `source_05_option_expression`
+- `source_06_position_execution`
+- `source_07_event_overlay`
 
 CLI entrypoints now use `trading-source-NN-bundle-<layer>` names. SQL table names are handled separately; bundle outputs must not imply ownership of the complete model input universe.
 
@@ -1068,7 +1068,7 @@ ThetaData option selection snapshots merge quote, implied-volatility, and Greeks
 
 ### Decision
 
-For `09_feed_thetadata_option_selection_snapshot` and downstream `05_source_option_expression`, use `snapshot_time` as the point-in-time clock. Do not preserve quote/IV/Greeks provider row timestamps in the source snapshot contract or in the `source_05_option_expression` SQL business table.
+For `09_feed_thetadata_option_selection_snapshot` and downstream `source_05_option_expression`, use `snapshot_time` as the point-in-time clock. Do not preserve quote/IV/Greeks provider row timestamps in the source snapshot contract or in the `source_05_option_expression` SQL business table.
 
 Keep other fields that are business values or source context, such as quote prices/sizes/exchange/condition, IV, Greeks, underlying price, underlying timestamp, and derived days-to-expiration, unless separately removed by a later contract decision.
 
@@ -1123,7 +1123,7 @@ Rename the old manager-facing bundle layer to **source**:
 
 - package path: `src/data_sources/`
 - source package pattern: `NN_source_<model_or_output>`
-- examples: `01_source_market_regime`, `05_source_option_expression`
+- examples: `source_01_market_regime`, `source_05_option_expression`
 - SQL tables remain `source_NN_<model_or_output>` under the `trading_source` schema.
 
 ### Consequences

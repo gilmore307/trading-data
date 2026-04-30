@@ -25,12 +25,12 @@ trading-source-06-feed-etf-holdings = "data_feed.06_feed_etf_holdings.__main__:m
 trading-source-09-feed-thetadata-option-selection-snapshot = "data_feed.09_feed_thetadata_option_selection_snapshot.__main__:main"
 trading-source-10-feed-thetadata-option-primary-tracking = "data_feed.10_feed_thetadata_option_primary_tracking.__main__:main"
 trading-source-11-feed-thetadata-option-event-timeline = "data_feed.11_feed_thetadata_option_event_timeline.__main__:main"
-trading-source-01-source-market-regime = "data_sources.01_source_market_regime.__main__:main"
-trading-source-02-source-security-selection = "data_sources.02_source_security_selection.__main__:main"
-trading-source-03-source-strategy-selection = "data_sources.03_source_strategy_selection.__main__:main"
-trading-source-05-source-option-expression = "data_sources.05_source_option_expression.__main__:main"
-trading-source-06-source-position-execution = "data_sources.06_source_position_execution.__main__:main"
-trading-source-07-source-event-overlay = "data_sources.07_source_event_overlay.__main__:main"
+trading-source-source-01-market-regime = "data_sources.source_01_market_regime.__main__:main"
+trading-source-source-02-security-selection = "data_sources.source_02_security_selection.__main__:main"
+trading-source-source-03-strategy-selection = "data_sources.source_03_strategy_selection.__main__:main"
+trading-source-source-05-option-expression = "data_sources.source_05_option_expression.__main__:main"
+trading-source-source-06-position-execution = "data_sources.source_06_position_execution.__main__:main"
+trading-source-source-07-event-overlay = "data_sources.source_07_event_overlay.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,4 +1,4 @@
-# 07_source_event_overlay
+# source_07_event_overlay
 
 Manager-facing EventOverlayModel data source.
 
@@ -10,7 +10,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `07_source_event_overlay`
+- `source`: `source_07_event_overlay`
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date

@@ -15,7 +15,7 @@ from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "03_source_strategy_selection"
+SOURCE = "source_03_strategy_selection"
 MODEL_ID = "strategy_selection_model"
 OUTPUT_TABLE = "source_03_strategy_selection"
 ET = ZoneInfo("America/New_York")

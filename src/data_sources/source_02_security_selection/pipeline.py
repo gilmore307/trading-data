@@ -18,7 +18,7 @@ RAW_HOLDING_FIELDS = _holding_feed.FIELDS
 from feed_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "02_source_security_selection"
+SOURCE = "source_02_security_selection"
 MODEL_ID = "security_selection_model"
 OUTPUT_TABLE = "source_02_security_selection"
 SQL_FIELDS = [

@@ -15,7 +15,7 @@ from feed_availability.http import HttpClient
 from feed_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "06_source_position_execution"
+SOURCE = "source_06_position_execution"
 MODEL_ID = "position_execution_model"
 OUTPUT_TABLE = "source_06_position_execution"
 ET = ZoneInfo("America/New_York")

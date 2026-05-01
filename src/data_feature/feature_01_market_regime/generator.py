@@ -446,7 +446,7 @@ def _add_single_symbol_ma_features(row: dict[str, Any], subject: str, daily_bars
 def _add_ratio_ma_features(row: dict[str, Any], inputs: MarketRegimeInputs, daily: Any) -> None:
     for combo in _market_regime_combinations(inputs):
         ratio = _ratio_series(_daily_close_series(daily(combo.numerator_symbol)), _daily_close_series(daily(combo.denominator_symbol)))
-        _add_ma_feature_set(row, combo.combination_id, ratio, include_ma_values=True)
+        _add_ma_feature_set(row, combo.combination_id, ratio, include_ma_values=False)
 
 
 def _add_ma_feature_set(row: dict[str, Any], subject: str, values: Sequence[float], *, include_ma_values: bool) -> None:

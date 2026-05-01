@@ -132,7 +132,7 @@ def _add_relative_strength_trend(row: dict[str, Any], combo: Combination, daily:
         market_features._daily_close_series(daily(combo.numerator_symbol)),
         market_features._daily_close_series(daily(combo.denominator_symbol)),
     )
-    market_features._add_ma_feature_set(row, "relative_strength", ratio, include_ma_values=True)
+    market_features._add_ma_feature_set(row, "relative_strength", ratio, include_ma_values=False)
 
 
 def _add_relative_strength_correlation(row: dict[str, Any], combo: Combination, daily: Any) -> None:

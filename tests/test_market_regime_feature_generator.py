@@ -98,7 +98,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertAlmostEqual(row["qqq_spy_30m"], math.log((525.0 / 370.0) / (520.0 / 369.0)))
         self.assertIn("spy_realized_vol_20d", row)
         self.assertIn("qqq_spy_realized_vol_20d_ratio", row)
-        self.assertIn("qqq_spy_ma20", row)
+        self.assertNotIn("qqq_spy_ma20", row)
         self.assertIn("qqq_spy_distance_to_ma20", row)
         self.assertIn("qqq_spy_return_corr_20d", row)
         self.assertFalse(any(key.startswith("xlk_spy") for key in row))
@@ -170,10 +170,11 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         row = generator.generate_row(inputs, datetime(2026, 1, 2, 16, 0, tzinfo=ET))
 
-        self.assertEqual(len(row), 960)
+        self.assertEqual(len(row), 871)
         self.assertFalse(any(key.startswith("xlk_spy") for key in row))
         self.assertFalse(any(key.startswith("smh_xlk") for key in row))
         self.assertTrue(any(key.startswith("qqq_spy") for key in row))
+        self.assertFalse(any(key.startswith("bkch_bitw") for key in row))
 
 
 if __name__ == "__main__":

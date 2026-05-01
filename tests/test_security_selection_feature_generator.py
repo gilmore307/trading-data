@@ -121,6 +121,7 @@ class SecuritySelectionFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(xlk_row["rotation_pair_type"], "sector_rotation")
         self.assertAlmostEqual(xlk_row["relative_strength_return_30m"], math.log((95.0 / 370.0) / (94.0 / 369.0)))
         self.assertIn("relative_strength_distance_to_ma20", xlk_row)
+        self.assertNotIn("relative_strength_ma20", xlk_row)
         self.assertIn("relative_strength_return_corr_20d", xlk_row)
 
         smh_row = next(row for row in rows if row["rotation_pair_id"] == "smh_xlk")
@@ -177,11 +178,14 @@ class SecuritySelectionFeatureGeneratorTests(unittest.TestCase):
 
         rows = generator.generate_rows(inputs, [datetime(2026, 1, 2, 16, 0, tzinfo=ET)])
 
-        self.assertEqual(len(rows), 31)
+        self.assertEqual(len(rows), 32)
         self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation_summary", "sector_rotation", "daily_context"})
         self.assertIn("sector_observation_breadth", {row["rotation_pair_id"] for row in rows})
-        self.assertIn("xlk_spy", {row["rotation_pair_id"] for row in rows})
-        self.assertIn("smh_xlk", {row["rotation_pair_id"] for row in rows})
+        pair_ids = {row["rotation_pair_id"] for row in rows}
+        self.assertIn("xlk_spy", pair_ids)
+        self.assertIn("smh_xlk", pair_ids)
+        self.assertIn("bkch_bitw", pair_ids)
+        self.assertEqual(sum(1 for row in rows if row["rotation_pair_type"] == "sector_rotation"), 18)
 
 
 if __name__ == "__main__":

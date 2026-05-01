@@ -20,6 +20,7 @@ ET = ZoneInfo("America/New_York")
 MARKET_STATE_TYPE = "market_state_etf"
 SECTOR_OBSERVATION_TYPE = "sector_observation_etf"
 MODEL2_ROTATION_COMBINATION_TYPES = {"sector_rotation", "daily_context"}
+SINGLE_RETURN_TREND_EXCLUDED_SYMBOLS = {"SHY"}
 RETURN_LOOKBACKS = ("30m", "1d", "5d", "20d")
 REALIZED_VOL_LOOKBACKS = (5, 20, 60)
 MA_WINDOWS = (20, 50, 200)
@@ -225,9 +226,10 @@ def generate_row(inputs: MarketRegimeInputs, snapshot_time: datetime) -> dict[st
 
     for symbol in inputs.market_state_symbols:
         subject = _lower_symbol(symbol)
-        _add_return_features(row, subject, close_at, symbol, snapshot_time, daily(symbol))
+        if symbol not in SINGLE_RETURN_TREND_EXCLUDED_SYMBOLS:
+            _add_return_features(row, subject, close_at, symbol, snapshot_time, daily(symbol))
+            _add_single_symbol_ma_features(row, subject, daily(symbol))
         _add_volatility_features(row, subject, daily(symbol))
-        _add_single_symbol_ma_features(row, subject, daily(symbol))
 
     _add_relative_strength_features(row, inputs, close_at, daily, snapshot_time)
     _add_cross_asset_volatility_ratios(row, inputs, daily)

@@ -1156,7 +1156,7 @@ Status: Accepted
 
 ### Context
 
-A development database smoke test attempted to materialize all `feature_01_market_regime` generated feature columns as physical `DOUBLE PRECISION` columns. PostgreSQL rejected dense rows with `row is too big: size 8768, maximum size 8160`. The V1 feature generator originally emitted 1,477 generated feature values per snapshot, and after the sector-rotation split it emits 870 Layer 1 generated feature values per snapshot. A physically wide table is still not the durable contract for dense model-local feature surfaces.
+A development database smoke test attempted to materialize all `feature_01_market_regime` generated feature columns as physical `DOUBLE PRECISION` columns. PostgreSQL rejected dense rows with `row is too big: size 8768, maximum size 8160`. The V1 feature generator originally emitted 1,477 generated feature values per snapshot, and after the sector-rotation split it emits 857 Layer 1 generated feature values per snapshot. A physically wide table is still not the durable contract for dense model-local feature surfaces.
 
 The generated features are model-local and intentionally not individually registered in the global registry.
 
@@ -1203,7 +1203,7 @@ Candidate-comparison rows store relative-strength return, trend, volatility-rati
 
 - Layer 1 feature rows keep broad market-state and cross-asset macro/risk evidence, but no longer carry candidate-facing sector/industry rotation pair keys such as `xlk_spy_*` or `smh_xlk_*`, nor sector-observation breadth/dispersion keys such as `sector_observation_above_ma20_pct`.
 - Layer 2 now owns all sector/industry rotation evidence for candidate parameterization, including sector-observation participation and dispersion evidence.
-- Current shared-contract width for `feature_01_market_regime` is 871 dictionary fields including `snapshot_time` (870 payload keys).
+- Current shared-contract width for `feature_01_market_regime` is 858 dictionary fields including `snapshot_time` (857 payload keys).
 - Current shared-contract row count for `feature_02_security_selection` is 32 rows per snapshot: 1 `sector_rotation_summary` row, 18 `sector_rotation` candidate-comparison rows, and 13 `daily_context` candidate-comparison rows.
 
 ## D069 - Prune raw ratio moving-average levels from feature surfaces
@@ -1215,16 +1215,16 @@ Status: Accepted
 
 After the Layer 1/Layer 2 split, Chentong asked to expand reviewed data usage and stop generating data that is not useful. Raw moving-average levels for ETF ratios, such as `qqq_spy_ma20` or `relative_strength_ma50`, are scale-dependent because ETF price levels and ratio levels depend on arbitrary share-price history. They are weaker durable evidence than normalized distance-to-moving-average, moving-average slope, spread, and alignment features.
 
-The `bkch_bitw` pair also used a `sector_observation_etf` candidate (`BKCH`) but was still marked as `primary`, so it leaked candidate/theme rotation evidence into the Layer 1 feature surface.
+The `bkch_bitw` pair also used a `sector_observation_etf` candidate (`BKCH`) but was still marked as `primary`, so it leaked candidate/theme rotation evidence into the Layer 1 feature surface. After expanding Model 1 evidence, the only remaining unowned Layer 1 payload keys were direct SHY return/trend keys. SHY remains useful as a short-duration denominator/rate anchor and volatility sensor, but its standalone price trend is not a durable market-state factor input.
 
 ### Decision
 
 Do not generate raw ratio moving-average level payload keys for Layer 1 market-regime pairs or Layer 2 relative-strength rows. Continue generating normalized trend evidence: distance to moving averages, moving-average slopes, MA spreads, and alignment scores.
 
-Classify `bkch_bitw` as `sector_rotation` so it is emitted by `feature_02_security_selection`, not `feature_01_market_regime`.
+Classify `bkch_bitw` as `sector_rotation` so it is emitted by `feature_02_security_selection`, not `feature_01_market_regime`. Do not generate standalone SHY return/trend keys for Layer 1; keep SHY as pair denominator/rate anchor and volatility evidence.
 
 ### Consequences
 
-- `feature_01_market_regime` payload width drops to 870 keys while retaining reviewed broad-market/cross-asset evidence.
+- `feature_01_market_regime` payload width drops to 857 keys while retaining reviewed broad-market/cross-asset evidence.
 - `feature_02_security_selection` emits 32 rows per snapshot: 1 sector summary row, 18 `sector_rotation` rows, and 13 `daily_context` rows.
-- Raw ratio MA level keys should not be reintroduced unless a later review defines a stable use that is not covered by normalized distance/slope/spread features.
+- Raw ratio MA level keys and standalone SHY return/trend keys should not be reintroduced unless a later review defines a stable use that is not covered by normalized distance/slope/spread features or rate-pair evidence.

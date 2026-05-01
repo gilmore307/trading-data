@@ -170,11 +170,12 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         row = generator.generate_row(inputs, datetime(2026, 1, 2, 16, 0, tzinfo=ET))
 
-        self.assertEqual(len(row), 871)
+        self.assertEqual(len(row), 858)
         self.assertFalse(any(key.startswith("xlk_spy") for key in row))
         self.assertFalse(any(key.startswith("smh_xlk") for key in row))
         self.assertTrue(any(key.startswith("qqq_spy") for key in row))
         self.assertFalse(any(key.startswith("bkch_bitw") for key in row))
+        self.assertFalse(any(key.startswith("shy_return_") for key in row))
 
 
 if __name__ == "__main__":

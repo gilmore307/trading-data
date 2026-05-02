@@ -1,9 +1,10 @@
-"""Point-in-time sector/industry rotation features for SecuritySelectionModel.
+"""Point-in-time sector/industry behavior evidence for SecuritySelectionModel.
 
 This module owns Model 2 rotation/leadership evidence. It consumes the same
 cleaned market-regime bar source and reviewed ETF combination CSVs as the Layer
 1 feature generator, but emits candidate-comparison rows keyed by snapshot time,
-candidate ETF, comparison ETF, and reviewed rotation pair id.
+candidate ETF, comparison ETF, and reviewed rotation pair id. Holdings and
+stock-exposure evidence are intentionally downstream of Layer 2.
 """
 from __future__ import annotations
 

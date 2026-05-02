@@ -737,7 +737,7 @@ Model needs should drive data organization. This prevents raw-source tables from
 ### Consequences
 
 - `docs/11_model_inputs.md` owns the current mapping from source outputs to model input bundles.
-- `SecuritySelectionModel` requires `stock_etf_exposure` derived from ETF holdings and ETF/sector/style scores.
+- Superseded by D070: `SecuritySelectionModel` does not require `stock_etf_exposure` as a core Layer 2 behavior-model input; ETF holdings/exposure evidence belongs to downstream candidate construction after Layer 2 sector-basket selection.
 - `EventOverlayModel` requires `equity_abnormal_activity_event` in addition to GDELT, SEC, Trading Economics, macro, and option activity data.
 - `PortfolioRiskModel` depends partly on portfolio/account state that may be execution/account-owned rather than pure `trading-data`.
 
@@ -826,10 +826,11 @@ The old shared manifest table stored point-in-time artifact references keyed by 
 ## D054 - Security selection bundle writes filtered ETF holdings
 
 Date: 2026-04-28
+Status: Superseded by D070 for active model-layer semantics; physical source/table name remains until a registry rename is accepted.
 
 ### Context
 
-Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified that bars belong to `source_01_market_regime`; `source_02_security_selection` should produce ETF holdings for security selection.
+Historical context: Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified at that time that bars belong to `source_01_market_regime`; `source_02_security_selection` should produce ETF holdings for security selection. D070 later moves the active semantic owner of holdings/exposure evidence to downstream candidate construction after Layer 2 sector-basket selection.
 
 ### Decision
 
@@ -839,9 +840,9 @@ The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`
 
 ### Consequences
 
-- Layer 2 no longer writes the shared `model_input_artifact_reference` manifest as its final output.
-- Layer 2 does not write bars; Layer 1 owns bars.
-- Layer 2 does not fetch holdings for `market_state_etf` rows; those ETFs are regime/bar instruments, not stock-exposure bridge instruments.
+- Historical D054 consequence: Layer 2 no longer wrote the shared `model_input_artifact_reference` manifest as its final output.
+- Historical D054 consequence: Layer 2 did not write bars; Layer 1 owns bars.
+- Superseded by D070 for active semantics: holdings are downstream candidate-construction evidence, not Layer 2 core behavior-model input. The implemented source still does not fetch holdings for `market_state_etf` rows; those ETFs are regime/bar instruments, not stock-exposure bridge instruments.
 - Filter out cash, money-market, fixed income, futures, swaps, options, funds, non-US local listings, and other non-equity assets unless explicitly reviewed later.
 - Primary key: `etf_symbol + as_of_date + holding_symbol`; run/task metadata lives in manifests and receipts, not business rows.
 
@@ -851,7 +852,7 @@ Date: 2026-04-28
 
 ### Context
 
-Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `source_03_strategy_selection` receives manager-selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
+Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `source_03_strategy_selection` receives selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. D070 later clarified that selected symbols should come from the anonymous target candidate builder based on Layer 2 selected/prioritized sector baskets. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
 
 ### Decision
 
@@ -1228,3 +1229,29 @@ Classify `bkch_bitw` as `sector_rotation` so it is emitted by `feature_02_securi
 - `feature_01_market_regime` payload width drops to 857 keys while retaining reviewed broad-market/cross-asset evidence.
 - `feature_02_security_selection` emits 32 rows per snapshot: 1 sector summary row, 18 `sector_rotation` rows, and 13 `daily_context` rows.
 - Raw ratio MA level keys and standalone SHY return/trend keys should not be reintroduced unless a later review defines a stable use that is not covered by normalized distance/slope/spread features or rate-pair evidence.
+
+## D070 - Move ETF holdings to downstream target candidate boundary
+
+Date: 2026-05-02
+Status: Accepted
+
+### Context
+
+`trading-model` clarified the Layer 2 / Layer 3 boundary: Layer 2 `SecuritySelectionModel` learns sector/industry ETF basket behavior under similar market backgrounds and may select/prioritize sector baskets for downstream work. Layer 3 strategy fitting remains anonymous, but its target candidates should be built from the Layer 2 selected/prioritized baskets.
+
+ETF holdings and `stock_etf_exposure` answer a different question: how a selected sector/industry basket transmits into a stock candidate universe. They do not describe the sector/basket's own conditional behavior and should not be treated as core Layer 2 behavior-model inputs.
+
+### Decision
+
+Keep `feature_02_security_selection` as the active Layer 2 deterministic feature surface. It owns sector/industry relative strength, normalized trend, volatility-ratio, correlation, breadth, and dispersion evidence for `sector_context_state` generation.
+
+Move ETF holdings and `stock_etf_exposure` to the anonymous target candidate builder / Layer 3 input-preparation boundary. The historical physical source/table name `source_02_security_selection` remains for now, but its semantic role is downstream sector-to-stock candidate-construction evidence after Layer 2 selected/prioritized sector baskets are known.
+
+`source_03_strategy_selection` should consume candidate-builder-supplied symbols, not arbitrary stock lists, once the candidate-builder contract is formalized. Layer 3 model-facing strategy vectors must still anonymize ticker/company identity.
+
+### Consequences
+
+- `SecuritySelectionModel` should not require ETF holdings or `stock_etf_exposure` to compute Layer 2 conditional behavior vectors.
+- `feature_02_security_selection` remains the Model 2 data feature surface to align with `trading_model.model_02_security_selection`.
+- `source_02_security_selection` is retained as an implemented holdings source until a registry/schema rename is explicitly accepted.
+- Docs and tests should describe holdings as downstream candidate-construction evidence, not Layer 2 core input.

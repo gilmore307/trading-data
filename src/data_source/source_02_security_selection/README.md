@@ -1,8 +1,10 @@
 # source_02_security_selection
 
-Manager-facing SecuritySelectionModel ETF holdings input source.
+Manager-facing ETF holdings source for downstream target-candidate preparation.
 
-This source reads the reviewed ETF universe, keeps only `universe_type = sector_observation_etf`, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table consumed by SecuritySelectionModel. Stable defaults live in pipeline code; there is no source-local `config.json`.
+This source reads the reviewed ETF universe, keeps only `universe_type = sector_observation_etf`, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table used after Layer 2 has selected/prioritized sector/industry baskets. Stable defaults live in pipeline code; there is no source-local `config.json`.
+
+Boundary note: the physical source/table name remains `source_02_security_selection` for now, but ETF holdings are no longer a core Layer 2 `SecuritySelectionModel` behavior input. They belong to the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before strategy fitting anonymizes target vectors.
 
 ## Input parameters
 
@@ -25,7 +27,7 @@ The universe CSV supplies `symbol`, `issuer_name`, `universe_type`, and `exposur
 
 ## Filtering rule
 
-Keep only ETF holdings that represent US-listed stock constituents accepted by the model universe.
+Keep only ETF holdings that represent US-listed stock constituents accepted by the model universe. These rows are candidate-construction evidence, not Layer 2 sector behavior features.
 
 Exclude:
 

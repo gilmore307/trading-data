@@ -15,8 +15,8 @@ class FakeSqlWriter:
         return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
 
 
-class StockEtfExposurePipelineTests(unittest.TestCase):
-    def test_security_selection_source_writes_filtered_us_equity_holdings(self):
+class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
+    def test_candidate_builder_holdings_source_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
             universe = Path(tmp) / "market_regime_etf_universe.csv"
             universe.write_text(

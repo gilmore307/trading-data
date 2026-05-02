@@ -1,4 +1,10 @@
-"""Manager-facing 02 SecuritySelectionModel ETF holdings input source."""
+"""ETF holdings source for downstream target-candidate preparation.
+
+The physical source/table name remains ``source_02_security_selection`` for now,
+but holdings are no longer a core Layer 2 behavior-model input. They support the
+anonymous target candidate builder / Layer 3 input-preparation boundary after
+Layer 2 selects or prioritizes sector/industry baskets.
+"""
 from __future__ import annotations
 
 import csv
@@ -71,7 +77,7 @@ class CleanedPayload:
 
 
 class SecuritySelectionInputsError(ValueError):
-    """Raised for invalid SecuritySelectionModel input tasks."""
+    """Raised for invalid ETF-holdings candidate-preparation tasks."""
 
 
 def _now_utc() -> str:

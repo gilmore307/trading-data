@@ -17,8 +17,9 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 | Model layer | Input source | Core data products | Notes |
 |---|---|---|---|
 | `MarketRegimeModel` | `source_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
-| `SecuritySelectionModel` | `source_02_security_selection` | filtered US-listed ETF holdings | Bridges sector/style/theme strength to tradable stocks through holdings-derived universes. |
-| `StrategySelectionModel` | `source_03_strategy_selection` | selected-symbol bars and liquidity | Chooses strategy family/variant for candidate symbols. |
+| `SecuritySelectionModel` | `feature_02_security_selection` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
+| Anonymous target candidate builder / Layer 3 input preparation | `source_02_security_selection` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Physical source name is retained for now; semantically this is downstream sector-to-stock transmission evidence, not Layer 2 core input. |
+| `StrategySelectionModel` | `source_03_strategy_selection` | candidate-symbol bars and liquidity | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for strategy fitting. |
 | `TradeQualityModel` | _(no trading-data source)_ | candidate signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-data`; generated candidates/outcomes/labels belong outside the data-production layer unless a deterministic feature contract is explicitly accepted. |
 | `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
 | `PositionExecutionModel` | `source_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
@@ -30,9 +31,11 @@ Each accepted model layer that needs new `trading-data` acquisition has a contro
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
 
-Layer 2 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_security_selection`.
+Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `feature_02_security_selection`. It owns deterministic point-in-time evidence for sector/industry behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. It does not consume ETF holdings or `stock_etf_exposure` as core behavior-model inputs.
 
-Layer 3 accepts manager-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `source_03_strategy_selection`.
+The downstream target-candidate preparation boundary accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_security_selection`. Until a registry rename is accepted, the historical physical name remains `source_02_security_selection`, but its semantic owner is the anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected/prioritized sector baskets.
+
+Layer 3 accepts candidate-builder-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `source_03_strategy_selection`.
 
 Layer 4 has no control-plane-facing `trading-data` source: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
 
@@ -48,9 +51,9 @@ Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event o
 
 Integrated step: `src/data_source/source_02_security_selection/pipeline.py`
 
-Purpose: point-in-time stock-to-ETF exposure table for `SecuritySelectionModel`.
+Purpose: point-in-time stock-to-ETF exposure evidence for the anonymous target candidate builder / Layer 3 input-preparation boundary.
 
-It derives from issuer-published `etf_holding_snapshot` rows and current ETF/sector/style scores from model research. It lets Layer 2 transmit ETF/sector/theme strength to individual stocks.
+It derives from issuer-published `etf_holding_snapshot` rows and reviewed upstream basket context. It lets downstream candidate construction transmit Layer 2 selected/prioritized ETF/sector/industry baskets into a stock candidate universe before Layer 3 strategy fitting anonymizes model-facing target vectors.
 
 Important fields:
 
@@ -70,7 +73,7 @@ Boundary:
 
 - Source-backed aggregation, not a raw provider table.
 - Must preserve `available_time`; do not assume a holdings file is usable before it was visible.
-- Superseded as the primary Layer 2 source output by `source_02_security_selection`.
+- Not a Layer 2 core behavior-model input.
 - Future stock-level exposure features that combine source holdings with model scores need explicit boundary review; deterministic source-derived features may live in `trading-data`, while model-derived scores belong in `trading-model`.
 
 ### `equity_abnormal_activity_event`

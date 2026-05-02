@@ -2,7 +2,8 @@
 
 ## Active Tasks
 
-- Calibrate and harden the first derived model-input sources: `stock_etf_exposure` freshness/scoring rules and `equity_abnormal_activity_event` thresholds/model standards.
+- Align `feature_02_security_selection`, `source_02_security_selection`, and `source_03_strategy_selection` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
+- Calibrate and harden downstream candidate-construction `stock_etf_exposure` freshness/scoring rules and `equity_abnormal_activity_event` thresholds/model standards.
 
 ## Queued Tasks
 
@@ -34,18 +35,19 @@
 - Provider quota/rate-limit policy and live-call guardrails.
 - Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
 - ETF issuer priority list, source-file formats, and as-of-date/available-time handling.
-- Production ETF holdings freshness/available-time rules for `stock_etf_exposure`.
+- Production ETF holdings freshness/available-time rules for downstream candidate construction / `stock_etf_exposure`.
 - Calibrated `equity_abnormal_activity_event` detection standards, lookbacks, thresholds, and model-standard identity.
-- Optionability summary shape for SecuritySelectionModel.
+- Optionability summary shape for SecuritySelectionModel sector/basket behavior evidence.
 - ThetaData connector/JAR/credential layout.
 - Data-domain vocabulary registration in `trading-manager` if exact domain keys become cross-repository contract values.
 
 ## Recently Accepted
 
+- Reclassified ETF holdings and `stock_etf_exposure` as downstream anonymous target candidate builder / Layer 3 input-preparation evidence, not Layer 2 core behavior inputs.
 - Implemented `stock_etf_exposure` derived source aggregation over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
 - Implemented `source_07_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
 - Registered seven model input organization sources originally; current accepted numbered set has no 04 data source, with 06 as position execution and 07 as event overlay.
-- Added `stock_etf_exposure` as a derived point-in-time model-input data kind for SecuritySelectionModel.
+- Added `stock_etf_exposure` as a derived point-in-time model-input data kind; it is now assigned to downstream candidate construction after Layer 2 selects/prioritizes sector baskets.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.
 - Added `docs/11_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input sources.
 - Implemented `11_feed_thetadata_option_event_timeline` for triggered option-activity events: explicit contract + date range + evidence-window `timeframe` + task/model `current_standard` input, local ThetaData Terminal trade_quote endpoint, event-only CSV rows, compact per-event detail JSON artifacts, and no raw provider response persistence.

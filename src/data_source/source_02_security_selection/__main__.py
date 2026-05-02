@@ -1,4 +1,4 @@
-"""CLI runner for the source_02_security_selection data source."""
+"""CLI runner for the source_02_security_selection ETF-holdings data source."""
 from __future__ import annotations
 
 import argparse

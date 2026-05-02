@@ -2,7 +2,7 @@
 
 Manager-facing StrategySelectionModel bar/liquidity input source.
 
-This source accepts manager-selected symbols over a requested time range, fetches Alpaca bars plus transient trade/quote liquidity inputs, aggregates them to the requested interval, and writes one SQL table for StrategySelectionModel inputs. Stable defaults live in pipeline code; there is no source-local `config.json`.
+This source accepts candidate symbols over a requested time range, fetches Alpaca bars plus transient trade/quote liquidity inputs, aggregates them to the requested interval, and writes one SQL table for StrategySelectionModel inputs. In the accepted model boundary, those candidate symbols should be produced by the anonymous target candidate builder from Layer 2 selected/prioritized sector baskets; the source still accepts `params.symbols` directly until that builder contract is formalized. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 ## Input parameters
 
@@ -12,7 +12,7 @@ Required task key fields:
 - `task_id`: stable task identifier
 - `params.start`: inclusive request start timestamp/date
 - `params.end`: exclusive request end timestamp/date
-- `params.symbols`: comma string or JSON list of manager-selected symbols
+- `params.symbols`: comma string or JSON list of candidate-builder-selected symbols
 
 Optional task key fields:
 

@@ -49,7 +49,7 @@
 - Registered seven model input organization sources originally; current accepted numbered set has no 04 data source, with 06 as position execution and 07 as event overlay.
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind; it is now assigned to downstream candidate construction after Layer 2 selects/prioritizes sector baskets.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.
-- Added `docs/11_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input sources.
+- Added `docs/94_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input sources.
 - Implemented `11_feed_thetadata_option_event_timeline` for triggered option-activity events: explicit contract + date range + evidence-window `timeframe` + task/model `current_standard` input, local ThetaData Terminal trade_quote endpoint, event-only CSV rows, compact per-event detail JSON artifacts, and no raw provider response persistence.
 - Implemented `10_feed_thetadata_option_primary_tracking` for specified-contract option bars: explicit contract + date range + `timeframe` input, local ThetaData Terminal OHLC endpoint, zero-volume placeholder filtering, requested-timeframe aggregation, final `option_bar.csv` save, and completion receipt without raw provider response persistence.
 - Implemented `09_feed_thetadata_option_selection_snapshot` as the first ThetaData option final-output feed: explicit `underlying` + `snapshot_time` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
@@ -62,7 +62,7 @@
 - Added provider/data-kind feed interface catalog and smoke runner under `src/feed_interfaces/`; live checks now confirm Alpaca equity bars/trades/quotes/snapshots/news, OKX crypto bars/trades/tickers/books, and SEC submissions/companyfacts/companyconcept/frames; ThetaData option endpoint families are cataloged but blocked until local Theta Terminal is reachable.
 - Removed the executable `macro_data` official macro API acquisition feed after accepting Trading Economics visible-page rows as the macro model-input source.
 - Added `src/feed_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `storage/feed_availability/` and default tests use mocks/fixtures only.
-- Registered the initial feed-availability `data_kind` inventory in `trading-manager` and documented it in `docs/10_feed_availability.md`.
+- Registered the initial feed-availability `data_kind` inventory in `trading-manager` and documented it in `docs/93_feed_availability.md`.
 - Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.
 - Previously consolidated macro acquisition into `macro_data`; this was later superseded by Trading Economics visible-page macro inputs.
 - Added `data_source` as a registry kind and registered current acquisition feed keys there.

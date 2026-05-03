@@ -96,7 +96,7 @@ High-volume raw trade and quote kinds are requestable source inputs, not default
 
 ## Acquisition Script Boundary
 
-Feed connector scripts should be split by historical data type and usage source so the `trading-manager` control plane can freely compose data tasks through task key files. Accepted feed keys are registered in `trading-manager` as `kind=data_feed`. See `09_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
+Feed connector scripts should be split by historical data type and usage source so the `trading-manager` control plane can freely compose data tasks through task key files. Accepted feed keys are registered in `trading-manager` as `kind=data_feed`. See `92_api_templates.md` for the required template design gate before implementation. Initial planning boundaries are:
 
 - Alpaca bars: one bars-only script/source.
 - Alpaca liquidity: one feed for liquidity bars, excluding news.

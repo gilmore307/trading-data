@@ -24,7 +24,7 @@ The trading system depends on reliable external observations. Provider/source co
 
 `trading-data` owns acquisition, cleaning, validation, source-output production, and deterministic point-in-time feature-output production. Model design, training, inference, evaluation labels, evaluation runs, and promotion belong in `trading-model`.
 
-See `docs/07_data_organization.md` and `docs/11_model_inputs.md`.
+See `docs/90_data_organization.md` and `docs/94_model_inputs.md`.
 
 ## Expected External Interfaces
 
@@ -38,7 +38,7 @@ Potential external interfaces include:
 - symbol/reference-data providers;
 - local or shared storage through `trading-storage` contracts.
 
-OKX is registered in `trading-manager` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/08_data_feed.md` for the source-connection boundary.
+OKX is registered in `trading-manager` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/91_data_feed.md` for the source-connection boundary.
 
 ## Environment
 
@@ -58,7 +58,7 @@ US Eastern time is the default project planning time. Data contracts may require
 
 Current system-level dependencies:
 
-- `trading-manager/docs/08_registry.md` for registry operating rules;
+- `trading-manager/docs/91_registry.md` for registry operating rules;
 - `trading-manager/templates/contracts/` for artifact, manifest, ready-signal, and request drafting templates;
 - `trading-manager/helpers/` for approved shared helper surfaces;
 - `trading-storage` for persistent layout and retention contracts;

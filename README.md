@@ -22,18 +22,16 @@ Executable CLIs are package entrypoints that call `src/`. If future operational 
 docs/
   00_scope.md
   01_context.md
-  02_workflow.md
-  03_acceptance.md
-  04_task.md
-  05_decision.md
-  06_memory.md
-  07_data_organization.md
-  08_data_feed.md
-  09_api_templates.md
-  10_feed_availability.md
-  11_model_inputs.md
-  91_layer_01_market_regime.md
-  92_layer_02_sector_context.md
+  02_layer_01_market_regime.md
+  03_layer_02_sector_context.md
+  80_task.md
+  81_decision.md
+  82_memory.md
+  90_data_organization.md
+  91_data_feed.md
+  92_api_templates.md
+  93_feed_availability.md
+  94_model_inputs.md
 ```
 
 ## Input And Output
@@ -50,7 +48,7 @@ Durable output: storage-backed SQL/artifact outputs plus manifests and ready sig
 
 `trading-data` now organizes work around provider/feed adapters, model-scoped source tables, deterministic feature tables, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
 
-See `docs/07_data_organization.md`. API-specific source design guidance is in `docs/09_api_templates.md`; model-layer mapping is in `docs/11_model_inputs.md`, with current layer-specific data boundaries in `docs/91_layer_01_market_regime.md` and `docs/92_layer_02_sector_context.md`.
+See `docs/90_data_organization.md`. API-specific source design guidance is in `docs/92_api_templates.md`; model-layer mapping is in `docs/94_model_inputs.md`. Current layer-specific data workflows, boundaries, and acceptance gates live in `docs/02_layer_01_market_regime.md` and `docs/03_layer_02_sector_context.md`.
 
 ## Platform Dependencies
 

@@ -143,7 +143,7 @@ The required docs spine covers scope, context, workflow, acceptance, tasks, deci
 
 ### Decision
 
-Allow optional docs after `06_memory.md` when they own a clear component-specific planning surface and do not duplicate the required spine.
+Allow `90_`+ reference docs when they own a clear component-specific planning surface and do not duplicate layer workflow, task, decision, or memory files.
 
 ### Rationale
 
@@ -151,8 +151,8 @@ Provider, bundle, and data-organization planning is too important to bury inside
 
 ### Consequences
 
-- `docs/07_data_organization.md` owns the current source/bundle/output organization surface and maps the older market board, instrument, and option domain labels as historical planning language.
-- `docs/08_data_feed.md` owns provider/source connector, API, token, and secret-alias planning boundaries.
+- `docs/90_data_organization.md` owns the current source/bundle/output organization surface and maps the older market board, instrument, and option domain labels as historical planning language.
+- `docs/91_data_feed.md` owns provider/source connector, API, token, and secret-alias planning boundaries.
 - Optional docs must be listed in `docs/README.md`.
 
 ## D008 - Data work was initially organized into three purpose-driven domains
@@ -196,7 +196,7 @@ Provider connections are a boundary risk: secrets, quotas, timestamp semantics, 
 
 ### Consequences
 
-- `docs/08_data_feed.md` owns provider/source connector planning.
+- `docs/91_data_feed.md` owns provider/source connector planning.
 - Default tests must not require live provider credentials.
 - Provider choices and secret aliases remain open gaps until selected and reviewed.
 
@@ -443,7 +443,7 @@ Provider/API requirements differ significantly. A template design gate keeps cre
 
 ### Consequences
 
-- `docs/09_api_templates.md` owns the component guide for applying the templates.
+- `docs/92_api_templates.md` owns the component guide for applying the templates.
 - Source bundle folders should not be created as ad hoc scripts without filled API requirements.
 - Stable fields or status values discovered while filling templates must route through `trading-main` registry review.
 
@@ -736,7 +736,7 @@ Model needs should drive data organization. This prevents raw-source tables from
 
 ### Consequences
 
-- `docs/11_model_inputs.md` owns the current mapping from source outputs to model input bundles.
+- `docs/94_model_inputs.md` owns the current mapping from source outputs to model input bundles.
 - Superseded by D070: `SectorContextModel` does not require `stock_etf_exposure` as a core Layer 2 behavior-model input; ETF holdings/exposure evidence belongs to downstream candidate construction after Layer 2 sector-basket selection.
 - `EventOverlayModel` requires `equity_abnormal_activity_event` in addition to GDELT, SEC, Trading Economics, macro, and option activity data.
 - `PortfolioRiskModel` depends partly on portfolio/account state that may be execution/account-owned rather than pure `trading-data`.

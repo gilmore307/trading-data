@@ -26,6 +26,8 @@ Layer 2 currently consumes a deterministic feature surface built from eligible s
 
 ETF holdings and `stock_etf_exposure` are not Layer 2 core behavior inputs. They belong to `source_02_target_candidate_holdings` and the downstream anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected or prioritized baskets.
 
+When reviewed ETFs have mixed provider coverage, daily-derived feature families may use explicit `1Day` bars when present and fall back to the latest regular-session intraday close for dates without explicit daily bars. The fallback must remain point-in-time: current-day partial evidence may only use bars available at or before the snapshot time.
+
 ## Field naming
 
 Raw/source columns may use clear provider or observation names without a layer prefix when they are generic facts. Layer-owned feature or model-facing keys use canonical compact prefixes when they represent Layer 2 concepts, for example `2_trend_stability_score` and `2_sector_handoff_state`. Do not introduce `layer02_*` aliases for the same concept.

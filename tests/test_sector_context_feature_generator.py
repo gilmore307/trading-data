@@ -98,6 +98,40 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         )
         return generator.build_inputs(bar_rows=bars, universe_rows=universe, combination_rows=combinations), snapshot
 
+    def test_intraday_only_symbols_still_get_daily_derived_evidence(self) -> None:
+        inputs, snapshot = self._inputs()
+        # Mimic the real provider split where 30m rotation ETFs do not always
+        # have explicit 1Day rows in the source table.
+        bars = [bar for symbol, rows in inputs.bars_by_symbol.items() for bar in rows if not (symbol in {"SPY", "XLK"} and bar.timeframe == "1Day")]
+        for symbol in ("SPY", "XLK"):
+            for daily_bar in inputs.bars_by_symbol[symbol][-80:]:
+                close_time = daily_bar.available_time.replace(hour=16, minute=0, second=0, microsecond=0)
+                bars.append(
+                    generator.market_features.Bar(
+                        symbol=symbol,
+                        timeframe="30Min",
+                        timestamp=close_time,
+                        available_time=close_time,
+                        open=daily_bar.open,
+                        high=daily_bar.high,
+                        low=daily_bar.low,
+                        close=daily_bar.close,
+                        volume=daily_bar.volume,
+                    )
+                )
+        fallback_inputs = generator.MarketRegimeInputs(
+            bars_by_symbol={symbol: sorted([bar for bar in bars if bar.symbol == symbol], key=lambda item: (item.available_time, item.timestamp)) for symbol in {bar.symbol for bar in bars}},
+            market_state_symbols=inputs.market_state_symbols,
+            sector_observation_symbols=inputs.sector_observation_symbols,
+            combinations=inputs.combinations,
+        )
+
+        rows = generator.generate_rows(fallback_inputs, [snapshot])
+        xlk_row = next(row for row in rows if row["rotation_pair_id"] == "xlk_spy")
+
+        self.assertIsNotNone(xlk_row["relative_strength_distance_to_ma20"])
+        self.assertIsNotNone(xlk_row["relative_strength_return_corr_20d"])
+
     def test_generates_sector_rotation_candidate_rows(self) -> None:
         inputs, snapshot = self._inputs()
 

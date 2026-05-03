@@ -240,7 +240,40 @@ def generate_row(inputs: MarketRegimeInputs, snapshot_time: datetime) -> dict[st
 
 
 def _daily_bars_at(bars: Sequence[Bar], snapshot_time: datetime) -> list[Bar]:
-    return [bar for bar in bars if _is_daily_timeframe(bar.timeframe) and bar.available_time <= snapshot_time and bar.close is not None]
+    """Return point-in-time daily close evidence at ``snapshot_time``.
+
+    Provider coverage is mixed: some reviewed ETFs arrive as explicit ``1Day``
+    bars while others are only available as intraday bars. Daily-derived feature
+    families should not disappear for intraday-only ETFs, so this function uses
+    explicit daily bars when present and falls back to the latest regular-session
+    intraday close for dates without an explicit daily bar. The fallback remains
+    point-in-time: current-day partial bars are only used up to ``snapshot_time``.
+    """
+
+    snapshot_time = snapshot_time.astimezone(ET)
+    daily_by_date: dict[Any, Bar] = {}
+    intraday_by_date: dict[Any, Bar] = {}
+    for bar in bars:
+        if bar.available_time > snapshot_time or bar.close is None:
+            break
+        local_available = bar.available_time.astimezone(ET)
+        day = local_available.date()
+        if _is_daily_timeframe(bar.timeframe):
+            daily_by_date[day] = bar
+        elif _is_regular_session_close_candidate(local_available):
+            current = intraday_by_date.get(day)
+            if current is None or bar.available_time > current.available_time:
+                intraday_by_date[day] = bar
+
+    output: list[Bar] = []
+    for day in sorted(set(daily_by_date) | set(intraday_by_date)):
+        output.append(daily_by_date.get(day) or intraday_by_date[day])
+    return output
+
+
+def _is_regular_session_close_candidate(value: datetime) -> bool:
+    local_time = value.astimezone(ET).time()
+    return time(9, 30) <= local_time <= time(16, 0)
 
 
 def _latest_close_at(bars: Sequence[Bar], at: datetime) -> float | None:

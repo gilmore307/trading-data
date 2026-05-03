@@ -16,6 +16,8 @@ This directory is the authoritative documentation set for `trading-data`: the re
 - `09_api_templates.md` — optional guide for applying `trading-manager/templates/data_tasks/` to API-specific feeds and control-plane-facing sources.
 - `10_feed_availability.md` — optional inventory of verified feed availability and registered data-kind groups.
 - `11_model_inputs.md` — optional mapping from `trading-data` source-backed outputs and derived products to model-layer data sources.
+- `91_layer_01_market_regime.md` — current Layer 1 data-source and feature boundary.
+- `92_layer_02_sector_context.md` — current Layer 2 data-feature boundary.
 
 Optional docs are allowed when they have a clear component-specific boundary and do not duplicate the required spine. Do not place generated data, notebooks, logs, credentials, or implementation artifacts in this directory.
 

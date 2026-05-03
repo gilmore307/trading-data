@@ -1275,3 +1275,22 @@ Rename the Layer 2 model contract to `SectorContextModel` / `sector_context_mode
 - `feature_02_sector_context` remains the deterministic Layer 2 feature surface for `SectorContextModel`.
 - `source_02_target_candidate_holdings` belongs to anonymous target candidate preparation and may be used after Layer 2 selected/prioritized sector baskets are known.
 - New code, task keys, registry rows, and docs must not introduce `SecuritySelectionModel`, `security_selection_model`, `model_02_security_selection`, `feature_02_security_selection`, or `source_02_security_selection` for active contracts.
+
+
+## D072 - Layer data artifacts use source/feature boundaries and compact layer names
+
+Date: 2026-05-03
+Status: Accepted
+
+Data-production layer artifacts should make their model-layer relationship visible without confusing source evidence, deterministic features, and model outputs.
+
+Accepted data-side pattern:
+
+```text
+source_NN_<layer_slug>
+feature_NN_<layer_slug>
+```
+
+Raw/source observation columns may keep clear generic names such as `available_time`, `symbol`, `open`, `high`, `low`, `close`, and `volume`. Layer-owned feature keys use compact numeric prefixes such as `1_*` or `2_*` when they represent a reviewed layer concept. Do not introduce `layer01_*` or `layer02_*` aliases for the same concept.
+
+Layer 1 remains broad-market only. Sector/industry ETF behavior evidence routes to `feature_02_sector_context`, and ETF holdings / `stock_etf_exposure` route to downstream anonymous target candidate construction rather than Layer 2 core behavior modeling.

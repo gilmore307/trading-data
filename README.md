@@ -32,6 +32,8 @@ docs/
   09_api_templates.md
   10_feed_availability.md
   11_model_inputs.md
+  91_layer_01_market_regime.md
+  92_layer_02_sector_context.md
 ```
 
 ## Input And Output
@@ -48,7 +50,7 @@ Durable output: storage-backed SQL/artifact outputs plus manifests and ready sig
 
 `trading-data` now organizes work around provider/feed adapters, model-scoped source tables, deterministic feature tables, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
 
-See `docs/07_data_organization.md`. API-specific source design guidance is in `docs/09_api_templates.md`; model-layer mapping is in `docs/11_model_inputs.md`.
+See `docs/07_data_organization.md`. API-specific source design guidance is in `docs/09_api_templates.md`; model-layer mapping is in `docs/11_model_inputs.md`, with current layer-specific data boundaries in `docs/91_layer_01_market_regime.md` and `docs/92_layer_02_sector_context.md`.
 
 ## Platform Dependencies
 

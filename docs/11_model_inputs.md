@@ -12,6 +12,20 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 - Keep model outputs, model-evaluation labels, training runs, strategy/backtest artifacts, and promotion decisions outside `trading-data`. This repository may perform feed acquisition, source construction, and deterministic point-in-time feature construction needed by models.
 - Register reusable names through `trading-manager` before other repositories depend on them.
 
+## Layer Artifact Naming
+
+Current layer artifacts use the pattern:
+
+```text
+source_NN_<layer_slug>
+feature_NN_<layer_slug>
+model_NN_<layer_slug>
+model_NN_<layer_slug>_explainability
+model_NN_<layer_slug>_diagnostics
+```
+
+`trading-data` owns `source` and `feature` artifacts only. Layer-owned fields use compact numeric prefixes such as `1_*` and `2_*` when they represent reviewed layer concepts; raw/source observation fields may remain generic. Do not introduce `layer01_*` or `layer02_*` aliases for the same concept.
+
 ## Layer Input Sources
 
 | Model layer | Input source | Core data products | Notes |
@@ -27,7 +41,7 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 
 ## Implemented Model Input Sources
 
-Each accepted model layer that needs new `trading-data` acquisition has a control-plane-facing source-backed source under `src/data_source/NN_source_<layer>/`. These sources fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
+Each accepted model layer that needs new `trading-data` acquisition has a control-plane-facing source-backed source under `src/data_source/source_NN_<layer_slug>/`. These sources fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
 

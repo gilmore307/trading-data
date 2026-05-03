@@ -1,4 +1,4 @@
-"""Point-in-time sector/industry behavior evidence for SecuritySelectionModel.
+"""Point-in-time sector/industry behavior evidence for SectorContextModel.
 
 This module owns Model 2 rotation/leadership evidence. It consumes the same
 cleaned market-regime bar source and reviewed ETF combination CSVs as the Layer

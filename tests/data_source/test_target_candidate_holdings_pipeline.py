@@ -35,8 +35,8 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                     {"Ticker": "SAP", "Name": "SAP SE", "Weight": "1", "Asset Class": "Equity", "Sector": "Technology"},
                 ])
             task_key = {
-                "task_id": "source_02_security_selection_task_test",
-                "source": "source_02_security_selection",
+                "task_id": "source_02_target_candidate_holdings_task_test",
+                "source": "source_02_target_candidate_holdings",
                 "params": {
                     "start": "2026-04-24",
                     "end": "2026-04-25",
@@ -46,17 +46,17 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            module = import_module("data_source.source_02_security_selection.pipeline")
+            module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
             sql_writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=sql_writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_02_security_selection"], 1)
+            self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 1)
             manifest = json.loads((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["universe_type_filter"], "sector_observation_etf")
             self.assertEqual(manifest["symbols"], ["SMH"])
             self.assertEqual(len(sql_writer.calls), 1)
             call = sql_writer.calls[0]
-            self.assertEqual(call["table"], "source_02_security_selection")
+            self.assertEqual(call["table"], "source_02_target_candidate_holdings")
             self.assertEqual(call["key_columns"], ["etf_symbol", "as_of_date", "holding_symbol"])
             self.assertEqual(call["columns"], ["etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
             rows = call["rows"]

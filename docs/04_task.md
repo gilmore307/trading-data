@@ -2,7 +2,7 @@
 
 ## Active Tasks
 
-- Align `feature_02_security_selection`, `source_02_security_selection`, and `source_03_strategy_selection` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
+- Align `feature_02_sector_context`, `source_02_target_candidate_holdings`, and `source_03_strategy_selection` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
 - Calibrate and harden downstream candidate-construction `stock_etf_exposure` freshness/scoring rules and `equity_abnormal_activity_event` thresholds/model standards.
 
 ## Queued Tasks
@@ -37,7 +37,7 @@
 - ETF issuer priority list, source-file formats, and as-of-date/available-time handling.
 - Production ETF holdings freshness/available-time rules for downstream candidate construction / `stock_etf_exposure`.
 - Calibrated `equity_abnormal_activity_event` detection standards, lookbacks, thresholds, and model-standard identity.
-- Optionability summary shape for SecuritySelectionModel sector/basket behavior evidence.
+- Optionability summary shape for downstream candidate-construction and strategy-fit evidence.
 - ThetaData connector/JAR/credential layout.
 - Data-domain vocabulary registration in `trading-manager` if exact domain keys become cross-repository contract values.
 

@@ -721,7 +721,7 @@ The accepted `trading-model` architecture now has seven layers. Source acquisiti
 `trading-data` will organize model-facing inputs into seven registered input bundles:
 
 1. `market_regime_model_inputs`
-2. `security_selection_model_inputs`
+2. `sector_context_model_inputs`
 3. `strategy_selection_model_inputs`
 4. `trade_quality_model_inputs`
 5. `option_expression_model_inputs`
@@ -737,7 +737,7 @@ Model needs should drive data organization. This prevents raw-source tables from
 ### Consequences
 
 - `docs/11_model_inputs.md` owns the current mapping from source outputs to model input bundles.
-- Superseded by D070: `SecuritySelectionModel` does not require `stock_etf_exposure` as a core Layer 2 behavior-model input; ETF holdings/exposure evidence belongs to downstream candidate construction after Layer 2 sector-basket selection.
+- Superseded by D070: `SectorContextModel` does not require `stock_etf_exposure` as a core Layer 2 behavior-model input; ETF holdings/exposure evidence belongs to downstream candidate construction after Layer 2 sector-basket selection.
 - `EventOverlayModel` requires `equity_abnormal_activity_event` in addition to GDELT, SEC, Trading Economics, macro, and option activity data.
 - `PortfolioRiskModel` depends partly on portfolio/account state that may be execution/account-owned rather than pure `trading-data`.
 
@@ -830,11 +830,11 @@ Status: Superseded by D070 for active model-layer semantics; physical source/tab
 
 ### Context
 
-Historical context: Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified at that time that bars belong to `source_01_market_regime`; `source_02_security_selection` should produce ETF holdings for security selection. D070 later moves the active semantic owner of holdings/exposure evidence to downstream candidate construction after Layer 2 sector-basket selection.
+Historical context: Layer 2 was incorrectly treated as a generic model-input artifact manifest, and a proposed bar-shaped output duplicated Layer 1. The user clarified at that time that bars belong to `source_01_market_regime`; `source_02_target_candidate_holdings` should produce ETF holdings for sector context. D070 later moves the active semantic owner of holdings/exposure evidence to downstream candidate construction after Layer 2 sector-basket selection.
 
 ### Decision
 
-`source_02_security_selection` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_regime_etf_universe.csv` for ETF universe/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_security_selection`.
+`source_02_target_candidate_holdings` accepts `params.start` and `params.end`, uses `trading-storage/main/shared/market_regime_etf_universe.csv` for ETF universe/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects issuer holdings snapshots, filters holdings to US-listed equity constituents, and writes SQL table `source_02_target_candidate_holdings`.
 
 The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`, and `source_url`. Task write/audit timestamps belong in completion receipts, not this business table. `available_time` remains because it defines when the holding row is visible to model logic and prevents lookahead.
 
@@ -945,7 +945,7 @@ The active numbered packages under `src/data_source/` were named `*_model_inputs
 Rename active numbered packages to `NN_bundle_<layer>`:
 
 - `source_01_market_regime`
-- `source_02_security_selection`
+- `source_02_target_candidate_holdings`
 - `source_03_strategy_selection`
 - `source_05_option_expression`
 - `source_06_position_execution`
@@ -972,7 +972,7 @@ The numbered data bundles wrote SQL tables with model-layer business names such 
 Accepted numbered bundle SQL outputs use bundle-derived table names under the `trading_data` schema:
 
 - `source_01_market_regime`
-- `source_02_security_selection`
+- `source_02_target_candidate_holdings`
 - `source_03_strategy_selection`
 - `source_05_option_expression`
 - `source_06_position_execution`
@@ -999,7 +999,7 @@ After bundle table names were changed to follow the producing `trading-data` bun
 Accepted numbered bundle SQL outputs live under schema `trading_data`, not `model_inputs`:
 
 - `source_01_market_regime`
-- `source_02_security_selection`
+- `source_02_target_candidate_holdings`
 - `source_03_strategy_selection`
 - `source_05_option_expression`
 - `source_06_position_execution`
@@ -1179,20 +1179,20 @@ The logical contract remains one point-in-time feature row per `snapshot_time`; 
 - If a generated feature becomes a cross-repository contract, promote that specific feature to an explicit reviewed schema/registry surface later.
 
 
-## D068 - Move sector rotation feature surface to SecuritySelectionModel
+## D068 - Move sector rotation feature surface to SectorContextModel
 
 Date: 2026-04-30
 Status: Accepted
 
 ### Context
 
-`feature_01_market_regime` originally generated relative-strength, moving-average, volatility-ratio, and correlation payload keys for every reviewed ETF combination, including `combination_type = sector_rotation` and `daily_context`. It also generated sector-observation breadth and dispersion aggregates from the sector/industry observation ETF universe. After the modeling boundary was clarified, all sector/industry rotation evidence, including sector-observation participation and dispersion evidence, became a Model 2 `SecuritySelectionModel` feature problem rather than a Layer 1 broad-market feature problem.
+`feature_01_market_regime` originally generated relative-strength, moving-average, volatility-ratio, and correlation payload keys for every reviewed ETF combination, including `combination_type = sector_rotation` and `daily_context`. It also generated sector-observation breadth and dispersion aggregates from the sector/industry observation ETF universe. After the modeling boundary was clarified, all sector/industry rotation evidence, including sector-observation participation and dispersion evidence, became a Model 2 `SectorContextModel` feature problem rather than a Layer 1 broad-market feature problem.
 
 ### Decision
 
-Exclude `sector_rotation` and `daily_context` combination-derived pair features from `feature_01_market_regime`. Also exclude `sector_observation_*` breadth/dispersion aggregates from Layer 1. Add `feature_02_security_selection` as the Layer 2 feature surface for both candidate-comparison rotation rows and one per-snapshot sector-observation summary row.
+Exclude `sector_rotation` and `daily_context` combination-derived pair features from `feature_01_market_regime`. Also exclude `sector_observation_*` breadth/dispersion aggregates from Layer 1. Add `feature_02_sector_context` as the Layer 2 feature surface for both candidate-comparison rotation rows and one per-snapshot sector-observation summary row.
 
-`feature_02_security_selection` emits candidate-comparison rows keyed by:
+`feature_02_sector_context` emits candidate-comparison rows keyed by:
 
 ```text
 snapshot_time + candidate_symbol + comparison_symbol + rotation_pair_id
@@ -1205,7 +1205,7 @@ Candidate-comparison rows store relative-strength return, trend, volatility-rati
 - Layer 1 feature rows keep broad market-state and cross-asset macro/risk evidence, but no longer carry candidate-facing sector/industry rotation pair keys such as `xlk_spy_*` or `smh_xlk_*`, nor sector-observation breadth/dispersion keys such as `sector_observation_above_ma20_pct`.
 - Layer 2 now owns all sector/industry rotation evidence for candidate parameterization, including sector-observation participation and dispersion evidence.
 - Current shared-contract width for `feature_01_market_regime` is 858 dictionary fields including `snapshot_time` (857 payload keys).
-- Current shared-contract row count for `feature_02_security_selection` is 32 rows per snapshot: 1 `sector_rotation_summary` row, 18 `sector_rotation` candidate-comparison rows, and 13 `daily_context` candidate-comparison rows.
+- Current shared-contract row count for `feature_02_sector_context` is 32 rows per snapshot: 1 `sector_rotation_summary` row, 18 `sector_rotation` candidate-comparison rows, and 13 `daily_context` candidate-comparison rows.
 
 ## D069 - Prune raw ratio moving-average levels from feature surfaces
 
@@ -1222,12 +1222,12 @@ The `bkch_bitw` pair also used a `sector_observation_etf` candidate (`BKCH`) but
 
 Do not generate raw ratio moving-average level payload keys for Layer 1 market-regime pairs or Layer 2 relative-strength rows. Continue generating normalized trend evidence: distance to moving averages, moving-average slopes, MA spreads, and alignment scores.
 
-Classify `bkch_bitw` as `sector_rotation` so it is emitted by `feature_02_security_selection`, not `feature_01_market_regime`. Do not generate standalone SHY return/trend keys for Layer 1; keep SHY as pair denominator/rate anchor and volatility evidence.
+Classify `bkch_bitw` as `sector_rotation` so it is emitted by `feature_02_sector_context`, not `feature_01_market_regime`. Do not generate standalone SHY return/trend keys for Layer 1; keep SHY as pair denominator/rate anchor and volatility evidence.
 
 ### Consequences
 
 - `feature_01_market_regime` payload width drops to 857 keys while retaining reviewed broad-market/cross-asset evidence.
-- `feature_02_security_selection` emits 32 rows per snapshot: 1 sector summary row, 18 `sector_rotation` rows, and 13 `daily_context` rows.
+- `feature_02_sector_context` emits 32 rows per snapshot: 1 sector summary row, 18 `sector_rotation` rows, and 13 `daily_context` rows.
 - Raw ratio MA level keys and standalone SHY return/trend keys should not be reintroduced unless a later review defines a stable use that is not covered by normalized distance/slope/spread features or rate-pair evidence.
 
 ## D070 - Move ETF holdings to downstream target candidate boundary
@@ -1237,21 +1237,41 @@ Status: Accepted
 
 ### Context
 
-`trading-model` clarified the Layer 2 / Layer 3 boundary: Layer 2 `SecuritySelectionModel` learns sector/industry ETF basket behavior under similar market backgrounds and may select/prioritize sector baskets for downstream work. Layer 3 strategy fitting remains anonymous, but its target candidates should be built from the Layer 2 selected/prioritized baskets.
+`trading-model` clarified the Layer 2 / Layer 3 boundary: Layer 2 `SectorContextModel` learns sector/industry ETF basket behavior under similar market backgrounds and may select/prioritize sector baskets for downstream work. Layer 3 strategy fitting remains anonymous, but its target candidates should be built from the Layer 2 selected/prioritized baskets.
 
 ETF holdings and `stock_etf_exposure` answer a different question: how a selected sector/industry basket transmits into a stock candidate universe. They do not describe the sector/basket's own conditional behavior and should not be treated as core Layer 2 behavior-model inputs.
 
 ### Decision
 
-Keep `feature_02_security_selection` as the active Layer 2 deterministic feature surface. It owns sector/industry relative strength, normalized trend, volatility-ratio, correlation, breadth, and dispersion evidence for `sector_context_state` generation.
+Keep `feature_02_sector_context` as the active Layer 2 deterministic feature surface. It owns sector/industry relative strength, normalized trend, volatility-ratio, correlation, breadth, and dispersion evidence for `sector_context_state` generation.
 
-Move ETF holdings and `stock_etf_exposure` to the anonymous target candidate builder / Layer 3 input-preparation boundary. The historical physical source/table name `source_02_security_selection` remains for now, but its semantic role is downstream sector-to-stock candidate-construction evidence after Layer 2 selected/prioritized sector baskets are known.
+Move ETF holdings and `stock_etf_exposure` to the anonymous target candidate builder / Layer 3 input-preparation boundary. The physical source/table name is `source_02_target_candidate_holdings`, and its semantic role is downstream sector-to-stock candidate-construction evidence after Layer 2 selected/prioritized sector baskets are known.
 
 `source_03_strategy_selection` should consume candidate-builder-supplied symbols, not arbitrary stock lists, once the candidate-builder contract is formalized. Layer 3 model-facing strategy vectors must still anonymize ticker/company identity.
 
 ### Consequences
 
-- `SecuritySelectionModel` should not require ETF holdings or `stock_etf_exposure` to compute Layer 2 conditional behavior vectors.
-- `feature_02_security_selection` remains the Model 2 data feature surface to align with `trading_model.model_02_security_selection`.
-- `source_02_security_selection` is retained as an implemented holdings source until a registry/schema rename is explicitly accepted.
+- `SectorContextModel` should not require ETF holdings or `stock_etf_exposure` to compute Layer 2 conditional behavior vectors.
+- `feature_02_sector_context` remains the Model 2 data feature surface to align with `trading_model.model_02_sector_context`.
+- `source_02_target_candidate_holdings` is the implemented holdings source and registry/schema name for downstream target-candidate preparation.
 - Docs and tests should describe holdings as downstream candidate-construction evidence, not Layer 2 core input.
+
+
+## D071 - Rename Layer 2 model and holdings source around sector context
+
+Date: 2026-05-03
+Status: Accepted
+
+### Context
+
+`SecuritySelectionModel` and `source_02_security_selection` no longer matched the accepted boundary. Layer 2 models sector/industry basket context under market conditions; final target/security selection starts only after the anonymous target candidate builder expands selected/prioritized baskets into stock candidates.
+
+### Decision
+
+Rename the Layer 2 model contract to `SectorContextModel` / `sector_context_model` with output table term `model_02_sector_context`. Rename the Layer 2 deterministic feature surface to `feature_02_sector_context`. Rename the ETF-holdings source to `source_02_target_candidate_holdings` so the physical data-source name reflects downstream candidate construction instead of Layer 2 model ownership.
+
+### Consequences
+
+- `feature_02_sector_context` remains the deterministic Layer 2 feature surface for `SectorContextModel`.
+- `source_02_target_candidate_holdings` belongs to anonymous target candidate preparation and may be used after Layer 2 selected/prioritized sector baskets are known.
+- New code, task keys, registry rows, and docs must not introduce `SecuritySelectionModel`, `security_selection_model`, `model_02_security_selection`, `feature_02_security_selection`, or `source_02_security_selection` for active contracts.

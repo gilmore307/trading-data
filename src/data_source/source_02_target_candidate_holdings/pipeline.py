@@ -1,6 +1,6 @@
 """ETF holdings source for downstream target-candidate preparation.
 
-The physical source/table name remains ``source_02_security_selection`` for now,
+The physical source/table name remains ``source_02_target_candidate_holdings`` for now,
 but holdings are no longer a core Layer 2 behavior-model input. They support the
 anonymous target candidate builder / Layer 3 input-preparation boundary after
 Layer 2 selects or prioritizes sector/industry baskets.
@@ -24,9 +24,9 @@ RAW_HOLDING_FIELDS = _holding_feed.FIELDS
 from feed_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "source_02_security_selection"
-MODEL_ID = "security_selection_model"
-OUTPUT_TABLE = "source_02_security_selection"
+SOURCE = "source_02_target_candidate_holdings"
+MODEL_ID = "anonymous_target_candidate_builder"
+OUTPUT_TABLE = "source_02_target_candidate_holdings"
 SQL_FIELDS = [
     "etf_symbol",
     "issuer_name",
@@ -76,7 +76,7 @@ class CleanedPayload:
     rows: list[dict[str, Any]]
 
 
-class SecuritySelectionInputsError(ValueError):
+class TargetCandidateHoldingsInputsError(ValueError):
     """Raised for invalid ETF-holdings candidate-preparation tasks."""
 
 
@@ -86,7 +86,7 @@ def _now_utc() -> str:
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
-        raise SecuritySelectionInputsError(f"task_key.source must be {SOURCE}")
+        raise TargetCandidateHoldingsInputsError(f"task_key.source must be {SOURCE}")
     output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', SOURCE + '_task')}"))
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
@@ -94,7 +94,7 @@ def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
 def _required(params: Mapping[str, Any], key: str) -> str:
     value = str(params.get(key) or "").strip()
     if not value:
-        raise SecuritySelectionInputsError(f"params.{key} is required")
+        raise TargetCandidateHoldingsInputsError(f"params.{key} is required")
     return value
 
 
@@ -104,7 +104,7 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
     rows = [row for row in rows if row.get("symbol") and row.get("issuer_name")]
     rows = [row for row in rows if row.get("universe_type") == HOLDINGS_UNIVERSE_TYPE]
     if not rows:
-        raise SecuritySelectionInputsError(f"market regime ETF universe produced zero {HOLDINGS_UNIVERSE_TYPE} rows: {path}")
+        raise TargetCandidateHoldingsInputsError(f"market regime ETF universe produced zero {HOLDINGS_UNIVERSE_TYPE} rows: {path}")
     return rows
 
 
@@ -122,7 +122,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     selected = _selected_symbols(universe_rows, params.get("symbols"))
     feed_payloads = params.get("holding_feed_payloads") or {}
     if not isinstance(feed_payloads, Mapping):
-        raise SecuritySelectionInputsError("params.holding_feed_payloads must map ETF symbol to feed payload params")
+        raise TargetCandidateHoldingsInputsError("params.holding_feed_payloads must map ETF symbol to feed payload params")
 
     raw_rows: list[dict[str, str]] = []
     evidence: list[dict[str, Any]] = []
@@ -132,7 +132,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
             continue
         payload_params = dict(feed_payloads.get(symbol) or {})
         if not payload_params:
-            raise SecuritySelectionInputsError(f"missing params.holding_feed_payloads.{symbol}")
+            raise TargetCandidateHoldingsInputsError(f"missing params.holding_feed_payloads.{symbol}")
         raw_rows.extend(_fetch_one_holding_feed(context, row, payload_params, start=start, end=end, evidence=evidence))
 
     context.run_dir.mkdir(parents=True, exist_ok=True)
@@ -160,7 +160,7 @@ def _selected_symbols(universe_rows: list[dict[str, str]], value: Any) -> set[st
     requested = {str(item).strip().upper() for item in (value if isinstance(value, list) else str(value).split(",")) if str(item).strip()}
     selected = symbols & requested
     if not selected:
-        raise SecuritySelectionInputsError("no ETF symbols selected")
+        raise TargetCandidateHoldingsInputsError("no ETF symbols selected")
     return selected
 
 

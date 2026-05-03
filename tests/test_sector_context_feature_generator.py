@@ -10,9 +10,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
-generator = importlib.import_module("data_feature.feature_02_security_selection.generator")
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_feature_02_security_selection.py"
-SCRIPT_SPEC = importlib.util.spec_from_file_location("generate_feature_02_security_selection", SCRIPT_PATH)
+generator = importlib.import_module("data_feature.feature_02_sector_context.generator")
+SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_feature_02_sector_context.py"
+SCRIPT_SPEC = importlib.util.spec_from_file_location("generate_feature_02_sector_context", SCRIPT_PATH)
 sql_runner = importlib.util.module_from_spec(SCRIPT_SPEC)
 assert SCRIPT_SPEC and SCRIPT_SPEC.loader
 SCRIPT_SPEC.loader.exec_module(sql_runner)
@@ -44,7 +44,7 @@ def _intraday_bar(symbol: str, timestamp: datetime, close: float) -> dict[str, s
     }
 
 
-class SecuritySelectionFeatureGeneratorTests(unittest.TestCase):
+class SectorContextFeatureGeneratorTests(unittest.TestCase):
     def _inputs(self):
         universe = [
             {"symbol": "SPY", "universe_type": "market_state_etf"},
@@ -152,10 +152,10 @@ class SecuritySelectionFeatureGeneratorTests(unittest.TestCase):
             }
         ]
 
-        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="feature_02_security_selection")
+        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="feature_02_sector_context")
 
         joined_sql = "\n".join(sql for sql, _params in cursor.calls)
-        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_02_security_selection"', joined_sql)
+        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_02_sector_context"', joined_sql)
         self.assertIn('PRIMARY KEY ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id")', joined_sql)
         self.assertIn('ON CONFLICT ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]

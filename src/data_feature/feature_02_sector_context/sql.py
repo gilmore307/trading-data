@@ -1,4 +1,4 @@
-"""Generate feature_02_security_selection rows from SQL source bars."""
+"""Generate feature_02_sector_context rows from SQL source bars."""
 from __future__ import annotations
 
 import argparse
@@ -25,7 +25,7 @@ METADATA_COLUMNS = (
 
 
 def _load_generator():
-    return importlib.import_module("data_feature.feature_02_security_selection.generator")
+    return importlib.import_module("data_feature.feature_02_sector_context.generator")
 
 
 def _load_psycopg():
@@ -182,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-schema", default="trading_data")
     parser.add_argument("--source-table", default="source_01_market_regime")
     parser.add_argument("--target-schema", default="trading_data")
-    parser.add_argument("--target-table", default="feature_02_security_selection")
+    parser.add_argument("--target-table", default="feature_02_sector_context")
     parser.add_argument("--source-start", help="Optional lower timestamp bound for source bars. Include enough lookback for requested features.")
     parser.add_argument("--source-end", help="Optional upper timestamp bound for source bars.")
     parser.add_argument("--universe-csv", type=Path, default=DEFAULT_UNIVERSE_CSV)

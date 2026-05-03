@@ -17,8 +17,8 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 | Model layer | Input source | Core data products | Notes |
 |---|---|---|---|
 | `MarketRegimeModel` | `source_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
-| `SecuritySelectionModel` | `feature_02_security_selection` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
-| Anonymous target candidate builder / Layer 3 input preparation | `source_02_security_selection` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Physical source name is retained for now; semantically this is downstream sector-to-stock transmission evidence, not Layer 2 core input. |
+| `SectorContextModel` | `feature_02_sector_context` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
+| Anonymous target candidate builder / Layer 3 input preparation | `source_02_target_candidate_holdings` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Downstream sector-to-stock transmission evidence, not Layer 2 core behavior input. |
 | `StrategySelectionModel` | `source_03_strategy_selection` | candidate-symbol bars and liquidity | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for strategy fitting. |
 | `TradeQualityModel` | _(no trading-data source)_ | candidate signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-data`; generated candidates/outcomes/labels belong outside the data-production layer unless a deterministic feature contract is explicitly accepted. |
 | `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
@@ -31,9 +31,9 @@ Each accepted model layer that needs new `trading-data` acquisition has a contro
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
 
-Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `feature_02_security_selection`. It owns deterministic point-in-time evidence for sector/industry behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. It does not consume ETF holdings or `stock_etf_exposure` as core behavior-model inputs.
+Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `feature_02_sector_context`. It owns deterministic point-in-time evidence for sector/industry behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. It does not consume ETF holdings or `stock_etf_exposure` as core behavior-model inputs.
 
-The downstream target-candidate preparation boundary accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_security_selection`. Until a registry rename is accepted, the historical physical name remains `source_02_security_selection`, but its semantic owner is the anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected/prioritized sector baskets.
+The downstream target-candidate preparation boundary accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_target_candidate_holdings`. Its semantic owner is the anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected/prioritized sector baskets.
 
 Layer 3 accepts candidate-builder-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `source_03_strategy_selection`.
 
@@ -49,7 +49,7 @@ Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event o
 
 ### `stock_etf_exposure`
 
-Integrated step: `src/data_source/source_02_security_selection/pipeline.py`
+Integrated step: `src/data_source/source_02_target_candidate_holdings/pipeline.py`
 
 Purpose: point-in-time stock-to-ETF exposure evidence for the anonymous target candidate builder / Layer 3 input-preparation boundary.
 
@@ -106,4 +106,4 @@ Boundary:
 - Clean accepted SQL business tables so `run_id`, `task_id`, and write audit timestamps stay in receipts/run metadata rather than business rows.
 - Harden ETF-symbol-to-issuer mapping and ETF holdings freshness/available-time rules for production runs.
 - Calibrate equity abnormal activity thresholds/model standards against historical distributions before training labels consume them.
-- Define optionability summary shape for SecuritySelectionModel; likely derived from option chain snapshots and liquidity filters.
+- Define optionability summary shape for SectorContextModel; likely derived from option chain snapshots and liquidity filters.

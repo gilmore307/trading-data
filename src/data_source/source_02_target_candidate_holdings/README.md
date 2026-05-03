@@ -1,16 +1,16 @@
-# source_02_security_selection
+# source_02_target_candidate_holdings
 
 Manager-facing ETF holdings source for downstream target-candidate preparation.
 
 This source reads the reviewed ETF universe, keeps only `universe_type = sector_observation_etf`, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table used after Layer 2 has selected/prioritized sector/industry baskets. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
-Boundary note: the physical source/table name remains `source_02_security_selection` for now, but ETF holdings are no longer a core Layer 2 `SecuritySelectionModel` behavior input. They belong to the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before strategy fitting anonymizes target vectors.
+Boundary note: the physical source/table name remains `source_02_target_candidate_holdings` for now, but ETF holdings are no longer a core Layer 2 `SectorContextModel` behavior input. They belong to the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before strategy fitting anonymizes target vectors.
 
 ## Input parameters
 
 Required task key fields:
 
-- `source`: `source_02_security_selection`
+- `source`: `source_02_target_candidate_holdings`
 - `task_id`: stable task identifier
 - `params.start`: inclusive holdings/as-of window start date or timestamp
 - `params.end`: inclusive holdings/as-of window end date or timestamp
@@ -44,7 +44,7 @@ Exclude:
 Final saved output is SQL-only:
 
 ```text
-source_02_security_selection
+source_02_target_candidate_holdings
 ```
 
 Natural key:

@@ -88,7 +88,7 @@ class StrategySelectionFeatureTests(unittest.TestCase):
             bar_rows.append(row)
         variants = [
             ("moving_average_crossover", {"ma_window_profile": "micro_3_10", "price_field": "bar_close", "ma_type": "sma", "crossover_confirmation_bars": 1, "cooldown_bars": 1, "min_slope": 0}),
-            ("donchian_channel_breakout", {"channel_window_profile": "micro_10_5_atr10", "breakout_buffer_atr": 0, "confirmation_bars": 1, "stop_atr_multiple": 1.5, "cooldown_bars": 1}),
+            ("donchian_channel_breakout", {"channel_window_profile": "micro_10_5_atr10", "confirmation_bars": 1, "breakout_buffer_atr": 0, "min_atr_pct": 0.004, "cooldown_bars": 1}),
             ("macd_trend", {"macd_profile": "micro_3_10_3", "histogram_threshold": "0", "zero_line_filter": False, "slope_confirmation_bars": 1, "exit_on_signal_cross": True, "cooldown_bars": 1}),
             ("bollinger_band_reversion", {"band_window_profile": "micro_10", "band_stddev": 1.5, "entry_band": "outer_touch", "exit_band": "midline", "trend_filter_enabled": False, "max_hold_minutes": 30}),
             ("rsi_reversion", {"rsi_period_profile": "micro_5", "threshold_pair": (30, 70), "exit_midline": "50_cross", "divergence_required": False, "multi_duration_confirm": False, "cooldown_bars": 1}),
@@ -119,6 +119,43 @@ class StrategySelectionFeatureTests(unittest.TestCase):
         self.assertEqual({row["3_strategy_family"] for row in rows}, {family for family, _params in variants})
         self.assertEqual(len(rows), len(closes) * len(variants))
         self.assertFalse(any("symbol" in row for row in rows))
+
+    def test_donchian_requires_close_break_confirmation_and_atr_gate(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        closes = [100] * 10 + [101, 102, 103]
+        bar_rows = [_bar("AAPL", start + timedelta(minutes=index), close) for index, close in enumerate(closes)]
+        confirmed_variant = {
+            "strategy_family": "donchian_channel_breakout",
+            "strategy_variant": "donchian.confirmed.fixture",
+            "variant_spec_ref": "family_02@fixture",
+            "params": {
+                "channel_window_profile": "micro_10_5_atr10",
+                "confirmation_bars": 2,
+                "breakout_buffer_atr": 0,
+                "min_atr_pct": 0,
+                "cooldown_bars": 0,
+            },
+        }
+        gated_variant = {
+            **confirmed_variant,
+            "strategy_variant": "donchian.gated.fixture",
+            "params": {**confirmed_variant["params"], "confirmation_bars": 1, "min_atr_pct": 0.10},
+        }
+        inputs = generator.build_inputs(
+            bar_rows=bar_rows,
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
+            variant_rows=[confirmed_variant, gated_variant],
+        )
+
+        rows = generator.generate_rows(inputs, run_id="donchian_contract")
+        confirmed_rows = [row for row in rows if row["3_strategy_variant"] == "donchian.confirmed.fixture"]
+        gated_rows = [row for row in rows if row["3_strategy_variant"] == "donchian.gated.fixture"]
+
+        first_long = next(row for row in confirmed_rows if row["signal_state"] == "long")
+        self.assertEqual(first_long["available_time"], (start + timedelta(minutes=11)).isoformat())
+        self.assertEqual(first_long["signal_reason"], "donchian_upper_break")
+        self.assertTrue(all(row["signal_state"] != "long" for row in gated_rows))
+        self.assertIn("min_atr_pct_gate", {row["signal_reason"] for row in gated_rows})
 
     def test_rejects_unsupported_family_before_silent_simulation(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)

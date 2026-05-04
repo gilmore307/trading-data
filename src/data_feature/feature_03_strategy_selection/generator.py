@@ -372,13 +372,30 @@ def _signal_donchian(index: int, bars: Sequence[Bar], variant: StrategyVariant, 
     atr = context["atr"][index]
     high = context["entry_high"][index]
     low = context["entry_low"][index]
-    buffer = _float_param(variant.params, "breakout_buffer_atr", 0.0) * (atr or 0)
-    diagnostics = {"entry_channel_high": high, "entry_channel_low": low, "atr": atr, "stop_atr_multiple": _float_param(variant.params, "stop_atr_multiple", 0.0)}
+    atr_pct = None if close in (None, 0) or atr is None else atr / close
+    min_atr_pct = _float_param(variant.params, "min_atr_pct", 0.0, minimum=0.0)
+    buffer_multiple = _float_param(variant.params, "breakout_buffer_atr", 0.0)
+    confirmation = _int_param(variant.params, "confirmation_bars", 1, minimum=1)
+    buffer = buffer_multiple * (atr or 0)
+    diagnostics = {
+        "entry_channel_high": high,
+        "entry_channel_low": low,
+        "atr": atr,
+        "atr_pct": atr_pct,
+        "min_atr_pct": min_atr_pct,
+        "breakout_buffer_atr": buffer_multiple,
+        "breakout_buffer_value": buffer,
+        "confirmation_bars": confirmation,
+    }
     if close is None or high is None or low is None or atr is None:
         return None, "insufficient_history", diagnostics
-    if close > high + buffer:
+    if atr_pct is None or atr_pct < min_atr_pct:
+        return None, "min_atr_pct_gate", diagnostics
+    upper_confirmed = _donchian_break_confirmed(index, bars, context, confirmation, buffer_multiple, direction=1)
+    lower_confirmed = _donchian_break_confirmed(index, bars, context, confirmation, buffer_multiple, direction=-1)
+    if upper_confirmed:
         return 1, "donchian_upper_break", diagnostics
-    if close < low - buffer:
+    if lower_confirmed:
         return -1, "donchian_lower_break", diagnostics
     if exposure > 0 and context["exit_low"][index] is not None and close < context["exit_low"][index]:
         return 0, "donchian_long_exit", diagnostics
@@ -867,6 +884,26 @@ def _confirmed_cross(index: int, fast: Sequence[float | None], slow: Sequence[fl
     if previous_delta >= 0 and all(float(delta) < 0 for delta in deltas):
         return -1
     return None
+
+
+def _donchian_break_confirmed(index: int, bars: Sequence[Bar], context: Mapping[str, Any], confirmation: int, buffer_multiple: float, *, direction: int) -> bool:
+    if index + 1 < confirmation:
+        return False
+    for pos in range(index - confirmation + 1, index + 1):
+        close = bars[pos].close
+        atr = context["atr"][pos]
+        if close is None or atr is None:
+            return False
+        buffer = buffer_multiple * atr
+        if direction > 0:
+            high = context["entry_high"][pos]
+            if high is None or close <= high + buffer:
+                return False
+        else:
+            low = context["entry_low"][pos]
+            if low is None or close >= low - buffer:
+                return False
+    return True
 
 
 def _trend_filter_blocks(index: int, price: float | None, series: Any, params: Mapping[str, Any]) -> bool:

@@ -195,7 +195,7 @@ def generate_sql(
     source_start: str | None,
     source_end: str | None,
     run_id: str | None,
-) -> int:
+) -> tuple[int, str, str]:
     generator = _load_generator()
     request = load_request(request_json)
     params = request_params(request)
@@ -210,21 +210,26 @@ def generate_sql(
     effective_run_id = run_id or str(request.get("run_id") or params.get("run_id") or request.get("task_id") or "adhoc")
     symbols = _symbols_from_candidates(candidate_rows)
 
+    effective_source_schema = str(params.get("source_schema") or source_schema)
+    effective_source_table = str(params.get("source_table") or source_table)
+    effective_target_schema = str(params.get("target_schema") or target_schema)
+    effective_target_table = str(params.get("target_table") or target_table)
+
     psycopg, dict_row = _load_psycopg()
     with psycopg.connect(database_url, row_factory=dict_row) as conn:
         with conn.cursor() as cursor:
             bar_rows = fetch_source_bars(
                 cursor,
-                source_schema=str(params.get("source_schema") or source_schema),
-                source_table=str(params.get("source_table") or source_table),
+                source_schema=effective_source_schema,
+                source_table=effective_source_table,
                 source_start=effective_start,
                 source_end=effective_end,
                 symbols=symbols,
             )
             inputs = generator.build_inputs(bar_rows=bar_rows, candidate_rows=candidate_rows, variant_rows=variant_rows)
             rows = generator.generate_rows(inputs, run_id=effective_run_id)
-            write_feature_rows_sql(cursor, rows, target_schema=str(params.get("target_schema") or target_schema), target_table=str(params.get("target_table") or target_table))
-            return len(rows)
+            write_feature_rows_sql(cursor, rows, target_schema=effective_target_schema, target_table=effective_target_table)
+            return len(rows), effective_target_schema, effective_target_table
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -242,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-id", help="Simulation run id. Defaults to request run_id, params.run_id, task_id, or adhoc.")
     args = parser.parse_args(argv)
 
-    row_count = generate_sql(
+    row_count, effective_target_schema, effective_target_table = generate_sql(
         database_url=_database_url(args.database_url),
         request_json=args.request_json,
         candidate_json=args.candidate_json,
@@ -255,5 +260,5 @@ def main(argv: list[str] | None = None) -> int:
         source_end=args.source_end,
         run_id=args.run_id,
     )
-    print(f"generated {row_count} rows into {args.target_schema}.{args.target_table}")
+    print(f"generated {row_count} rows into {effective_target_schema}.{effective_target_table}")
     return 0

@@ -9,9 +9,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
-generator = importlib.import_module("data_feature.feature_03_strategy_variant_simulation.generator")
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_feature_03_strategy_variant_simulation.py"
-SCRIPT_SPEC = importlib.util.spec_from_file_location("generate_feature_03_strategy_variant_simulation", SCRIPT_PATH)
+generator = importlib.import_module("data_feature.feature_03_strategy_selection.generator")
+SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_feature_03_strategy_selection.py"
+SCRIPT_SPEC = importlib.util.spec_from_file_location("generate_feature_03_strategy_selection", SCRIPT_PATH)
 sql_runner = importlib.util.module_from_spec(SCRIPT_SPEC)
 assert SCRIPT_SPEC and SCRIPT_SPEC.loader
 SCRIPT_SPEC.loader.exec_module(sql_runner)
@@ -49,7 +49,7 @@ def _variant(**overrides: object) -> dict[str, object]:
     return row
 
 
-class StrategyVariantSimulationFeatureTests(unittest.TestCase):
+class StrategySelectionFeatureTests(unittest.TestCase):
     def test_generates_point_in_time_variant_path_for_anonymous_candidate(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
         closes = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 12, 14, 16]
@@ -78,7 +78,7 @@ class StrategyVariantSimulationFeatureTests(unittest.TestCase):
 
     def test_rejects_unsupported_family_before_silent_simulation(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
-        with self.assertRaisesRegex(generator.StrategyVariantSimulationError, "unsupported"):
+        with self.assertRaisesRegex(generator.StrategySelectionError, "unsupported"):
             generator.build_inputs(
                 bar_rows=[_bar("AAPL", start, 10)],
                 candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
@@ -109,10 +109,10 @@ class StrategyVariantSimulationFeatureTests(unittest.TestCase):
             }
         ]
 
-        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="feature_03_strategy_variant_simulation")
+        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="feature_03_strategy_selection")
 
         joined_sql = "\n".join(sql for sql, _params in cursor.calls)
-        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_03_strategy_variant_simulation"', joined_sql)
+        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_03_strategy_selection"', joined_sql)
         self.assertIn('PRIMARY KEY ("run_id", "available_time", "target_candidate_id", "3_strategy_family", "3_strategy_variant")', joined_sql)
         self.assertIn('ON CONFLICT ("run_id", "available_time", "target_candidate_id", "3_strategy_family", "3_strategy_variant") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]

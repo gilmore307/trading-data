@@ -24,7 +24,7 @@ docs/
   01_context.md
   02_layer_01_market_regime.md
   03_layer_02_sector_context.md
-  04_layer_03_strategy_variant_simulation.md
+  04_layer_03_strategy_selection.md
   80_task.md
   81_decision.md
   82_memory.md
@@ -43,13 +43,13 @@ Development output: local SQL databases and, for legacy source pipelines, inspec
 
 Durable output: storage-backed SQL/artifact outputs plus manifests and ready signals as cross-repository contracts are accepted.
 
-`trading-data` owns the data chain from provider feeds to model-scoped sources to deterministic point-in-time feature tables. For high-dimensional generated feature surfaces such as `feature_01_market_regime`, SQL storage may use one row per point-in-time key with generated feature values inside JSONB payloads instead of one physical column per feature. Request-driven Layer 3 strategy variant simulation also belongs here as deterministic feature production; oracle construction, variant lifecycle decisions, model training, and promotion decisions belong to `trading-model`. Realtime execution feeds belong to `trading-execution`.
+`trading-data` owns the data chain from provider feeds to model-scoped sources to deterministic point-in-time feature tables. For high-dimensional generated feature surfaces such as `feature_01_market_regime`, SQL storage may use one row per point-in-time key with generated feature values inside JSONB payloads instead of one physical column per feature. Request-driven Layer 3 strategy selection also belongs here as deterministic feature production; oracle construction, variant lifecycle decisions, model training, and promotion decisions belong to `trading-model`. Realtime execution feeds belong to `trading-execution`.
 
 ## Data Organization
 
 `trading-data` now organizes work around provider/feed adapters, model-scoped source tables, deterministic feature tables, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
 
-See `docs/90_data_organization.md`. API-specific source design guidance is in `docs/92_api_templates.md`; model-layer mapping is in `docs/94_model_inputs.md`. Current layer-specific data workflows, boundaries, and acceptance gates live in `docs/02_layer_01_market_regime.md`, `docs/03_layer_02_sector_context.md`, and `docs/04_layer_03_strategy_variant_simulation.md`.
+See `docs/90_data_organization.md`. API-specific source design guidance is in `docs/92_api_templates.md`; model-layer mapping is in `docs/94_model_inputs.md`. Current layer-specific data workflows, boundaries, and acceptance gates live in `docs/02_layer_01_market_regime.md`, `docs/03_layer_02_sector_context.md`, and `docs/04_layer_03_strategy_selection.md`.
 
 ## Platform Dependencies
 

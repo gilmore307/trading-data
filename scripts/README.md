@@ -6,7 +6,7 @@ Executable maintenance and operational entrypoints for `trading-data`.
 
 - `generate_feature_01_market_regime.py` — compatibility wrapper for the Layer 1 feature SQL runner. The importable implementation lives in `src/data_feature/feature_01_market_regime/sql.py` so installed CLI entrypoints and direct script execution share one code path.
 - `generate_feature_02_sector_context.py` — compatibility wrapper for the Layer 2 sector/industry rotation feature SQL runner. The importable implementation lives in `src/data_feature/feature_02_sector_context/sql.py`.
-- `generate_feature_03_strategy_variant_simulation.py` — compatibility wrapper for the manager-requested Layer 3 strategy variant simulation SQL runner. The importable implementation lives in `src/data_feature/feature_03_strategy_variant_simulation/sql.py`.
+- `generate_feature_03_strategy_selection.py` — compatibility wrapper for the manager-requested Layer 3 strategy selection SQL runner. The importable implementation lives in `src/data_feature/feature_03_strategy_selection/sql.py`.
 
 ## Boundary
 

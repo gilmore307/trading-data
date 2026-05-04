@@ -1,4 +1,4 @@
-"""Deterministic Layer 3 strategy variant simulation feature generator.
+"""Deterministic Layer 3 strategy selection feature generator.
 
 The generator consumes already-cleaned 1Min bars plus manager-supplied anonymous
 candidate and reviewed strategy-variant specs. It performs no provider calls and
@@ -16,7 +16,7 @@ from typing import Any, Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
-FEATURE = "feature_03_strategy_variant_simulation"
+FEATURE = "feature_03_strategy_selection"
 SUPPORTED_FAMILY = "moving_average_crossover"
 DEFAULT_RUN_ID = "adhoc"
 METADATA_COLUMNS = {
@@ -86,7 +86,7 @@ class SimulationInputs:
     variants: list[StrategyVariant]
 
 
-class StrategyVariantSimulationError(ValueError):
+class StrategySelectionError(ValueError):
     """Raised when feature_03 simulation inputs are invalid."""
 
 
@@ -103,7 +103,7 @@ def read_json_rows(path: str | Path) -> list[dict[str, Any]]:
                 payload = payload[key]
                 break
     if not isinstance(payload, list):
-        raise StrategyVariantSimulationError(f"{path} must contain a JSON list or an object with a rows/variants key")
+        raise StrategySelectionError(f"{path} must contain a JSON list or an object with a rows/variants key")
     return [dict(item) for item in payload]
 
 
@@ -141,7 +141,7 @@ def build_inputs(
 
     variants = [_variant(row) for row in variant_rows]
     if not variants:
-        raise StrategyVariantSimulationError("at least one strategy variant is required")
+        raise StrategySelectionError("at least one strategy variant is required")
     return SimulationInputs(bars_by_candidate=bars_by_candidate, variants=variants)
 
 
@@ -155,7 +155,7 @@ def generate_rows(inputs: SimulationInputs, *, run_id: str = DEFAULT_RUN_ID) -> 
 
 def simulate_variant(bars: Sequence[Bar], variant: StrategyVariant, *, run_id: str = DEFAULT_RUN_ID) -> list[dict[str, Any]]:
     if variant.strategy_family != SUPPORTED_FAMILY:
-        raise StrategyVariantSimulationError(f"unsupported strategy_family: {variant.strategy_family}")
+        raise StrategySelectionError(f"unsupported strategy_family: {variant.strategy_family}")
     if not bars:
         return []
 
@@ -234,10 +234,10 @@ def _candidate_map(rows: Iterable[Mapping[str, Any]]) -> dict[str, str]:
 def _variant(row: Mapping[str, Any]) -> StrategyVariant:
     strategy_family = str(row.get("3_strategy_family") or row.get("strategy_family") or "").strip()
     if strategy_family != SUPPORTED_FAMILY:
-        raise StrategyVariantSimulationError(f"unsupported or missing strategy_family: {strategy_family!r}")
+        raise StrategySelectionError(f"unsupported or missing strategy_family: {strategy_family!r}")
     strategy_variant = str(row.get("3_strategy_variant") or row.get("strategy_variant") or row.get("variant_id") or "").strip()
     if not strategy_variant:
-        raise StrategyVariantSimulationError("strategy_variant is required")
+        raise StrategySelectionError("strategy_variant is required")
     variant_spec_ref = str(row.get("variant_spec_ref") or row.get("spec_ref") or strategy_variant).strip()
     params_payload = row.get("params") or row.get("variant_params") or {}
     if isinstance(params_payload, str) and params_payload.strip():
@@ -255,10 +255,10 @@ def _ma_params(params: Mapping[str, Any]) -> MovingAverageCrossoverParams:
     profile_id, fast_window, slow_window = _profile_windows(profile_value, params)
     price_field = str(params.get("price_field") or "bar_close").strip()
     if price_field not in {"bar_close", "bar_hlc3"}:
-        raise StrategyVariantSimulationError(f"unsupported price_field: {price_field}")
+        raise StrategySelectionError(f"unsupported price_field: {price_field}")
     ma_type = str(params.get("ma_type") or "ema").strip().lower()
     if ma_type not in {"ema", "sma"}:
-        raise StrategyVariantSimulationError(f"unsupported ma_type: {ma_type}")
+        raise StrategySelectionError(f"unsupported ma_type: {ma_type}")
     return MovingAverageCrossoverParams(
         ma_window_profile=profile_id,
         fast_window_1min_bars=fast_window,
@@ -282,7 +282,7 @@ def _profile_windows(profile_value: Any, params: Mapping[str, Any]) -> tuple[str
     slow = params.get("slow_window_1min_bars")
     if fast and slow:
         return profile_id or f"custom_{fast}_{slow}", int(fast), int(slow)
-    raise StrategyVariantSimulationError("ma_window_profile or fast/slow windows are required")
+    raise StrategySelectionError("ma_window_profile or fast/slow windows are required")
 
 
 def _desired_exposure(index: int, fast_ma: Sequence[float | None], slow_ma: Sequence[float | None], params: MovingAverageCrossoverParams) -> int | None:
@@ -305,7 +305,7 @@ def _desired_exposure(index: int, fast_ma: Sequence[float | None], slow_ma: Sequ
 
 def _moving_average_series(values: Sequence[float | None], window: int, ma_type: str) -> list[float | None]:
     if window <= 0:
-        raise StrategyVariantSimulationError("moving-average windows must be positive")
+        raise StrategySelectionError("moving-average windows must be positive")
     if ma_type == "sma":
         return [_sma(values, index, window) for index in range(len(values))]
     return _ema_series(values, window)
@@ -346,7 +346,7 @@ def _price(bar: Bar, price_field: str) -> float | None:
 def _parse_timestamp(value: Any) -> datetime:
     text = str(value or "").strip()
     if not text:
-        raise StrategyVariantSimulationError("timestamp is required")
+        raise StrategySelectionError("timestamp is required")
     parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
         return parsed.replace(tzinfo=ET)

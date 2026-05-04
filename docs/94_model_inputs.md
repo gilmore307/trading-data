@@ -53,7 +53,7 @@ Layer 3 has two `trading-data` surfaces with different ownership.
 
 Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and write SQL table `source_03_strategy_selection`.
 
-Strategy variant simulation is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, and strategy variant-universe reference; `trading-data` runs deterministic per-bar family/variant simulations and writes `feature_03_strategy_variant_simulation`. `trading-model` consumes that feature surface to construct Universal/Theoretic/Practical Oracle paths, propose expansion/pruning/promotion actions, and call agent review for final lifecycle decisions.
+Strategy selection is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, and strategy variant-universe reference; `trading-data` runs deterministic per-bar family/variant simulations and writes `feature_03_strategy_selection`. `trading-model` consumes that feature surface to construct Universal/Theoretic/Practical Oracle paths, propose expansion/pruning/promotion actions, and call agent review for final lifecycle decisions.
 
 Layer 4 has no control-plane-facing `trading-data` source: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
 

@@ -1,6 +1,6 @@
-# feature_03_strategy_variant_simulation
+# feature_03_strategy_selection
 
-Deterministic Layer 3 strategy variant simulation feature surface.
+Deterministic Layer 3 strategy selection feature surface.
 
 ## Boundary
 
@@ -12,8 +12,8 @@ It does not decide which variant is best, expand/prune variants, train StrategyS
 
 ```text
 trading-manager task/request
-  -> trading-data feature_03_strategy_variant_simulation runner
-  -> trading_data.feature_03_strategy_variant_simulation
+  -> trading-data feature_03_strategy_selection runner
+  -> trading_data.feature_03_strategy_selection
   -> trading-model oracle/lifecycle review
 ```
 
@@ -33,16 +33,16 @@ The output contains signal/exposure/holding/return-path evidence for `trading-mo
 
 ## Current implementation
 
-The first runner supports the accepted `moving_average_crossover` baseline family from serialized variant specs. It reads source bars from `source_03_strategy_selection`, maps routing symbols to `target_candidate_id` through the manager-supplied target-candidate rows, writes `trading_data.feature_03_strategy_variant_simulation`, and keeps ticker/company identity out of emitted feature rows.
+The first runner supports the accepted `moving_average_crossover` baseline family from serialized variant specs. It reads source bars from `source_03_strategy_selection`, maps routing symbols to `target_candidate_id` through the manager-supplied target-candidate rows, writes `trading_data.feature_03_strategy_selection`, and keeps ticker/company identity out of emitted feature rows.
 
 CLI entrypoint:
 
 ```bash
-trading-data-feature-03-strategy-variant-simulation --request-json request.json
+trading-data-feature-03-strategy-selection --request-json request.json
 ```
 
 Compatibility wrapper:
 
 ```bash
-PYTHONPATH=src python3 scripts/generate_feature_03_strategy_variant_simulation.py --request-json request.json
+PYTHONPATH=src python3 scripts/generate_feature_03_strategy_selection.py --request-json request.json
 ```

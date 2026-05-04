@@ -1,4 +1,4 @@
-"""Generate feature_03_strategy_variant_simulation rows from SQL source bars."""
+"""Generate feature_03_strategy_selection rows from SQL source bars."""
 from __future__ import annotations
 
 import argparse
@@ -24,7 +24,7 @@ METADATA_COLUMNS = (
 
 
 def _load_generator():
-    return importlib.import_module("data_feature.feature_03_strategy_variant_simulation.generator")
+    return importlib.import_module("data_feature.feature_03_strategy_selection.generator")
 
 
 def _load_psycopg():
@@ -64,8 +64,8 @@ def load_request(path: Path | None) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("feature_03 request JSON must be an object")
     feature = payload.get("feature") or payload.get("source")
-    if feature and feature != "feature_03_strategy_variant_simulation":
-        raise ValueError("request feature/source must be feature_03_strategy_variant_simulation")
+    if feature and feature != "feature_03_strategy_selection":
+        raise ValueError("request feature/source must be feature_03_strategy_selection")
     return payload
 
 
@@ -236,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-schema", default="trading_data")
     parser.add_argument("--source-table", default="source_03_strategy_selection")
     parser.add_argument("--target-schema", default="trading_data")
-    parser.add_argument("--target-table", default="feature_03_strategy_variant_simulation")
+    parser.add_argument("--target-table", default="feature_03_strategy_selection")
     parser.add_argument("--source-start", help="Optional lower timestamp bound for source bars. Defaults to request params.start.")
     parser.add_argument("--source-end", help="Optional upper timestamp bound for source bars. Defaults to request params.end.")
     parser.add_argument("--run-id", help="Simulation run id. Defaults to request run_id, params.run_id, task_id, or adhoc.")

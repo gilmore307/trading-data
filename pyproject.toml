@@ -33,7 +33,7 @@ trading-data-source-06-position-execution = "data_source.source_06_position_exec
 trading-data-source-07-event-overlay = "data_source.source_07_event_overlay.__main__:main"
 trading-data-feature-01-market-regime = "data_feature.feature_01_market_regime.__main__:main"
 trading-data-feature-02-sector-context = "data_feature.feature_02_sector_context.__main__:main"
-trading-data-feature-03-strategy-variant-simulation = "data_feature.feature_03_strategy_variant_simulation.__main__:main"
+trading-data-feature-03-strategy-selection = "data_feature.feature_03_strategy_selection.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

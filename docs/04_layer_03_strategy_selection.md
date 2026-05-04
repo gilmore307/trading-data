@@ -1,6 +1,6 @@
-# Layer 3 Strategy Variant Simulation
+# Layer 3 Strategy Selection
 
-`trading-data` owns the deterministic feature-production side of Layer 3 strategy variant simulation.
+`trading-data` owns the deterministic feature-production side of Layer 3 strategy selection.
 
 ## Boundary
 
@@ -12,9 +12,9 @@ This layer does **not** decide which strategy variant is best, which variants sh
 
 ```text
 trading-manager request
-  -> feature_03_strategy_variant_simulation task key
-  -> trading-data variant simulation runner
-  -> trading_data.feature_03_strategy_variant_simulation
+  -> feature_03_strategy_selection task key
+  -> trading-data strategy selection feature runner
+  -> trading_data.feature_03_strategy_selection
   -> trading-model oracle/lifecycle review
 ```
 
@@ -36,13 +36,13 @@ Expected inputs are point-in-time artifacts, not future-aware labels:
 Canonical feature key:
 
 ```text
-feature_03_strategy_variant_simulation
+feature_03_strategy_selection
 ```
 
 SQL table target when promoted:
 
 ```text
-trading_data.feature_03_strategy_variant_simulation
+trading_data.feature_03_strategy_selection
 ```
 
 The feature table should represent deterministic per-bar variant behavior, such as:

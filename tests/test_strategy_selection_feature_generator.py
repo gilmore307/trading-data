@@ -76,6 +76,50 @@ class StrategySelectionFeatureTests(unittest.TestCase):
         self.assertEqual(next_row["exposure_before_bar"], 1)
         self.assertAlmostEqual(next_row["variant_return"], 14 / 12 - 1)
 
+    def test_accepts_model_shaped_variant_configs_for_all_active_families(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        closes = [100 + (index * 0.2) + (3 if index > 45 else 0) for index in range(90)]
+        bar_rows = []
+        for index, close in enumerate(closes):
+            row = _bar("AAPL", start + timedelta(minutes=index), close)
+            row["bar_volume"] = str(1000 + index * 10)
+            row["spread_bps"] = "4"
+            row["bar_vwap"] = str(close - 0.2)
+            bar_rows.append(row)
+        variants = [
+            ("moving_average_crossover", {"ma_window_profile": "micro_3_10", "price_field": "bar_close", "ma_type": "sma", "crossover_confirmation_bars": 1, "cooldown_bars": 1, "min_slope": 0}),
+            ("donchian_channel_breakout", {"channel_window_profile": "micro_10_5_atr10", "breakout_buffer_atr": 0, "confirmation_bars": 1, "stop_atr_multiple": 1.5, "cooldown_bars": 1}),
+            ("macd_trend", {"macd_profile": "micro_3_10_3", "histogram_threshold": "0", "zero_line_filter": False, "slope_confirmation_bars": 1, "exit_on_signal_cross": True, "cooldown_bars": 1}),
+            ("bollinger_band_reversion", {"band_window_profile": "micro_10", "band_stddev": 1.5, "entry_band": "outer_touch", "exit_band": "midline", "trend_filter_enabled": False, "max_hold_minutes": 30}),
+            ("rsi_reversion", {"rsi_period_profile": "micro_5", "threshold_pair": (30, 70), "exit_midline": "50_cross", "divergence_required": False, "multi_duration_confirm": False, "cooldown_bars": 1}),
+            ("bias_reversion", {"ma_window_profile": "micro_10", "ma_type": "sma", "deviation_measure": "pct_from_ma", "entry_deviation_threshold": 1.5, "exit_deviation_threshold": 0.5, "trend_filter_enabled": False}),
+            ("vwap_reversion", {"deviation_bps": 30, "entry_zscore": 1.0, "exit_zscore": 0.5, "maximum_spread_bps": 5}),
+            ("range_breakout", {"range_window_profile": "micro_10", "range_width_max_atr": 3.0, "breakout_buffer_atr": 0, "volume_confirmation_ratio": 1.0, "retest_rule": "none", "cooldown_bars": 1}),
+            ("opening_range_breakout", {"opening_range_minutes": 5, "breakout_buffer_bps": 5, "volume_confirmation_ratio": 1.0}),
+            ("volatility_breakout", {"volatility_profile": "micro_atr10_x1.25", "direction_filter": "none", "confirmation_bars": 1, "stop_atr_multiple": 1.5, "cooldown_bars": 1}),
+        ]
+        variant_rows = [
+            {
+                "3_strategy_family": family,
+                "3_strategy_variant": f"{family}.fixture",
+                "strategy_spec_hash": f"hash_{family}",
+                "fixed_parameters": {"signal_bar_interval": "1Min"},
+                "variable_parameters": params,
+            }
+            for family, params in variants
+        ]
+
+        inputs = generator.build_inputs(
+            bar_rows=bar_rows,
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
+            variant_rows=variant_rows,
+        )
+        rows = generator.generate_rows(inputs, run_id="all_family_smoke")
+
+        self.assertEqual({row["3_strategy_family"] for row in rows}, {family for family, _params in variants})
+        self.assertEqual(len(rows), len(closes) * len(variants))
+        self.assertFalse(any("symbol" in row for row in rows))
+
     def test_rejects_unsupported_family_before_silent_simulation(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
         with self.assertRaisesRegex(generator.StrategySelectionError, "unsupported"):

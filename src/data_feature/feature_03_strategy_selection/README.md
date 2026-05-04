@@ -33,7 +33,7 @@ The output contains signal/exposure/holding/return-path evidence for `trading-mo
 
 ## Current implementation
 
-The first runner supports the accepted `moving_average_crossover` baseline family from serialized variant specs. It reads source bars from `source_03_strategy_selection`, maps routing symbols to `target_candidate_id` through the manager-supplied target-candidate rows, writes `trading_data.feature_03_strategy_selection`, and keeps ticker/company identity out of emitted feature rows.
+The runner supports the ten active StrategySelectionModel families from serialized variant specs owned by `trading-model`: `moving_average_crossover`, `donchian_channel_breakout`, `macd_trend`, `bollinger_band_reversion`, `rsi_reversion`, `bias_reversion`, `vwap_reversion`, `range_breakout`, `opening_range_breakout`, and `volatility_breakout`. It reads source bars from `source_03_strategy_selection`, maps routing symbols to `target_candidate_id` through the manager-supplied target-candidate rows, writes `trading_data.feature_03_strategy_selection`, and keeps ticker/company identity out of emitted feature rows.
 
 CLI entrypoint:
 

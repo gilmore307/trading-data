@@ -72,4 +72,4 @@ Real ticker/company identity must remain outside model-facing fitting vectors. R
 
 ## Acceptance notes
 
-Initial implementation is request-driven and deterministic. The first supported family is the accepted `moving_average_crossover` baseline from serialized reviewed variant specs. A completed run provides enough evidence for `trading-model` to compare variant paths with oracle paths and to build an agent-review package for expansion, pruning, or promotion decisions.
+Implementation is request-driven and deterministic. The current runner supports the ten active StrategySelectionModel families from serialized reviewed variant specs owned by `trading-model`: `moving_average_crossover`, `donchian_channel_breakout`, `macd_trend`, `bollinger_band_reversion`, `rsi_reversion`, `bias_reversion`, `vwap_reversion`, `range_breakout`, `opening_range_breakout`, and `volatility_breakout`. A completed run provides enough evidence for `trading-model` to compare variant paths with oracle paths and to build an agent-review package for expansion, pruning, or promotion decisions.

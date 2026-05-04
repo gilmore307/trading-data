@@ -49,7 +49,11 @@ Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relati
 
 The downstream target-candidate preparation boundary accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_target_candidate_holdings`. Its semantic owner is the anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected/prioritized sector baskets.
 
-Layer 3 accepts candidate-builder-supplied `params.start`, `params.end`, and `params.symbols`, defaults to 1Min, fetches Alpaca bars plus transient trade/quote liquidity inputs, and writes SQL table `source_03_strategy_selection`.
+Layer 3 has two `trading-data` surfaces with different ownership.
+
+Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and write SQL table `source_03_strategy_selection`.
+
+Strategy variant simulation is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, and strategy variant-universe reference; `trading-data` runs deterministic per-bar family/variant simulations and writes `feature_03_strategy_variant_simulation`. `trading-model` consumes that feature surface to construct Universal/Theoretic/Practical Oracle paths, propose expansion/pruning/promotion actions, and call agent review for final lifecycle decisions.
 
 Layer 4 has no control-plane-facing `trading-data` source: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
 

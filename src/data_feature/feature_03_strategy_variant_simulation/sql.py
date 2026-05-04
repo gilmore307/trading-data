@@ -10,13 +10,13 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 DEFAULT_DB_URL_FILE = Path("/root/secrets/openclaw/database-url")
-IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9_]+$")
 METADATA_COLUMNS = (
     "run_id",
     "available_time",
     "target_candidate_id",
-    "strategy_family",
-    "strategy_variant",
+    "3_strategy_family",
+    "3_strategy_variant",
     "variant_spec_ref",
     "signal_state",
     "exposure",
@@ -140,13 +140,13 @@ def write_feature_rows_sql(
           "run_id" TEXT NOT NULL,
           "available_time" TIMESTAMPTZ NOT NULL,
           "target_candidate_id" TEXT NOT NULL,
-          "strategy_family" TEXT NOT NULL,
-          "strategy_variant" TEXT NOT NULL,
+          "3_strategy_family" TEXT NOT NULL,
+          "3_strategy_variant" TEXT NOT NULL,
           "variant_spec_ref" TEXT NOT NULL,
           "signal_state" TEXT NOT NULL,
           "exposure" DOUBLE PRECISION NOT NULL,
           "feature_payload_json" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
-          PRIMARY KEY ("run_id", "available_time", "target_candidate_id", "strategy_family", "strategy_variant")
+          PRIMARY KEY ("run_id", "available_time", "target_candidate_id", "3_strategy_family", "3_strategy_variant")
         )
         """
     )
@@ -154,7 +154,7 @@ def write_feature_rows_sql(
     insert_sql = f"""
         INSERT INTO {qualified_table} ({", ".join(_quote_identifier(column) for column in METADATA_COLUMNS)}, "feature_payload_json")
         VALUES ({", ".join(["%s"] * (len(METADATA_COLUMNS) + 1))}::jsonb)
-        ON CONFLICT ("run_id", "available_time", "target_candidate_id", "strategy_family", "strategy_variant") DO UPDATE SET
+        ON CONFLICT ("run_id", "available_time", "target_candidate_id", "3_strategy_family", "3_strategy_variant") DO UPDATE SET
           "variant_spec_ref" = EXCLUDED."variant_spec_ref",
           "signal_state" = EXCLUDED."signal_state",
           "exposure" = EXCLUDED."exposure",

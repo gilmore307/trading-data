@@ -27,7 +27,7 @@ trading-manager task/request
 
 ## Expected output
 
-One deterministic point-in-time feature surface keyed by simulation run, available time, anonymous target candidate, strategy family, and strategy variant.
+One deterministic point-in-time feature surface keyed by `run_id`, `available_time`, `target_candidate_id`, `3_strategy_family`, and `3_strategy_variant`.
 
 The output contains signal/exposure/holding/return-path evidence for `trading-model` to build Universal Oracle, Theoretic Strategy Oracle, Practical Strategy Oracle, expansion/pruning proposals, and promotion evidence.
 

@@ -63,7 +63,7 @@ class StrategyVariantSimulationFeatureTests(unittest.TestCase):
 
         self.assertEqual(len(rows), len(closes))
         self.assertEqual({row["target_candidate_id"] for row in rows}, {"tc_001"})
-        self.assertEqual({row["strategy_family"] for row in rows}, {"moving_average_crossover"})
+        self.assertEqual({row["3_strategy_family"] for row in rows}, {"moving_average_crossover"})
         self.assertNotIn("symbol", rows[0])
 
         first_long = next(row for row in rows if row["signal_state"] == "long")
@@ -99,8 +99,8 @@ class StrategyVariantSimulationFeatureTests(unittest.TestCase):
                 "run_id": "sim_001",
                 "available_time": "2026-01-02T09:40:00-05:00",
                 "target_candidate_id": "tc_001",
-                "strategy_family": "moving_average_crossover",
-                "strategy_variant": "ma_cross__micro_3_10__close__sma",
+                "3_strategy_family": "moving_average_crossover",
+                "3_strategy_variant": "ma_cross__micro_3_10__close__sma",
                 "variant_spec_ref": "family_01@fixture",
                 "signal_state": "long",
                 "exposure": 1,
@@ -113,8 +113,8 @@ class StrategyVariantSimulationFeatureTests(unittest.TestCase):
 
         joined_sql = "\n".join(sql for sql, _params in cursor.calls)
         self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_03_strategy_variant_simulation"', joined_sql)
-        self.assertIn('PRIMARY KEY ("run_id", "available_time", "target_candidate_id", "strategy_family", "strategy_variant")', joined_sql)
-        self.assertIn('ON CONFLICT ("run_id", "available_time", "target_candidate_id", "strategy_family", "strategy_variant") DO UPDATE SET', joined_sql)
+        self.assertIn('PRIMARY KEY ("run_id", "available_time", "target_candidate_id", "3_strategy_family", "3_strategy_variant")', joined_sql)
+        self.assertIn('ON CONFLICT ("run_id", "available_time", "target_candidate_id", "3_strategy_family", "3_strategy_variant") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]
         self.assertIsNotNone(insert_params)
         self.assertEqual(insert_params[:8], ["sim_001", "2026-01-02T09:40:00-05:00", "tc_001", "moving_average_crossover", "ma_cross__micro_3_10__close__sma", "family_01@fixture", "long", 1])

@@ -23,8 +23,8 @@ METADATA_COLUMNS = {
     "run_id",
     "available_time",
     "target_candidate_id",
-    "strategy_family",
-    "strategy_variant",
+    "3_strategy_family",
+    "3_strategy_variant",
     "variant_spec_ref",
     "signal_state",
     "exposure",
@@ -196,8 +196,8 @@ def simulate_variant(bars: Sequence[Bar], variant: StrategyVariant, *, run_id: s
                 "run_id": run_id,
                 "available_time": bar.available_time.isoformat(),
                 "target_candidate_id": bar.target_candidate_id,
-                "strategy_family": variant.strategy_family,
-                "strategy_variant": variant.strategy_variant,
+                "3_strategy_family": variant.strategy_family,
+                "3_strategy_variant": variant.strategy_variant,
                 "variant_spec_ref": variant.variant_spec_ref,
                 "signal_state": signal_state,
                 "exposure": exposure,
@@ -232,10 +232,10 @@ def _candidate_map(rows: Iterable[Mapping[str, Any]]) -> dict[str, str]:
 
 
 def _variant(row: Mapping[str, Any]) -> StrategyVariant:
-    strategy_family = str(row.get("strategy_family") or row.get("3_strategy_family") or "").strip()
+    strategy_family = str(row.get("3_strategy_family") or row.get("strategy_family") or "").strip()
     if strategy_family != SUPPORTED_FAMILY:
         raise StrategyVariantSimulationError(f"unsupported or missing strategy_family: {strategy_family!r}")
-    strategy_variant = str(row.get("strategy_variant") or row.get("3_strategy_variant") or row.get("variant_id") or "").strip()
+    strategy_variant = str(row.get("3_strategy_variant") or row.get("strategy_variant") or row.get("variant_id") or "").strip()
     if not strategy_variant:
         raise StrategyVariantSimulationError("strategy_variant is required")
     variant_spec_ref = str(row.get("variant_spec_ref") or row.get("spec_ref") or strategy_variant).strip()

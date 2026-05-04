@@ -4,7 +4,7 @@ Deterministic Layer 3 strategy selection feature surface.
 
 ## Boundary
 
-This package will execute reviewed strategy family/variant specs against point-in-time target bars and target-state evidence after a `trading-manager` request. It produces simulation features for `trading-model` oracle construction and lifecycle review.
+This package executes reviewed strategy family/variant specs against point-in-time target bars and target-state evidence after a `trading-manager` request. It produces simulation features for `trading-model` oracle construction and lifecycle review.
 
 It does not decide which variant is best, expand/prune variants, train StrategySelectionModel, or approve promotion. Those decisions belong to `trading-model` review scripts and agent-reviewed lifecycle decisions.
 

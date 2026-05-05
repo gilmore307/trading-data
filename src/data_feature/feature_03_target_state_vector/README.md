@@ -12,7 +12,7 @@ trading_data.feature_03_target_state_vector
 
 ## V1 feature blocks
 
-The feature surface should expose the same four model-facing blocks used by `trading-model`:
+The feature surface should expose the same four model-facing blocks used by `trading-model`. Market, sector, target, and cross-state blocks must declare identical `state_observation_windows` on every row:
 
 - `market_state_features`
 - `sector_state_features`
@@ -31,7 +31,7 @@ V1 sparse trailing windows:
 5min, 15min, 60min, 390min
 ```
 
-These are state observation windows, not strategy variants.
+These are state observation windows, not strategy variants. They are synchronized across market, sector, target, and cross-state blocks.
 
 ## Required row keys
 

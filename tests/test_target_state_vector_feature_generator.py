@@ -60,9 +60,15 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertEqual(row["run_id"], "state_v1")
         self.assertEqual(row["market_context_state_ref"], "mkt_001")
         self.assertEqual(row["sector_context_state_ref"], "sec_001")
+        expected_windows = ["5min", "15min", "60min", "390min"]
         for block in ("market_state_features", "sector_state_features", "target_state_features", "cross_state_features"):
             self.assertIn(block, row)
             self.assertIsInstance(row[block], dict)
+            self.assertEqual(row[block]["state_observation_windows"], expected_windows)
+            self.assertEqual(
+                row[block]["state_window_sync_policy"],
+                "market_sector_target_blocks_must_share_identical_observation_windows",
+            )
 
         target_state = row["target_state_features"]
         self.assertAlmostEqual(target_state["target_return_shape"]["return_15min"], 115 / 100 - 1)

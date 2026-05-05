@@ -22,6 +22,8 @@ FEATURE = "feature_03_target_state_vector"
 DEFAULT_VECTOR_VERSION = "target_state_vector_v1"
 DEFAULT_RUN_ID = "adhoc"
 STATE_WINDOWS = (5, 15, 60, 390)
+STATE_WINDOW_LABELS = tuple(f"{window}min" for window in STATE_WINDOWS)
+STATE_WINDOW_SYNC_POLICY = "market_sector_target_blocks_must_share_identical_observation_windows"
 METADATA_COLUMNS = {
     "run_id",
     "source_run_ref",
@@ -265,10 +267,16 @@ def _sector_state_features(context: ContextRow | None) -> dict[str, Any]:
 
 
 def _project_context(context: ContextRow | None, *, groups: Sequence[str], default_key: str) -> dict[str, Any]:
+    projected: dict[str, Any] = {
+        "state_observation_windows": list(STATE_WINDOW_LABELS),
+        "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
+    }
     if context is None:
-        return {group: None for group in groups} | {default_key: {}}
+        projected.update({group: None for group in groups})
+        projected[default_key] = {}
+        return projected
     payload = dict(context.payload)
-    projected = {group: payload.get(group) for group in groups}
+    projected.update({group: payload.get(group) for group in groups})
     projected[default_key] = {key: value for key, value in payload.items() if key not in groups}
     return projected
 
@@ -285,6 +293,8 @@ def _target_state_features(
 ) -> dict[str, Any]:
     close = closes[index]
     state: dict[str, Any] = {
+        "state_observation_windows": list(STATE_WINDOW_LABELS),
+        "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
         "target_return_shape": {},
         "target_trend_momentum_state": {},
         "target_volatility_range_state": {},
@@ -334,6 +344,8 @@ def _cross_state_features(target_state: Mapping[str, Any], market_state: Mapping
     market_vol = _first_float(market_payload, "market_volatility_15min", "market_volatility", "realized_vol_15min")
     sector_vol = _first_float(sector_payload, "sector_volatility_15min", "sector_volatility", "realized_vol_15min", "relative_strength_realized_vol_20d_ratio")
     return {
+        "state_observation_windows": list(STATE_WINDOW_LABELS),
+        "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
         "target_vs_market_strength": _delta(target_return, market_return),
         "target_vs_sector_strength": _delta(target_return, sector_return),
         "target_vs_market_volatility": _safe_div(target_vol, market_vol),

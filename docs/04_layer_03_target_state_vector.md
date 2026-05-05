@@ -91,7 +91,7 @@ The output is accepted only if it is point-in-time, identity-safe, reproducible 
 
 ## V1 state windows
 
-The first target-state feature contract should use sparse trailing state windows rather than strategy-like parameter grids:
+The first target-state feature contract should use sparse synchronized state windows rather than strategy-like parameter grids:
 
 ```text
 5min, 15min, 60min, 390min

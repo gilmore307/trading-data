@@ -256,8 +256,8 @@ def _sector_state_features(context: ContextRow | None) -> dict[str, Any]:
         context,
         groups=(
             "sector_context_state",
-            "sector_relative_strength_state",
-            "sector_trend_stability_state",
+            "sector_relative_direction_state",
+            "sector_trend_quality_stability_state",
             "sector_volatility_state",
             "sector_breadth_dispersion_state",
             "sector_liquidity_tradability_state",
@@ -295,36 +295,36 @@ def _target_state_features(
     state: dict[str, Any] = {
         "state_observation_windows": list(STATE_WINDOW_LABELS),
         "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
-        "target_return_shape": {},
-        "target_trend_momentum_state": {},
+        "target_direction_return_shape": {},
+        "target_trend_quality_state": {},
         "target_volatility_range_state": {},
         "target_gap_jump_state": {},
         "target_volume_activity_state": {},
-        "target_liquidity_cost_state": {},
+        "target_liquidity_tradability_state": {},
         "target_vwap_location_state": {},
         "target_session_position_state": {},
         "target_data_quality_state": {},
     }
     for window in STATE_WINDOWS:
-        state["target_return_shape"][f"return_{window}min"] = _window_return(closes, index, window)
+        state["target_direction_return_shape"][f"return_{window}min"] = _window_return(closes, index, window)
         state["target_volatility_range_state"][f"realized_vol_{window}min"] = _realized_vol(closes, index, window)
         state["target_volatility_range_state"][f"range_position_{window}min"] = _range_position(closes, highs, lows, index, window)
         state["target_volatility_range_state"][f"atr_pct_{window}min"] = _atr_pct(closes, highs, lows, index, window)
         state["target_volume_activity_state"][f"relative_volume_{window}min"] = _relative_to_window(volumes, index, window)
         state["target_volume_activity_state"][f"relative_dollar_volume_{window}min"] = _relative_to_window(dollar_volumes, index, window)
 
-    state["target_trend_momentum_state"]["return_5m_minus_15m"] = _delta(
-        state["target_return_shape"].get("return_5min"),
-        state["target_return_shape"].get("return_15min"),
+    state["target_trend_quality_state"]["return_5m_minus_15m"] = _delta(
+        state["target_direction_return_shape"].get("return_5min"),
+        state["target_direction_return_shape"].get("return_15min"),
     )
-    state["target_trend_momentum_state"]["return_15m_minus_60m"] = _delta(
-        state["target_return_shape"].get("return_15min"),
-        state["target_return_shape"].get("return_60min"),
+    state["target_trend_quality_state"]["return_15m_minus_60m"] = _delta(
+        state["target_direction_return_shape"].get("return_15min"),
+        state["target_direction_return_shape"].get("return_60min"),
     )
     state["target_gap_jump_state"]["current_bar_return"] = _window_return(closes, index, 1)
     state["target_gap_jump_state"]["current_range_pct"] = None if close in (None, 0) or highs[index] is None or lows[index] is None else (highs[index] - lows[index]) / close
-    state["target_liquidity_cost_state"]["spread_bps"] = spreads[index]
-    state["target_liquidity_cost_state"]["dollar_volume"] = dollar_volumes[index]
+    state["target_liquidity_tradability_state"]["spread_bps"] = spreads[index]
+    state["target_liquidity_tradability_state"]["dollar_volume"] = dollar_volumes[index]
     state["target_vwap_location_state"]["vwap_distance_pct"] = _safe_ratio_delta(close, vwaps[index])
     state["target_session_position_state"]["window_policy"] = "completed_1min_bars"
     state["target_data_quality_state"]["has_close"] = close is not None
@@ -335,7 +335,7 @@ def _target_state_features(
 
 
 def _cross_state_features(target_state: Mapping[str, Any], market_state: Mapping[str, Any], sector_state: Mapping[str, Any]) -> dict[str, Any]:
-    target_return = _nested_float(target_state, "target_return_shape", "return_15min")
+    target_return = _nested_float(target_state, "target_direction_return_shape", "return_15min")
     target_vol = _nested_float(target_state, "target_volatility_range_state", "realized_vol_15min")
     market_payload = market_state.get("market_context_payload") if isinstance(market_state.get("market_context_payload"), Mapping) else {}
     sector_payload = sector_state.get("sector_context_payload") if isinstance(sector_state.get("sector_context_payload"), Mapping) else {}
@@ -346,15 +346,15 @@ def _cross_state_features(target_state: Mapping[str, Any], market_state: Mapping
     return {
         "state_observation_windows": list(STATE_WINDOW_LABELS),
         "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
-        "target_vs_market_strength": _delta(target_return, market_return),
-        "target_vs_sector_strength": _delta(target_return, sector_return),
+        "target_vs_market_residual_direction": _delta(target_return, market_return),
+        "target_vs_sector_residual_direction": _delta(target_return, sector_return),
         "target_vs_market_volatility": _safe_div(target_vol, market_vol),
         "target_vs_sector_volatility": _safe_div(target_vol, sector_vol),
         "target_market_beta_correlation": None,
         "target_sector_beta_correlation": None,
         "sector_confirmation_state": _sector_confirmation(target_return, sector_return),
         "idiosyncratic_residual_state": _delta(_delta(target_return, market_return), sector_return),
-        "relative_liquidity_cost_state": None,
+        "relative_liquidity_tradability_state": None,
     }
 
 

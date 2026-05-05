@@ -25,7 +25,7 @@ The first implementation stores these as Python dictionaries ready for JSON/JSON
 
 `generator.py` consumes candidate-mapped target-local bars plus optional point-in-time market/sector context rows and emits one row per `target_candidate_id + available_time` with the four V1 blocks.
 
-V1 sparse trailing windows:
+V1 sparse synchronized state windows:
 
 ```text
 5min, 15min, 60min, 390min

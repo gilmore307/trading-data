@@ -71,14 +71,14 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
             )
 
         target_state = row["target_state_features"]
-        self.assertAlmostEqual(target_state["target_return_shape"]["return_15min"], 115 / 100 - 1)
-        self.assertIn("target_liquidity_cost_state", target_state)
-        self.assertEqual(target_state["target_liquidity_cost_state"]["spread_bps"], 4.0)
+        self.assertAlmostEqual(target_state["target_direction_return_shape"]["return_15min"], 115 / 100 - 1)
+        self.assertIn("target_liquidity_tradability_state", target_state)
+        self.assertEqual(target_state["target_liquidity_tradability_state"]["spread_bps"], 4.0)
         self.assertGreater(target_state["target_vwap_location_state"]["vwap_distance_pct"], 0)
 
         cross_state = row["cross_state_features"]
-        self.assertAlmostEqual(cross_state["target_vs_market_strength"], (115 / 100 - 1) - 0.03)
-        self.assertAlmostEqual(cross_state["target_vs_sector_strength"], (115 / 100 - 1) - 0.06)
+        self.assertAlmostEqual(cross_state["target_vs_market_residual_direction"], (115 / 100 - 1) - 0.03)
+        self.assertAlmostEqual(cross_state["target_vs_sector_residual_direction"], (115 / 100 - 1) - 0.06)
         self.assertEqual(cross_state["sector_confirmation_state"], "sector_confirmed")
 
     def test_uses_sparse_state_windows_without_variant_fields(self) -> None:
@@ -91,7 +91,7 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         rows = generator.generate_rows(inputs)
         target_state = rows[-1]["target_state_features"]
 
-        self.assertEqual(set(target_state["target_return_shape"]), {"return_5min", "return_15min", "return_60min", "return_390min"})
+        self.assertEqual(set(target_state["target_direction_return_shape"]), {"return_5min", "return_15min", "return_60min", "return_390min"})
         self.assertNotIn("3_strategy_family", rows[-1])
         self.assertNotIn("3_strategy_variant", rows[-1])
         self.assertNotIn("strategy_variant", repr(rows[-1]))

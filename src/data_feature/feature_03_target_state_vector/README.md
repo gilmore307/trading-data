@@ -28,7 +28,7 @@ The first implementation may store these as JSON payloads for review, but the bl
 - `target_candidate_id`
 - `market_context_state_ref`
 - `sector_context_state_ref`
-- `feature_vector_version`
+- `target_state_vector_version`
 - `source_run_ref`
 
 ## Non-ownership

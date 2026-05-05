@@ -1,0 +1,89 @@
+# Layer 3 Target State Vector
+
+`trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction.
+
+Layer 3 is reset from strategy-family/variant simulation to target state-vector production. The earlier `feature_03_strategy_selection` runner is frozen as legacy compatibility work and should not be expanded while the active Layer 3 contract is target-state based.
+
+## Boundary
+
+`trading-data` receives manager-issued requests, reads point-in-time source evidence, and publishes deterministic target-state feature surfaces for `trading-model` to train and evaluate `TargetStateVectorModel`.
+
+`trading-data` does **not** decide whether a target should be traded, which strategy to use, whether a model should be promoted, or whether a state relationship is accepted. Those modeling and review decisions belong to `trading-model` and the `trading-manager` control plane.
+
+## Control-plane flow
+
+```text
+trading-manager request
+  -> feature_03_target_state_vector task key
+  -> trading-data target state-vector feature runner
+  -> trading_data.feature_03_target_state_vector
+  -> trading-model TargetStateVectorModel training/evaluation/review
+```
+
+Temporary migration may read from existing `source_03_strategy_selection` bars/liquidity tables, but new contracts should use target-state names:
+
+```text
+source_03_target_state
+feature_03_target_state_vector
+```
+
+## Inputs
+
+Expected inputs are point-in-time artifacts, not future-aware labels:
+
+- manager-issued request parameters: `start`, `end`, candidate universe reference, Layer 1/2 state references, output target, and run metadata;
+- anonymous target candidate rows from the Layer 3 candidate-preparation boundary;
+- target-local 1-minute bars;
+- target liquidity, quote/trade, spread, and dollar-volume evidence when available;
+- `market_context_state` reference from Layer 1;
+- `sector_context_state` reference from Layer 2;
+- optional accepted event/risk availability flags when they are point-in-time.
+
+## Output surface
+
+Canonical feature key:
+
+```text
+feature_03_target_state_vector
+```
+
+SQL table target when promoted:
+
+```text
+trading_data.feature_03_target_state_vector
+```
+
+The feature table should expose decomposable blocks:
+
+- `available_time`
+- `tradeable_time`
+- `target_candidate_id`
+- `market_context_state_ref`
+- `sector_context_state_ref`
+- market-state feature payload or columns
+- sector-state feature payload or columns
+- target-state feature payload or columns
+- cross-state feature payload or columns
+- feature-quality diagnostics
+- source/run references
+
+Real ticker/company identity must remain outside model-facing feature vectors. Routing/audit metadata may preserve symbol references separately when required.
+
+## Non-ownership
+
+`trading-data` does not own:
+
+- target-state label design beyond deterministic label-materialization requests accepted by `trading-model`;
+- model training, state clustering, embeddings, promotion decisions, or agent review;
+- strategy-family/variant lifecycle;
+- final trade instructions, option contract selection, position size, execution, or portfolio allocation.
+
+## Acceptance notes
+
+A completed feature run should let `trading-model` compare:
+
+1. market-only baseline;
+2. market + sector baseline;
+3. market + sector + target state vector.
+
+The output is accepted only if it is point-in-time, identity-safe, reproducible from manager request metadata, and split into inspectable market/sector/target/cross-state blocks.

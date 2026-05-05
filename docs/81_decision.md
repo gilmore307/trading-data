@@ -1294,3 +1294,12 @@ feature_NN_<layer_slug>
 Raw/source observation columns may keep clear generic names such as `available_time`, `symbol`, `open`, `high`, `low`, `close`, and `volume`. Layer-owned feature keys use compact numeric prefixes such as `1_*` or `2_*` when they represent a reviewed layer concept. Do not introduce `layer01_*` or `layer02_*` aliases for the same concept.
 
 Layer 1 remains broad-market only. Sector/industry ETF behavior evidence routes to `feature_02_sector_context`, and ETF holdings / `stock_etf_exposure` route to downstream anonymous target candidate construction rather than Layer 2 core behavior modeling.
+
+## D073 - Layer 3 data boundary resets to target state vectors
+
+Date: 2026-05-04
+Status: Accepted
+
+Layer 3 data production is reset from strategy-family/variant simulation to target state-vector feature construction.
+
+New contracts should use `source_03_target_state` for target-local observed inputs and `feature_03_target_state_vector` for deterministic market/sector/target/cross-state feature blocks. Existing `source_03_strategy_selection` and `feature_03_strategy_selection` implementations are legacy compatibility assets and should not be expanded as the active Layer 3 boundary.

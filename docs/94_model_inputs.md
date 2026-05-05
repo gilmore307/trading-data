@@ -33,7 +33,7 @@ model_NN_<layer_slug>_diagnostics
 | `MarketRegimeModel` | `source_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
 | `SectorContextModel` | `feature_02_sector_context` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
 | Anonymous target candidate builder / Layer 3 input preparation | `source_02_target_candidate_holdings` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Downstream sector-to-stock transmission evidence, not Layer 2 core behavior input. |
-| `StrategySelectionModel` | `source_03_strategy_selection` | candidate-symbol bars and liquidity | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for strategy fitting. |
+| `TargetStateVectorModel` | `source_03_target_state` / legacy `source_03_strategy_selection` compatibility | candidate-symbol bars, liquidity, and point-in-time target-local evidence | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for target state-vector construction. |
 | `TradeQualityModel` | _(no trading-data source)_ | candidate signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-data`; generated candidates/outcomes/labels belong outside the data-production layer unless a deterministic feature contract is explicitly accepted. |
 | `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
 | `PositionExecutionModel` | `source_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
@@ -49,11 +49,11 @@ Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relati
 
 The downstream target-candidate preparation boundary accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_target_candidate_holdings`. Its semantic owner is the anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected/prioritized sector baskets.
 
-Layer 3 has two `trading-data` surfaces with different ownership.
+Layer 3 has two target-state surfaces with different maturity.
 
-Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and write SQL table `source_03_strategy_selection`.
+Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and should write SQL table `source_03_target_state` after migration. The existing `source_03_strategy_selection` table is a legacy compatibility source.
 
-Strategy selection is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, and strategy variant-universe reference; `trading-data` runs deterministic per-bar family/variant simulations and writes `feature_03_strategy_selection`. `trading-model` consumes that feature surface to construct Universal/Theoretic/Practical Oracle paths, propose expansion/pruning/promotion actions, and call agent review for final lifecycle decisions.
+Target state-vector construction is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, Layer 1/2 state references, and output target; `trading-data` builds deterministic market/sector/target/cross-state feature blocks and writes `feature_03_target_state_vector`. `trading-model` consumes that surface to train/evaluate `TargetStateVectorModel` against market-only and market+sector baselines.
 
 Layer 4 has no control-plane-facing `trading-data` source: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
 
@@ -71,7 +71,7 @@ Integrated step: `src/data_source/source_02_target_candidate_holdings/pipeline.p
 
 Purpose: point-in-time stock-to-ETF exposure evidence for the anonymous target candidate builder / Layer 3 input-preparation boundary.
 
-It derives from issuer-published `etf_holding_snapshot` rows and reviewed upstream basket context. It lets downstream candidate construction transmit Layer 2 selected/prioritized ETF/sector/industry baskets into a stock candidate universe before Layer 3 strategy fitting anonymizes model-facing target vectors.
+It derives from issuer-published `etf_holding_snapshot` rows and reviewed upstream basket context. It lets downstream candidate construction transmit Layer 2 selected/prioritized ETF/sector/industry baskets into a stock candidate universe before Layer 3 target-state construction anonymizes model-facing target vectors.
 
 Important fields:
 

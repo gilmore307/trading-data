@@ -14,7 +14,7 @@ Note: `TradeQualityModel` currently does not need a `trading-data` source becaus
 
 - `source_01_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_regime_etf_universe.csv`.
 - `source_02_target_candidate_holdings` — SQL-only filtered US-listed equity ETF holdings table for anonymous target candidate preparation after Layer 2 sector/basket prioritization; ETF universe comes from `market_regime_etf_universe.csv`.
-- `source_03_strategy_selection` — SQL-only manager-selected symbol bar/liquidity table for StrategySelectionModel; defaults to 1Min.
+- `source_03_strategy_selection` — legacy SQL-only manager-selected symbol bar/liquidity table; active replacement naming should be `source_03_target_state`.
 - `source_05_option_expression` — SQL-only contract-level ThetaData option-chain snapshot table for OptionExpressionModel; one row per visible contract per entry/exit snapshot.
 - `source_06_position_execution` — SQL-only selected option contract time-series table for PositionExecutionModel; covers entry through exit plus one hour.
 - `source_07_event_overlay` — SQL-only EventOverlayModel overview table; one row per event, with details behind references.

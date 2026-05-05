@@ -1,62 +1,12 @@
 # source_03_strategy_selection
 
-Manager-facing StrategySelectionModel bar/liquidity input source.
+Legacy compatibility source for Layer 3 target-local bars/liquidity.
 
-This source accepts candidate symbols over a requested time range, fetches Alpaca bars plus transient trade/quote liquidity inputs, aggregates them to the requested interval, and writes one SQL table for StrategySelectionModel inputs. In the accepted model boundary, those candidate symbols should be produced by the anonymous target candidate builder from Layer 2 selected/prioritized sector baskets; the source still accepts `params.symbols` directly until that builder contract is formalized. Stable defaults live in pipeline code; there is no source-local `config.json`.
-
-## Input parameters
-
-Required task key fields:
-
-- `source`: `source_03_strategy_selection`
-- `task_id`: stable task identifier
-- `params.start`: inclusive request start timestamp/date
-- `params.end`: exclusive request end timestamp/date
-- `params.symbols`: comma string or JSON list of candidate-builder-selected symbols
-
-Optional task key fields:
-
-- `params.timeframe`: bar/liquidity interval. Default is `1Min`.
-- `params.limit`, `params.max_pages`, `params.adjustment`, `params.feed`, `params.timeout_seconds`, `params.secret_alias`: request/runtime overrides
-- `output_root`: local receipt/request-manifest root
-
-Liquidity thresholds and feature windows are intentionally not in this source. Strategy features such as returns, volatility, trend strength, gap logic, and model scoring are downstream feature/model responsibilities.
-
-## Output
-
-Final saved output is SQL-only:
+This source was named for the earlier `StrategySelectionModel` boundary. Layer 3 has been reset to target state-vector construction. New contracts should use target-state names such as:
 
 ```text
-source_03_strategy_selection
+source_03_target_state
+feature_03_target_state_vector
 ```
 
-Natural key:
-
-```text
-symbol + timeframe + timestamp
-```
-
-Columns:
-
-- `symbol`
-- `timeframe`
-- `timestamp`
-- `bar_open`
-- `bar_high`
-- `bar_low`
-- `bar_close`
-- `bar_volume`
-- `bar_vwap`
-- `bar_trade_count`
-- `dollar_volume`
-- `quote_count`
-- `avg_bid`
-- `avg_ask`
-- `avg_bid_size`
-- `avg_ask_size`
-- `avg_spread`
-- `spread_bps`
-- `last_bid`
-- `last_ask`
-
-No saved source CSV mirror is written. `run_id`, `task_id`, and task write/audit timestamps belong in manifests and completion receipts, not this business table.
+During migration, this source may still provide candidate-symbol 1Min bars and liquidity evidence, but it should be treated as a compatibility path rather than the active naming authority.

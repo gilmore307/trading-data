@@ -2,13 +2,13 @@
 
 `trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction.
 
-Layer 3 is reset from strategy-family/variant simulation to target state-vector production. The earlier `feature_03_strategy_selection` runner is frozen as legacy compatibility work and should not be expanded while the active Layer 3 contract is target-state based.
+Layer 3 is target state-vector production. Earlier action/variant simulation code has been retired and must not be used as the active Layer 3 contract.
 
 ## Boundary
 
 `trading-data` receives manager-issued requests, reads point-in-time source evidence, and publishes deterministic target-state feature surfaces for `trading-model` to train and evaluate `TargetStateVectorModel`.
 
-`trading-data` does **not** decide whether a target should be traded, which strategy to use, whether a model should be promoted, or whether a state relationship is accepted. Those modeling and review decisions belong to `trading-model` and the `trading-manager` control plane.
+`trading-data` does **not** decide whether a target should be traded, which downstream action/expression to use, whether a model should be promoted, or whether a state relationship is accepted. Those modeling and review decisions belong to `trading-model` and the `trading-manager` control plane.
 
 ## Control-plane flow
 
@@ -20,7 +20,7 @@ trading-manager request
   -> trading-model TargetStateVectorModel training/evaluation/review
 ```
 
-Temporary migration may read from existing `source_03_strategy_selection` bars/liquidity tables, but new contracts should use target-state names:
+Active contracts use target-state names:
 
 ```text
 source_03_target_state
@@ -75,7 +75,7 @@ Real ticker/company identity must remain outside model-facing feature vectors. R
 
 - target-state label design beyond deterministic label-materialization requests accepted by `trading-model`;
 - model training, state clustering, embeddings, promotion decisions, or agent review;
-- strategy-family/variant lifecycle;
+- downstream action/variant lifecycle;
 - final trade instructions, option contract selection, position size, execution, or portfolio allocation.
 
 ## Acceptance notes
@@ -91,10 +91,10 @@ The output is accepted only if it is point-in-time, identity-safe, reproducible 
 
 ## V1 state windows
 
-The first target-state feature contract should use sparse synchronized state windows rather than strategy-like parameter grids:
+The first target-state feature contract should use sparse synchronized state windows rather than action-like parameter grids:
 
 ```text
 5min, 15min, 60min, 390min
 ```
 
-These windows are for trailing return, volatility, volume, liquidity, and relative-strength state summaries. They are not strategy variants and should not create a variant universe.
+These windows are for trailing return, volatility, volume, liquidity, and relative-strength state summaries. They are not downstream action variants and should not create a variant universe.

@@ -722,8 +722,8 @@ The accepted `trading-model` architecture now has seven layers. Source acquisiti
 
 1. `market_regime_model_inputs`
 2. `sector_context_model_inputs`
-3. `strategy_selection_model_inputs`
-4. `trade_quality_model_inputs`
+3. historical Layer 3 source inputs, later retired in favor of `source_03_target_state` / `feature_03_target_state_vector`
+4. historical trade-quality inputs, later retired in favor of downstream Alpha-Confidence / Trading Projection semantics
 5. `option_expression_model_inputs`
 6. `event_overlay_model_inputs`
 7. `portfolio_risk_model_inputs`
@@ -846,17 +846,18 @@ The output excludes non-model fields such as `cusip`, `sedol`, raw `asset_class`
 - Filter out cash, money-market, fixed income, futures, swaps, options, funds, non-US local listings, and other non-equity assets unless explicitly reviewed later.
 - Primary key: `etf_symbol + as_of_date + holding_symbol`; run/task metadata lives in manifests and receipts, not business rows.
 
-## D055 - Strategy selection bundle writes bar plus liquidity inputs
+## D055 - Historical Layer 3 source bundle wrote bar plus liquidity inputs
 
 Date: 2026-04-28
+Status: Superseded by D073 and later retired from active code/registry
 
 ### Context
 
-Layer 3 was still represented as a generic artifact-reference manifest. The user clarified that `source_03_strategy_selection` receives selected symbols plus a start/end window, defaults to 1-minute data, and should output bar plus liquidity inputs. D070 later clarified that selected symbols should come from the anonymous target candidate builder based on Layer 2 selected/prioritized sector baskets. Liquidity rules and feature windows already belong elsewhere and should not be added to this bundle config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by this raw input bundle.
+Layer 3 was still represented as a generic artifact-reference manifest. The historical source accepted selected symbols plus a start/end window, defaulted to 1-minute data, and output bar plus liquidity inputs. D070 later clarified that selected symbols should come from the anonymous target candidate builder based on Layer 2 selected/prioritized sector baskets. Liquidity rules and feature windows already belong elsewhere and should not be added to this source config. Derived features such as returns, volatility, trend strength, and gap percentage should not be fabricated by raw input acquisition.
 
 ### Decision
 
-`source_03_strategy_selection` accepts `params.start`, `params.end`, and `params.symbols`, fetches Alpaca bars plus transient trades/quotes, aggregates liquidity by interval, and writes SQL table `source_03_strategy_selection`.
+Active replacement contract: `source_03_target_state` accepts target-candidate-local source windows, fetches bars plus transient trades/quotes where needed, aggregates liquidity by interval, and writes SQL table `source_03_target_state`.
 
 The output includes bar-prefixed OHLCV/VWAP/trade count, dollar volume, quote count, average bid/ask/depth/spread, spread bps, and last bid/ask. It does not include created/write timestamps or downstream feature/model columns.
 
@@ -867,17 +868,18 @@ The output includes bar-prefixed OHLCV/VWAP/trade count, dollar volume, quote co
 - Feature engineering for returns/volatility/trend/gaps remains downstream of this data bundle.
 - Primary key: `symbol + timeframe + timestamp`; run/task metadata lives in manifests and receipts, not business rows.
 
-## D056 - Trade quality has no trading-data bundle; option expression writes option snapshot
+## D056 - Downstream confidence/projection consumers have no trading-data bundle; option expression writes option snapshot
 
 Date: 2026-04-28
+Status: Superseded for model names by V2.2 Alpha-Confidence / Trading Projection terminology
 
 ### Context
 
-The user clarified that `TradeQualityModel` does not require a `trading-data` bundle, SQL view, or manifest contract because it does not fetch new data. It consumes upstream SQL outputs and model/strategy candidates. The next model-input acquisition need is `OptionExpressionModel`, which needs a point-in-time option snapshot.
+The user clarified that downstream confidence/projection consumers do not require a `trading-data` bundle, SQL view, or manifest contract when they do not fetch new data. They consume upstream SQL outputs, model outputs, labels, and reviewed evaluation artifacts. The next model-input acquisition need is `OptionExpressionModel`, which needs a point-in-time option snapshot.
 
 ### Decision
 
-Remove active `04_trade_quality_model_inputs` from `trading-data` runnable bundles. `TradeQualityModel` inputs are constructed by `trading-model` from existing upstream SQL outputs and candidate signal artifacts.
+Do not add a symmetry-only Layer 4 `trading-data` runnable bundle. Alpha-Confidence / Trading Projection inputs are constructed by `trading-model` from existing upstream SQL outputs, model outputs, labels, and reviewed evaluation artifacts.
 
 `source_05_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot feed interface, and writes SQL table `source_05_option_expression` with one row per visible option contract per snapshot.
 
@@ -946,7 +948,7 @@ Rename active numbered packages to `NN_bundle_<layer>`:
 
 - `source_01_market_regime`
 - `source_02_target_candidate_holdings`
-- `source_03_strategy_selection`
+- `source_03_target_state`
 - `source_05_option_expression`
 - `source_06_position_execution`
 - `source_07_event_overlay`
@@ -973,7 +975,7 @@ Accepted numbered bundle SQL outputs use bundle-derived table names under the `t
 
 - `source_01_market_regime`
 - `source_02_target_candidate_holdings`
-- `source_03_strategy_selection`
+- `source_03_target_state`
 - `source_05_option_expression`
 - `source_06_position_execution`
 - `source_07_event_overlay`
@@ -1000,7 +1002,7 @@ Accepted numbered bundle SQL outputs live under schema `trading_data`, not `mode
 
 - `source_01_market_regime`
 - `source_02_target_candidate_holdings`
-- `source_03_strategy_selection`
+- `source_03_target_state`
 - `source_05_option_expression`
 - `source_06_position_execution`
 - `source_07_event_overlay`
@@ -1247,7 +1249,7 @@ Keep `feature_02_sector_context` as the active Layer 2 deterministic feature sur
 
 Move ETF holdings and `stock_etf_exposure` to the anonymous target candidate builder / Layer 3 input-preparation boundary. The physical source/table name is `source_02_target_candidate_holdings`, and its semantic role is downstream sector-to-stock candidate-construction evidence after Layer 2 selected/prioritized sector baskets are known.
 
-`source_03_strategy_selection` should consume candidate-builder-supplied symbols, not arbitrary stock lists, once the candidate-builder contract is formalized. Layer 3 model-facing strategy vectors must still anonymize ticker/company identity.
+`source_03_target_state` should consume candidate-builder-supplied symbols, not arbitrary stock lists, once the candidate-builder contract is formalized. Layer 3 model-facing target-state vectors must still anonymize ticker/company identity.
 
 ### Consequences
 
@@ -1300,6 +1302,6 @@ Layer 1 remains broad-market only. Sector/industry ETF behavior evidence routes 
 Date: 2026-05-04
 Status: Accepted
 
-Layer 3 data production is reset from strategy-family/variant simulation to target state-vector feature construction.
+Layer 3 data production is target state-vector feature construction.
 
-New contracts should use `source_03_target_state` for target-local observed inputs and `feature_03_target_state_vector` for deterministic market/sector/target/cross-state feature blocks. Existing `source_03_strategy_selection` and `feature_03_strategy_selection` implementations are legacy compatibility assets and should not be expanded as the active Layer 3 boundary.
+Contracts use `source_03_target_state` for target-local observed inputs and `feature_03_target_state_vector` for deterministic market/sector/target/cross-state feature blocks. Earlier action/variant simulation implementations have been retired from active code and registry surfaces.

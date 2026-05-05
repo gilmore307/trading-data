@@ -16,19 +16,6 @@ class FakeBarsClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
-class FakeStrategySelectionClient:
-    def get(self, url, *, params=None, headers=None):
-        if url.endswith("/bars"):
-            payload = {"bars": [{"t": "2026-04-24T13:30:00Z", "o": 100, "h": 101, "l": 99, "c": 100.5, "v": 1000, "vw": 100.25, "n": 10}]}
-        elif url.endswith("/trades"):
-            payload = {"trades": [{"t": "2026-04-24T13:30:10Z", "p": 100.5, "s": 100}, {"t": "2026-04-24T13:30:40Z", "p": 100.7, "s": 200}]}
-        elif url.endswith("/quotes"):
-            payload = {"quotes": [{"t": "2026-04-24T13:30:05Z", "bp": 100.4, "ap": 100.6, "bs": 10, "as": 12}, {"t": "2026-04-24T13:30:45Z", "bp": 100.5, "ap": 100.7, "bs": 20, "as": 22}]}
-        else:
-            payload = {}
-        return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
-
-
 class FakeThetaDataClient:
     def get(self, url, *, params=None, headers=None):
         if url.endswith("/snapshot/quote"):
@@ -95,38 +82,6 @@ class NumberedDataSourceTests(unittest.TestCase):
                 self.assertNotIn("run_id", rows[0])
                 self.assertNotIn("task_id", rows[0])
                 self.assertEqual(call["columns"], ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
-        finally:
-            module.load_secret_alias = old_load_secret
-
-    def test_strategy_selection_source_writes_bar_liquidity_sql_rows(self):
-        module = import_module("data_source.source_03_strategy_selection.pipeline")
-        old_load_secret = module.load_secret_alias
-        module.load_secret_alias = lambda alias: Secret()
-        try:
-            with tempfile.TemporaryDirectory() as tmp:
-                task_key = {
-                    "task_id": "source_03_strategy_selection_task_test",
-                    "source": "source_03_strategy_selection",
-                    "params": {"start": "2026-04-24T13:30:00Z", "end": "2026-04-24T13:31:00Z", "symbols": ["NVDA"]},
-                    "output_root": str(Path(tmp) / "task"),
-                }
-                writer = FakeSqlWriter()
-                result = module.run(task_key, run_id="run", client=FakeStrategySelectionClient(), sql_writer=writer)
-                self.assertEqual(result.status, "succeeded")
-                self.assertEqual(result.row_counts["source_03_strategy_selection"], 1)
-                call = writer.calls[0]
-                self.assertEqual(call["table"], "source_03_strategy_selection")
-                self.assertEqual(call["key_columns"], ["symbol", "timeframe", "timestamp"])
-                row = call["rows"][0]
-                self.assertEqual(row["symbol"], "NVDA")
-                self.assertEqual(row["timeframe"], "1Min")
-                self.assertEqual(row["timestamp"], "2026-04-24T09:30:00-04:00")
-                self.assertEqual(row["dollar_volume"], 100500.0)
-                self.assertAlmostEqual(row["avg_spread"], 0.2)
-                self.assertAlmostEqual(row["spread_bps"], 19.890601690701146)
-                self.assertNotIn("run_id", row)
-                self.assertNotIn("task_id", row)
-                self.assertNotIn("created_at", row)
         finally:
             module.load_secret_alias = old_load_secret
 

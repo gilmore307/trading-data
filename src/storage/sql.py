@@ -152,8 +152,8 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _model_input_artifact_reference_ddl(qualified_table)
     if table == "source_02_target_candidate_holdings":
         return _source_02_target_candidate_holdings_ddl(qualified_table)
-    if table == "source_03_strategy_selection":
-        return _source_03_strategy_selection_ddl(qualified_table)
+    if table == "source_03_target_state":
+        return _source_03_target_state_ddl(qualified_table)
     if table == "source_05_option_expression":
         return _source_05_option_expression_ddl(qualified_table)
     if table == "source_06_position_execution":
@@ -221,7 +221,7 @@ def _source_02_target_candidate_holdings_ddl(qualified_table: str) -> str:
     """
 
 
-def _source_03_strategy_selection_ddl(qualified_table: str) -> str:
+def _source_03_target_state_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         symbol TEXT NOT NULL,

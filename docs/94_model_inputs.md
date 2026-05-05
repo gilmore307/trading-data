@@ -1,6 +1,6 @@
 # Source Outputs For Model Layers
 
-This document maps `trading-data` source-backed outputs to the seven accepted `trading-model` layers. It is an organization contract for external/source observations, not a complete training-data or derived-data plan.
+This document maps `trading-data` source-backed outputs to accepted `trading-model` layers and downstream model consumers. It is an organization contract for external/source observations, not a complete training-data or derived-data plan.
 
 ## Principles
 
@@ -9,7 +9,7 @@ This document maps `trading-data` source-backed outputs to the seven accepted `t
 - Keep task inputs in control-plane task keys, stable source contracts/defaults in code, and shared reviewed universes in shared artifacts; avoid source-local config files unless operators must routinely change the value outside code review.
 - Keep final model-facing outputs SQL-only for accepted numbered data sources.
 - Preserve point-in-time semantics. Model inputs must not use information unavailable at decision time.
-- Keep model outputs, model-evaluation labels, training runs, strategy/backtest artifacts, and promotion decisions outside `trading-data`. This repository may perform feed acquisition, source construction, and deterministic point-in-time feature construction needed by models.
+- Keep model outputs, model-evaluation labels, training runs, action/backtest artifacts, and promotion decisions outside `trading-data`. This repository may perform feed acquisition, source construction, and deterministic point-in-time feature construction needed by models.
 - Register reusable names through `trading-manager` before other repositories depend on them.
 
 ## Layer Artifact Naming
@@ -33,8 +33,9 @@ model_NN_<layer_slug>_diagnostics
 | `MarketRegimeModel` | `source_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
 | `SectorContextModel` | `feature_02_sector_context` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
 | Anonymous target candidate builder / Layer 3 input preparation | `source_02_target_candidate_holdings` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Downstream sector-to-stock transmission evidence, not Layer 2 core behavior input. |
-| `TargetStateVectorModel` | `source_03_target_state` / legacy `source_03_strategy_selection` compatibility | candidate-symbol bars, liquidity, and point-in-time target-local evidence | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for target state-vector construction. |
-| `TradeQualityModel` | _(no trading-data source)_ | candidate signals, upstream context, bars/liquidity, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-data`; generated candidates/outcomes/labels belong outside the data-production layer unless a deterministic feature contract is explicitly accepted. |
+| `TargetStateVectorModel` | `source_03_target_state` | candidate-symbol bars, liquidity, and point-in-time target-local evidence | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for target state-vector construction. |
+| `AlphaConfidenceModel` | _(no trading-data source)_ | `target_state_vector`, upstream context, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-data`; labels belong outside inference features and are materialized only through reviewed deterministic evaluation contracts. |
+| `TradingProjectionModel` | _(no trading-data source)_ | alpha/confidence state, costs, risk budget, current/pending position state | Converts confidence into offline target action/exposure outside `trading-data`. |
 | `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
 | `PositionExecutionModel` | `source_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
 | `EventOverlayModel` | `source_07_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
@@ -51,7 +52,7 @@ The downstream target-candidate preparation boundary accepts `params.start` and 
 
 Layer 3 has two target-state surfaces with different maturity.
 
-Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and should write SQL table `source_03_target_state` after migration. The existing `source_03_strategy_selection` table is a legacy compatibility source.
+Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and should write SQL table `source_03_target_state`.
 
 Target state-vector construction is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, Layer 1/2 state references, and output target; `trading-data` builds deterministic market/sector/target/cross-state feature blocks and writes `feature_03_target_state_vector`. `trading-model` consumes that surface to train/evaluate `TargetStateVectorModel` against market-only and market+sector baselines.
 

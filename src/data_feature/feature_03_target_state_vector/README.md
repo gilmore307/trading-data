@@ -2,7 +2,7 @@
 
 Deterministic Layer 3 target state-vector feature production.
 
-This is the active replacement target for the legacy `feature_03_strategy_selection` runner. It should build point-in-time feature rows for `TargetStateVectorModel`; it must not simulate strategy variants or make model promotion decisions.
+This package builds point-in-time feature rows for `TargetStateVectorModel`; it must not simulate downstream action variants or make model promotion decisions.
 
 ## Intended table
 
@@ -31,7 +31,7 @@ V1 sparse synchronized state windows:
 5min, 15min, 60min, 390min
 ```
 
-These are state observation windows, not strategy variants. They are synchronized across market, sector, target, and cross-state blocks.
+These are state observation windows, not downstream action variants. They are synchronized across market, sector, target, and cross-state blocks.
 
 ## Required row keys
 
@@ -45,4 +45,4 @@ These are state observation windows, not strategy variants. They are synchronize
 
 ## Non-ownership
 
-This package does not own target-state labels, model training, state clustering, promotion decisions, strategy selection, option contracts, position sizing, execution, or portfolio allocation.
+This package does not own target-state labels, model training, state clustering, promotion decisions, downstream action selection, option contracts, position sizing, execution, or portfolio allocation.

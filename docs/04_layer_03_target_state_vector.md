@@ -60,10 +60,10 @@ The feature table should expose decomposable blocks:
 - `target_candidate_id`
 - `market_context_state_ref`
 - `sector_context_state_ref`
-- market-state feature payload or columns
-- sector-state feature payload or columns
-- target-state feature payload or columns
-- cross-state feature payload or columns
+- `market_state_features` payload or columns
+- `sector_state_features` payload or columns
+- `target_state_features` payload or columns
+- `cross_state_features` payload or columns
 - feature-quality diagnostics
 - source/run references
 
@@ -87,3 +87,14 @@ A completed feature run should let `trading-model` compare:
 3. market + sector + target state vector.
 
 The output is accepted only if it is point-in-time, identity-safe, reproducible from manager request metadata, and split into inspectable market/sector/target/cross-state blocks.
+
+
+## V1 state windows
+
+The first target-state feature contract should use sparse trailing state windows rather than strategy-like parameter grids:
+
+```text
+5min, 15min, 60min, 390min
+```
+
+These windows are for trailing return, volatility, volume, liquidity, and relative-strength state summaries. They are not strategy variants and should not create a variant universe.

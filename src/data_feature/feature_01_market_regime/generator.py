@@ -19,6 +19,8 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo("America/New_York")
 MARKET_STATE_TYPE = "market_state_etf"
 SECTOR_OBSERVATION_TYPE = "sector_observation_etf"
+LAYER_01_MARKET_REGIME = "layer_01_market_regime"
+LAYER_02_SECTOR_CONTEXT = "layer_02_sector_context"
 MODEL2_ROTATION_COMBINATION_TYPES = {"sector_rotation", "daily_context"}
 SINGLE_RETURN_TREND_EXCLUDED_SYMBOLS = {"SHY"}
 RETURN_LOOKBACKS = ("30m", "1d", "5d", "20d")
@@ -100,6 +102,7 @@ class Bar:
 class Combination:
     combination_id: str
     combination_type: str
+    model_layer: str
     numerator_symbol: str
     denominator_symbol: str
     feature_bar_grain: str
@@ -129,11 +132,12 @@ def build_inputs(
     for row in universe_rows:
         symbol = str(row.get("symbol") or "").strip().upper()
         universe_type = str(row.get("universe_type") or "").strip()
+        model_layer = str(row.get("model_layer") or "").strip().lower()
         if not symbol:
             continue
-        if universe_type == MARKET_STATE_TYPE:
+        if model_layer == LAYER_01_MARKET_REGIME:
             market_state_symbols.append(symbol)
-        elif universe_type == SECTOR_OBSERVATION_TYPE:
+        elif model_layer == LAYER_02_SECTOR_CONTEXT:
             sector_observation_symbols.append(symbol)
 
     combinations: list[Combination] = []
@@ -146,6 +150,7 @@ def build_inputs(
                 Combination(
                     combination_id=combination_id,
                     combination_type=str(row.get("combination_type") or "").strip().lower(),
+                    model_layer=str(row.get("model_layer") or "").strip().lower(),
                     numerator_symbol=numerator,
                     denominator_symbol=denominator,
                     feature_bar_grain=str(row.get("feature_bar_grain") or "").strip().lower(),
@@ -359,7 +364,7 @@ def _add_return_features(row: dict[str, Any], subject: str, close_at: Any, symbo
 
 
 def _market_regime_combinations(inputs: MarketRegimeInputs) -> list[Combination]:
-    return [combo for combo in inputs.combinations if combo.combination_type not in MODEL2_ROTATION_COMBINATION_TYPES]
+    return [combo for combo in inputs.combinations if combo.model_layer == LAYER_01_MARKET_REGIME]
 
 
 def _add_relative_strength_features(row: dict[str, Any], inputs: MarketRegimeInputs, close_at: Any, daily: Any, snapshot_time: datetime) -> None:

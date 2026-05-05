@@ -36,7 +36,7 @@ Combination = market_features.Combination
 def rotation_combinations(inputs: MarketRegimeInputs) -> list[Combination]:
     """Return reviewed sector/industry rotation combinations for Model 2."""
 
-    return [combo for combo in inputs.combinations if combo.combination_type in ROTATION_COMBINATION_TYPES]
+    return [combo for combo in inputs.combinations if combo.model_layer == market_features.LAYER_02_SECTOR_CONTEXT]
 
 
 def generate_rows(inputs: MarketRegimeInputs, snapshot_times: Sequence[str | datetime] | None = None) -> list[dict[str, Any]]:

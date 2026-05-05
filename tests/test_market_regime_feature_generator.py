@@ -46,15 +46,16 @@ def _intraday_bar(symbol: str, timestamp: datetime, close: float) -> dict[str, s
 class MarketRegimeGeneratorTests(unittest.TestCase):
     def _inputs(self):
         universe = [
-            {"symbol": "SPY", "universe_type": "market_state_etf"},
-            {"symbol": "QQQ", "universe_type": "market_state_etf"},
-            {"symbol": "XLK", "universe_type": "sector_observation_etf"},
-            {"symbol": "XLP", "universe_type": "sector_observation_etf"},
+            {"symbol": "SPY", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
+            {"symbol": "QQQ", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
+            {"symbol": "XLK", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
+            {"symbol": "XLP", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
         ]
         combinations = [
             {
                 "combination_id": "qqq_spy",
                 "combination_type": "primary",
+                "model_layer": "layer_01_market_regime",
                 "numerator_symbol": "QQQ",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "30m",
@@ -62,6 +63,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
             {
                 "combination_id": "xlk_spy",
                 "combination_type": "sector_rotation",
+                "model_layer": "layer_02_sector_context",
                 "numerator_symbol": "XLK",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "30m",
@@ -170,6 +172,9 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         row = generator.generate_row(inputs, datetime(2026, 1, 2, 16, 0, tzinfo=ET))
 
+        self.assertEqual(inputs.market_state_symbols, sorted(inputs.market_state_symbols))
+        self.assertNotIn("XLK", inputs.market_state_symbols)
+        self.assertTrue(all(combo.model_layer == "layer_01_market_regime" for combo in generator._market_regime_combinations(inputs)))
         self.assertEqual(len(row), 858)
         self.assertFalse(any(key.startswith("xlk_spy") for key in row))
         self.assertFalse(any(key.startswith("smh_xlk") for key in row))

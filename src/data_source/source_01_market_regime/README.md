@@ -1,8 +1,8 @@
 # source_01_market_regime
 
-MarketRegimeModel manager-facing ETF bar source.
+Market-context ETF bar source for Layer 1 market regime and Layer 2 sector context.
 
-This source fetches the reviewed market/sector/cross-asset ETF universe over a manager-supplied time range and writes one normalized SQL long table. Stable defaults live in the pipeline code; there is no source-local `config.json` for this contract.
+This source fetches the reviewed market/sector/cross-asset ETF universe over a manager-supplied time range and writes one normalized SQL long table. Stable defaults live in the pipeline code; there is no source-local `config.json` for this contract. Layer ownership is not inferred from the source table name; downstream feature generators must honor the shared CSV `model_layer` discriminator.
 
 ## Input parameters
 
@@ -22,6 +22,7 @@ The universe CSV owns ETF scope and grain choices:
 
 - `symbol` — ETF symbol to fetch.
 - `universe_type` / `exposure_type` — why the ETF belongs in the universe.
+- `model_layer` — authoritative scope discriminator; `layer_01_market_regime` rows feed Layer 1 feature construction and `layer_02_sector_context` rows feed Layer 2 sector/industry/theme observation.
 - `bar_grain` — requested bar grain for that ETF, e.g. `1d`, `30m`.
 - `fund_name`, `issuer_name` — human-readable metadata.
 

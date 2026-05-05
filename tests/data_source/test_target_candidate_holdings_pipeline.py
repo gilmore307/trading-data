@@ -20,9 +20,9 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             universe = Path(tmp) / "market_regime_etf_universe.csv"
             universe.write_text(
-                "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
-                "SPY,market_state_etf,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"
-                "SMH,sector_observation_etf,industry_chain,1d,VanEck Semiconductor ETF,VanEck\n",
+                "symbol,universe_type,model_layer,exposure_type,bar_grain,fund_name,issuer_name\n"
+                "SPY,market_state_etf,layer_01_market_regime,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"
+                "SMH,sector_observation_etf,layer_02_sector_context,industry_chain,1d,VanEck Semiconductor ETF,VanEck\n",
                 encoding="utf-8",
             )
             holdings = Path(tmp) / "smh_holdings.csv"
@@ -52,6 +52,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 1)
             manifest = json.loads((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["model_layer_filter"], "layer_02_sector_context")
             self.assertEqual(manifest["universe_type_filter"], "sector_observation_etf")
             self.assertEqual(manifest["symbols"], ["SMH"])
             self.assertEqual(len(sql_writer.calls), 1)

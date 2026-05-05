@@ -8,6 +8,6 @@ Feature packages transform accepted feed/source data into model-facing feature t
 
 ## Packages
 
-- `feature_01_market_regime/` — Layer 1 MarketRegimeModel V1 feature generator and SQL runner for `trading_data.feature_01_market_regime`; generated feature values are stored in `feature_payload_json` JSONB under the `snapshot_time` row key. Sector/industry rotation pair features are excluded from this Layer 1 surface.
+- `feature_01_market_regime/` — Layer 1 MarketRegimeModel feature generator and SQL runner for `trading_data.feature_01_market_regime`; generated feature values are stored in `feature_payload_json` JSONB under the `snapshot_time` row key. It consumes shared CSV rows scoped to `model_layer = layer_01_market_regime`; sector/industry rotation pair features are excluded from this Layer 1 surface.
 - `feature_02_sector_context/` — Layer 2 SectorContextModel sector/industry rotation feature generator and SQL runner for `trading_data.feature_02_sector_context`; rows are keyed by `snapshot_time + candidate_symbol + comparison_symbol + rotation_pair_id` and store relative-strength plus sector-observation summary evidence in `feature_payload_json`.
 - `feature_03_target_state_vector/` — active contract-first Layer 3 target state-vector feature workspace for market/sector/target/cross-state feature blocks.

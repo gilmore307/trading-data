@@ -2,7 +2,7 @@
 
 Manager-facing ETF holdings source for downstream target-candidate preparation.
 
-This source reads the reviewed ETF universe, keeps only `universe_type = sector_observation_etf`, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table used after Layer 2 has selected/prioritized sector/industry baskets. Stable defaults live in pipeline code; there is no source-local `config.json`.
+This source reads the reviewed ETF universe, keeps only `model_layer = layer_02_sector_context` rows, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table used after Layer 2 has selected/prioritized sector/industry baskets. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Boundary note: the physical source/table name remains `source_02_target_candidate_holdings` for now, but ETF holdings are no longer a core Layer 2 `SectorContextModel` behavior input. They belong to the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before strategy fitting anonymizes target vectors.
 
@@ -23,7 +23,7 @@ Optional task key fields:
 - `params.market_regime_etf_universe_path`: reviewed universe override. Normal runs use `/root/projects/trading-storage/main/shared/market_regime_etf_universe.csv`.
 - `output_root`: local receipt/request-manifest root
 
-The universe CSV supplies `symbol`, `issuer_name`, `universe_type`, and `exposure_type`. Only `sector_observation_etf` rows require holdings analysis; `market_state_etf` rows are Layer 1 regime/bar instruments and are intentionally skipped here. The holdings source supplies constituent rows.
+The universe CSV supplies `symbol`, `issuer_name`, `model_layer`, `universe_type`, and `exposure_type`. Only `model_layer = layer_02_sector_context` rows require holdings analysis; `layer_01_market_regime` rows are Layer 1 regime/bar instruments and are intentionally skipped here. The holdings source supplies constituent rows.
 
 ## Filtering rule
 

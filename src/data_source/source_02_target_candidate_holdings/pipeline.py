@@ -102,9 +102,9 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         rows = [{str(k): str(v or "").strip() for k, v in row.items()} for row in csv.DictReader(handle)]
     rows = [row for row in rows if row.get("symbol") and row.get("issuer_name")]
-    rows = [row for row in rows if row.get("universe_type") == HOLDINGS_UNIVERSE_TYPE]
+    rows = [row for row in rows if row.get("model_layer") == "layer_02_sector_context"]
     if not rows:
-        raise TargetCandidateHoldingsInputsError(f"market regime ETF universe produced zero {HOLDINGS_UNIVERSE_TYPE} rows: {path}")
+        raise TargetCandidateHoldingsInputsError(f"market regime ETF universe produced zero layer_02_sector_context rows: {path}")
     return rows
 
 
@@ -142,6 +142,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
         "start": start,
         "end": end,
         "market_regime_etf_universe_path": str(universe_path),
+        "model_layer_filter": "layer_02_sector_context",
         "universe_type_filter": HOLDINGS_UNIVERSE_TYPE,
         "symbols": sorted(selected),
         "holding_feeds": evidence,

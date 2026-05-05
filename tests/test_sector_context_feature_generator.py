@@ -47,16 +47,17 @@ def _intraday_bar(symbol: str, timestamp: datetime, close: float) -> dict[str, s
 class SectorContextFeatureGeneratorTests(unittest.TestCase):
     def _inputs(self):
         universe = [
-            {"symbol": "SPY", "universe_type": "market_state_etf"},
-            {"symbol": "QQQ", "universe_type": "market_state_etf"},
-            {"symbol": "XLK", "universe_type": "sector_observation_etf"},
-            {"symbol": "XLP", "universe_type": "sector_observation_etf"},
-            {"symbol": "SMH", "universe_type": "sector_observation_etf"},
+            {"symbol": "SPY", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
+            {"symbol": "QQQ", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
+            {"symbol": "XLK", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
+            {"symbol": "XLP", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
+            {"symbol": "SMH", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
         ]
         combinations = [
             {
                 "combination_id": "qqq_spy",
                 "combination_type": "primary",
+                "model_layer": "layer_01_market_regime",
                 "numerator_symbol": "QQQ",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "30m",
@@ -64,6 +65,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             {
                 "combination_id": "xlk_spy",
                 "combination_type": "sector_rotation",
+                "model_layer": "layer_02_sector_context",
                 "numerator_symbol": "XLK",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "30m",
@@ -71,6 +73,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             {
                 "combination_id": "smh_xlk",
                 "combination_type": "daily_context",
+                "model_layer": "layer_02_sector_context",
                 "numerator_symbol": "SMH",
                 "denominator_symbol": "XLK",
                 "feature_bar_grain": "1d",
@@ -212,6 +215,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
         rows = generator.generate_rows(inputs, [datetime(2026, 1, 2, 16, 0, tzinfo=ET)])
 
+        self.assertTrue(all(combo.model_layer == "layer_02_sector_context" for combo in generator.rotation_combinations(inputs)))
         self.assertEqual(len(rows), 32)
         self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation_summary", "sector_rotation", "daily_context"})
         self.assertIn("sector_observation_breadth", {row["rotation_pair_id"] for row in rows})

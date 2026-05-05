@@ -1,6 +1,6 @@
 # feature_03_target_state_vector
 
-Contract-first workspace for deterministic Layer 3 target state-vector feature production.
+Deterministic Layer 3 target state-vector feature production.
 
 This is the active replacement target for the legacy `feature_03_strategy_selection` runner. It should build point-in-time feature rows for `TargetStateVectorModel`; it must not simulate strategy variants or make model promotion decisions.
 
@@ -19,7 +19,19 @@ The feature surface should expose the same four model-facing blocks used by `tra
 - `target_state_features`
 - `cross_state_features`
 
-The first implementation may store these as JSON payloads for review, but the block names should remain inspectable in SQL output and receipts.
+The first implementation stores these as Python dictionaries ready for JSON/JSONB persistence by a later SQL wrapper. Block names remain inspectable in output rows and receipts.
+
+## Current implementation
+
+`generator.py` consumes candidate-mapped target-local bars plus optional point-in-time market/sector context rows and emits one row per `target_candidate_id + available_time` with the four V1 blocks.
+
+V1 sparse trailing windows:
+
+```text
+5min, 15min, 60min, 390min
+```
+
+These are state observation windows, not strategy variants.
 
 ## Required row keys
 

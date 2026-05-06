@@ -44,7 +44,7 @@
 - Reclassified ETF holdings and `stock_etf_exposure` as downstream anonymous target candidate builder / Layer 3 input-preparation evidence, not Layer 2 core behavior inputs.
 - Implemented `stock_etf_exposure` derived source aggregation over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
 - Implemented `source_04_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
-- Registered seven model input organization sources originally; current accepted numbered set has no 04 data source, with 06 as position execution and 07 as event overlay.
+- Registered seven model input organization sources originally; current accepted numbered set uses 04 as event overlay, 05 as option expression, and 06 as position execution.
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind; it is now assigned to downstream candidate construction after Layer 2 selects/prioritizes sector baskets.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.
 - Added `docs/94_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input sources.

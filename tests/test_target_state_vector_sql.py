@@ -29,7 +29,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             "target_candidate_id": "tcand_001",
             "market_context_state_ref": "mkt_001",
             "sector_context_state_ref": "sec_001",
-            "target_state_vector_version": "target_state_vector_v1",
+            "target_context_state_version": "target_context_state_v1",
             "market_state_features": {"state_observation_windows": ["5min"]},
             "sector_state_features": {"state_observation_windows": ["5min"]},
             "target_state_features": {"target_direction_return_shape": {"return_5min": 0.01}},
@@ -41,7 +41,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
         statements = "\n".join(statement for statement, _ in cursor.calls)
         self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_03_target_state_vector"', statements)
-        self.assertIn('PRIMARY KEY ("target_candidate_id", "available_time", "target_state_vector_version")', statements)
+        self.assertIn('PRIMARY KEY ("target_candidate_id", "available_time", "target_context_state_version")', statements)
         self.assertIn('"market_state_features" JSONB', statements)
         insert_calls = [call for call in cursor.calls if "INSERT INTO" in call[0]]
         self.assertEqual(len(insert_calls), 1)

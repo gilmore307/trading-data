@@ -24,7 +24,7 @@ METADATA_COLUMNS = (
     "target_candidate_id",
     "market_context_state_ref",
     "sector_context_state_ref",
-    "target_state_vector_version",
+    "target_context_state_version",
 )
 JSONB_COLUMNS = (
     "market_state_features",
@@ -33,7 +33,7 @@ JSONB_COLUMNS = (
     "cross_state_features",
     "feature_quality_diagnostics",
 )
-KEY_COLUMNS = ("target_candidate_id", "available_time", "target_state_vector_version")
+KEY_COLUMNS = ("target_candidate_id", "available_time", "target_context_state_version")
 
 
 def _load_generator():
@@ -150,7 +150,7 @@ def fetch_context_rows(
     )
     rows = [dict(row) for row in cursor.fetchall()]
     for row in rows:
-        row.setdefault("context_ref", row.get(ref_column) or row.get("model_run_id") or row.get("target_state_vector_ref"))
+        row.setdefault("context_ref", row.get(ref_column) or row.get("model_run_id") or row.get("target_context_state_ref"))
     return rows
 
 
@@ -180,13 +180,13 @@ def write_feature_rows_sql(
           "target_candidate_id" TEXT NOT NULL,
           "market_context_state_ref" TEXT,
           "sector_context_state_ref" TEXT,
-          "target_state_vector_version" TEXT NOT NULL,
+          "target_context_state_version" TEXT NOT NULL,
           "market_state_features" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
           "sector_state_features" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
           "target_state_features" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
           "cross_state_features" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
           "feature_quality_diagnostics" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
-          PRIMARY KEY ("target_candidate_id", "available_time", "target_state_vector_version")
+          PRIMARY KEY ("target_candidate_id", "available_time", "target_context_state_version")
         )
         """
     )
@@ -219,7 +219,7 @@ def generate_sql(
     sector_context_schema: str,
     sector_context_table: str,
     run_id: str,
-    target_state_vector_version: str,
+    target_context_state_version: str,
 ) -> int:
     generator = _load_generator()
     psycopg, dict_row = _load_psycopg()
@@ -234,7 +234,7 @@ def generate_sql(
                 if row.get("target_candidate_id") and row.get("symbol")
             ]
             inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows)
-            rows = generator.generate_rows(inputs, run_id=run_id, target_state_vector_version=target_state_vector_version)
+            rows = generator.generate_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
             write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
             return len(rows)
 
@@ -253,7 +253,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
     parser.add_argument("--run-id", default="feature_03_target_state_vector_sql")
-    parser.add_argument("--target-state-vector-version", default="target_state_vector_v1")
+    parser.add_argument(
+        "--target-context-state-version",
+        "--target-state-vector-version",
+        dest="target_context_state_version",
+        default="target_context_state_v1",
+        help="Layer 3 target context state contract version; --target-state-vector-version is a deprecated alias.",
+    )
     args = parser.parse_args(argv)
     row_count = generate_sql(
         database_url=_database_url(args.database_url),
@@ -268,7 +274,7 @@ def main(argv: list[str] | None = None) -> int:
         sector_context_schema=args.sector_context_schema,
         sector_context_table=args.sector_context_table,
         run_id=args.run_id,
-        target_state_vector_version=args.target_state_vector_version,
+        target_context_state_version=args.target_context_state_version,
     )
     print(f"generated {row_count} rows into {args.target_schema}.{args.target_table}")
     return 0

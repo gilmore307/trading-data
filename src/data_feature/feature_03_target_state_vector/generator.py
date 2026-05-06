@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
 FEATURE = "feature_03_target_state_vector"
-DEFAULT_VECTOR_VERSION = "target_state_vector_v1"
+DEFAULT_VECTOR_VERSION = "target_context_state_v1"
 DEFAULT_RUN_ID = "adhoc"
 STATE_WINDOWS = (5, 15, 60, 390)
 STATE_WINDOW_LABELS = tuple(f"{window}min" for window in STATE_WINDOWS)
@@ -32,7 +32,7 @@ METADATA_COLUMNS = {
     "target_candidate_id",
     "market_context_state_ref",
     "sector_context_state_ref",
-    "target_state_vector_version",
+    "target_context_state_version",
 }
 
 
@@ -135,7 +135,7 @@ def generate_rows(
     inputs: TargetStateInputs,
     *,
     run_id: str = DEFAULT_RUN_ID,
-    target_state_vector_version: str = DEFAULT_VECTOR_VERSION,
+    target_context_state_version: str = DEFAULT_VECTOR_VERSION,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for target_candidate_id in sorted(inputs.bars_by_candidate):
@@ -145,7 +145,7 @@ def generate_rows(
                 inputs.market_context_rows,
                 inputs.sector_context_rows,
                 run_id=run_id,
-                target_state_vector_version=target_state_vector_version,
+                target_context_state_version=target_context_state_version,
             )
         )
     _attach_peer_ranks(rows)
@@ -158,7 +158,7 @@ def generate_candidate_rows(
     sector_context_rows: Sequence[ContextRow] = (),
     *,
     run_id: str = DEFAULT_RUN_ID,
-    target_state_vector_version: str = DEFAULT_VECTOR_VERSION,
+    target_context_state_version: str = DEFAULT_VECTOR_VERSION,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     closes = [bar.close for bar in bars]
@@ -185,7 +185,7 @@ def generate_candidate_rows(
                 "target_candidate_id": bar.target_candidate_id,
                 "market_context_state_ref": market_context.context_ref if market_context else None,
                 "sector_context_state_ref": sector_context.context_ref if sector_context else None,
-                "target_state_vector_version": target_state_vector_version,
+                "target_context_state_version": target_context_state_version,
                 "market_state_features": market_state,
                 "sector_state_features": sector_state,
                 "target_state_features": target_state,

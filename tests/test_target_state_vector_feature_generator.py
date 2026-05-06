@@ -73,13 +73,19 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         target_state = row["target_state_features"]
         self.assertAlmostEqual(target_state["target_direction_return_shape"]["return_15min"], 115 / 100 - 1)
         self.assertIn("target_liquidity_tradability_state", target_state)
+        self.assertIn("target_trend_age_state", target_state)
+        self.assertIn("target_exhaustion_decay_state", target_state)
+        self.assertIn("target_peer_rank_state", target_state)
         self.assertEqual(target_state["target_liquidity_tradability_state"]["spread_bps"], 4.0)
+        self.assertEqual(target_state["target_session_position_state"]["minutes_since_open"], 15)
+        self.assertEqual(target_state["target_session_position_state"]["session_phase"], "opening_range")
         self.assertGreater(target_state["target_vwap_location_state"]["vwap_distance_pct"], 0)
 
         cross_state = row["cross_state_features"]
         self.assertAlmostEqual(cross_state["target_vs_market_residual_direction"], (115 / 100 - 1) - 0.03)
         self.assertAlmostEqual(cross_state["target_vs_sector_residual_direction"], (115 / 100 - 1) - 0.06)
         self.assertEqual(cross_state["sector_confirmation_state"], "sector_confirmed")
+        self.assertIn("beta_adjustment_policy", cross_state)
 
     def test_uses_sparse_state_windows_without_variant_fields(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)

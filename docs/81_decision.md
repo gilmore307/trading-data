@@ -909,15 +909,15 @@ Consequences:
 
 Accepted: 2026-04-28
 
-Decision: Layer 06 is now `PositionExecutionModel` / `source_06_position_execution`, and Layer 07 is now `EventOverlayModel` / `source_07_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
+Decision: Layer 06 is now `PositionExecutionModel` / `source_06_position_execution`, and Layer 04 is now `EventOverlayModel` / `source_04_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
 
 Rationale: OptionExpressionModel chooses the theoretically best-return and risk-controllable contracts. The next layer should study how to execute those selected contracts, requiring option contract time-series data from entry through exit plus one hour. Event overlay is a later global context layer and should use one event overview table rather than manifest references.
 
 Consequences:
 
 - Layer 06 writes `source_06_position_execution`.
-- Layer 07 writes `source_07_event_overlay`.
-- `source_07_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
+- Layer 04 writes `source_04_event_overlay`.
+- `source_04_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 
 ## D059 - Retire data-kind preview templates
@@ -951,7 +951,7 @@ Rename active numbered packages to `NN_bundle_<layer>`:
 - `source_03_target_state`
 - `source_05_option_expression`
 - `source_06_position_execution`
-- `source_07_event_overlay`
+- `source_04_event_overlay`
 
 CLI entrypoints now use `trading-data-NN-bundle-<layer>` names. SQL table names are handled separately; bundle outputs must not imply ownership of the complete model input universe.
 
@@ -978,7 +978,7 @@ Accepted numbered bundle SQL outputs use bundle-derived table names under the `t
 - `source_03_target_state`
 - `source_05_option_expression`
 - `source_06_position_execution`
-- `source_07_event_overlay`
+- `source_04_event_overlay`
 
 Use snake_case for SQL identifiers; hyphenated names are only for CLI/package presentation where supported.
 
@@ -1005,7 +1005,7 @@ Accepted numbered bundle SQL outputs live under schema `trading_data`, not `mode
 - `source_03_target_state`
 - `source_05_option_expression`
 - `source_06_position_execution`
-- `source_07_event_overlay`
+- `source_04_event_overlay`
 
 The default PostgreSQL storage target id is `trading_data_postgres` and its schema is `trading_data`.
 

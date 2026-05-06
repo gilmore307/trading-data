@@ -17,7 +17,7 @@ Note: downstream alpha/projection consumers currently do not need new `trading-d
 - `source_03_target_state` — SQL-only target-local bar/liquidity input table for anonymous target state-vector construction.
 - `source_05_option_expression` — SQL-only contract-level ThetaData option-chain snapshot table for OptionExpressionModel; one row per visible contract per entry/exit snapshot.
 - `source_06_position_execution` — SQL-only selected option contract time-series table for PositionExecutionModel; covers entry through exit plus one hour.
-- `source_07_event_overlay` — SQL-only EventOverlayModel overview table; one row per event, with details behind references.
-- `source_07_event_overlay/equity_abnormal_activity` — nested event-overlay detector for equity/ETF abnormal activity evidence rows.
+- `source_04_event_overlay` — SQL-only EventOverlayModel overview table; one row per event, with details behind references.
+- `source_04_event_overlay/equity_abnormal_activity` — nested event-overlay detector for equity/ETF abnormal activity evidence rows.
 
 The remaining historical acquisition runners still live under `data_feed` until each has a reviewed manager-facing wrapper. Do not add new model-layer data preparation under `data_feed`, and do not name active source packages `*_model_inputs`.

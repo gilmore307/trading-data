@@ -1,8 +1,8 @@
-# source_07_event_overlay
+# source_04_event_overlay
 
 Manager-facing EventOverlayModel data source.
 
-Layer 07 supplies bounded, point-in-time event overview rows for the event overlay model. The output is one SQL table and one row per event. Full news text, SEC filing detail, and detector artifacts stay behind references such as web URLs, SEC file paths, or internal artifact paths.
+Layer 04 supplies bounded, point-in-time event overview rows for the event overlay model. The output is one SQL table and one row per event. Full news text, SEC filing detail, and detector artifacts stay behind references such as web URLs, SEC file paths, or internal artifact paths.
 
 Stable defaults live in pipeline code; there is no source-local `config.json`.
 
@@ -10,7 +10,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `source_07_event_overlay`
+- `source`: `source_04_event_overlay`
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date
@@ -40,7 +40,7 @@ Each event row requires:
 Final saved output is SQL-only:
 
 ```text
-source_07_event_overlay
+source_04_event_overlay
 ```
 
 Natural key:

@@ -161,11 +161,11 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_source_writes_one_row_per_event(self):
-        module = import_module("data_source.source_07_event_overlay.pipeline")
+        module = import_module("data_source.source_04_event_overlay.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "source_07_event_overlay_task_test",
-                "source": "source_07_event_overlay",
+                "task_id": "source_04_event_overlay_task_test",
+                "source": "source_04_event_overlay",
                 "params": {
                     "start": "2026-04-24T09:30:00-04:00",
                     "end": "2026-04-24T16:00:00-04:00",
@@ -205,9 +205,9 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_07_event_overlay"], 2)
+            self.assertEqual(result.row_counts["source_04_event_overlay"], 2)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "source_07_event_overlay")
+            self.assertEqual(call["table"], "source_04_event_overlay")
             self.assertEqual(call["key_columns"], ["event_id"])
             self.assertNotIn("run_id", call["columns"])
             self.assertEqual({row["information_role_type"] for row in call["rows"]}, {"lagging_evidence", "prior_signal"})

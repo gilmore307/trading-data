@@ -38,7 +38,7 @@ model_NN_<layer_slug>_diagnostics
 | `TradingProjectionModel` | _(no trading-data source)_ | alpha/confidence state, costs, risk budget, current/pending position state | Converts confidence into offline target action/exposure outside `trading-data`. |
 | `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
 | `PositionExecutionModel` | `source_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
-| `EventOverlayModel` | `source_07_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
+| `EventOverlayModel` | `source_04_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
 ## Implemented Model Input Sources
 
@@ -62,7 +62,7 @@ Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, an
 
 Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `source_06_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
 
-Layer 7 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `source_07_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
+Layer 4 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `source_04_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
 
 ## Source-Backed Aggregations That Need Migration Review
 
@@ -97,9 +97,9 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Source: `src/data_source/source_07_event_overlay/equity_abnormal_activity/`
+Source: `src/data_source/source_04_event_overlay/equity_abnormal_activity/`
 
-Config: `src/data_source/source_07_event_overlay/equity_abnormal_activity/config.json`
+Config: `src/data_source/source_04_event_overlay/equity_abnormal_activity/config.json`
 
 Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
 

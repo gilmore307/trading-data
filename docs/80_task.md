@@ -43,7 +43,7 @@
 - Aligned `feature_02_sector_context`, `source_02_target_candidate_holdings`, `source_03_target_state`, and `feature_03_target_state_vector` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
 - Reclassified ETF holdings and `stock_etf_exposure` as downstream anonymous target candidate builder / Layer 3 input-preparation evidence, not Layer 2 core behavior inputs.
 - Implemented `stock_etf_exposure` derived source aggregation over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
-- Implemented `source_07_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
+- Implemented `source_04_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
 - Registered seven model input organization sources originally; current accepted numbered set has no 04 data source, with 06 as position execution and 07 as event overlay.
 - Added `stock_etf_exposure` as a derived point-in-time model-input data kind; it is now assigned to downstream candidate construction after Layer 2 selects/prioritizes sector baskets.
 - Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.

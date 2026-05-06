@@ -27,13 +27,11 @@ trading-data-10-feed-thetadata-option-primary-tracking = "data_feed.10_feed_thet
 trading-data-11-feed-thetadata-option-event-timeline = "data_feed.11_feed_thetadata_option_event_timeline.__main__:main"
 trading-data-source-01-market-regime = "data_source.source_01_market_regime.__main__:main"
 trading-data-source-02-target-candidate-holdings = "data_source.source_02_target_candidate_holdings.__main__:main"
-trading-data-source-03-strategy-selection = "data_source.source_03_strategy_selection.__main__:main"
 trading-data-source-05-option-expression = "data_source.source_05_option_expression.__main__:main"
 trading-data-source-06-position-execution = "data_source.source_06_position_execution.__main__:main"
 trading-data-source-07-event-overlay = "data_source.source_07_event_overlay.__main__:main"
 trading-data-feature-01-market-regime = "data_feature.feature_01_market_regime.__main__:main"
 trading-data-feature-02-sector-context = "data_feature.feature_02_sector_context.__main__:main"
-trading-data-feature-03-strategy-selection = "data_feature.feature_03_strategy_selection.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

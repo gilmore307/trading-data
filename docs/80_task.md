@@ -2,7 +2,6 @@
 
 ## Active Tasks
 
-- Align `feature_02_sector_context`, `source_02_target_candidate_holdings`, `source_03_target_state`, and `feature_03_target_state_vector` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
 - Calibrate and harden downstream candidate-construction `stock_etf_exposure` freshness/scoring rules and `equity_abnormal_activity_event` thresholds/model standards.
 
 ## Queued Tasks
@@ -43,6 +42,7 @@
 
 ## Recently Accepted
 
+- Aligned `feature_02_sector_context`, `source_02_target_candidate_holdings`, `source_03_target_state`, and `feature_03_target_state_vector` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
 - Reclassified ETF holdings and `stock_etf_exposure` as downstream anonymous target candidate builder / Layer 3 input-preparation evidence, not Layer 2 core behavior inputs.
 - Implemented `stock_etf_exposure` derived source aggregation over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
 - Implemented `source_07_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.

@@ -19,11 +19,11 @@ The feature surface should expose the same four model-facing blocks used by `tra
 - `target_state_features`
 - `cross_state_features`
 
-The first implementation stores these as Python dictionaries ready for JSON/JSONB persistence by a later SQL wrapper. Block names remain inspectable in output rows and receipts.
+The first implementation stores these as Python dictionaries and `sql.py` persists them as JSONB blocks. Block names remain inspectable in output rows and receipts.
 
 ## Current implementation
 
-`generator.py` consumes candidate-mapped target-local bars plus optional point-in-time market/sector context rows and emits one row per `target_candidate_id + available_time` with the four V1 blocks.
+`generator.py` consumes candidate-mapped target-local bars plus optional point-in-time market/sector context rows and emits one row per `target_candidate_id + available_time` with the four V1 blocks. `sql.py` reads accepted `source_03_target_state` rows and writes `trading_data.feature_03_target_state_vector` keyed by `target_candidate_id + available_time + target_state_vector_version`.
 
 V1 sparse synchronized state windows:
 

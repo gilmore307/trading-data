@@ -22,7 +22,7 @@
 
 - Exact control-plane task key file/request schema beyond the current minimal template.
 - Exact feed connector package layout beyond the implemented source slices.
-- Exact source invocation contract and runner interface beyond current CLIs.
+- Exact live orchestration/task-key schema for production Layer 3 source/feature runs beyond current local/SQL CLIs.
 - Exact development output subdirectory/file layout under `storage/` beyond task/run grouping.
 - Exact segment naming/checkpoint/resume evidence format.
 - Exact data artifact schema and reference format.
@@ -42,6 +42,8 @@
 
 ## Recently Accepted
 
+- Implemented `source_03_target_state` as a deterministic target-local bars/liquidity normalizer keyed by `target_candidate_id + timeframe + timestamp`; raw symbol is retained only as source/audit/routing metadata.
+- Implemented `feature_03_target_state_vector` SQL wrapper to read `source_03_target_state` plus optional Layer 1/2 context rows and write JSONB market/sector/target/cross-state blocks into `trading_data.feature_03_target_state_vector`.
 - Aligned `feature_02_sector_context`, `source_02_target_candidate_holdings`, `source_03_target_state`, and `feature_03_target_state_vector` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
 - Reclassified ETF holdings and `stock_etf_exposure` as downstream anonymous target candidate builder / Layer 3 input-preparation evidence, not Layer 2 core behavior inputs.
 - Implemented `stock_etf_exposure` derived source aggregation over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.

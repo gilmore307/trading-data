@@ -224,9 +224,11 @@ def _source_02_target_candidate_holdings_ddl(qualified_table: str) -> str:
 def _source_03_target_state_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
-        symbol TEXT NOT NULL,
+        target_candidate_id TEXT NOT NULL,
+        symbol TEXT,
         timeframe TEXT NOT NULL,
         timestamp TIMESTAMPTZ NOT NULL,
+        available_time TIMESTAMPTZ NOT NULL,
         bar_open DOUBLE PRECISION,
         bar_high DOUBLE PRECISION,
         bar_low DOUBLE PRECISION,
@@ -244,7 +246,7 @@ def _source_03_target_state_ddl(qualified_table: str) -> str:
         spread_bps DOUBLE PRECISION,
         last_bid DOUBLE PRECISION,
         last_ask DOUBLE PRECISION,
-        PRIMARY KEY (symbol, timeframe, timestamp)
+        PRIMARY KEY (target_candidate_id, timeframe, timestamp)
     )
     """
 

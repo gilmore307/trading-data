@@ -1,6 +1,6 @@
 # Layer 3 Target State Vector
 
-`trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction.
+`trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction. The first source/feature scaffold is implemented and remains promotion-gated by model-side real-data evidence.
 
 Layer 3 is target state-vector production. Earlier action/variant simulation code has been retired and must not be used as the active Layer 3 contract.
 
@@ -26,6 +26,13 @@ Active contracts use target-state names:
 source_03_target_state
 feature_03_target_state_vector
 ```
+
+Current implementation:
+
+- `src/data_source/source_03_target_state/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.source_03_target_state` rows keyed by `target_candidate_id + timeframe + timestamp`.
+- `src/data_feature/feature_03_target_state_vector/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
+- `src/data_feature/feature_03_target_state_vector/sql.py` reads `source_03_target_state` plus optional Layer 1/2 context rows and writes `trading_data.feature_03_target_state_vector` with JSONB blocks.
+- CLI entrypoints are registered for `trading-data-source-03-target-state` and `trading-data-feature-03-target-state-vector`.
 
 ## Inputs
 
@@ -67,7 +74,7 @@ The feature table should expose decomposable blocks:
 - feature-quality diagnostics
 - source/run references
 
-Real ticker/company identity must remain outside model-facing feature vectors. Routing/audit metadata may preserve symbol references separately when required.
+Real ticker/company identity must remain outside model-facing feature vectors. `source_03_target_state.symbol` is source/audit/routing metadata only; `feature_03_target_state_vector` feature blocks must use `target_candidate_id` and context refs rather than ticker/company identity.
 
 ## Non-ownership
 

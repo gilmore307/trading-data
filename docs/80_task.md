@@ -6,31 +6,20 @@
 
 ## Queued Tasks
 
-- Define initial control-plane-issued data task key file schema in `trading-manager`.
 - Fill API-specific templates for the first implementation feed before writing connector code.
 - Define strict Trading Economics macro calendar task/config vocabulary for accepted visible-page macro model inputs.
 - Define source-specific task/run ID prefix rules in implementation helpers.
 - Define segment checkpoint/resume behavior for long historical fetch-clean-save jobs.
-- Define data artifact reference and manifest requirements with `trading-manager` and `trading-storage`.
-- Define storage-resident data task completion receipt schema with `trading-manager` and `trading-storage`.
-- Define storage SQL table/partition contract for data-task outputs before durable/production mode.
 - Define provider quota/rate-limit/retry policy per source before automation loops are introduced.
 - Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
 - Define any additional provider secret alias names through `trading-manager` once providers are selected.
 
 ## Open Gaps
 
-- Exact control-plane task key file/request schema beyond the current minimal template.
 - Exact feed connector package layout beyond the implemented source slices.
 - Exact live orchestration/task-key schema for production Layer 3 source/feature runs beyond current local/SQL CLIs.
 - Exact development output subdirectory/file layout under `storage/` beyond task/run grouping.
 - Exact segment naming/checkpoint/resume evidence format.
-- Exact data artifact schema and reference format.
-- Exact manifest and ready-signal schema.
-- Exact completion receipt durable schema and storage location.
-- Exact storage SQL table/partition destination contract for durable/production mode.
-- Shared storage root and partition layout.
-- Timestamp normalization contract for payload fields that must remain America/New_York versus any required UTC/database fields.
 - Provider quota/rate-limit policy and live-call guardrails.
 - Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
 - ETF issuer priority list, source-file formats, and as-of-date/available-time handling.
@@ -39,6 +28,13 @@
 - Optionability summary shape for downstream candidate-construction and expression-fit evidence.
 - ThetaData connector/JAR/credential layout.
 - Data-domain vocabulary registration in `trading-manager` if exact domain keys become cross-repository contract values.
+
+## Deferred Until Manager Phase
+
+- Control-plane-issued task key/request schema beyond the current minimal template.
+- Data artifact reference, manifest, ready-signal, durable completion-receipt, and storage SQL table/partition contracts.
+- Shared storage root/partition layout and UTC-vs-America/New_York payload-field normalization rules for durable database/storage fields.
+- These shared contracts remain deferred until all model layers are designed and the `trading-manager` development phase starts; `trading-data` may continue local/offline source and feature work without pretending the durable manager/storage interface is final.
 
 ## Recently Accepted
 

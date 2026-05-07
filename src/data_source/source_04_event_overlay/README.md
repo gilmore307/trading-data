@@ -2,7 +2,9 @@
 
 Manager-facing EventOverlayModel data source.
 
-Layer 04 supplies bounded, point-in-time event overview rows for the event overlay model. The output is one SQL table and one row per event. Full news text, SEC filing detail, and detector artifacts stay behind references such as web URLs, SEC file paths, or internal artifact paths.
+Layer 04 supplies bounded, point-in-time event overview rows for the event overlay model. The output is one SQL table and one row per event. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity detector payloads, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
+
+This source is an event index, not the full `event_context_vector`. `EventOverlayModel` combines these overview rows with point-in-time event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and scope/sensitivity metadata inside `trading-model`.
 
 Stable defaults live in pipeline code; there is no source-local `config.json`.
 
@@ -65,4 +67,6 @@ Columns:
 - `reference_type`
 - `reference`
 
-The table stores overview rows only. It does not store full article text, SEC filing contents, model impact scores, or trade recommendations.
+The table stores overview rows only. It does not store full article text, SEC filing contents, event artifact payloads, model impact scores, labels, alpha confidence, or trade recommendations.
+
+Future fields such as `event_native_scope_type`, `declared_scope_type`, `industry_type`, `theme_tags`, revision ids, and source update timestamps require explicit SQL migration plus registry review before they become active table columns.

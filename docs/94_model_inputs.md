@@ -34,11 +34,11 @@ model_NN_<layer_slug>_diagnostics
 | `SectorContextModel` | `feature_02_sector_context` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
 | Anonymous target candidate builder / Layer 3 input preparation | `source_02_target_candidate_holdings` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Downstream sector-to-stock transmission evidence, not Layer 2 core behavior input. |
 | `TargetStateVectorModel` | `source_03_target_state` | candidate-symbol bars, liquidity, and point-in-time target-local evidence | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for target state-vector construction. |
+| `EventOverlayModel` | `source_04_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references; `trading-model` builds `event_context_vector` from this point-in-time index plus reviewed context states/artifacts. |
 | `AlphaConfidenceModel` | _(no trading-data source)_ | `target_state_vector`, upstream context, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-data`; labels belong outside inference features and are materialized only through reviewed deterministic evaluation contracts. |
 | `TradingProjectionModel` | _(no trading-data source)_ | alpha/confidence state, costs, risk budget, current/pending position state | Converts confidence into offline target action/exposure outside `trading-data`. |
 | `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
 | `PositionExecutionModel` | `source_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
-| `EventOverlayModel` | `source_04_event_overlay` | one-row-per-event overview table | Combines lagging evidence and prior-signal events while details remain behind URL/path references. |
 
 ## Implemented Model Input Sources
 
@@ -56,13 +56,11 @@ Raw target-local observed inputs remain source-scoped: candidate-builder-supplie
 
 Target state-vector construction is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, Layer 1/2 state references, and output target; `trading-data` builds deterministic market/sector/target/cross-state feature blocks and writes `feature_03_target_state_vector`. `trading-model` consumes that surface to train/evaluate `TargetStateVectorModel` against market-only and market+sector baselines.
 
-Layer 4 has no control-plane-facing `trading-data` source: it consumes upstream SQL outputs plus model/derived candidates without new source acquisition or manifest/view contract here.
+Layer 4 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `source_04_event_overlay`, one row per event. Full news, SEC, macro, abnormal-activity detector, revision, and timeline details remain behind references. `source_04_event_overlay` is an event index; `trading-model` builds `event_context_vector` by combining these point-in-time rows with event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and reviewed scope/sensitivity metadata.
 
 Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes SQL table `source_05_option_expression` as one row per visible option contract per snapshot. `snapshot_time` is the point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted from the business table.
 
 Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `source_06_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
-
-Layer 4 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `source_04_event_overlay`, one row per event. Full news, SEC, macro, and detector details remain behind references.
 
 ## Source-Backed Aggregations That Need Migration Review
 

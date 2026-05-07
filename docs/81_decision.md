@@ -871,7 +871,7 @@ The output includes bar-prefixed OHLCV/VWAP/trade count, dollar volume, quote co
 ## D056 - Downstream confidence/projection consumers have no trading-data bundle; option expression writes option snapshot
 
 Date: 2026-04-28
-Status: Superseded for model names by V2.2 Alpha-Confidence / Trading Projection terminology
+Status: Superseded for model names by V2.2 Alpha-Confidence / Position Projection terminology
 
 ### Context
 
@@ -879,13 +879,13 @@ The user clarified that downstream confidence/projection consumers do not requir
 
 ### Decision
 
-Do not add a symmetry-only Layer 4 `trading-data` runnable bundle. Alpha-Confidence / Trading Projection inputs are constructed by `trading-model` from existing upstream SQL outputs, model outputs, labels, and reviewed evaluation artifacts.
+Do not add a symmetry-only downstream `trading-data` runnable bundle. AlphaConfidenceModel and PositionProjectionModel inputs are constructed by `trading-model` from existing upstream SQL outputs, model outputs, labels, current/pending position context, and reviewed evaluation artifacts.
 
 `source_05_option_expression` is a real data bundle. It accepts `underlying`, `snapshot_time`, and optional `snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot feed interface, and writes SQL table `source_05_option_expression` with one row per visible option contract per snapshot.
 
 ### Consequences
 
-- Do not keep a symmetry-only runnable data bundle or SQL manifest/view for AlphaConfidenceModel / TradingProjectionModel when no new source acquisition is required.
+- Do not keep a symmetry-only runnable data bundle or SQL manifest/view for AlphaConfidenceModel / PositionProjectionModel when no new source acquisition is required.
 - `source_05_option_expression` owns option-chain snapshot acquisition for downstream OptionExpressionModel inputs; this source-number 05 is not model Layer 5 AlphaConfidenceModel.
 - Raw ThetaData responses and nested source snapshots remain transient; final durable payload is contract-level SQL rows with explicit option identity, quote, IV, greeks, underlying context, and derived columns.
 - Primary key for `source_05_option_expression`: `underlying + snapshot_time + snapshot_type + option_symbol`; run/task metadata lives in manifests and receipts, not business rows.

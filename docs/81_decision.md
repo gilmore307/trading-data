@@ -885,10 +885,10 @@ Do not add a symmetry-only Layer 4 `trading-data` runnable bundle. Alpha-Confide
 
 ### Consequences
 
-- Do not keep a Layer 4 runnable data bundle or SQL manifest/view just for orchestration symmetry.
-- Layer 5 owns option-chain snapshot acquisition for OptionExpressionModel inputs.
+- Do not keep a symmetry-only runnable data bundle or SQL manifest/view for AlphaConfidenceModel / TradingProjectionModel when no new source acquisition is required.
+- `source_05_option_expression` owns option-chain snapshot acquisition for downstream OptionExpressionModel inputs; this source-number 05 is not model Layer 5 AlphaConfidenceModel.
 - Raw ThetaData responses and nested source snapshots remain transient; final durable payload is contract-level SQL rows with explicit option identity, quote, IV, greeks, underlying context, and derived columns.
-- Primary key for Layer 5: `underlying + snapshot_time + snapshot_type + option_symbol`; run/task metadata lives in manifests and receipts, not business rows.
+- Primary key for `source_05_option_expression`: `underlying + snapshot_time + snapshot_type + option_symbol`; run/task metadata lives in manifests and receipts, not business rows.
 
 ### D057 — Keep accepted model-input bundle defaults in code, not bundle-local config
 

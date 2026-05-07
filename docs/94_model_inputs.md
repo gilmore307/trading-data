@@ -58,9 +58,9 @@ Target state-vector construction is feature-scoped: `trading-manager` issues a r
 
 Layer 4 accepts `params.start`, `params.end`, focus sectors/symbols, and event overview rows, then writes SQL table `source_04_event_overlay`, one row per event. Full news, SEC, macro, abnormal-activity detector, revision, and timeline details remain behind references. `source_04_event_overlay` is an event index; `trading-model` builds `event_context_vector` by combining these point-in-time rows with event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and reviewed scope/sensitivity metadata.
 
-Layer 5 accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes SQL table `source_05_option_expression` as one row per visible option contract per snapshot. `snapshot_time` is the point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted from the business table.
+`source_05_option_expression` accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes one row per visible option contract per snapshot. `snapshot_time` is the point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted from the business table. Despite the `source_05_` prefix, this is an option-expression source for the downstream `OptionExpressionModel`, not the model Layer 5 `AlphaConfidenceModel`.
 
-Layer 6 accepts `params.selected_contracts` from Layer 5 and writes SQL table `source_06_position_execution`, containing selected option contract market data from entry time through exit time plus one hour.
+`source_06_position_execution` accepts `params.selected_contracts` from the expression/projection handoff and writes selected option contract market data from entry time through exit time plus one hour.
 
 ## Source-Backed Aggregations That Need Migration Review
 
@@ -119,7 +119,7 @@ Boundary:
 
 ## Known Open Data Gaps
 
-- Revise Layer 5 from nested option snapshot payloads to contract-level entry/exit snapshot rows.
+- Keep `source_05_option_expression` documented as source-number 05 for option-expression input, not as model Layer 5 `AlphaConfidenceModel` acquisition.
 - Clean accepted SQL business tables so `run_id`, `task_id`, and write audit timestamps stay in receipts/run metadata rather than business rows.
 - Harden ETF-symbol-to-issuer mapping and ETF holdings freshness/available-time rules for production runs.
 - Calibrate equity abnormal activity thresholds/model standards against historical distributions before training labels consume them.

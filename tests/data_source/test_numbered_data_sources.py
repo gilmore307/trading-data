@@ -173,18 +173,36 @@ class NumberedDataSourceTests(unittest.TestCase):
                     "symbols": ["NVDA"],
                     "events": [
                         {
-                            "event_id": "evt_nvda_abnormal_1",
+                            "event_id": "evt_nvda_10q_2026q1",
                             "event_time": "2026-04-24T09:35:00-04:00",
                             "available_time": "2026-04-24T09:36:00-04:00",
                             "information_role_type": "prior_signal",
-                            "event_category_type": "equity_abnormal_activity",
+                            "event_category_type": "sec_filing",
                             "scope_type": "symbol",
                             "symbol": "NVDA",
-                            "title": "NVDA abnormal opening activity",
-                            "summary": "NVDA opened with abnormal return and volume.",
-                            "source_name": "alpaca_equity_market_data",
-                            "reference_type": "internal_artifact_path",
-                            "reference": "/tmp/equity_abnormal_activity_event.csv",
+                            "title": "NVDA 10-Q filing",
+                            "summary": "NVDA filed its quarterly report.",
+                            "source_name": "sec_company_financials",
+                            "reference_type": "sec_file_path",
+                            "reference": "/tmp/sec/nvda-10q.html",
+                        },
+                        {
+                            "event_id": "evt_nvda_news_covered_1",
+                            "event_time": "2026-04-24T09:37:00-04:00",
+                            "available_time": "2026-04-24T09:38:00-04:00",
+                            "information_role_type": "lagging_evidence",
+                            "event_category_type": "symbol_news",
+                            "scope_type": "symbol",
+                            "symbol": "NVDA",
+                            "title": "News outlet reports NVDA filing",
+                            "summary": "Article summarizes the same NVDA 10-Q filing.",
+                            "source_name": "alpaca_equity_news",
+                            "reference_type": "web_url",
+                            "reference": "https://example.com/nvda-10q-news",
+                            "canonical_event_id": "evt_nvda_10q_2026q1",
+                            "dedup_status": "covered_by_canonical_event",
+                            "source_priority": "derivative_news",
+                            "coverage_reason": "agent_read_article_found_no_new_information_beyond_sec_filing",
                         },
                         {
                             "event_id": "evt_macro_1",
@@ -205,12 +223,39 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_04_event_overlay"], 2)
+            self.assertEqual(result.row_counts["source_04_event_overlay"], 3)
             call = writer.calls[0]
             self.assertEqual(call["table"], "source_04_event_overlay")
             self.assertEqual(call["key_columns"], ["event_id"])
             self.assertNotIn("run_id", call["columns"])
+            self.assertIn("canonical_event_id", call["columns"])
+            self.assertIn("dedup_status", call["columns"])
+            self.assertIn("source_priority", call["columns"])
+            self.assertIn("coverage_reason", call["columns"])
+            self.assertIn("covered_by_event_id", call["columns"])
             self.assertEqual({row["information_role_type"] for row in call["rows"]}, {"lagging_evidence", "prior_signal"})
+            by_event = {row["event_id"]: row for row in call["rows"]}
+            self.assertEqual(by_event["evt_nvda_10q_2026q1"]["canonical_event_id"], "evt_nvda_10q_2026q1")
+            self.assertEqual(by_event["evt_nvda_10q_2026q1"]["dedup_status"], "canonical")
+            self.assertEqual(by_event["evt_nvda_10q_2026q1"]["source_priority"], "official_disclosure")
+            self.assertEqual(by_event["evt_nvda_news_covered_1"]["canonical_event_id"], "evt_nvda_10q_2026q1")
+            self.assertEqual(by_event["evt_nvda_news_covered_1"]["covered_by_event_id"], "evt_nvda_10q_2026q1")
+            self.assertEqual(by_event["evt_nvda_news_covered_1"]["dedup_status"], "covered_by_canonical_event")
+            self.assertEqual(by_event["evt_nvda_news_covered_1"]["source_priority"], "derivative_news")
+
+    def test_event_overlay_sql_ddl_includes_dedup_contract_fields(self):
+        from storage.sql import _table_ddl
+
+        ddl = _table_ddl("source_04_event_overlay", '"trading_data"."source_04_event_overlay"')
+        self.assertIsNotNone(ddl)
+        for column in {
+            "canonical_event_id TEXT NOT NULL",
+            "dedup_status TEXT NOT NULL",
+            "source_priority TEXT NOT NULL",
+            "coverage_reason TEXT",
+            "covered_by_event_id TEXT",
+        }:
+            self.assertIn(column, ddl)
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

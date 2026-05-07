@@ -314,6 +314,11 @@ def _source_04_event_overlay_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         event_id TEXT NOT NULL,
+        canonical_event_id TEXT NOT NULL,
+        dedup_status TEXT NOT NULL,
+        source_priority TEXT NOT NULL,
+        coverage_reason TEXT,
+        covered_by_event_id TEXT,
         event_time TIMESTAMPTZ NOT NULL,
         available_time TIMESTAMPTZ NOT NULL,
         information_role_type TEXT NOT NULL,
@@ -327,5 +332,16 @@ def _source_04_event_overlay_ddl(qualified_table: str) -> str:
         reference_type TEXT NOT NULL,
         reference TEXT NOT NULL,
         PRIMARY KEY (event_id)
-    )
+    );
+    ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS canonical_event_id TEXT;
+    UPDATE {qualified_table} SET canonical_event_id = event_id WHERE canonical_event_id IS NULL;
+    ALTER TABLE {qualified_table} ALTER COLUMN canonical_event_id SET NOT NULL;
+    ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS dedup_status TEXT;
+    UPDATE {qualified_table} SET dedup_status = 'canonical' WHERE dedup_status IS NULL;
+    ALTER TABLE {qualified_table} ALTER COLUMN dedup_status SET NOT NULL;
+    ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS source_priority TEXT;
+    UPDATE {qualified_table} SET source_priority = 'unknown' WHERE source_priority IS NULL;
+    ALTER TABLE {qualified_table} ALTER COLUMN source_priority SET NOT NULL;
+    ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS coverage_reason TEXT;
+    ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS covered_by_event_id TEXT;
     """

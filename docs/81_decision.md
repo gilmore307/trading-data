@@ -673,7 +673,9 @@ Long-form agent/model interpretation belongs in artifact files, with `event_anal
 
 News articles that merely report or summarize an official SEC filing should not create separate independent event alpha when the SEC filing is already represented as the canonical event. Raw news remains preserved in the source-specific acquisition layer, but the unified event layer must either suppress the duplicate news event or mark it as covered by the canonical official event.
 
-Use `canonical_event_id`, `dedup_status`, `source_priority`, and `coverage_reason` to record this boundary. Official SEC/exchange/company/regulatory disclosures outrank derivative news coverage. Covered news can still contribute to propagation, attention, or report context, but it should not create an extra `event_factor` row unless it contains genuinely new information not already present in the official source and that information is observable at its own `effective_time`.
+Use `canonical_event_id`, `dedup_status`, `source_priority`, `coverage_reason`, and `covered_by_event_id` to record this boundary. Official SEC/exchange/company/regulatory disclosures outrank derivative news coverage. Covered news can still contribute to propagation, attention, or report context, but it should not create an extra `event_factor` row unless it contains genuinely new information not already present in the official source and that information is observable at its own `effective_time`.
+
+When an event candidate includes article/filing URLs, agent/browser analysis may read those provided links to classify whether the row is canonical, covered by a canonical event, duplicate coverage, related follow-up, or genuinely new information. Directly opening known links is reading source evidence, not news discovery; broad search/discovery remains a separate quota-controlled acquisition step.
 
 ## D044 - Event impact scope is explicit
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,8 +20,15 @@ INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
 EVENT_CATEGORIES = {"macro_data", "macro_news", "sector_news", "symbol_news", "sec_filing", "option_abnormal_activity", "equity_abnormal_activity"}
 SCOPE_TYPES = {"macro", "sector", "symbol"}
 REFERENCE_TYPES = {"web_url", "sec_file_path", "internal_artifact_path", "source_reference"}
+DEDUP_STATUSES = {"canonical", "covered_by_canonical_event", "duplicate_of_canonical_event", "related_followup", "new_information", "unresolved"}
+SOURCE_PRIORITIES = {"official_disclosure", "official_data_release", "company_disclosure", "regulatory_disclosure", "source_detector", "verified_news", "broad_news", "derivative_news", "unknown"}
 SQL_FIELDS = [
     "event_id",
+    "canonical_event_id",
+    "dedup_status",
+    "source_priority",
+    "coverage_reason",
+    "covered_by_event_id",
     "event_time",
     "available_time",
     "information_role_type",
@@ -143,7 +151,50 @@ def _event_id(row: Mapping[str, Any]) -> str:
     reference = str(row.get("reference") or row.get("event_link_url") or row.get("source_reference") or "").strip()
     symbol = str(row.get("symbol") or "").strip().upper()
     base = "|".join([category, event_time, symbol, reference])
-    return "evt_" + str(abs(hash(base)))
+    return "evt_" + hashlib.sha256(base.encode("utf-8")).hexdigest()[:16]
+
+
+def _source_priority(row: Mapping[str, Any]) -> str:
+    explicit = str(row.get("source_priority") or "").strip().lower()
+    if explicit:
+        return _enum(explicit, SOURCE_PRIORITIES, "source_priority")
+    category = str(row.get("event_category_type") or "").strip().lower()
+    source_name = str(row.get("source_name") or row.get("source") or "").strip().lower()
+    reference_type = str(row.get("reference_type") or "").strip().lower()
+    if category == "sec_filing" or reference_type == "sec_file_path" or "sec" in source_name:
+        return "official_disclosure"
+    if category == "macro_data":
+        return "official_data_release"
+    if category in {"option_abnormal_activity", "equity_abnormal_activity"}:
+        return "source_detector"
+    if category in {"macro_news", "sector_news", "symbol_news"}:
+        return "verified_news"
+    return "unknown"
+
+
+def _dedup_fields(source: Mapping[str, Any], event_id: str) -> dict[str, str | None]:
+    dedup_status = _enum(source.get("dedup_status") or "canonical", DEDUP_STATUSES, "dedup_status")
+    canonical_event_id = str(source.get("canonical_event_id") or "").strip()
+    covered_by_event_id = str(source.get("covered_by_event_id") or "").strip()
+    if not canonical_event_id:
+        canonical_event_id = covered_by_event_id or event_id
+    if dedup_status == "canonical" and canonical_event_id != event_id:
+        raise EventOverlayInputsError("canonical event rows must use canonical_event_id equal to event_id")
+    if dedup_status in {"covered_by_canonical_event", "duplicate_of_canonical_event"}:
+        if canonical_event_id == event_id:
+            raise EventOverlayInputsError(f"{dedup_status} rows require canonical_event_id or covered_by_event_id for the canonical event")
+        if not covered_by_event_id:
+            covered_by_event_id = canonical_event_id
+    coverage_reason = str(source.get("coverage_reason") or "").strip()
+    if not coverage_reason:
+        coverage_reason = "canonical_event_row" if dedup_status == "canonical" else dedup_status
+    return {
+        "canonical_event_id": canonical_event_id,
+        "dedup_status": dedup_status,
+        "source_priority": _source_priority(source),
+        "coverage_reason": coverage_reason,
+        "covered_by_event_id": covered_by_event_id or None,
+    }
 
 
 def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
@@ -152,8 +203,10 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
         reference = str(source.get("reference") or source.get("event_link_url") or source.get("source_reference") or source.get("sec_file_path") or "").strip()
         if not reference:
             raise EventOverlayInputsError("each event requires reference/link/path")
+        event_id = _event_id(source)
         row = {
-            "event_id": _event_id(source),
+            "event_id": event_id,
+            **_dedup_fields(source, event_id),
             "event_time": _et_iso(_required(source, "event_time")),
             "available_time": _et_iso(source.get("available_time") or source.get("event_time")),
             "information_role_type": _enum(source.get("information_role_type"), INFORMATION_ROLES, "information_role_type"),

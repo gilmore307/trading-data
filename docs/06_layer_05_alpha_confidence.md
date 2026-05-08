@@ -1,6 +1,6 @@
 # Layer 05 - Alpha Confidence Data
 
-`trading-data` does not own a dedicated Layer 5 source. This is intentional.
+`trading-data` does not own a dedicated Layer 5 source or feature package. This is intentional.
 
 Layer 5 is `AlphaConfidenceModel` in `trading-model`. It consumes accepted upstream context/model outputs and evaluated outcome evidence; it does not require a new provider acquisition route in `trading-data` by default.
 
@@ -32,7 +32,7 @@ accepted Layer 1-4 outputs and references
 
 ## Non-ownership
 
-`trading-data` must not create a symmetry-only `source_05_alpha_confidence` just because Layer 5 exists. It also must not emit:
+`trading-data` must not create a symmetry-only `source_05_alpha_confidence` or `feature_05_alpha_confidence` just because Layer 5 exists. It also must not emit:
 
 - alpha confidence scores;
 - return labels;

@@ -1,9 +1,10 @@
 """Authoritative layer-to-repository-structure catalog.
 
 This catalog keeps the visible repository structure aligned with the accepted
-model stack without creating fake symmetry-only source packages. A layer with no
-new `trading-data` acquisition must say so here and in its docs; a layer with a
-source/feature surface must name the package and CLI command that owns it.
+model stack without creating fake symmetry-only source or feature packages. A
+layer with no new `trading-data` acquisition or deterministic feature surface
+must say so here and in its docs; a layer with a source/feature surface must
+name the package and CLI command that owns it.
 """
 
 from __future__ import annotations
@@ -83,10 +84,12 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         doc_path="docs/05_layer_04_event_overlay.md",
         owns_dedicated_data_surface=True,
         source_packages=("data_source.source_04_event_overlay",),
-        cli_commands=("trading-data-source-04-event-overlay",),
+        feature_packages=("data_feature.feature_04_event_overlay",),
+        cli_commands=("trading-data-source-04-event-overlay", "trading-data-feature-04-event-overlay"),
         test_paths=(
             "tests/data_source/test_numbered_data_sources.py",
             "tests/data_source/test_equity_abnormal_activity_pipeline.py",
+            "tests/test_event_overlay_feature_generator.py",
         ),
     ),
     LayerDataContract(
@@ -98,7 +101,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         test_paths=("tests/test_layer_structure_catalog.py",),
         no_source_reason=(
             "Consumes target_context_state, event_context_vector, upstream context, and labels/evaluation artifacts; "
-            "no new provider/source acquisition is owned by trading-data."
+            "no new provider/source acquisition or deterministic trading-data feature surface is owned by trading-data."
         ),
     ),
     LayerDataContract(
@@ -110,7 +113,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         test_paths=("tests/test_layer_structure_catalog.py",),
         no_source_reason=(
             "Consumes alpha confidence plus position/risk/cost context owned by model/control-plane/execution boundaries; "
-            "no new trading-data source is accepted."
+            "no new trading-data source or feature surface is accepted."
         ),
     ),
     LayerDataContract(
@@ -121,7 +124,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         owns_dedicated_data_surface=False,
         test_paths=("tests/test_layer_structure_catalog.py",),
         no_source_reason=(
-            "Action recommendation is model/control-plane work; trading-data supplies only upstream observed inputs and deterministic features."
+            "Action recommendation is model/control-plane work; trading-data supplies only upstream observed inputs and deterministic features from owned source layers."
         ),
     ),
     LayerDataContract(
@@ -131,6 +134,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         doc_path="docs/09_layer_08_option_expression.md",
         owns_dedicated_data_surface=True,
         source_packages=("data_source.source_05_option_expression", "data_source.source_06_position_execution"),
+        feature_packages=("data_feature.feature_08_option_expression",),
         feed_packages=(
             "data_feed.09_feed_thetadata_option_selection_snapshot",
             "data_feed.10_feed_thetadata_option_primary_tracking",
@@ -139,12 +143,14 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         cli_commands=(
             "trading-data-source-05-option-expression",
             "trading-data-source-06-position-execution",
+            "trading-data-feature-08-option-expression",
             "trading-data-09-feed-thetadata-option-selection-snapshot",
             "trading-data-10-feed-thetadata-option-primary-tracking",
             "trading-data-11-feed-thetadata-option-event-timeline",
         ),
         test_paths=(
             "tests/data_source/test_numbered_data_sources.py",
+            "tests/test_option_expression_feature_generator.py",
             "tests/data_feed/test_thetadata_option_selection_snapshot_pipeline.py",
             "tests/data_feed/test_thetadata_option_primary_tracking_pipeline.py",
             "tests/data_feed/test_thetadata_option_event_timeline_pipeline.py",

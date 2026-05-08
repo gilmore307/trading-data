@@ -1,6 +1,6 @@
 # Layer 06 - Position Projection Data
 
-`trading-data` does not own a dedicated Layer 6 source. This is intentional.
+`trading-data` does not own a dedicated Layer 6 source or feature package. This is intentional.
 
 Layer 6 is `PositionProjectionModel` in `trading-model`. It relates alpha confidence to current/pending position state, target exposure, costs, and risk-budget context. Those inputs are model/control-plane/execution-state concerns, not new historical provider acquisition owned by `trading-data`.
 
@@ -19,7 +19,7 @@ Layer 6 may consume:
 - cost/risk-budget context;
 - model-side projection/evaluation artifacts.
 
-`trading-data` may provide upstream observed market/source features used before this layer, but it does not produce the `position_projection_vector`.
+`trading-data` may provide upstream observed market/source features used before this layer, but it does not create `feature_06_position_projection` or produce the `position_projection_vector`.
 
 ## Stage flow
 

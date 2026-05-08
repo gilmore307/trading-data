@@ -18,11 +18,11 @@ Date: 2026-05-08
 | Layer 2 data | `feature_02_sector_context` | accepted sector-context feature surface |
 | Layer 3 data | `source_03_target_state`, `feature_03_target_state_vector` | accepted target-state observed-input and feature-block surfaces |
 | Target candidate preparation | `source_02_target_candidate_holdings` | accepted downstream candidate-preparation source; not Layer 2 core behavior input |
-| Layer 4 data | `source_04_event_overlay` plus event sub-sources | accepted event overview/index boundary with canonical dedup fields |
-| Layer 5 data | no dedicated `trading-data` source | accepted no-new-source boundary; alpha confidence belongs to `trading-model` |
-| Layer 6 data | no dedicated `trading-data` source | accepted no-new-source boundary; position projection belongs to `trading-model` / control-plane state |
-| Layer 7 data | no dedicated `trading-data` source | accepted no-new-source boundary; underlying action belongs outside `trading-data` |
-| Layer 8 data | `source_05_option_expression`, `source_06_position_execution` | accepted option-expression and selected-contract tracking source boundaries |
+| Layer 4 data | `source_04_event_overlay`, `feature_04_event_overlay` plus event sub-sources | accepted event overview/index and deterministic event-feature boundary with canonical dedup fields |
+| Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
+| Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
+| Layer 7 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
+| Layer 8 data | `source_05_option_expression`, `feature_08_option_expression`, `source_06_position_execution` | accepted option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries |
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 

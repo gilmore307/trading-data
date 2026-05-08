@@ -34,6 +34,8 @@ trading-data-source-04-event-overlay = "data_source.source_04_event_overlay.__ma
 trading-data-feature-01-market-regime = "data_feature.feature_01_market_regime.__main__:main"
 trading-data-feature-02-sector-context = "data_feature.feature_02_sector_context.__main__:main"
 trading-data-feature-03-target-state-vector = "data_feature.feature_03_target_state_vector.__main__:main"
+trading-data-feature-04-event-overlay = "data_feature.feature_04_event_overlay.__main__:main"
+trading-data-feature-08-option-expression = "data_feature.feature_08_option_expression.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

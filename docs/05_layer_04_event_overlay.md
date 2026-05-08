@@ -2,10 +2,11 @@
 
 `trading-data` owns the point-in-time event evidence index for Layer 4. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
 
-## Owned artifact
+## Owned artifacts
 
 ```text
 trading_data.source_04_event_overlay
+trading_data.feature_04_event_overlay
 ```
 
 Nested event-overlay data-source helpers may produce source evidence before it is written into the overview table, for example:
@@ -16,11 +17,13 @@ src/data_source/source_04_event_overlay/equity_abnormal_activity/
 
 ## Boundary
 
-Layer 4 data is an event index, not the full `event_context_vector`.
+Layer 4 data is an event index plus deterministic event-overview features, not the full `event_context_vector`.
 
 `source_04_event_overlay` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
 
-`trading-model` builds `event_context_vector` from these overview rows plus referenced artifacts and upstream context states.
+`feature_04_event_overlay` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
+
+`trading-model` builds `event_context_vector` from the feature rows plus referenced artifacts and upstream context states.
 
 ## Input boundary
 
@@ -45,6 +48,7 @@ Required semantics:
 trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
   -> source_04_event_overlay
+  -> feature_04_event_overlay
   -> trading-model EventOverlayModel event_context_vector construction
   -> evaluation/promotion review outside trading-data
 ```

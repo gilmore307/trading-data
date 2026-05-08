@@ -6,6 +6,7 @@
 
 ```text
 trading_data.source_05_option_expression
+trading_data.feature_08_option_expression
 trading_data.source_06_position_execution
 ```
 
@@ -18,9 +19,11 @@ Neither source is model Layer 5 or Layer 6.
 
 ## Boundary
 
-Layer 8 data covers visible option-chain evidence and selected-contract market paths.
+Layer 8 data covers visible option-chain evidence, deterministic option-candidate features, and selected-contract market paths.
 
 `source_05_option_expression` writes one row per visible contract at an explicit entry/exit snapshot time. It captures quote, spread, IV, first-order Greeks, and contract identity where provider data is available.
+
+`feature_08_option_expression` derives source-only per-contract candidate features from accepted snapshot rows: moneyness, spread/liquidity, IV, Greeks availability, and quality diagnostics. It prepares model inputs without ranking contracts or choosing an expression.
 
 `source_06_position_execution` writes selected option contract bars from entry time through exit time plus one hour. It emits market data only.
 
@@ -29,6 +32,7 @@ Layer 8 data covers visible option-chain evidence and selected-contract market p
 ```text
 ThetaData option feeds
   -> source_05_option_expression option-chain snapshot
+  -> feature_08_option_expression
   -> trading-model OptionExpressionModel
   -> selected contract handoff
   -> source_06_position_execution selected-contract tracking

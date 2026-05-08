@@ -1,110 +1,113 @@
 # API Templates
 
-`trading-data` should design each historical acquisition feed from the API/source requirements before writing connector code.
+Design each acquisition/source route before writing connector code.
 
-Reusable template files live in `trading-manager/templates/data_tasks/`. This file explains how `trading-data` should apply them to API-specific feeds and control-plane-facing sources.
+Reusable starter templates live in `trading-manager/templates/data_tasks/`. They help shape local source design; they are not automatically accepted cross-repository schemas.
 
 ## Template Sources
 
 | Template | Use |
 |---|---|
-| `templates/data_tasks/task_key.json` | Draft the manager-issued task key shape for a feed/source. |
-| `templates/data_tasks/source_readme.md` | Draft the source README and boundary. |
-| `templates/data_tasks/pipeline.py` | Default single-file feed/source implementation template. |
-| `templates/data_tasks/fetch_spec.md` | Capture API/source fetch requirements. |
-| `templates/data_tasks/clean_spec.md` | Capture normalization and validation-prep requirements. |
-| `templates/data_tasks/save_spec.md` | Capture development-save layout and future durable mapping. |
-| `templates/data_tasks/completion_receipt.json` | Draft success/failure receipt evidence. |
-| `templates/data_tasks/fixture_policy.md` | Capture fixture, mock, and live-call guardrails. |
+| `task_key.json` | Starter manager-issued task/request shape. |
+| `source_readme.md` | Starter source boundary and operator notes. |
+| `pipeline.py` | Default single-file feed/source implementation shape. |
+| `fetch_spec.md` | API/source request requirements. |
+| `clean_spec.md` | Normalization and validation-prep requirements. |
+| `save_spec.md` | Local development output and reviewed handoff mapping. |
+| `completion_receipt.json` | Success/failure evidence shape. |
+| `fixture_policy.md` | Fixture, mock, and live-call guardrails. |
 
-These templates are drafts, not accepted schemas. Stable field names, statuses, task types, receipt shapes, and storage contracts still require `trading-manager` registry/contract review.
+Stable fields, statuses, task types, receipt shapes, artifact refs, and storage contracts require `trading-manager` / `trading-storage` review.
 
-Accepted acquisition feed names belong in the `trading-manager` registry as `kind=data_feed`; control-plane-facing source outputs belong as `kind=data_source`, not as generic terminology rows.
+## Design Order
+
+For each feed/source:
+
+1. Identify the official endpoint/source page, credential/no-key rule, and source-of-truth note.
+2. Define required and optional task/request parameters.
+3. Document pagination, retries, rate limits, timeouts, and entitlement behavior.
+4. Define timestamp/timezone semantics.
+5. Define raw/transient handling and final cleaned outputs.
+6. Define SQL table or reviewed artifact handoff.
+7. Define receipt/manifest evidence for success and failure.
+8. Define fixture-safe tests and live-call guardrails.
+9. Implement `pipeline.py` under the accepted package path.
 
 ## Runtime JSON Minimalism
 
-`task_key.json` and `completion_receipt.json` should stay small. Add a field only when manager, runner, feed/source code, or receipt readers actually consume it. Provider documentation URLs, explanatory notes, and source research details belong in registry rows, provider docs, or the source README, not runtime JSON.
+Task/request JSON and receipts should stay small. Add a field only when manager, runner, feed/source code, manifest writers, or receipt readers consume it.
 
-A task key is stable across many invocations, including periodic or scheduled tasks. Per-run values do not belong in the task key; they belong in completion receipt `runs[]`.
+Do not place provider docs, long notes, or source research inside runtime JSON. Put that material in registry rows, provider docs, source READMEs, or specs.
 
-## Source Design Order
+Stable task/request values belong in the task/request file. Per-run evidence belongs in receipts/manifests.
 
-For each data source, design in this order:
+## Package Shape
 
-1. Identify the API/source endpoint, official docs, credentials/no-key rule, and source-of-truth page in the source README/specs.
-2. Fill the fetch spec from the provider's concrete API requirements.
-3. Fill the clean spec from the raw response shape and target normalized outputs.
-4. Fill the save spec for development files under `TRADING_SOURCE_DEVELOPMENT_STORAGE_ROOT`.
-5. Fill the completion receipt template for both success and failure evidence.
-6. Fill the fixture policy before writing default tests.
-7. Only then create `pipeline.py` under the accepted source package layout.
-
-## Future Source Folder Shape
-
-When implementation starts, each feed should eventually have a folder like:
+A feed package should look like:
 
 ```text
 src/data_feed/<feed>/
   README.md
+  __main__.py
   pipeline.py
 ```
 
-`pipeline.py` should expose one public `run(task_key, run_id=...)` entry point and keep four internal step functions:
+A manager-facing source package should look like:
 
-- `fetch(...)` retrieves source data and writes raw development files.
-- `clean(...)` normalizes raw files into cleaned outputs.
-- `save(...)` writes development outputs under `storage/`; durable SQL waits for storage contracts.
-- `write_receipt(...)` emits success/failure completion receipts.
+```text
+src/data_source/<source>/
+  README.md
+  __main__.py
+  pipeline.py
+```
 
-A shared runner should call feed/source `run(...)` from a task key so the `trading-manager` control plane does not need to know feed/source internals. Split the step functions into separate modules only when a feed/source becomes too large for one file.
+`pipeline.py` should keep the route easy to inspect:
 
-## API-Specific Checklist
+- `fetch(...)` retrieves provider/source evidence;
+- `clean(...)` normalizes rows;
+- `save(...)` writes accepted SQL/artifact outputs or local ignored development evidence;
+- `write_receipt(...)` emits sanitized run evidence.
 
-Every feed/source design should answer:
+Split into more modules only when one file becomes harder to audit than the split.
 
-- Which API endpoint(s), URL pattern, or local terminal command is used?
-- Which task key fields are required?
-- Which credentials or no-key rule applies?
-- What request parameters are accepted and rejected?
-- How are pagination, retries, and rate limits handled?
-- What timezone and timestamp semantics does the source use?
-- What historical range limits or snapshot semantics apply?
-- What raw files are produced transiently, if any? High-volume trade/quote raw rows should normally be stream/segment inputs only, not saved outputs.
-- What cleaned/aggregated outputs are produced? For high-volume market microstructure data, default persisted outputs should be ET-aligned aggregates rather than raw rows.
-- What files are saved under `storage/<task-id>/runs/<run-id>/`?
-- What run receipt fields prove success or failure?
-- Which fixtures cover expected and edge-case responses?
+## Feed Names
 
-## Feed-Specific Notes
-
-Initial feed planning names remain:
+Current accepted feed package names:
 
 - `01_feed_alpaca_bars`
 - `02_feed_alpaca_liquidity`
 - `03_feed_alpaca_news`
+- `04_feed_okx_crypto_market_data`
+- `05_feed_gdelt_news`
+- `06_feed_etf_holdings`
+- `07_feed_trading_economics_calendar_web`
+- `08_feed_sec_company_financials`
+- `09_feed_thetadata_option_selection_snapshot`
 - `10_feed_thetadata_option_primary_tracking`
 - `11_feed_thetadata_option_event_timeline`
-- `09_feed_thetadata_option_selection_snapshot`
-- `04_feed_okx_crypto_market_data`
-- `07_feed_trading_economics_calendar_web`
-- `calendar_discovery`
-- `06_feed_etf_holdings`
-- `08_feed_sec_company_financials`
 
+ThetaData option acquisition is split by use case:
 
-ThetaData option acquisition is intentionally split by use case, not endpoint family:
+- selection snapshot: point-in-time chain/contract visibility;
+- primary tracking: bars for one supplied contract;
+- event timeline: timestamped option activity events for one supplied contract and standard.
 
-- `10_feed_thetadata_option_primary_tracking` supplements equity bars/liquidity by selecting one primary option contract and tracking it at the same research grain.
-- `11_feed_thetadata_option_event_timeline` produces news-like timestamped option activity events.
-- `09_feed_thetadata_option_selection_snapshot` captures point-in-time option-chain information visible when an equity signal needs to choose a contract.
+`macro_data` is not an active executable feed. Macro model-input rows use `07_feed_trading_economics_calendar_web` unless a separately reviewed route replaces it.
 
-`macro_data` has been removed as an executable macro acquisition feed. Macro model inputs now use the conservative `07_feed_trading_economics_calendar_web` visible-page interface; official macro API secret aliases may remain stored but are not active control-plane task routes.
+## Implemented CLIs
 
-`08_feed_sec_company_financials` covers company financial report data from official SEC EDGAR APIs. It should use SEC-specific task/run ID prefixes such as `08_feed_sec_company_financials_task_...` and `08_feed_sec_company_financials_run_...`, preserve all stock-research timestamps in America/New_York, and persist only final cleaned development outputs rather than bulky raw SEC responses.
+Feed CLIs are declared in `pyproject.toml` and mirror package modules, for example:
 
-## Implemented feed CLIs
+```bash
+trading-data-01-feed-alpaca-bars
+PYTHONPATH=src python3 -m data_feed.01_feed_alpaca_bars
+```
 
-- `trading-data-01-feed-alpaca-bars` / `python -m data_feed.01_feed_alpaca_bars` runs the Alpaca bars pipeline.
-- `trading-data-02-feed-alpaca-liquidity` / `python -m data_feed.02_feed_alpaca_liquidity` runs the aggregate-only Alpaca liquidity pipeline.
-- `trading-data-03-feed-alpaca-news` / `python -m data_feed.03_feed_alpaca_news` runs the Alpaca news pipeline.
-- `trading-data-04-feed-okx-crypto-market-data` / `python -m data_feed.04_feed_okx_crypto_market_data` runs the OKX crypto bar/trade/liquidity pipeline.
+Source and feature CLIs follow the same rule:
+
+```bash
+trading-data-source-01-market-regime
+trading-data-feature-01-market-regime
+```
+
+Reusable logic belongs in `src/`. `scripts/` is for thin wrappers only.

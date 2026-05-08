@@ -2,71 +2,57 @@
 
 ## Purpose
 
-`trading-data` is the unified data-production repository for the trading system.
+`trading-data` is the trading system's data-production component.
 
-It owns the component-level work required to acquire, clean, normalize, validate, and publish provider/source observations for downstream trading repositories. It turns approved source-data requests into source-backed SQL outputs, artifacts, manifests, and ready signals.
+It turns approved historical data requests into normalized source outputs, deterministic feature outputs, and handoff evidence for downstream repositories. Its direct route is:
 
-This repository exists to make external data production explicit, testable, and reusable without mixing source acquisition with derived labels/samples/signals/outcomes, strategy/backtest generation, model research, execution, dashboard rendering, or global storage policy.
+```text
+provider/API/web/file -> data_feed -> data_source -> data_feature -> SQL/artifact handoff
+```
+
+The repository exists so data acquisition and normalization are explicit, testable, reproducible, and separate from modeling, strategy, execution, dashboard, and global storage concerns.
 
 ## In Scope
 
-- Define component-local historical data ingestion workflows.
-- Connect to approved market data, macro data, calendar, options, and related data sources once providers are chosen.
-- Normalize provider responses into documented data shapes for market board data, instrument data, and option data.
-- Validate data completeness, schema expectations, timestamps, market calendars, and known provider quirks.
-- Execute `trading-manager` control-plane task key files for historical data acquisition.
-- During development, prefer SQL outputs for accepted SQL-only source contracts; legacy source pipelines may still write inspected task files and receipts under ignored local `storage/`.
-- Move durable outputs to specified storage SQL/artifact targets as `trading-storage` contracts are accepted.
-- Produce source-backed data artifacts for downstream repositories.
-- Produce run manifests and ready signals using `trading-manager` contracts once concrete schemas are accepted.
-- Coordinate with `trading-storage` for future durable output placement, SQL contracts, receipt storage, and retention rules.
-- Expose component-local tests for data parsing, validation, and fixture-based provider behavior.
-- Track data-provider limitations, quotas, and quality caveats that affect this repository.
-- Build provider/feed connector layer boundaries before domain pipelines depend on live APIs.
-- Keep `src/data_feed/` limited to smallest-unit provider/source acquisition and normalization interfaces.
-- Keep control-plane-facing source task execution in `src/data_source/`, with config-backed parameters for reusable baskets, issuers, grains, and source-cleaning defaults.
+- Acquire historical market, option, issuer, filing, news, calendar, macro, and related provider/source data.
+- Normalize provider responses into reviewed feed/source shapes.
+- Validate schema, timestamps, market calendars, completeness, rate-limit behavior, and provider quirks.
+- Execute manager-issued task/request files for historical data runs.
+- Produce accepted SQL source tables, feature tables, final cleaned artifacts, run receipts, and sanitized development evidence.
+- Keep `src/data_feed/` focused on provider/API/web/file access and feed-level normalization.
+- Keep `src/data_source/` focused on manager-facing source orchestration and model-input source outputs.
+- Keep `src/data_feature/` focused on deterministic feature construction from accepted source outputs.
+- Keep default tests fixture-safe and live calls explicitly guarded.
+- Record provider limitations, quotas, quality caveats, and source-of-truth rules.
 
 ## Out of Scope
 
-- Defining global artifact, manifest, ready-signal, or request contracts.
-- Owning shared storage layout, backup, archive, restore, or retention policy.
-- Strategy implementation or backtesting.
-- Model training, market-state discovery, or strategy-result analysis.
-- Live or paper trade execution.
-- Realtime market data feeds, streaming ingestion, or execution-time data handling unless explicitly re-scoped by a later cross-repository contract.
-- Dashboard frontend or backend implementation.
-- Promotion, scheduling, retry policy, task-key creation, or lifecycle orchestration owned by the `trading-manager` control plane.
-- Storing generated data, raw provider dumps, logs, notebooks, credentials, or secrets in Git.
-- General-purpose data platform work unrelated to the trading system.
-
-## Owner Intent
-
-`trading-data` should become a disciplined source-data component: narrow enough to be auditable, but strong enough that downstream repositories can trust its artifacts and manifests.
-
-The repository should prefer explicit provider boundaries, deterministic normalization, fixture-backed tests, and documented quality checks over ad hoc scripts.
+- Global request, artifact, manifest, ready-signal, storage layout, retention, backup, archive, or restore policy.
+- Model training, labels, evaluation, promotion, market-state discovery, strategy research, or backtests.
+- Live/paper execution, broker mutation, order routing, or execution-time streaming data.
+- Dashboard frontend/backend work.
+- Production scheduling, approvals, retries, lifecycle routing, or task generation.
+- Committing generated datasets, raw provider dumps, logs, notebooks, credentials, or secrets.
+- General data-platform work unrelated to the trading system.
 
 ## Boundary Rules
 
-- `trading-data` owns historical feed acquisition, model-scoped source-output production, and deterministic feature-output production; in development legacy outputs may live under ignored local `storage/`; it does not own realtime execution feeds or model interpretation.
-- Cross-repository artifact, manifest, ready-signal, request, field, status, and type definitions belong in `trading-manager`.
-- Durable storage layout and retention belong in `trading-storage`; SQL table contracts should be explicit before a source treats them as canonical output.
-- Scheduling, retries, and lifecycle routing belong in the `trading-manager` control plane.
+- `trading-data` owns historical feed acquisition, model-scoped source production, deterministic feature production, and point-in-time data visibility.
+- `trading-manager` owns shared names, registry rows, request/task contracts, scheduling, retries, approvals, and promotion control.
+- `trading-storage` owns durable layout, manifests, artifact references, ready signals, retention, backup, and restore.
+- `trading-model` owns labels, training, evaluation, and promotion decisions.
 - Generated data and provider responses are runtime artifacts, not source files.
-- Secrets, API keys, provider tokens, broker credentials, and exchange keys must stay outside the repository and be referenced only by approved secret aliases.
-- Shared helpers, templates, and registrable fields discovered here must be recorded through `trading-manager` before other repositories depend on them.
-- Source-backed aggregations may be emitted by `data_source`, not mixed into `data_feed`.
-- Model-evaluation labels, training runs, model outputs, strategy/backtest outputs, and promotion decisions belong outside `trading-data`, primarily in `trading-model` or downstream strategy/execution repositories.
-- Data features emitted here must be market/data-feed based. Strategy returns or strategy performance must not feed source data production.
+- Secrets must stay outside the repository and be referenced only by approved aliases.
+- Source-backed aggregations may be emitted by `data_source`; raw provider access belongs in `data_feed`.
+- Data features emitted here must be market/source based; strategy returns or execution outcomes must not feed upstream data production.
 
-## Out-of-Scope Signals
+## Rejection Signals
 
-A request should be rejected or re-scoped if it asks `trading-data` to:
+Reject or re-scope a request if it asks `trading-data` to:
 
-- implement strategy, model, execution, or dashboard logic;
-- commit generated datasets, raw dumps, logs, or notebooks;
-- store secrets or credentials;
-- define global contracts without routing them through `trading-manager`;
-- invent shared field/status/type names without registry review;
+- implement model, strategy, execution, or dashboard logic;
+- commit generated data, raw dumps, logs, notebooks, or credentials;
+- define shared field/status/type names without registry review;
 - bypass `trading-storage` for durable layout policy;
-- use strategy performance to define upstream market data features;
-- become a one-off script dump without tests, contracts, or acceptance evidence.
+- use profitability or strategy performance as upstream source data;
+- become a one-off script pile without tests, contracts, and acceptance evidence.

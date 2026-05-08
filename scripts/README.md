@@ -1,12 +1,12 @@
 # scripts
 
-Executable maintenance and operational entrypoints for `trading-data`.
+Thin executable wrappers for `trading-data`.
+
+Reusable implementation belongs in `src/`. A script may import `src` code and pass through CLI arguments, but it should not own business logic, contracts, or source-specific behavior.
 
 ## Files
 
-- `generate_feature_01_market_regime.py` — compatibility wrapper for the Layer 1 feature SQL runner. The importable implementation lives in `src/data_feature/feature_01_market_regime/sql.py` so installed CLI entrypoints and direct script execution share one code path.
-- `generate_feature_02_sector_context.py` — compatibility wrapper for the Layer 2 sector/industry rotation feature SQL runner. The importable implementation lives in `src/data_feature/feature_02_sector_context/sql.py`.
+- `generate_feature_01_market_regime.py` — wrapper for `data_feature.feature_01_market_regime.sql`.
+- `generate_feature_02_sector_context.py` — wrapper for `data_feature.feature_02_sector_context.sql`.
 
-## Boundary
-
-Scripts may import reusable code from `src/`. Reusable pipeline/generator logic belongs in `src/`, not here.
+Installed package entrypoints in `pyproject.toml` are the preferred CLI surface for feeds, sources, and features.

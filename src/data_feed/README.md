@@ -1,13 +1,15 @@
 # data_feed
 
-Smallest-unit data feed interfaces live here.
+Smallest-unit provider/source acquisition lives here.
+
+A feed module talks to one provider/API/web/file family and returns normalized feed-level evidence. It may expose a CLI for local or manager-triggered runs, but it must not own model-input orchestration.
 
 Boundary:
 
-- A data feed module talks to one provider/API/web/file family or normalizes one feed output shape.
-- It should expose reusable fetch/clean/save primitives for that feed-level output.
-- It should not own model-input orchestration, cross-source feature assembly, or manager-facing model feed logic.
+- provider requests, pagination, retries, rate limits, entitlement handling;
+- credential lookup by alias only;
+- timestamp normalization and feed-level cleaning;
+- final cleaned feed artifacts or transient rows for a source;
+- fixture-safe tests and explicit live-call guardrails.
 
-Manager-facing orchestration belongs in `data_source`.
-
-Current caveat: several historical acquisition runners still expose CLIs here for compatibility. New model-input generation must go under `data_source`, and existing feed CLIs should be wrapped/migrated behind feed runners as their manager contracts are hardened.
+Manager-facing composition belongs in `data_source`. Deterministic model-layer feature construction belongs in `data_feature`.

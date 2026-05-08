@@ -2,90 +2,88 @@
 
 ## Why This Repository Exists
 
-The trading system depends on reliable external observations. Provider/source collection and normalization are intentionally isolated in `trading-data` so that downstream derived-data, model, execution, and dashboard repositories consume documented outputs instead of provider-specific implementation details.
+The trading system needs reliable external observations. `trading-data` isolates provider/source acquisition and normalization so downstream repositories consume reviewed outputs instead of provider-specific implementation details.
 
-`trading-data` provides the component boundary between external data providers and the rest of the trading platform.
+The direct route is:
+
+```text
+provider/API/web/file -> data_feed -> data_source -> data_feature -> SQL/artifact handoff
+```
 
 ## Related Systems
 
 | System | Relationship |
 |---|---|
-| `trading-manager` | Owns global architecture, registry, templates, shared helpers, and cross-repository contracts. |
-| `trading-manager` control plane | Sends or schedules structured data requests and consumes manifests/ready signals for lifecycle decisions. |
-| `trading-storage` | Owns durable storage layout, retention, archive, backup, restore, and artifact placement rules. |
-| `trading-data` | Consumes `trading-data` observations and produces internally generated datasets such as labels, samples, signals, candidates, oracle outcomes, and backtest/evaluation outputs. |
-| `trading-model` | Consumes `trading-data` plus `trading-data` data foundations for market-state research, training, and later evaluation flows. |
-| `trading-dashboard` | Displays already-produced data outputs and metadata; it should not become a data source of truth. |
-
+| `trading-manager` | Owns registry, shared names, templates, request/control-plane policy, scheduling, approvals, retries, and promotion control. |
+| `trading-storage` | Owns durable storage layout, manifests, artifact references, ready signals, retention, archive, backup, and restore. |
+| `trading-model` | Consumes accepted data outputs and owns labels, samples, training, evaluation, model outputs, diagnostics, and promotion evidence. |
+| `trading-execution` | Owns execution-time data, broker/account state, orders, and mutation. |
+| `trading-dashboard` | Displays already-produced outputs and metadata; it is not a source of truth. |
 
 ## Data Organization
 
-`trading-data` now organizes work around source-backed data sources and accepted output contracts rather than broad domain labels. The original market-board / instrument / option grouping remains useful historical product language, but concrete runtime boundaries should be provider/feed, source, table, and downstream contract.
+`trading-data` organizes work by feed/source/feature boundaries, not broad domain labels.
 
-`trading-data` owns acquisition, cleaning, validation, source-output production, and deterministic point-in-time feature-output production. Model design, training, inference, evaluation labels, evaluation runs, and promotion belong in `trading-model`.
+- `data_feed` acquires and normalizes provider/source evidence.
+- `data_source` composes feeds into manager-facing model-input source outputs.
+- `data_feature` builds deterministic point-in-time feature blocks from accepted source outputs.
 
 See `docs/90_data_organization.md` and `docs/94_model_inputs.md`.
 
-## Expected External Interfaces
+## External Interfaces
 
-Potential external interfaces include:
+Current provider/source surfaces include:
 
-- market data APIs;
-- instrument/reference data APIs;
-- options data APIs;
-- macroeconomic data APIs;
-- market calendars and holiday schedules;
-- symbol/reference-data providers;
-- local or shared storage through `trading-storage` contracts.
+- Alpaca stock/ETF market data and news;
+- ThetaData option data through local Terminal v3;
+- OKX crypto market data;
+- SEC EDGAR company filings/facts;
+- ETF issuer holdings pages/files;
+- Trading Economics visible macro calendar rows;
+- official FOMC and macro release pages;
+- optional reviewed official macro/economic APIs such as FRED, BLS, Census, BEA, and Treasury.
 
-OKX is registered in `trading-manager` as the first crypto data/trading provider config surface. Other provider choices, quotas, retry expectations, and commercial limits remain unsettled. See `docs/91_data_feed.md` for the source-connection boundary.
+See `docs/91_data_feed.md` and `docs/93_feed_availability.md`.
 
 ## Environment
 
-Development is server-hosted under `/root/projects/trading-data`.
+Development path:
 
-The shared Python environment is anchored by `trading-manager` at:
+```text
+/root/projects/trading-data
+```
+
+Shared Python environment:
 
 ```text
 /root/projects/trading-manager/.venv
 ```
 
-`trading-data` should not create an independent virtual environment unless a documented exception is accepted.
-
-US Eastern time is the default project planning time. Data contracts may require UTC timestamps for artifact content; exact timestamp rules remain an open contract detail.
+Do not create an independent virtual environment unless a documented exception is accepted. US Eastern time is the default project planning and market-research timezone unless a storage/field contract states otherwise.
 
 ## Dependencies
 
-Current system-level dependencies:
+- `trading-manager` registry and templates for shared names and request/receipt drafts.
+- `trading-storage` contracts for durable manifests, artifact references, ready signals, and retention.
+- External providers/source pages through explicitly guarded feed code.
 
-- `trading-manager/docs/91_registry.md` for registry operating rules;
-- `trading-manager/templates/contracts/` for artifact, manifest, ready-signal, and request drafting templates;
-- `trading-manager/helpers/` for approved shared helper surfaces;
-- `trading-storage` for persistent layout and retention contracts;
-- external data providers once chosen.
+## Registration Discipline
 
-## Global Registration Discipline
+Route any cross-repository name through `trading-manager` before treating it as stable:
 
-If data work introduces a name that other repositories may consume, route it back to `trading-manager` before treating it as stable.
-
-This includes:
-
-- shared data fields;
-- artifact, manifest, ready-signal, or request type values;
-- global helper methods;
-- reusable templates;
-- status values;
-- repository-wide config keys;
+- fields;
+- statuses;
+- source/feed/data-kind names;
+- artifact, manifest, ready-signal, and request type values;
+- helper surfaces;
+- templates;
+- config keys;
 - provider-independent terminology.
 
-Temporary names may appear in local drafts, but they must be recorded and reviewed before becoming cross-repository contracts.
+## Constraints
 
-## Important Constraints
-
-- Do not store generated datasets in Git.
-- Do not store API keys, credentials, or tokens in Git.
-- Keep provider-specific quirks documented close to provider integration work once implementation exists.
-- Keep downstream derived-data, strategy/backtest, and model interpretation out of this repository.
-- Prefer fixture-backed provider tests before live provider calls.
-- Respect provider quotas and rate limits; do not build tight unaudited polling loops.
-- Exact artifact, manifest, request, and ready-signal schemas remain open until accepted through `trading-manager` contracts.
+- Do not store generated datasets, raw dumps, logs, notebooks, credentials, or secrets in Git.
+- Keep model labels, strategy/backtest logic, execution decisions, and dashboard interpretation out of this repository.
+- Prefer fixture-backed tests before live provider calls.
+- Respect quotas and rate limits; do not build unaudited polling loops.
+- Treat local ignored `storage/` files as development evidence, not durable interfaces.

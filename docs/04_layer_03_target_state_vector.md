@@ -1,8 +1,8 @@
 # Layer 3 Target State Vector
 
-`trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction. The first source/feature scaffold is implemented and remains promotion-gated by model-side real-data evidence.
+`trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction. The source/feature surface is implemented; promotion remains gated by model-side real-data evidence.
 
-Layer 3 is target state-vector production. Earlier action/variant simulation code has been retired and must not be used as the active Layer 3 contract.
+Layer 3 is target state-vector production. Action/variant simulation code is not part of the active Layer 3 contract.
 
 ## Boundary
 

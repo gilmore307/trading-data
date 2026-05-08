@@ -1,14 +1,14 @@
 # storage
 
-Reusable storage adapters for accepted durable outputs.
+Low-level persistence helpers live here.
 
 Boundary:
 
-- `storage.*` owns low-level persistence adapters and receipt-safe storage metadata.
-- Data sources own the semantic table contract they write: table name, columns, natural key, and row normalization.
-- Real durable SQL targets are configured by `storage_target` entries and runtime secret aliases; bundle code must not hard-code local database files as canonical outputs.
-- Tests may inject fake writers. Local SQLite is not the accepted contract for production model-input outputs.
+- `storage.*` provides adapters and receipt-safe metadata helpers.
+- Data sources own semantic table contracts: table name, columns, keys, timestamps, and row normalization.
+- Durable targets are configured through reviewed storage/request contracts and secret aliases; local files or test databases are not production contracts.
+- Tests may inject fake writers. Local SQLite-style fixtures are development evidence only.
 
 Current adapters:
 
-- `sql.py` — PostgreSQL table writer for SQL-only bundle outputs.
+- `sql.py` — PostgreSQL writer for accepted SQL source/feature outputs.

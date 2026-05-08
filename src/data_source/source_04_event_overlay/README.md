@@ -30,7 +30,7 @@ Each event row requires:
 - `event_time`
 - `available_time` or defaults to `event_time`
 - `information_role_type`: `lagging_evidence` or `prior_signal`
-- `event_category_type`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `option_abnormal_activity`, or `equity_abnormal_activity`
+- `event_category_type`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `option_abnormal_activity`, or `equity_abnormal_activity`. Here `macro_data` is an event category label, not an active executable feed.
 - `scope_type`: `macro`, `sector`, or `symbol`
 - `title` or `headline`
 - `source_name`
@@ -84,4 +84,4 @@ Columns:
 
 The table stores overview rows only. It does not store full article text, SEC filing contents, browser/agent analysis transcripts, event artifact payloads, model impact scores, labels, alpha confidence, or trade recommendations.
 
-Future fields such as `event_native_scope_type`, `declared_scope_type`, `industry_type`, `theme_tags`, revision ids, source update timestamps, and structured analysis-report links require explicit SQL migration plus registry review before they become active table columns.
+Additional columns such as `event_native_scope_type`, `declared_scope_type`, `industry_type`, `theme_tags`, revision ids, source update timestamps, or structured analysis-report links require explicit SQL migration plus registry review before use.

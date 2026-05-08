@@ -91,7 +91,7 @@ Boundary:
 - Source-backed aggregation, not a raw provider table.
 - Must preserve `available_time`; do not assume a holdings file is usable before it was visible.
 - Not a Layer 2 core behavior-model input.
-- Future stock-level exposure features that combine source holdings with model scores need explicit boundary review; deterministic source-derived features may live in `trading-data`, while model-derived scores belong in `trading-model`.
+- Stock-level exposure features that combine source holdings with model scores require explicit boundary review: deterministic source-derived features may live in `trading-data`; model-derived scores belong in `trading-model`.
 
 ### `equity_abnormal_activity_event`
 
@@ -115,12 +115,12 @@ Boundary:
 - Source-backed event-style aggregation, not raw trades/quotes.
 - Should be created only from observable market data at/after the event effective time.
 - Implemented first as a conservative detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs.
-- If this becomes a generated signal/candidate/label rather than source evidence, move it to `trading-data`.
+- If this becomes a generated signal, candidate decision, or label rather than source evidence, move that behavior out of `trading-data` and into the owning model/evaluation boundary.
 
-## Known Open Data Gaps
+## Current Guardrails
 
-- Keep `source_05_option_expression` documented as source-number 05 for option-expression input, not as model Layer 5 `AlphaConfidenceModel` acquisition.
-- Clean accepted SQL business tables so `run_id`, `task_id`, and write audit timestamps stay in receipts/run metadata rather than business rows.
-- ETF holdings freshness/available-time rule is now conservative by default: explicit source/task `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
-- `equity_abnormal_activity_event` default standard is `equity_abnormal_activity_conservative_v1`; production labels or promoted gates still require reviewed historical calibration evidence before threshold changes are trusted.
-- Define optionability summary shape for SectorContextModel only when the model/control-plane contract needs a durable shared interface; likely derived from option chain snapshots and liquidity filters.
+- `source_05_option_expression` is source-number 05 for option-expression input; it is not model Layer 5 `AlphaConfidenceModel` acquisition.
+- SQL business tables keep `run_id`, `task_id`, and write audit timestamps in receipts/run metadata rather than business rows.
+- ETF holdings freshness is conservative by default: explicit source/task `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
+- `equity_abnormal_activity_event` default standard is `equity_abnormal_activity_conservative_v1`; production labels or promoted gates require reviewed historical calibration evidence before threshold changes are trusted.
+- Optionability summary shape should be defined only when the model/control-plane contract needs a durable shared interface.

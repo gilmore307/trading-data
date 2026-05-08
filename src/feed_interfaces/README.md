@@ -2,7 +2,7 @@
 
 `feed_interfaces` records executable provider/data-kind interfaces. It is the
 next layer after documentation/feed availability: each entry names a concrete
-`data_kind`, feed, feed, endpoint family, access rule, and bounded smoke
+`data_kind`, feed package, endpoint family, access rule, and bounded smoke
 parameters.
 
 Commands:

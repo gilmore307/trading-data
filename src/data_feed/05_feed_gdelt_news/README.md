@@ -38,5 +38,5 @@ Boundary:
 
 - This feed pre-filters at the BigQuery query layer; do not fetch global all-news rows and filter them locally by default.
 - This feed saves GDELT article/source evidence, not final canonical events.
-- Later event extraction/clustering projects `gdelt_article` into `trading_event` / `event_factor`.
+- Event extraction/clustering is a separate reviewed boundary that projects `gdelt_article` into canonical event/evidence outputs.
 - SEC/company official disclosures still outrank derivative news coverage for canonical event identity.

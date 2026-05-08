@@ -45,7 +45,7 @@ class StepResult:
     details: dict[str, Any] = field(default_factory=dict)
 
 
-RETIRED_LOCAL_FIELD_PAYLOADS = {
+LOCAL_FIELD_PAYLOADS = {
     "fld_A7K3P2Q9": "id",
     "fld_ABN002": "evidence_window",
     "fld_ABN008": "source_references",
@@ -166,7 +166,7 @@ class ThetaDataOptionSelectionSnapshotError(ValueError):
 
 
 class RegistryNames:
-    """Resolve retained registry fields and retired local-output field names."""
+    """Resolve retained registry fields and code-local output field names."""
 
     def __init__(self, registry_csv: Path = DEFAULT_REGISTRY_CSV) -> None:
         with registry_csv.open(newline="", encoding="utf-8") as handle:
@@ -178,7 +178,7 @@ class RegistryNames:
         row = self._rows.get(ref.id)
         if row is None:
             try:
-                return RETIRED_LOCAL_FIELD_PAYLOADS[ref.id]
+                return LOCAL_FIELD_PAYLOADS[ref.id]
             except KeyError as exc:
                 raise ThetaDataOptionSelectionSnapshotError(f"registry id not found: {ref.id}") from exc
         if row["kind"] not in ref.expected_kinds:
@@ -188,8 +188,8 @@ class RegistryNames:
         return row["payload"]
 
 
-# Legacy local-output field ids. Current registry rows are used when present;
-# retired preview-only ids fall back to code-local names and must not be re-registered.
+# Local-output field ids. Current registry rows are used when present;
+# code-local ids fall back to local names and must not be re-registered.
 def field(item_id: str) -> RegistryRef:
     return RegistryRef(item_id, ("field", "identity_field", "path_field", "temporal_field", "classification_field", "text_field", "parameter_field"))
 

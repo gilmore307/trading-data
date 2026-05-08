@@ -4,7 +4,7 @@ Manager-facing ETF holdings source for downstream target-candidate preparation.
 
 This source reads the reviewed ETF universe, keeps only `model_layer = layer_02_sector_context` rows, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table used after Layer 2 has selected/prioritized sector/industry baskets. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
-Boundary note: the physical source/table name remains `source_02_target_candidate_holdings` for now, but ETF holdings are no longer a core Layer 2 `SectorContextModel` behavior input. They belong to the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before strategy fitting anonymizes target vectors.
+Boundary note: ETF holdings are not a core Layer 2 `SectorContextModel` behavior input. They belong to the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before target-state feature construction anonymizes model-facing vectors.
 
 ## Input parameters
 
@@ -35,7 +35,7 @@ Exclude:
 - bonds, treasuries, and fixed income
 - futures, swaps, options, warrants, and preferreds
 - funds/ETFs inside ETF holdings
-- non-US local listings and other non-equity assets unless explicitly reviewed later
+- non-US local listings and other non-equity assets unless explicitly reviewed
 
 `cusip`, `sedol`, raw `asset_class`, and `source_url` are source evidence fields and are not part of the final model-input table.
 

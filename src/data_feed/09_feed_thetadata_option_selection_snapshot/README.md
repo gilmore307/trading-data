@@ -4,37 +4,33 @@ ThetaData option-chain selection snapshot feed.
 
 ## Purpose
 
-Produce a point-in-time `option_chain_snapshot` final CSV artifact for a specified underlying and explicit ET snapshot time. The output is used as future option-selection model input. This feed does not select contracts and does not filter by liquidity, spread, bid/ask availability, IV, or Greeks availability.
+Produce a point-in-time `option_chain_snapshot.csv` artifact for a specified underlying and explicit ET snapshot time. The feed captures chain visibility; it does not select contracts or apply liquidity/spread/IV/Greek filters.
 
-## Input task params
-
-Required:
+## Required params
 
 - `underlying` — equity underlying symbol, e.g. `AAPL`.
 - `snapshot_time` — explicit ISO datetime in `America/New_York`, e.g. `2026-04-24T16:00:00-04:00`.
 
-Optional development/runtime params:
+No implicit latest/current mode exists. The caller must supply `snapshot_time`.
 
-- `output_root` at task-key top level — development output root. Defaults to `storage/<task_id>`.
-- `thetadata_base_url` — local ThetaData Terminal base URL. Defaults to `http://127.0.0.1:25503`.
-- `timeout_seconds` — request timeout. Defaults to `30`.
-- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
+## Optional runtime params
 
-No implicit latest/current snapshot mode is supported. The caller must supply `snapshot_time`.
+- `output_root` — development output root at task-key top level; defaults to `storage/<task_id>`.
+- `thetadata_base_url` — local ThetaData Terminal base URL; defaults to `http://127.0.0.1:25503`.
+- `timeout_seconds` — request timeout; defaults to `30`.
+- `registry_csv` — optional registry snapshot for retained registered fields; defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
 
 ## Source endpoints
 
-The feed uses ThetaData Terminal v3 snapshot endpoints:
+ThetaData Terminal v3:
 
 - `/v3/option/snapshot/quote`
 - `/v3/option/snapshot/greeks/implied_volatility`
 - `/v3/option/snapshot/greeks/first_order`
 
-The request passes the underlying, wildcard expiration, `date`, and ET `ms_of_day` derived from `snapshot_time`. The final artifact treats `snapshot_time` as the point-in-time clock and does not preserve quote/IV/Greeks row timestamps from the provider snapshot responses.
+The request passes underlying, wildcard expiration, `date`, and ET `ms_of_day` derived from `snapshot_time`. The final artifact uses `snapshot_time` as the point-in-time clock.
 
-## Development outputs
-
-For each run:
+## Outputs
 
 ```text
 <output_root>/runs/<run_id>/
@@ -44,23 +40,10 @@ For each run:
 <output_root>/completion_receipt.json
 ```
 
-Only the normalized final CSV is saved. Full raw provider responses are not persisted by default.
+Only the normalized final CSV is saved. Raw provider responses are normalized in memory and discarded by default.
 
-## Final JSON shape
-
-This legacy feed interface can still emit the local development CSV/JSON shape listed below, but the old `storage/templates/data_kinds/` preview contract has been retired. Accepted model-input output contracts are now owned by dedicated SQL tables.
-
-Top-level fields include:
-
-- `underlying`
-- `snapshot_time`
-- `contract_count`
-- `contracts`
-
-Each contract includes expiration/option_right_type/strike plus nested quote, IV, Greeks, derived, and underlying context where provider data is available.
+Key row fields include underlying, snapshot time, contract identity, quote, IV, first-order Greeks, and derived/context fields where provider data is available.
 
 ## Failure and retry
 
-Development-stage save is atomic: the feed writes a temporary CSV file and renames it to `option_chain_snapshot.csv` only after serialization succeeds. If the run fails, rerun the task; no partial final CSV is considered valid.
-
-Durable SQL storage is future `trading-storage` work. The accepted direction is to store this nested final artifact in a PostgreSQL `jsonb` column, not as an external JSON file path.
+The final CSV write is atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.

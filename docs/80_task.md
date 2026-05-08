@@ -2,84 +2,44 @@
 
 ## Active Tasks
 
-- None for the current data-source/model-input design phase. The repository is structurally closed for the accepted local feed/source/feature scaffold; see `docs/95_data_stack_closeout.md`.
+- None for the accepted local feed/source/feature route. The current data route is structurally closed; see `docs/95_data_stack_closeout.md`.
 
-## Queued Tasks
+## Production-Hardening Queue
 
-- Implement production-hardening work under manager/control-plane orchestration using the accepted policies in `docs/96_production_hardening.md` and storage-owned V1 handoff contracts.
-- Produce reviewed historical calibration reports before any data-derived event standard becomes a production training-label or promotion gate dependency.
-- Promote optionability summary shape only when the model/control-plane contract needs a durable shared interface.
+These are ready-now hardening items, separate from accumulated production-data/model-label evidence:
 
-## Open Gaps
-
-These are production-readiness gaps, not blockers for the current design closeout:
-
-- Exact production feed connector package layout beyond the implemented local source slices.
-- Physical manager/storage queue and SQL/storage implementation for `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1`.
-- Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
-- ETF issuer priority list and source-file formats for broader production coverage.
-- Optionability summary shape for downstream candidate-construction and expression-fit evidence.
-- Controlled ThetaData live smoke is environment-blocked until the local terminal is intentionally started and reachable on `127.0.0.1:25503`.
-- Data-domain vocabulary registration in `trading-manager` if exact domain keys become cross-repository contract values.
-
-## Deferred Beyond This Closeout
-
-- Control-plane-issued production task key/request schemas beyond the current minimal template.
-- Data artifact references, manifests, ready signals, durable completion receipts, and storage SQL table/partition contracts.
-- Shared storage root/partition layout and UTC-vs-America/New_York payload-field normalization rules for durable database/storage fields.
-- These shared contracts belong to `trading-manager` / `trading-storage` implementation; `trading-data` must not present local development output paths as final durable interfaces.
+- Implement physical manager/storage queue and SQL/storage handling for `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1`.
+- Define source-specific production parameter dictionaries for registered `data_kind` rows.
+- Expand ETF issuer adapters after the issuer priority list and source-file formats are reviewed.
+- Promote an optionability summary interface only when the model/control-plane contract needs it.
+- Produce reviewed historical calibration reports before any data-derived event standard becomes a production label or gate.
+- Configure ThetaData runtime as an intentional service/autostart item if unattended option data runs become accepted.
 
 ## Recently Accepted
 
-- Repository data-stack closeout is accepted for the current design phase: implemented feed/source/feature scaffolds cover the accepted Layers 1-8 model-input route, and remaining gaps are production hardening / manager-storage orchestration rather than open data-design blockers.
-- `source_02_target_candidate_holdings` now uses a conservative default `available_time`: next regular US session open after `as_of_date`, unless explicit source/task evidence supplies a different availability timestamp.
-- `equity_abnormal_activity_event` now uses explicit default `model_standard = equity_abnormal_activity_conservative_v1` and `calibration_status = conservative_fixture_default_not_production_calibrated`; production label/gate use still requires reviewed historical calibration evidence.
-- Implemented `source_03_target_state` as a deterministic target-local bars/liquidity normalizer keyed by `target_candidate_id + timeframe + timestamp`; raw symbol is retained only as source/audit/routing metadata.
-- Implemented `feature_03_target_state_vector` SQL wrapper to read `source_03_target_state` plus optional Layer 1/2 context rows and write JSONB market/sector/target/cross-state blocks into `trading_data.feature_03_target_state_vector`.
-- Aligned `feature_02_sector_context`, `source_02_target_candidate_holdings`, `source_03_target_state`, and `feature_03_target_state_vector` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.
-- Reclassified ETF holdings and `stock_etf_exposure` as downstream anonymous target candidate builder / Layer 3 input-preparation evidence, not Layer 2 core behavior inputs.
-- Implemented `stock_etf_exposure` derived source aggregation over saved ETF holdings CSV inputs plus caller-supplied ETF/sector/theme scores.
-- Implemented `source_04_event_overlay/equity_abnormal_activity` derived event detector over saved equity bars, optional benchmark bars, and optional liquidity bars.
-- Registered seven model input organization sources originally; current accepted numbered set uses 04 as event overlay, 05 as option expression, and 06 as position execution.
-- Added `stock_etf_exposure` as a derived point-in-time model-input data kind; it is now assigned to downstream candidate construction after Layer 2 selects/prioritizes sector baskets.
-- Added `equity_abnormal_activity_event` as a derived event-style data kind for EventOverlayModel stock/ETF abnormal price, volume, relative-strength, gap, and liquidity signals.
-- Added `docs/94_model_inputs.md` as the current mapping from `trading-data` source outputs and derived products to the seven `trading-model` layer input sources.
-- Implemented `11_feed_thetadata_option_event_timeline` for triggered option-activity events: explicit contract + date range + evidence-window `timeframe` + task/model `current_standard` input, local ThetaData Terminal trade_quote endpoint, event-only CSV rows, compact per-event detail JSON artifacts, and no raw provider response persistence.
-- Implemented `10_feed_thetadata_option_primary_tracking` for specified-contract option bars: explicit contract + date range + `timeframe` input, local ThetaData Terminal OHLC endpoint, zero-volume placeholder filtering, requested-timeframe aggregation, final `option_bar.csv` save, and completion receipt without raw provider response persistence.
-- Implemented `09_feed_thetadata_option_selection_snapshot` as the first ThetaData option final-output feed: explicit `underlying` + `snapshot_time` input, local ThetaData Terminal snapshot endpoints, in-memory normalization, atomic final `option_chain_snapshot.json` save, and completion receipt without raw provider response persistence.
-- Standardized final saved source outputs on CSV only; JSONL may remain a transient cleaned/run-local format but is no longer duplicated into saved outputs.
-- Retired the old `storage/templates/data_kinds/` preview catalog after dedicated SQL storage contracts became the accepted data-output boundary.
-- Implemented `03_feed_alpaca_news` pipeline: fetches Alpaca news with bounded pagination, normalizes article timestamps to America/New_York, and saves cleaned `equity_news` CSV without full raw payload persistence.
-- Implemented `01_feed_alpaca_bars` pipeline: fetches Alpaca bars with bounded pagination, normalizes timestamps to America/New_York, and saves cleaned `equity_bar` CSV without full raw payload persistence.
-- Implemented `02_feed_alpaca_liquidity` aggregate-only pipeline: fetches Alpaca trades/quotes as transient inputs, aggregates to America/New_York time buckets, saves one `equity_liquidity_bar` CSV, and writes completion receipts without raw trade/quote persistence.
-- Decided raw high-volume Alpaca trade/quote rows must not be persisted by default; `02_feed_alpaca_liquidity` should save ET-aligned aggregate/derived outputs and discard transient raw segments after aggregation unless a bounded debug artifact is explicitly approved.
-- Added provider/data-kind feed interface catalog and smoke runner under `src/feed_interfaces/`; live checks now confirm Alpaca equity bars/trades/quotes/snapshots/news, OKX crypto bars/trades/tickers/books, and SEC submissions/companyfacts/companyconcept/frames; ThetaData option endpoint families are cataloged but blocked until local Theta Terminal is reachable.
-- Removed the executable `macro_data` official macro API acquisition feed after accepting Trading Economics visible-page rows as the macro model-input source.
-- Added `src/feed_availability/` as a bounded smoke-probe package and CLI for source/API availability checks; reports write to ignored `storage/feed_availability/` and default tests use mocks/fixtures only.
-- Registered the initial feed-availability `data_kind` inventory in `trading-manager` and documented it in `docs/93_feed_availability.md`.
-- Constrained FRED usage to FRED/St. Louis Fed/ALFRED-unique data or explicitly approved FRED-native research series/groups; official agency measures use their official sources as canonical.
-- Previously consolidated macro acquisition into `macro_data`; this was later superseded by Trading Economics visible-page macro inputs.
-- Added `data_source` as a registry kind and registered current acquisition feed keys there.
-- Split Alpaca news into standalone `03_feed_alpaca_news` and renamed liquidity feed planning to `02_feed_alpaca_liquidity`.
-- Added `08_feed_sec_company_financials` for official SEC EDGAR company financial report data.
-- Confirmed all stock research timestamps use America/New_York unless a later storage contract explicitly requires another representation for a field.
-- Clarified stable random `task_id` and `run_id` with source-specific prefixes.
-- Clarified persistence policy: do not retain bulky raw/intermediate outputs by default; persist final cleaned outputs, with production headed toward SQL.
-- Clarified fixture policy: development may use tiny sanitized provider-response fixtures to understand structure; production hardening should remove or replace original-shape fixtures with minimal synthetic/contract fixtures.
-- Confirmed and registered all current task key / completion receipt JSON fields through `trading-manager`.
-- Clarified stable task key versus per-run completion receipt `runs[]` model.
-- Recorded runtime JSON minimalism for task key and completion receipt templates.
-- Updated feed/source implementation guidance to default to one `pipeline.py` file with four internal step functions and source-specific README details.
-- Added API template application guide for data data sources and linked `trading-manager/templates/data_tasks/`.
-- Changed development-stage task outputs from SQL writes to ignored local files under `storage/`.
-- Formalized control-plane-driven historical data task workflow: task key file in, specified historical script executes, development output/receipt files are written under `storage/`, and durable SQL/storage receipts remain future contract work.
-- Recorded FOMC calendar, official macro release calendar discovery, and ETF issuer holdings source-of-truth rules.
-- Recorded U.S. Treasury Fiscal Data as an open/no-key provider term with documentation path.
-- Added provider documentation URLs to data-feed planning docs, matching registry provider term paths.
-- Recorded FRED, Census, BEA, and BLS as registered economic/macro provider config surfaces using source-level secret aliases.
-- Recorded ThetaData as registered provider terminology for option data, with connector/JAR/credential layout deferred.
-- Recorded Alpaca as first registered stock/ETF data provider config surface using source-level secret alias `alpaca`.
-- Recorded OKX as first registered crypto provider config surface using a `trading-manager` source-level secret alias and non-secret metadata.
-- Added optional data-organization and data-feed docs for feed/source/output planning and provider connection boundaries.
-- Created initial `trading-data` docs spine and repository boundary.
-- Added initial `.gitignore` for local environments, generated data, artifacts, logs, and secrets.
+- Repository data-stack closeout: current feed/source/feature surfaces cover the accepted local Layers 1-8 model-input route.
+- Production hardening policy: live-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/96_production_hardening.md`.
+- Storage-owned V1 handoff contracts are the production handoff vocabulary; local ignored `storage/` remains development evidence.
+- ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.
+- `source_02_target_candidate_holdings` preserves point-in-time visibility with a conservative next-session-open default when no explicit availability timestamp exists.
+- `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative_v1` with `conservative_fixture_default_not_production_calibrated` until reviewed calibration exists.
+- `source_03_target_state` and `feature_03_target_state_vector` implement deterministic target-local observed-input and feature-block surfaces.
+- Layer 2 / candidate / Layer 3 boundaries are aligned: ETF holdings and `stock_etf_exposure` support anonymous target candidate preparation, not Layer 2 core behavior.
+- Event overlay sources are accepted through `source_04_event_overlay`, including equity abnormal activity evidence.
+- Option-expression inputs are accepted through `source_05_option_expression` and selected-contract tracking through `source_06_position_execution`.
+- Final saved source outputs are CSV or explicitly reviewed compact artifacts; JSONL may exist only as transient run-local evidence.
+- Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.
+- ThetaData option feeds are implemented for selection snapshot, specified-contract primary tracking, and event timeline.
+- `feed_availability` and `feed_interfaces` provide bounded provider/data-kind inventory and smoke support.
+- `macro_data` is not active. Macro model-input rows use `07_feed_trading_economics_calendar_web` visible-page evidence.
+- Current task key / receipt fields are registered through `trading-manager`; new shared fields need registry review.
+
+## Closed Design Notes
+
+Broad domain labels — market board, instrument, option — are product concepts only. The repository follows the direct route:
+
+```text
+data_feed -> data_source -> data_feature -> SQL/artifact handoff
+```
+
+New work should extend that route rather than adding parallel ad hoc scripts or new historical naming layers.

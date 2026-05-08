@@ -7,7 +7,7 @@ Boundary:
 - Use visible website calendar data only.
 - Do not call Trading Economics API endpoints or Download/export features.
 - Do not bypass WAF/captcha/permissions.
-- First version is an interface/parser scaffold; do not bulk backfill history yet.
+- Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 
 Run:
 

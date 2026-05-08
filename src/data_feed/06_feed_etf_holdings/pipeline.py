@@ -1,9 +1,9 @@
 """ETF issuer holdings interface feed.
 
 The feed normalizes issuer-published holdings into a single snapshot row shape.
-It intentionally starts as a conservative interface scaffold: users provide an
-official source URL and captured/source text, while issuer-specific live fetch
-adapters can be added after the ETF-symbol-to-issuer mapping table is accepted.
+It is conservative by default: users provide an official source URL and
+captured/source text, while issuer-specific live fetch adapters require an
+accepted ETF-symbol-to-issuer mapping table.
 """
 
 from __future__ import annotations
@@ -132,7 +132,7 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
         "feed": FEED,
         "etf_symbol": etf_symbol,
         "issuer_name": issuer,
-        "issuer_pattern": ISSUER_FETCH_PATTERNS.get(issuer, "issuer adapter pending mapping review"),
+        "issuer_pattern": ISSUER_FETCH_PATTERNS.get(issuer, "issuer adapter requires reviewed mapping"),
         "source_url": source_url,
         "feed_payload_kind": payload.kind,
         "fetched_at_utc": _now_utc(),

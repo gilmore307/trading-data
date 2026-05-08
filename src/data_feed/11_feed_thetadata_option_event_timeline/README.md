@@ -1,14 +1,12 @@
 # 11_feed_thetadata_option_event_timeline
 
-ThetaData option activity event timeline feed.
+ThetaData specified-contract option activity event feed.
 
 ## Purpose
 
-Produce news-like `option_activity_event.csv` rows and one compact `<id>.csv` detail artifact for each triggered option activity event. This feed reports events only; it does not save rolling-window process state, raw trade/quote rows, or periodic chain snapshots by default.
+Produce `option_activity_event.csv` rows and one compact `<event_id>.json` detail artifact for each triggered option activity event. The feed emits events only; it does not save rolling process state, raw trade/quote rows, or periodic chain snapshots by default.
 
-## Input task params
-
-Required:
+## Required params
 
 - `underlying` — equity underlying symbol, e.g. `AAPL`.
 - `expiration` — option expiration date, e.g. `2026-05-15`.
@@ -16,10 +14,10 @@ Required:
 - `strike` — option strike price.
 - `start_date` — ThetaData request start date, `YYYY-MM-DD`.
 - `end_date` — ThetaData request end date, `YYYY-MM-DD`.
-- `timeframe` — event evidence-window grain. Supported values: `1Min`, `5Min`, `15Min`, `30Min`, `1Hour`, `1Day`.
-- `current_standard` — event-time standard values used to emit events. This is task/model/run input, not a global fixed rule.
+- `timeframe` — event evidence-window grain: `1Min`, `5Min`, `15Min`, `30Min`, `1Hour`, or `1Day`.
+- `current_standard` — task/model/run event standard. This is input, not a global threshold owned by `trading-data`.
 
-`current_standard` can include:
+Example `current_standard`:
 
 ```json
 {
@@ -43,26 +41,24 @@ Required:
 }
 ```
 
-Optional params:
+## Optional runtime params
 
-- `output_root` at task-key top level — development output root. Defaults to `storage/<task_id>`.
-- `thetadata_base_url` — local ThetaData Terminal base URL. Defaults to `http://127.0.0.1:25503`.
-- `timeout_seconds` — request timeout. Defaults to `30`.
-- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
-- `max_events` — cap emitted events for bounded development runs. Defaults to `100`.
-- `iv_context` — optional event-local IV context values. When supplied, `iv_high_cross_section` can trigger and is included in detail artifacts.
+- `output_root` — development output root at task-key top level; defaults to `storage/<task_id>`.
+- `thetadata_base_url` — local ThetaData Terminal base URL; defaults to `http://127.0.0.1:25503`.
+- `timeout_seconds` — request timeout; defaults to `30`.
+- `registry_csv` — optional registry snapshot for retained registered fields; defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
+- `max_events` — cap emitted events for bounded development runs; defaults to `100`.
+- `iv_context` — optional event-local IV context values used by `iv_high_cross_section`.
 
 ## Source endpoint
 
-The feed uses ThetaData Terminal v3:
+ThetaData Terminal v3:
 
 - `/v3/option/history/trade_quote`
 
-Rows are transient. The feed groups them into ET evidence windows and emits a final event only when at least one indicator in `current_standard` is satisfied.
+Rows are transient. The feed groups them into ET evidence windows and emits a final event only when at least one supplied indicator standard is satisfied.
 
-## Development outputs
-
-For each run:
+## Outputs
 
 ```text
 <output_root>/runs/<run_id>/
@@ -76,12 +72,8 @@ For each run:
 <output_root>/completion_receipt.json
 ```
 
-Only `saved/option_activity_event.csv` and `saved/<event_id>.json` are final saved outputs. Cleaned JSONL is run-local/transient development evidence. Full raw provider responses are not persisted by default.
-
-## Final shapes
-
-This legacy feed interface can still emit local development CSV/JSON artifacts, but the old `storage/templates/data_kinds/` preview contracts have been retired. Accepted model-input output contracts are now owned by dedicated SQL tables.
+Only `saved/option_activity_event.csv` and `saved/<event_id>.json` are final saved outputs. Cleaned JSONL is run-local development evidence. Raw provider responses are not persisted by default.
 
 ## Failure and retry
 
-Development-stage saves are atomic: the feed writes temporary CSV/JSON files and renames them only after serialization succeeds. Durable SQL storage is future `trading-storage` work.
+Final CSV/JSON writes are atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.

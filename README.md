@@ -1,61 +1,49 @@
 # trading-data
 
-`trading-data` is the unified data-production repository for the trading system.
+`trading-data` is the trading system's data-production repository.
 
-It owns historical market, options, issuer, filing, news, calendar, and related provider data acquisition, cleaning, validation, and publication for downstream repositories. It executes self-contained task key files from the `trading-manager` control plane; legacy source pipelines may still create ignored local files under runtime `storage/`, while accepted SQL-only source outputs write directly to reviewed SQL tables.
+It acquires provider data, normalizes it into reviewed source tables/artifacts, derives deterministic feature tables, and hands ready outputs to downstream repositories. The direct route is:
 
-It does not own shared storage policy, model training/evaluation labels, strategy/backtest generation, model research, execution, dashboard rendering, secrets, credentials, notebooks, or generated data committed to Git.
+```text
+provider/API/web/file -> data_feed -> data_source -> data_feature -> SQL/artifact handoff
+```
+
+It does not own model training, promotion, strategy/backtest logic, broker execution, dashboard rendering, global storage policy, or secrets.
 
 ## Top-Level Structure
 
 ```text
-docs/        Required docs spine plus component-specific guides for feed, source, and feature organization.
-src/         Importable data-feed, data-source, data-feature, storage, and probe implementation packages.
-tests/       First-party tests for data-feed pipelines, interface probes, storage, and sources.
+docs/        Repository boundary, data routes, source/feed rules, and acceptance notes.
+src/         Importable feed, source, feature, storage, and probe packages.
+tests/       Fixture-safe tests for feeds, sources, features, storage, and probes.
+scripts/     Thin operational wrappers only; reusable logic belongs in src/.
 ```
 
-Executable CLIs are package entrypoints that call `src/`. If future operational wrappers are needed, place them under `scripts/`; `src/` must not import `scripts/`.
+## Current Route
 
-## Docs Set
+- `data_feed` talks to one provider/API/web/file family and produces normalized feed-level evidence.
+- `data_source` accepts a manager-issued task/request, composes feed evidence, and writes reviewed model-input source outputs.
+- `data_feature` derives deterministic layer-ready feature blocks from accepted source outputs.
+- `storage` provides low-level persistence helpers; durable layout and retention remain `trading-storage` responsibilities.
 
-```text
-docs/
-  00_scope.md
-  01_context.md
-  02_layer_01_market_regime.md
-  03_layer_02_sector_context.md
-  04_layer_03_target_state_vector.md
-  80_task.md
-  81_decision.md
-  82_memory.md
-  90_data_organization.md
-  91_data_feed.md
-  92_api_templates.md
-  93_feed_availability.md
-  94_model_inputs.md
-  95_data_stack_closeout.md
-```
+Accepted SQL outputs are the preferred model-input boundary. Local ignored `storage/` files are development evidence, not durable interfaces.
 
-## Input And Output
+## Key Docs
 
-Input: self-contained historical data task key files from the `trading-manager` control plane once the task-key contract is accepted.
+- `docs/00_scope.md` — repository purpose and boundaries.
+- `docs/90_data_organization.md` — feed/source/feature organization.
+- `docs/91_data_feed.md` — provider and feed rules.
+- `docs/92_api_templates.md` — task/source design order.
+- `docs/93_feed_availability.md` — provider/data-kind availability inventory.
+- `docs/94_model_inputs.md` — mapping from data outputs to model layers.
+- `docs/95_data_stack_closeout.md` — accepted local data-stack closeout.
+- `docs/96_production_hardening.md` — non-production hardening contracts.
 
-Development output: local SQL databases and, for legacy source pipelines, inspected local files and task completion receipts under runtime-created `storage/` (ignored by Git).
+## Platform Boundaries
 
-Durable output: storage-backed SQL/artifact outputs plus manifests and ready signals as cross-repository contracts are accepted.
+- `trading-manager` owns registry names, task/request contracts, scheduling, approvals, retries, and promotion control.
+- `trading-storage` owns durable layout, manifests, artifact references, ready signals, retention, backup, and restore.
+- `trading-model` owns labels, training, evaluation, and promotion evidence.
+- `trading-execution` owns realtime execution-time data and broker mutation.
 
-`trading-data` owns the data chain from provider feeds to model-scoped sources to deterministic point-in-time feature tables. For high-dimensional generated feature surfaces such as `feature_01_market_regime`, SQL storage may use one row per point-in-time key with generated feature values inside JSONB payloads instead of one physical column per feature. Request-driven Layer 3 target state-vector production (`feature_03_target_state_vector`) also belongs here as deterministic feature production; state-label design, model training, evaluation, and promotion decisions belong to `trading-model`. Realtime execution feeds belong to `trading-execution`.
-
-## Data Organization
-
-`trading-data` now organizes work around provider/feed adapters, model-scoped source tables, deterministic feature tables, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
-
-See `docs/90_data_organization.md`. API-specific source design guidance is in `docs/92_api_templates.md`; model-layer mapping is in `docs/94_model_inputs.md`; current repository closeout is in `docs/95_data_stack_closeout.md`. Current layer-specific data workflows, boundaries, and acceptance gates live in `docs/02_layer_01_market_regime.md`, `docs/03_layer_02_sector_context.md`, and `docs/04_layer_03_target_state_vector.md`.
-
-## Platform Dependencies
-
-- `trading-manager` owns global contracts, registry, shared helpers, and templates.
-- `trading-storage` owns durable storage layout, retention, archive, backup, and restore rules.
-- `trading-manager` owns control-plane scheduling, request generation, lifecycle, retries, and promotion decisions.
-
-Any new global helper, template, shared field, status, type, or reusable vocabulary discovered while developing `trading-data` must be routed back to `trading-manager` for documentation and registry review before other repositories depend on it.
+Reusable names, fields, statuses, helpers, templates, and cross-repository contracts discovered here must be routed through `trading-manager` before other repositories depend on them.

@@ -2,8 +2,8 @@
 
 This feed acquires source article records from GDELT's public BigQuery tables.
 It is a source-evidence layer for political/economic/technology/geopolitical
-and broad-market event discovery. Event clustering/scoring happens later in the
-unified event layer.
+and broad-market event discovery. Event clustering/scoring belongs outside this
+feed, in the event-overlay/model boundary.
 """
 
 from __future__ import annotations

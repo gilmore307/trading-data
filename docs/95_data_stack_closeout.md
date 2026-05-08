@@ -5,14 +5,14 @@ Date: 2026-05-08
 
 ## Closeout scope
 
-`trading-data` has a complete accepted local design/implementation scaffold for the current feed, source, and feature surfaces needed by the Layers 1-8 model stack.
+`trading-data` has a complete accepted local feed/source/feature implementation surface for the current Layers 1-8 model-input route.
 
 | Surface | Current owner path | Closeout state |
 |---|---|---|
-| Feed availability inventory | `src/feed_availability/`, `src/feed_interfaces/` | accepted probe/catalog scaffold; live smoke remains opt-in |
-| Alpaca bars/liquidity/news | `src/data_feed/01_*`, `02_*`, `03_*` | accepted feed scaffolds with fixture-safe tests and no default raw persistence |
-| OKX crypto market data | `src/data_feed/04_feed_okx_crypto_market_data/` | accepted feed scaffold/catalog surface |
-| GDELT / ETF holdings / Trading Economics / SEC feeds | `src/data_feed/05_*` through `08_*` | accepted feed scaffolds for current data-source planning |
+| Feed availability inventory | `src/feed_availability/`, `src/feed_interfaces/` | accepted probe/catalog support; live smoke remains opt-in |
+| Alpaca bars/liquidity/news | `src/data_feed/01_*`, `02_*`, `03_*` | accepted feeds with fixture-safe tests and no default raw persistence |
+| OKX crypto market data | `src/data_feed/04_feed_okx_crypto_market_data/` | accepted feed/catalog surface |
+| GDELT / ETF holdings / Trading Economics / SEC feeds | `src/data_feed/05_*` through `08_*` | accepted feed surfaces for current source planning |
 | ThetaData option feeds | `src/data_feed/09_*` through `11_*` | accepted local terminal-oriented V1 feeds for option snapshot, primary tracking, and event timeline |
 | Layer 1 data | `source_01_market_regime`, `feature_01_market_regime` | accepted market-regime input/feature surfaces |
 | Layer 2 data | `feature_02_sector_context` | accepted sector-context feature surface |
@@ -32,13 +32,13 @@ Two previously active hardening items are now resolved as conservative closeout 
 
 ## Remaining work classification
 
-Remaining items are production hardening / manager-storage orchestration, not open data-stack design blockers. The non-data-accumulation policy layer is now defined in `docs/96_production_hardening.md`; remaining implementation work is narrower:
+Remaining items are production hardening / manager-storage orchestration, not open data-stack design blockers. The non-data-accumulation policy layer is defined in `docs/96_production_hardening.md`; remaining implementation work is narrower:
 
 - physical manager/storage queue and SQL/storage implementation for `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1`;
-- production feed connector packaging beyond the implemented local source slices;
+- production packaging/service decisions beyond the implemented local source slices;
 - source-specific parameter dictionaries and broader production coverage source files;
 - optionability summary promotion after the model/control-plane contract needs it;
-- controlled ThetaData live smoke once the local terminal is intentionally running and reachable;
+- optional ThetaData service/autostart setup if unattended option data runs become accepted;
 - production calibration reports for data-derived event standards before labels depend on them.
 
 ## Boundary closeout

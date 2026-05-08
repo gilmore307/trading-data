@@ -151,7 +151,7 @@ def payload_columns(rows: Iterable[Mapping[str, Any]]) -> list[str]:
 
 
 def candidate_parameter_inputs(row: Mapping[str, Any]) -> dict[str, Any]:
-    """Return numeric payload fields intended for later Model 2 parameterization."""
+    """Return payload fields available for SectorContextModel parameterization."""
 
     return {key: value for key, value in row.items() if key not in METADATA_COLUMNS}
 

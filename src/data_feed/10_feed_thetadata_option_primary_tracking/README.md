@@ -1,14 +1,12 @@
 # 10_feed_thetadata_option_primary_tracking
 
-ThetaData specified-contract option primary tracking feed.
+ThetaData specified-contract option bar feed.
 
 ## Purpose
 
-Produce final `option_bar.csv` rows for one option contract supplied in the task key. This feed tracks a specified contract; it does not select contracts. Contract selection belongs to future model work that consumes `option_chain_snapshot`.
+Produce final `option_bar.csv` rows for one option contract supplied by the caller. The feed tracks the supplied contract; it does not choose contracts.
 
-## Input task params
-
-Required:
+## Required params
 
 - `underlying` — equity underlying symbol, e.g. `AAPL`.
 - `expiration` — option expiration date, e.g. `2026-05-15`.
@@ -16,26 +14,24 @@ Required:
 - `strike` — option strike price.
 - `start_date` — ThetaData request start date, `YYYY-MM-DD`.
 - `end_date` — ThetaData request end date, `YYYY-MM-DD`.
-- `timeframe` — final bar grain. Supported values: `1Sec`, `1Min`, `5Min`, `15Min`, `30Min`, `1Hour`, `1Day`.
+- `timeframe` — final bar grain: `1Sec`, `1Min`, `5Min`, `15Min`, `30Min`, `1Hour`, or `1Day`.
 
-Optional development/runtime params:
+## Optional runtime params
 
-- `output_root` at task-key top level — development output root. Defaults to `storage/<task_id>`.
-- `thetadata_base_url` — local ThetaData Terminal base URL. Defaults to `http://127.0.0.1:25503`.
-- `timeout_seconds` — request timeout. Defaults to `30`.
-- `registry_csv` — optional registry snapshot used for retained registered fields; retired preview-only local output fields use code-local names and must not be re-registered. Defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
+- `output_root` — development output root at task-key top level; defaults to `storage/<task_id>`.
+- `thetadata_base_url` — local ThetaData Terminal base URL; defaults to `http://127.0.0.1:25503`.
+- `timeout_seconds` — request timeout; defaults to `30`.
+- `registry_csv` — optional registry snapshot for retained registered fields; defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
 
 ## Source endpoint
 
-The feed uses ThetaData Terminal v3:
+ThetaData Terminal v3:
 
 - `/v3/option/history/ohlc`
 
-ThetaData returns 1-second OHLC rows including zero-volume placeholder rows. The feed treats those provider rows as transient and aggregates only rows with nonzero `volume` or `count` into the requested final `timeframe`.
+ThetaData returns 1-second OHLC rows, including zero-volume placeholders. The feed treats provider rows as transient, skips zero-volume/count placeholders, and aggregates active rows to the requested `America/New_York` timeframe.
 
-## Development outputs
-
-For each run:
+## Outputs
 
 ```text
 <output_root>/runs/<run_id>/
@@ -48,28 +44,10 @@ For each run:
 <output_root>/completion_receipt.json
 ```
 
-Only `saved/option_bar.csv` is the final saved output. Cleaned JSONL is run-local/transient development evidence. Full raw provider responses are not persisted by default.
+Only `saved/option_bar.csv` is the final saved output. Cleaned JSONL is run-local development evidence. Raw provider responses are not persisted by default.
 
-## Final CSV shape
-
-This legacy feed interface can still emit the local development CSV shape listed below, but the old `storage/templates/data_kinds/` preview contract has been retired. Accepted model-input output contracts are now owned by dedicated SQL tables.
-
-Fields include:
-
-- `underlying`
-- `expiration`
-- `right`
-- `strike`
-- `timeframe`
-- `timestamp`
-- `bar_open`
-- `bar_high`
-- `bar_low`
-- `bar_close`
-- `bar_volume`
-- `bar_trade_count`
-- `bar_vwap`
+Final CSV fields include contract identity, timeframe, timestamp, OHLC, volume, trade count, and VWAP.
 
 ## Failure and retry
 
-Development-stage save is atomic: the feed writes a temporary CSV file and renames it to `option_bar.csv` only after serialization succeeds. If the run fails, rerun the task. Durable SQL storage is future `trading-storage` work.
+The final CSV write is atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.

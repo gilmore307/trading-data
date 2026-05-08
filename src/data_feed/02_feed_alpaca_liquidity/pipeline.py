@@ -237,9 +237,9 @@ def aggregate_quotes(symbol: str, quotes: list[dict[str, Any]], timeframe: str) 
 
 
 def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: list[dict[str, Any]], timeframe: str) -> list[dict[str, Any]]:
-    # For this first implementation, liquidity is interval-level trade/quote
-    # aggregation, not tick-level previous-quote matching. Tick-level matching can
-    # be added later without changing the raw non-persistence rule.
+    # Liquidity is interval-level trade/quote aggregation, not tick-level
+    # previous-quote matching. A reviewed tick-matching extension can be added
+    # without changing the raw non-persistence rule.
     trade_by_bucket = {row["interval_start"]: row for row in aggregate_trades(symbol, trades, timeframe)}
     quote_by_bucket = {row["interval_start"]: row for row in aggregate_quotes(symbol, quotes, timeframe)}
     rows = []

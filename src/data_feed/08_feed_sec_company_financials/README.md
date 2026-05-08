@@ -35,4 +35,4 @@ Rules:
 - Use official SEC endpoints only by default.
 - Automated requests must send an identifying SEC User-Agent.
 - Full raw SEC responses are not persisted by default because `companyfacts` can be large.
-- This feed does not yet normalize GAAP facts into model-ready financial statements; that belongs to a later model/financials transformation layer.
+- This feed does not normalize GAAP facts into model-ready financial statements; that belongs to a reviewed model/financials transformation boundary.

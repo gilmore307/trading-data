@@ -7,12 +7,12 @@ runtime reads/writes.
 """
 from __future__ import annotations
 
+import bisect
 import csv
 import math
 from dataclasses import dataclass
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from statistics import mean, pstdev
 from typing import Any, Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
@@ -44,6 +44,26 @@ def _safe_float(value: Any) -> float | None:
         return None
     return parsed
 
+
+
+def _mean(values: Iterable[float]) -> float:
+    if isinstance(values, Sequence):
+        if not values:
+            raise ValueError("mean requires at least one value")
+        return sum(values) / len(values)
+    items = list(values)
+    if not items:
+        raise ValueError("mean requires at least one value")
+    return sum(items) / len(items)
+
+
+def _pstdev(values: Iterable[float]) -> float:
+    if not isinstance(values, Sequence):
+        values = list(values)
+    result = _std(values)
+    if result is None:
+        raise ValueError("pstdev requires at least two values")
+    return result
 
 def _safe_div(numerator: float | None, denominator: float | None) -> float | None:
     if numerator is None or denominator in (None, 0):
@@ -114,6 +134,19 @@ class MarketRegimeInputs:
     market_state_symbols: list[str]
     sector_observation_symbols: list[str]
     combinations: list[Combination]
+
+
+@dataclass(frozen=True)
+class PreparedBars:
+    bars: Sequence[Bar]
+    available_times: tuple[datetime, ...]
+    day_keys: tuple[date, ...]
+    eod_bars: tuple[Bar, ...]
+    explicit_daily_by_day: dict[date, Bar]
+    intraday_candidates_by_day: dict[date, tuple[Bar, ...]]
+
+
+_PREPARED_BAR_CACHE: dict[int, PreparedBars] = {}
 
 
 def read_csv_rows(path: str | Path) -> list[dict[str, str]]:
@@ -244,6 +277,46 @@ def generate_row(inputs: MarketRegimeInputs, snapshot_time: datetime) -> dict[st
     return row
 
 
+def _prepared_bars(bars: Sequence[Bar]) -> PreparedBars:
+    cache_key = id(bars)
+    cached = _PREPARED_BAR_CACHE.get(cache_key)
+    if cached is not None and cached.bars is bars:
+        return cached
+
+    explicit_daily_by_day: dict[date, Bar] = {}
+    intraday_candidates_by_day: dict[date, list[Bar]] = {}
+    for bar in bars:
+        if bar.close is None:
+            continue
+        local_available = bar.available_time.astimezone(ET)
+        day = local_available.date()
+        if _is_daily_timeframe(bar.timeframe):
+            explicit_daily_by_day[day] = bar
+        elif _is_regular_session_close_candidate(local_available):
+            intraday_candidates_by_day.setdefault(day, []).append(bar)
+
+    frozen_intraday = {
+        day: tuple(sorted(day_bars, key=lambda item: item.available_time))
+        for day, day_bars in intraday_candidates_by_day.items()
+    }
+    day_keys = tuple(sorted(set(explicit_daily_by_day) | set(frozen_intraday)))
+    eod_bars: list[Bar] = []
+    for day in day_keys:
+        intraday = frozen_intraday.get(day, tuple())
+        eod_bars.append(explicit_daily_by_day.get(day) or intraday[-1])
+
+    prepared = PreparedBars(
+        bars=bars,
+        available_times=tuple(bar.available_time for bar in bars),
+        day_keys=day_keys,
+        eod_bars=tuple(eod_bars),
+        explicit_daily_by_day=explicit_daily_by_day,
+        intraday_candidates_by_day=frozen_intraday,
+    )
+    _PREPARED_BAR_CACHE[cache_key] = prepared
+    return prepared
+
+
 def _daily_bars_at(bars: Sequence[Bar], snapshot_time: datetime) -> list[Bar]:
     """Return point-in-time daily close evidence at ``snapshot_time``.
 
@@ -256,23 +329,21 @@ def _daily_bars_at(bars: Sequence[Bar], snapshot_time: datetime) -> list[Bar]:
     """
 
     snapshot_time = snapshot_time.astimezone(ET)
-    daily_by_date: dict[Any, Bar] = {}
-    intraday_by_date: dict[Any, Bar] = {}
-    for bar in bars:
-        if bar.available_time > snapshot_time or bar.close is None:
-            break
-        local_available = bar.available_time.astimezone(ET)
-        day = local_available.date()
-        if _is_daily_timeframe(bar.timeframe):
-            daily_by_date[day] = bar
-        elif _is_regular_session_close_candidate(local_available):
-            current = intraday_by_date.get(day)
-            if current is None or bar.available_time > current.available_time:
-                intraday_by_date[day] = bar
+    prepared = _prepared_bars(bars)
+    snapshot_day = snapshot_time.date()
+    completed_days = bisect.bisect_left(prepared.day_keys, snapshot_day)
+    output = list(prepared.eod_bars[:completed_days])
 
-    output: list[Bar] = []
-    for day in sorted(set(daily_by_date) | set(intraday_by_date)):
-        output.append(daily_by_date.get(day) or intraday_by_date[day])
+    if completed_days < len(prepared.day_keys) and prepared.day_keys[completed_days] == snapshot_day:
+        explicit = prepared.explicit_daily_by_day.get(snapshot_day)
+        if explicit is not None and explicit.available_time <= snapshot_time:
+            output.append(explicit)
+        else:
+            intraday = prepared.intraday_candidates_by_day.get(snapshot_day, tuple())
+            intraday_times = tuple(bar.available_time for bar in intraday)
+            index = bisect.bisect_right(intraday_times, snapshot_time) - 1
+            if index >= 0:
+                output.append(intraday[index])
     return output
 
 
@@ -282,13 +353,14 @@ def _is_regular_session_close_candidate(value: datetime) -> bool:
 
 
 def _latest_close_at(bars: Sequence[Bar], at: datetime) -> float | None:
-    latest: Bar | None = None
-    for bar in bars:
-        if bar.available_time <= at and bar.close is not None:
-            latest = bar
-        elif bar.available_time > at:
-            break
-    return None if latest is None else latest.close
+    prepared = _prepared_bars(bars)
+    index = bisect.bisect_right(prepared.available_times, at.astimezone(ET)) - 1
+    while index >= 0:
+        close = prepared.bars[index].close
+        if close is not None:
+            return close
+        index -= 1
+    return None
 
 
 def _daily_close_series(bars: Sequence[Bar]) -> list[float]:
@@ -315,7 +387,8 @@ def _log_return_from_daily_bars(bars: Sequence[Bar], periods: int) -> float | No
 def _std(values: Sequence[float]) -> float | None:
     if len(values) < 2:
         return None
-    return pstdev(values)
+    center = sum(values) / len(values)
+    return math.sqrt(sum((value - center) ** 2 for value in values) / len(values))
 
 
 def _sample_corr(left: Sequence[float], right: Sequence[float], window: int) -> float | None:
@@ -324,8 +397,8 @@ def _sample_corr(left: Sequence[float], right: Sequence[float], window: int) -> 
         return None
     xs = [item[0] for item in pairs]
     ys = [item[1] for item in pairs]
-    mean_x = mean(xs)
-    mean_y = mean(ys)
+    mean_x = _mean(xs)
+    mean_y = _mean(ys)
     cov = sum((x - mean_x) * (y - mean_y) for x, y in pairs)
     var_x = sum((x - mean_x) ** 2 for x in xs)
     var_y = sum((y - mean_y) ** 2 for y in ys)
@@ -344,7 +417,7 @@ def _rolling_realized_vol(log_returns: Sequence[float], window: int) -> float | 
 def _moving_average(values: Sequence[float], window: int) -> float | None:
     if len(values) < window:
         return None
-    return mean(values[-window:])
+    return _mean(values[-window:])
 
 
 def _ratio_series(numerator: Sequence[float], denominator: Sequence[float]) -> list[float]:
@@ -421,7 +494,7 @@ def _atr_pct(bars: Sequence[Bar], window: int) -> float | None:
         if current.high is None or current.low is None or previous.close is None:
             return None
         ranges.append(max(current.high - current.low, abs(current.high - previous.close), abs(current.low - previous.close)))
-    return _safe_div(mean(ranges), bars[-1].close)
+    return _safe_div(_mean(ranges), bars[-1].close)
 
 
 def _rolling_percentile(values: Sequence[float], window: int) -> float | None:
@@ -439,7 +512,7 @@ def _rolling_zscore(values: Sequence[float], window: int) -> float | None:
     std = _std(sample)
     if std in (None, 0):
         return None
-    return (sample[-1] - mean(sample)) / std
+    return (sample[-1] - _mean(sample)) / std
 
 
 def _parkinson_vol(bars: Sequence[Bar], window: int) -> float | None:
@@ -464,7 +537,7 @@ def _garman_klass_vol(bars: Sequence[Bar], window: int) -> float | None:
         if high_low is None or close_open is None:
             return None
         terms.append(0.5 * high_low**2 - (2 * math.log(2) - 1) * close_open**2)
-    variance = mean(terms)
+    variance = _mean(terms)
     if variance < 0:
         return None
     return math.sqrt(variance) * math.sqrt(252)
@@ -528,6 +601,6 @@ def _add_market_state_correlation_concentration(row: dict[str, Any], inputs: Mar
                 value = _sample_corr(returns[left], returns[right], window)
                 if value is not None:
                     correlations.append(value)
-        row[f"market_state_avg_return_corr_{window}d"] = mean(correlations) if correlations else None
-        row[f"market_state_avg_abs_return_corr_{window}d"] = mean(abs(value) for value in correlations) if correlations else None
-        row[f"market_state_return_corr_dispersion_{window}d"] = pstdev(correlations) if len(correlations) >= 2 else None
+        row[f"market_state_avg_return_corr_{window}d"] = _mean(correlations) if correlations else None
+        row[f"market_state_avg_abs_return_corr_{window}d"] = _mean(abs(value) for value in correlations) if correlations else None
+        row[f"market_state_return_corr_dispersion_{window}d"] = _pstdev(correlations) if len(correlations) >= 2 else None

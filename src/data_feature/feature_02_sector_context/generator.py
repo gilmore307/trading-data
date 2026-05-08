@@ -9,7 +9,6 @@ stock-exposure evidence are intentionally downstream of Layer 2.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from statistics import mean, pstdev
 from typing import Any, Iterable, Mapping, Sequence
 
 from data_feature.feature_01_market_regime import generator as market_features
@@ -162,7 +161,7 @@ def relative_strength_signal_average(row: Mapping[str, Any]) -> float | None:
 
     values = [market_features._safe_float(row.get(key)) for key in ("relative_strength_return", "relative_strength_distance_to_ma20", "relative_strength_ma_alignment_score")]
     clean = [value for value in values if value is not None]
-    return mean(clean) if clean else None
+    return market_features._mean(clean) if clean else None
 
 
 def _add_sector_observation_breadth(row: dict[str, Any], inputs: MarketRegimeInputs, daily: Any) -> None:
@@ -205,9 +204,9 @@ def _add_sector_observation_breadth(row: dict[str, Any], inputs: MarketRegimeInp
     row["sector_observation_above_ma20_pct"] = market_features._safe_div(above20, above20_count)
     row["sector_observation_above_ma50_pct"] = market_features._safe_div(above50, above50_count)
     row["sector_observation_above_ma200_pct"] = market_features._safe_div(above200, above200_count)
-    row["sector_observation_distance_to_ma20_avg"] = mean(distance20) if distance20 else None
-    row["sector_observation_distance_to_ma20_dispersion"] = pstdev(distance20) if len(distance20) >= 2 else None
-    row["sector_observation_return_20d_dispersion"] = pstdev(returns20) if len(returns20) >= 2 else None
+    row["sector_observation_distance_to_ma20_avg"] = market_features._mean(distance20) if distance20 else None
+    row["sector_observation_distance_to_ma20_dispersion"] = market_features._pstdev(distance20) if len(distance20) >= 2 else None
+    row["sector_observation_return_20d_dispersion"] = market_features._pstdev(returns20) if len(returns20) >= 2 else None
 
 
 def _positive_pct(values: Sequence[float]) -> float | None:

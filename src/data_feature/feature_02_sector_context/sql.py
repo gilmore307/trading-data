@@ -66,7 +66,18 @@ def fetch_source_bars(
     source_start: str | None = None,
     source_end: str | None = None,
 ) -> list[dict[str, Any]]:
-    where: list[str] = []
+    where: list[str] = [
+        """
+        (
+          lower(timeframe) NOT IN ('1m', '1min', '1minute')
+          OR (
+            (timestamp AT TIME ZONE 'America/New_York')::time BETWEEN TIME '09:30' AND TIME '16:00'
+            AND EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)
+            AND EXTRACT(SECOND FROM timestamp AT TIME ZONE 'America/New_York') = 0
+          )
+        )
+        """
+    ]
     params: list[Any] = []
     if source_start:
         where.append("timestamp >= %s")
@@ -74,7 +85,7 @@ def fetch_source_bars(
     if source_end:
         where.append("timestamp <= %s")
         params.append(source_end)
-    where_sql = " WHERE " + " AND ".join(where) if where else ""
+    where_sql = " WHERE " + " AND ".join(where)
     cursor.execute(
         f"""
         SELECT

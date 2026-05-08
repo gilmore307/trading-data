@@ -1320,3 +1320,14 @@ Closeout does not approve unattended production orchestration, final durable sto
 ETF holdings candidate-preparation rows must preserve point-in-time visibility. If no explicit source/task `available_time` is supplied, the conservative default is the next regular US session open after `as_of_date`. Same-day availability requires explicit evidence.
 
 `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative_v1` as the default local standard. It may produce conservative event evidence, but production training labels or promoted gates require reviewed historical calibration evidence before thresholds or model-standard identity are treated as production-calibrated.
+
+## D075 - Layer 1/2 feature generation must preserve point-in-time daily evidence at intraday scale
+
+Date: 2026-05-08
+Status: Accepted
+
+Layer 1/2 promotion repair found that full-year source data existed, but stale feature generation had left daily-derived evidence populated mostly near the final evaluation window. The fix is data completeness and runtime efficiency, not threshold tuning.
+
+`feature_01_market_regime` and `feature_02_sector_context` may downsample raw one-minute source bars at SQL-fetch time to the 30-minute regular-session decision surface while retaining non-one-minute rows. Their generators must still reconstruct point-in-time daily evidence from explicit daily bars or the latest regular-session intraday close available at each snapshot.
+
+The accepted implementation uses prepared bar caches and binary-search lookups so full feature regeneration can cover the full available sample without changing model semantics. This repair supports honest promotion evaluation; it does not itself approve Layer 1 or Layer 2 production promotion.

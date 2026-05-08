@@ -1,0 +1,59 @@
+# Layer 08 - Option Expression Data
+
+`trading-data` owns option-expression source inputs for Layer 8. Model-side contract ranking, expression choice, labels, evaluation, and promotion belong to `trading-model`.
+
+## Owned artifacts
+
+```text
+trading_data.source_05_option_expression
+trading_data.source_06_position_execution
+```
+
+The source numbers remain historical/accepted source identifiers:
+
+- `source_05_option_expression` is the option-chain snapshot input for `OptionExpressionModel`.
+- `source_06_position_execution` is selected-contract option market-data tracking for replay/evaluation.
+
+Neither source is model Layer 5 or Layer 6.
+
+## Boundary
+
+Layer 8 data covers visible option-chain evidence and selected-contract market paths.
+
+`source_05_option_expression` writes one row per visible contract at an explicit entry/exit snapshot time. It captures quote, spread, IV, first-order Greeks, and contract identity where provider data is available.
+
+`source_06_position_execution` writes selected option contract bars from entry time through exit time plus one hour. It emits market data only.
+
+## Stage flow
+
+```text
+ThetaData option feeds
+  -> source_05_option_expression option-chain snapshot
+  -> trading-model OptionExpressionModel
+  -> selected contract handoff
+  -> source_06_position_execution selected-contract tracking
+  -> replay/evaluation outside trading-data
+```
+
+## Non-ownership
+
+`trading-data` does not own:
+
+- contract ranking;
+- final expression choice;
+- theoretically best-return label design;
+- risk-controllable expression scoring;
+- order instructions;
+- execution decisions;
+- PnL labels;
+- production promotion decisions.
+
+## Acceptance notes
+
+Layer 8 data changes are acceptable when they:
+
+- preserve explicit point-in-time snapshot times;
+- keep ThetaData raw provider rows transient by default;
+- write reviewed SQL source outputs or compact reviewed artifacts;
+- keep selected-contract tracking as market data only;
+- route reusable option fields, statuses, and artifact names through `trading-manager` before cross-repository dependence.

@@ -35,6 +35,7 @@ Accepted SQL outputs are the preferred model-input boundary. Local ignored `stor
 - `docs/91_data_feed.md` — provider and feed rules.
 - `docs/92_api_templates.md` — task/source design order.
 - `docs/93_feed_availability.md` — provider/data-kind availability inventory.
+- `docs/02_layer_01_market_regime.md` through `docs/09_layer_08_option_expression.md` — layer-specific data boundaries.
 - `docs/94_model_inputs.md` — mapping from data outputs to model layers.
 - `docs/95_data_stack_closeout.md` — accepted local data-stack closeout.
 - `docs/96_production_hardening.md` — non-production hardening contracts.

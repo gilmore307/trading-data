@@ -14,7 +14,7 @@ It does not own model training, promotion, strategy/backtest logic, broker execu
 
 ```text
 docs/        Repository boundary, data routes, source/feed rules, and acceptance notes.
-src/         Importable feed, source, feature, storage, and probe packages.
+src/         Importable feed, source, feature, layer-catalog, storage, and probe packages.
 tests/       Fixture-safe tests for feeds, sources, features, storage, and probes.
 scripts/     Thin operational wrappers only; reusable logic belongs in src/.
 ```
@@ -24,6 +24,7 @@ scripts/     Thin operational wrappers only; reusable logic belongs in src/.
 - `data_feed` talks to one provider/API/web/file family and produces normalized feed-level evidence.
 - `data_source` accepts a manager-issued task/request, composes feed evidence, and writes reviewed model-input source outputs.
 - `data_feature` derives deterministic layer-ready feature blocks from accepted source outputs.
+- `data_layers` catalogs the Layer 1-8 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
 - `storage` provides low-level persistence helpers; durable layout and retention remain `trading-storage` responsibilities.
 
 Accepted SQL outputs are the preferred model-input boundary. Local ignored `storage/` files are development evidence, not durable interfaces.

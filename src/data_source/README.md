@@ -8,9 +8,9 @@ Boundary:
 - `data_source.*` accepts manager-issued task keys, chooses the required feed interfaces, applies reviewed code-level contracts/defaults, and writes task-run outputs/receipts.
 - Model-layer data acquisition/preparation belongs here, not in `data_feed`, because it composes source outputs around manager-facing source boundaries.
 
-Current numbered data sources:
+Current numbered data sources are cataloged in `src/data_layers/catalog.py` and summarized here:
 
-Note: downstream alpha/projection consumers currently do not need new `trading-data` sources because they consume upstream SQL outputs, model outputs, labels, and reviewed evaluation artifacts without new source acquisition.
+Note: Layers 5-7 currently do not need new `trading-data` sources because they consume upstream SQL outputs, model outputs, labels, position/risk/control-plane context, and reviewed evaluation artifacts without new source acquisition.
 
 - `source_01_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_regime_etf_universe.csv`.
 - `source_02_target_candidate_holdings` — SQL-only filtered US-listed equity ETF holdings table for anonymous target candidate preparation after Layer 2 sector/basket prioritization; ETF universe comes from `market_regime_etf_universe.csv`.

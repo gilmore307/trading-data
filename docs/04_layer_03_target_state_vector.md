@@ -1,4 +1,4 @@
-# Layer 3 Target State Vector
+# Layer 03 - Target State Vector Data
 
 `trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction. The source/feature surface is implemented; promotion remains gated by model-side real-data evidence.
 

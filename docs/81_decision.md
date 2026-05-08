@@ -1332,3 +1332,26 @@ Layer 1/2 promotion repair found that full-year source data existed, but stale f
 `feature_01_market_regime` and `feature_02_sector_context` may downsample raw one-minute source bars at SQL-fetch time to the 30-minute regular-session decision surface while retaining non-one-minute rows. Their generators must still reconstruct point-in-time daily evidence from explicit daily bars or the latest regular-session intraday close available at each snapshot.
 
 The accepted implementation uses prepared bar caches and binary-search lookups so full feature regeneration can cover the full available sample without changing model semantics. This repair supports honest promotion evaluation; it does not itself approve Layer 1 or Layer 2 production promotion.
+
+## D084 - Production-hardening policy is defined before production data accumulation
+
+Date: 2026-05-08
+Status: Accepted
+
+### Context
+
+The current data-source/model-input design is closed, but several operational gaps do not require accumulated production labels/data: live-call guardrails, retry/rate-limit policy, checkpoint/resume evidence, manifest/ready-signal rules, and provider runbooks.
+
+### Decision
+
+Accept `docs/96_production_hardening.md` as the current data-side production-hardening policy.
+
+The policy requires live calls to fail closed unless an explicit manager request permits them, provider retry/rate-limit evidence to be recorded, segmented runs to support idempotent checkpoint/resume evidence, and production handoff to use storage-owned `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1` contracts.
+
+ThetaData live smoke is not a production-data blocker, but it is environment-blocked unless the local Theta Terminal is intentionally running at `127.0.0.1:25503`.
+
+### Consequences
+
+- These rules can be implemented before production data accumulation.
+- The policy does not approve unattended production orchestration, training-label use, or model promotion.
+- Fixture/local outputs remain development evidence until manager/storage persistence and ready-signal implementation are accepted.

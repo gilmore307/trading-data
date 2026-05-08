@@ -17,7 +17,8 @@ This directory is the authoritative documentation spine for `trading-data`.
 - `93_feed_availability.md` — inventory of verified feed availability and registered data-kind groups.
 - `94_model_inputs.md` — mapping from `trading-data` source-backed outputs and derived products to model-layer data sources.
 - `95_data_stack_closeout.md` — accepted closeout receipt for the current data-source/model-input design phase and remaining production-hardening scope.
+- `96_production_hardening.md` — accepted live-call, retry/rate-limit, checkpoint/resume, manifest, ready-signal, and ThetaData runbook policy for work that does not require accumulated production data.
 
-Layer workflow and acceptance live in the numbered layer files. Current model-input/data-source design is closed in `95_data_stack_closeout.md`; future changes should be scoped as production hardening, bug fixes, or explicitly accepted architecture revisions.
+Layer workflow and acceptance live in the numbered layer files. Current model-input/data-source design is closed in `95_data_stack_closeout.md`; future changes should be scoped as production hardening, bug fixes, or explicitly accepted architecture revisions. Production hardening policy that can be defined before real production labels/data exists lives in `96_production_hardening.md`.
 
 Do not place generated data, provider dumps, artifacts, notebooks, logs, credentials, or implementation outputs in this directory.

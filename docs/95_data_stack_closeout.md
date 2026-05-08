@@ -32,14 +32,13 @@ Two previously active hardening items are now resolved as conservative closeout 
 
 ## Remaining work classification
 
-Remaining items are production hardening / manager-storage orchestration, not open data-stack design blockers:
+Remaining items are production hardening / manager-storage orchestration, not open data-stack design blockers. The non-data-accumulation policy layer is now defined in `docs/96_production_hardening.md`; remaining implementation work is narrower:
 
-- provider quota, rate-limit, retry, and live-call guardrails per source;
-- segment checkpoint/resume evidence for long historical runs;
-- durable data artifact references, manifests, ready signals, completion receipts, SQL table/partition contracts, and retention policy;
-- final `trading-manager` issued request/task schemas for production orchestration;
+- physical manager/storage queue and SQL/storage implementation for `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1`;
+- production feed connector packaging beyond the implemented local source slices;
+- source-specific parameter dictionaries and broader production coverage source files;
 - optionability summary promotion after the model/control-plane contract needs it;
-- live ThetaData terminal/JAR/credential placement smoke and operator runbook;
+- controlled ThetaData live smoke once the local terminal is intentionally running and reachable;
 - production calibration reports for data-derived event standards before labels depend on them.
 
 ## Boundary closeout

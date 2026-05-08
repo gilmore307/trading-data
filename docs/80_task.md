@@ -6,7 +6,7 @@
 
 ## Queued Tasks
 
-- Execute production-hardening work under manager/control-plane orchestration: provider quota/rate-limit/retry policies, segment checkpoint/resume evidence, durable manifests/ready signals, and SQL/storage contracts.
+- Implement production-hardening work under manager/control-plane orchestration using the accepted policies in `docs/96_production_hardening.md` and storage-owned V1 handoff contracts.
 - Produce reviewed historical calibration reports before any data-derived event standard becomes a production training-label or promotion gate dependency.
 - Promote optionability summary shape only when the model/control-plane contract needs a durable shared interface.
 
@@ -15,13 +15,11 @@
 These are production-readiness gaps, not blockers for the current design closeout:
 
 - Exact production feed connector package layout beyond the implemented local source slices.
-- Exact live orchestration/task-key schema for production Layer 3 source/feature runs beyond current local/SQL CLIs.
-- Exact segment naming/checkpoint/resume evidence format.
-- Provider quota/rate-limit policy and live-call guardrails.
+- Physical manager/storage queue and SQL/storage implementation for `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1`.
 - Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
 - ETF issuer priority list and source-file formats for broader production coverage.
 - Optionability summary shape for downstream candidate-construction and expression-fit evidence.
-- ThetaData terminal/JAR/credential runbook and controlled live smoke.
+- Controlled ThetaData live smoke is environment-blocked until the local terminal is intentionally started and reachable on `127.0.0.1:25503`.
 - Data-domain vocabulary registration in `trading-manager` if exact domain keys become cross-repository contract values.
 
 ## Deferred Beyond This Closeout

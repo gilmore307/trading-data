@@ -1,4 +1,9 @@
-"""Manager-facing 06 PositionExecutionModel selected option time-series source."""
+"""Manager-facing 06 selected-contract option time-series source.
+
+This source supports OptionExpressionModel replay/evaluation by collecting the
+market path of contracts selected by an upstream offline expression plan. It is
+not a model-output layer and emits no execution instructions.
+"""
 from __future__ import annotations
 
 import csv
@@ -16,7 +21,8 @@ from feed_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 SOURCE = "source_06_position_execution"
-MODEL_ID = "position_execution_model"
+MODEL_ID = "option_expression_model"
+SOURCE_ROLE = "selected_contract_tracking_source"
 OUTPUT_TABLE = "source_06_position_execution"
 ET = ZoneInfo("America/New_York")
 DEFAULT_TIMEFRAME = "1Min"
@@ -69,8 +75,8 @@ class CleanedPayload:
     rows: list[dict[str, Any]]
 
 
-class PositionExecutionInputsError(ValueError):
-    """Raised for invalid PositionExecutionModel input tasks."""
+class SelectedContractTrackingInputsError(ValueError):
+    """Raised for invalid selected-contract tracking source tasks."""
 
 
 def _now_utc() -> str:
@@ -80,7 +86,7 @@ def _now_utc() -> str:
 def _required(mapping: Mapping[str, Any], key: str) -> Any:
     value = mapping.get(key)
     if value in (None, "", []):
-        raise PositionExecutionInputsError(f"params.{key} is required")
+        raise SelectedContractTrackingInputsError(f"params.{key} is required")
     return value
 
 
@@ -96,7 +102,7 @@ def _et_dt(value: Any) -> datetime:
     try:
         parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     except ValueError as exc:
-        raise PositionExecutionInputsError(f"invalid timestamp {value!r}") from exc
+        raise SelectedContractTrackingInputsError(f"invalid timestamp {value!r}") from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=ET)
     return parsed.astimezone(ET)
@@ -110,7 +116,7 @@ def _right(contract: Mapping[str, Any]) -> str:
     value = str(contract.get("option_right_type") or contract.get("right") or "").upper()
     aliases = {"C": "CALL", "CALL": "CALL", "P": "PUT", "PUT": "PUT"}
     if value not in aliases:
-        raise PositionExecutionInputsError("selected contract requires option_right_type/right CALL or PUT")
+        raise SelectedContractTrackingInputsError("selected contract requires option_right_type/right CALL or PUT")
     return aliases[value]
 
 
@@ -127,7 +133,7 @@ def _option_symbol(contract: Mapping[str, Any]) -> str:
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
-        raise PositionExecutionInputsError(f"task_key.source must be {SOURCE}")
+        raise SelectedContractTrackingInputsError(f"task_key.source must be {SOURCE}")
     output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', SOURCE + '_task')}"))
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
@@ -164,7 +170,7 @@ def _fetch_contract_rows(context: SourceContext, contract: Mapping[str, Any], *,
             feed_task["params"][passthrough] = contract[passthrough]
     result = run_option_tracking(feed_task, run_id=str(context.metadata["run_id"]), client=client)
     if result.status != "succeeded":
-        raise PositionExecutionInputsError(f"option tracking failed for {_option_symbol(contract)}: {result.details.get('error')}")
+        raise SelectedContractTrackingInputsError(f"option tracking failed for {_option_symbol(contract)}: {result.details.get('error')}")
     output_refs = [ref for ref in result.references if ref.endswith("option_bar.csv")]
     rows = _read_csv(Path(output_refs[0])) if output_refs else []
     return rows, result.references
@@ -174,7 +180,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
     params = dict(context.task_key.get("params") or {})
     contracts = [dict(item) for item in _as_list(_required(params, "selected_contracts")) if isinstance(item, Mapping)]
     if not contracts:
-        raise PositionExecutionInputsError("params.selected_contracts must contain at least one contract")
+        raise SelectedContractTrackingInputsError("params.selected_contracts must contain at least one contract")
     rows: list[dict[str, Any]] = []
     refs: list[str] = []
     for contract in contracts:
@@ -193,7 +199,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
         refs.extend(contract_refs)
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "contract_count": len(contracts), "row_count": len(rows), "feed_receipts": refs, "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "source_role": SOURCE_ROLE, "contract_count": len(contracts), "row_count": len(rows), "feed_receipts": refs, "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(manifest), *refs], {"raw_option_timeseries_rows": len(rows)}, details={"contract_count": len(contracts)}), SourcePayload(contracts, rows, refs)
 
 

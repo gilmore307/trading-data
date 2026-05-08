@@ -38,7 +38,7 @@ model_NN_<layer_slug>_diagnostics
 | `AlphaConfidenceModel` | _(no trading-data source)_ | `target_context_state`, `event_context_vector`, upstream context, realized outcomes/labels | Does not require new source acquisition, SQL view, or manifest contract in `trading-data`; labels belong outside inference features and are materialized only through reviewed deterministic evaluation contracts. |
 | `PositionProjectionModel` | _(no trading-data source)_ | final adjusted `alpha_confidence_vector`, costs, risk budget, current/pending position state | Projects target holding state and abstract target exposure outside `trading-data`; it does not produce buy/sell/hold or execution instructions. |
 | `OptionExpressionModel` | `source_05_option_expression` | contract-level option-chain snapshots at entry/exit decision points | Chooses theoretically best-return and most risk-controllable long call / long put contracts from one row per visible contract per snapshot. |
-| `PositionExecutionModel` | `source_06_position_execution` | selected-contract option time series | Studies how to execute the selected contracts from entry through exit plus one hour. |
+| `OptionExpressionModel` replay/evaluation | `source_06_position_execution` | selected-contract option time series | Tracks the market path of selected contracts from entry through exit plus one hour; this is a data source for option-expression replay/evaluation, not a model-output layer. |
 
 ## Implemented Model Input Sources
 
@@ -60,7 +60,7 @@ Layer 4 accepts `params.start`, `params.end`, focus sectors/symbols, and event o
 
 `source_05_option_expression` accepts manager-supplied `params.underlying`, `params.snapshot_time`, and optional `params.snapshot_type` (`entry`/`exit`, default `entry`), calls the ThetaData option selection snapshot interface, and writes one row per visible option contract per snapshot. `snapshot_time` is the point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted from the business table. Despite the `source_05_` prefix, this is an option-expression source for the downstream `OptionExpressionModel`, not the model Layer 5 `AlphaConfidenceModel`.
 
-`source_06_position_execution` accepts `params.selected_contracts` from the expression/projection handoff and writes selected option contract market data from entry time through exit time plus one hour.
+`source_06_position_execution` accepts `params.selected_contracts` from the option-expression handoff and writes selected option contract market data from entry time through exit time plus one hour. It emits market data only and must not produce execution instructions, order fields, PnL labels, or model outputs.
 
 ## Source-Backed Aggregations That Need Migration Review
 

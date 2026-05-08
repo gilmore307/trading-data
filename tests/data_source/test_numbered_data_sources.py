@@ -121,7 +121,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertNotIn("task_id", row)
             self.assertNotIn("created_at", row)
 
-    def test_position_execution_source_writes_selected_contract_timeseries(self):
+    def test_selected_contract_tracking_source_writes_option_timeseries(self):
         module = import_module("data_source.source_06_position_execution.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {

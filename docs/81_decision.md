@@ -907,18 +907,19 @@ Consequences:
 - One-off universe overrides remain possible through explicit task params where useful for tests/review.
 - Future config files should be added only when a value is intentionally operator-managed outside code review.
 
-### D058 — Reorder execution and event overlay model-input bundles
+### D058 — Reorder selected-contract tracking and event overlay model-input sources
 
 Accepted: 2026-04-28
+Updated: 2026-05-08
 
-Decision: Layer 06 is now `PositionExecutionModel` / `source_06_position_execution`, and Layer 04 is now `EventOverlayModel` / `source_04_event_overlay`. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
+Decision: `source_06_position_execution` is retained as the selected-contract option time-series source for OptionExpressionModel replay/evaluation, and `source_04_event_overlay` is the EventOverlayModel source. The old manifest-style `06_event_overlay_model_inputs` and `07_portfolio_risk_model_inputs` bundle shells are removed.
 
-Rationale: OptionExpressionModel chooses the theoretically best-return and risk-controllable contracts. The next layer should study how to execute those selected contracts, requiring option contract time-series data from entry through exit plus one hour. Event overlay is a later global context layer and should use one event overview table rather than manifest references.
+Rationale: OptionExpressionModel chooses the theoretically best-return and risk-controllable contracts. The selected-contract source records option contract market paths from entry through exit plus one hour for replay/evaluation without becoming a separate model or execution-instruction layer. Event overlay uses one event overview table rather than manifest references.
 
 Consequences:
 
-- Layer 06 writes `source_06_position_execution`.
-- Layer 04 writes `source_04_event_overlay`.
+- `source_06_position_execution` writes selected-contract option market data only.
+- `source_04_event_overlay` writes event overview rows.
 - `source_04_event_overlay/equity_abnormal_activity` remains a nested detector feeding event overlay prior-signal rows.
 - Old `model_input_artifact_reference` manifest behavior should not be expanded for accepted numbered bundles.
 

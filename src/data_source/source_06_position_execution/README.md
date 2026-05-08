@@ -1,8 +1,8 @@
 # source_06_position_execution
 
-Manager-facing PositionExecutionModel data source.
+Manager-facing selected-contract option time-series source.
 
-Layer 06 answers how selected option contracts could be executed. The source accepts multiple contracts selected by Layer 05 and writes option contract time-series rows from each contract's entry time through one hour after its exit time.
+This source supports OptionExpressionModel replay/evaluation by collecting the market path of contracts selected by an upstream offline option-expression plan. It is not a model-output layer and does not emit execution instructions. The source accepts multiple selected contracts and writes option contract time-series rows from each contract's entry time through one hour after its exit time.
 
 Stable defaults live in pipeline code; there is no source-local `config.json`.
 

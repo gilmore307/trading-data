@@ -16,7 +16,8 @@ This directory is the authoritative documentation spine for `trading-data`.
 - `92_api_templates.md` — guide for applying `trading-manager/templates/data_tasks/` to API-specific feeds and control-plane-facing sources.
 - `93_feed_availability.md` — inventory of verified feed availability and registered data-kind groups.
 - `94_model_inputs.md` — mapping from `trading-data` source-backed outputs and derived products to model-layer data sources.
+- `95_data_stack_closeout.md` — accepted closeout receipt for the current data-source/model-input design phase and remaining production-hardening scope.
 
-Layer workflow and acceptance live in the numbered layer files. Add future layers as `04_layer_03_...`, `05_layer_04_...`, and so on before adding broad workflow prose.
+Layer workflow and acceptance live in the numbered layer files. Current model-input/data-source design is closed in `95_data_stack_closeout.md`; future changes should be scoped as production hardening, bug fixes, or explicitly accepted architecture revisions.
 
 Do not place generated data, provider dumps, artifacts, notebooks, logs, credentials, or implementation outputs in this directory.

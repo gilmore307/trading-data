@@ -68,4 +68,6 @@ Columns:
 - `market_value`
 - `sector_type`
 
-`available_time` is the time the holdings row is allowed to become visible to model logic. `run_id`, `task_id`, and task write/audit time belong in manifests and completion receipts, not in this business table.
+`available_time` is the time the holdings row is allowed to become visible to model logic. If the feed supplies no explicit `available_time`, the conservative default is the next regular US session open after `as_of_date` (`09:30 America/New_York`, skipping weekends). Same-day availability requires explicit source evidence or reviewed task input; the pipeline must not assume a holdings file was visible before publication.
+
+`run_id`, `task_id`, and task write/audit time belong in manifests and completion receipts, not in this business table.

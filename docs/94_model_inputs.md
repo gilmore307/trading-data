@@ -121,6 +121,6 @@ Boundary:
 
 - Keep `source_05_option_expression` documented as source-number 05 for option-expression input, not as model Layer 5 `AlphaConfidenceModel` acquisition.
 - Clean accepted SQL business tables so `run_id`, `task_id`, and write audit timestamps stay in receipts/run metadata rather than business rows.
-- Harden ETF-symbol-to-issuer mapping and ETF holdings freshness/available-time rules for production runs.
-- Calibrate equity abnormal activity thresholds/model standards against historical distributions before training labels consume them.
-- Define optionability summary shape for SectorContextModel; likely derived from option chain snapshots and liquidity filters.
+- ETF holdings freshness/available-time rule is now conservative by default: explicit source/task `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
+- `equity_abnormal_activity_event` default standard is `equity_abnormal_activity_conservative_v1`; production labels or promoted gates still require reviewed historical calibration evidence before threshold changes are trusted.
+- Define optionability summary shape for SectorContextModel only when the model/control-plane contract needs a durable shared interface; likely derived from option chain snapshots and liquidity filters.

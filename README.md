@@ -33,6 +33,7 @@ docs/
   92_api_templates.md
   93_feed_availability.md
   94_model_inputs.md
+  95_data_stack_closeout.md
 ```
 
 ## Input And Output
@@ -49,7 +50,7 @@ Durable output: storage-backed SQL/artifact outputs plus manifests and ready sig
 
 `trading-data` now organizes work around provider/feed adapters, model-scoped source tables, deterministic feature tables, and accepted SQL outputs. The old market-board / instrument / option domain labels remain historical planning language, not the primary runtime or docs boundary.
 
-See `docs/90_data_organization.md`. API-specific source design guidance is in `docs/92_api_templates.md`; model-layer mapping is in `docs/94_model_inputs.md`. Current layer-specific data workflows, boundaries, and acceptance gates live in `docs/02_layer_01_market_regime.md`, `docs/03_layer_02_sector_context.md`, and `docs/04_layer_03_target_state_vector.md`.
+See `docs/90_data_organization.md`. API-specific source design guidance is in `docs/92_api_templates.md`; model-layer mapping is in `docs/94_model_inputs.md`; current repository closeout is in `docs/95_data_stack_closeout.md`. Current layer-specific data workflows, boundaries, and acceptance gates live in `docs/02_layer_01_market_regime.md`, `docs/03_layer_02_sector_context.md`, and `docs/04_layer_03_target_state_vector.md`.
 
 ## Platform Dependencies
 

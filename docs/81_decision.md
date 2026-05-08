@@ -1307,3 +1307,16 @@ Status: Accepted
 Layer 3 data production is target state-vector feature construction.
 
 Contracts use `source_03_target_state` for target-local observed inputs and `feature_03_target_state_vector` for deterministic market/sector/target/cross-state feature blocks. Earlier action/variant simulation implementations have been retired from active code and registry surfaces.
+
+## D074 - Data stack design closeout preserves production hardening gates
+
+Date: 2026-05-08
+Status: Accepted
+
+The current `trading-data` feed/source/feature design phase is closed for the accepted Layers 1-8 model-input route.
+
+Closeout does not approve unattended production orchestration, final durable storage contracts, or production-calibrated labels. Remaining work is production hardening and manager/storage orchestration: quota/rate-limit/retry policies, segment checkpoint/resume evidence, durable manifests/ready signals/receipts, final SQL/storage contracts, and live-provider runbooks.
+
+ETF holdings candidate-preparation rows must preserve point-in-time visibility. If no explicit source/task `available_time` is supplied, the conservative default is the next regular US session open after `as_of_date`. Same-day availability requires explicit evidence.
+
+`equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative_v1` as the default local standard. It may produce conservative event evidence, but production training labels or promoted gates require reviewed historical calibration evidence before thresholds or model-standard identity are treated as production-calibrated.

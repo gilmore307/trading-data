@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Default parameters for the equity_abnormal_activity source. Task keys may override these values per run.",
+  "description": "Conservative default parameters for the equity_abnormal_activity source. Task keys may override these values per run, but production training labels require a reviewed calibration report before changing the model_standard.",
   "bar_grain": "1Min",
   "lookback_intervals": 20,
   "min_abs_return_zscore": 3.0,
@@ -8,5 +8,6 @@
   "min_abs_relative_strength_zscore": 3.0,
   "min_abs_gap_pct": 0.04,
   "min_liquidity_spread_zscore": 3.0,
-  "model_standard": "equity_abnormal_activity_v0"
+  "model_standard": "equity_abnormal_activity_conservative_v1",
+  "calibration_status": "conservative_fixture_default_not_production_calibrated"
 }

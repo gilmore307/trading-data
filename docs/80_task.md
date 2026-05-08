@@ -2,42 +2,40 @@
 
 ## Active Tasks
 
-- Calibrate and harden downstream candidate-construction `stock_etf_exposure` freshness/scoring rules and `equity_abnormal_activity_event` thresholds/model standards.
+- None for the current data-source/model-input design phase. The repository is structurally closed for the accepted local feed/source/feature scaffold; see `docs/95_data_stack_closeout.md`.
 
 ## Queued Tasks
 
-- Fill API-specific templates for the first implementation feed before writing connector code.
-- Define strict Trading Economics macro calendar task/config vocabulary for accepted visible-page macro model inputs.
-- Define source-specific task/run ID prefix rules in implementation helpers.
-- Define segment checkpoint/resume behavior for long historical fetch-clean-save jobs.
-- Define provider quota/rate-limit/retry policy per source before automation loops are introduced.
-- Define ThetaData connector, ThetaTerminal JAR, and creds.txt placement policy.
-- Define any additional provider secret alias names through `trading-manager` once providers are selected.
+- Execute production-hardening work under manager/control-plane orchestration: provider quota/rate-limit/retry policies, segment checkpoint/resume evidence, durable manifests/ready signals, and SQL/storage contracts.
+- Produce reviewed historical calibration reports before any data-derived event standard becomes a production training-label or promotion gate dependency.
+- Promote optionability summary shape only when the model/control-plane contract needs a durable shared interface.
 
 ## Open Gaps
 
-- Exact feed connector package layout beyond the implemented source slices.
+These are production-readiness gaps, not blockers for the current design closeout:
+
+- Exact production feed connector package layout beyond the implemented local source slices.
 - Exact live orchestration/task-key schema for production Layer 3 source/feature runs beyond current local/SQL CLIs.
-- Exact development output subdirectory/file layout under `storage/` beyond task/run grouping.
 - Exact segment naming/checkpoint/resume evidence format.
 - Provider quota/rate-limit policy and live-call guardrails.
 - Source-specific parameter dictionaries for each registered `data_kind`, including which FRED series are truly FRED/St. Louis Fed/ALFRED-native.
-- ETF issuer priority list, source-file formats, and as-of-date/available-time handling.
-- Production ETF holdings freshness/available-time rules for downstream candidate construction / `stock_etf_exposure`.
-- Calibrated `equity_abnormal_activity_event` detection standards, lookbacks, thresholds, and model-standard identity.
+- ETF issuer priority list and source-file formats for broader production coverage.
 - Optionability summary shape for downstream candidate-construction and expression-fit evidence.
-- ThetaData connector/JAR/credential layout.
+- ThetaData terminal/JAR/credential runbook and controlled live smoke.
 - Data-domain vocabulary registration in `trading-manager` if exact domain keys become cross-repository contract values.
 
-## Deferred Until Manager Phase
+## Deferred Beyond This Closeout
 
-- Control-plane-issued task key/request schema beyond the current minimal template.
-- Data artifact reference, manifest, ready-signal, durable completion-receipt, and storage SQL table/partition contracts.
+- Control-plane-issued production task key/request schemas beyond the current minimal template.
+- Data artifact references, manifests, ready signals, durable completion receipts, and storage SQL table/partition contracts.
 - Shared storage root/partition layout and UTC-vs-America/New_York payload-field normalization rules for durable database/storage fields.
-- These shared contracts remain deferred until all model layers are designed and the `trading-manager` development phase starts; `trading-data` may continue local/offline source and feature work without pretending the durable manager/storage interface is final.
+- These shared contracts belong to `trading-manager` / `trading-storage` implementation; `trading-data` must not present local development output paths as final durable interfaces.
 
 ## Recently Accepted
 
+- Repository data-stack closeout is accepted for the current design phase: implemented feed/source/feature scaffolds cover the accepted Layers 1-8 model-input route, and remaining gaps are production hardening / manager-storage orchestration rather than open data-design blockers.
+- `source_02_target_candidate_holdings` now uses a conservative default `available_time`: next regular US session open after `as_of_date`, unless explicit source/task evidence supplies a different availability timestamp.
+- `equity_abnormal_activity_event` now uses explicit default `model_standard = equity_abnormal_activity_conservative_v1` and `calibration_status = conservative_fixture_default_not_production_calibrated`; production label/gate use still requires reviewed historical calibration evidence.
 - Implemented `source_03_target_state` as a deterministic target-local bars/liquidity normalizer keyed by `target_candidate_id + timeframe + timestamp`; raw symbol is retained only as source/audit/routing metadata.
 - Implemented `feature_03_target_state_vector` SQL wrapper to read `source_03_target_state` plus optional Layer 1/2 context rows and write JSONB market/sector/target/cross-state blocks into `trading_data.feature_03_target_state_vector`.
 - Aligned `feature_02_sector_context`, `source_02_target_candidate_holdings`, `source_03_target_state`, and `feature_03_target_state_vector` with the accepted Layer 2 -> anonymous target candidate builder -> Layer 3 boundary.

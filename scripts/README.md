@@ -16,8 +16,8 @@ Installed package entrypoints in `pyproject.toml` are the preferred CLI surface 
 | Layer | `trading-data` CLI surface |
 |---|---|
 | 1 Market Regime | `trading-data-source-01-market-regime`, `trading-data-feature-01-market-regime` |
-| 2 Sector Context | `trading-data-source-02-target-candidate-holdings`, `trading-data-feature-02-sector-context` |
-| 3 Target State Vector | `trading-data-source-03-target-state`, `trading-data-feature-03-target-state-vector` |
+| 2 Sector Context | `trading-data-feature-02-sector-context` |
+| 3 Target State Vector | `trading-data-source-02-target-candidate-holdings`, `trading-data-source-03-target-state`, `trading-data-feature-03-target-state-vector` |
 | 4 Event Overlay | `trading-data-source-04-event-overlay`, `trading-data-feature-04-event-overlay` |
 | 5 Alpha Confidence | No dedicated `trading-data` CLI; model/evaluation boundary owns it. |
 | 6 Position Projection | No dedicated `trading-data` CLI; position/risk/control-plane boundary owns it. |

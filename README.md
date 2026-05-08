@@ -27,7 +27,7 @@ scripts/     Thin operational wrappers only; reusable logic belongs in src/.
 - `data_layers` catalogs the Layer 1-8 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
 - `storage` provides low-level persistence helpers; durable layout and retention remain `trading-storage` responsibilities.
 
-Accepted SQL outputs are the preferred model-input boundary. Local ignored `storage/` files are development evidence, not durable interfaces.
+Accepted SQL outputs are the preferred model-input boundary. Local ignored `storage/` files are development evidence, not durable interfaces. `source_NN_*` numbers identify accepted source contracts; they do not necessarily equal model layer numbers.
 
 ## Key Docs
 

@@ -66,6 +66,6 @@ Columns:
 - `underlying_timestamp`
 - `days_to_expiration`
 
-`option_symbol` uses the same normalized fallback format consumed by Layer 06 when no provider-native symbol is supplied: `<UNDERLYING>_<expiration>_<C|P>_<strike>`.
+`option_symbol` uses the same normalized fallback format consumed by `source_06_position_execution` selected-contract tracking when no provider-native symbol is supplied: `<UNDERLYING>_<expiration>_<C|P>_<strike>`.
 
 The final table intentionally has no nested `contracts` JSONB column. Raw ThetaData responses and feed snapshot nesting are transient feed evidence. `snapshot_time` is the table's point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted. `run_id`, `task_id`, and write/audit timestamps live in manifests and completion receipts, not in this business table. No saved source CSV mirror is written.

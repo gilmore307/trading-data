@@ -1,8 +1,8 @@
 # source_06_position_execution
 
-Manager-facing selected-contract option time-series source.
+Manager-facing selected-option-contract market-path tracking source.
 
-This source supports OptionExpressionModel replay/evaluation by collecting the market path of contracts selected by an upstream offline option-expression plan. It is not a model-output layer and does not emit execution instructions. The source accepts multiple selected contracts and writes option contract time-series rows from each contract's entry time through one hour after its exit time.
+This source supports OptionExpressionModel replay/evaluation by collecting the market path of contracts selected by an upstream offline option-expression plan. Despite the historical `source_06` identifier, it is not broker execution, not model Layer 6 `PositionProjectionModel`, not a model-output layer, and does not emit execution instructions. The source accepts multiple selected contracts and writes option contract time-series rows from each contract's entry time through one hour after its exit time.
 
 Stable defaults live in pipeline code; there is no source-local `config.json`.
 

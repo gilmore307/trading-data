@@ -49,6 +49,15 @@ class LayerStructureCatalogTests(unittest.TestCase):
                 with self.subTest(layer=contract.layer, command=command):
                     self.assertIn(command, scripts)
 
+    def test_target_candidate_source_belongs_to_layer_three_input_preparation(self) -> None:
+        layer_2 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 2)
+        layer_3 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 3)
+        self.assertEqual(layer_2.source_packages, ())
+        self.assertIn("data_feature.feature_02_sector_context", layer_2.feature_packages)
+        self.assertIn("data_source.source_02_target_candidate_holdings", layer_3.source_packages)
+        self.assertIn("data_source.source_03_target_state", layer_3.source_packages)
+        self.assertIn("trading-data-source-02-target-candidate-holdings", layer_3.cli_commands)
+
     def test_no_source_layers_are_explicit_and_do_not_have_symmetry_packages(self) -> None:
         for contract in LAYER_CONTRACTS:
             if contract.owns_dedicated_data_surface:

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib
-import importlib.util
 import math
 import unittest
 from datetime import date, datetime, timedelta
@@ -10,11 +9,7 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
 generator = importlib.import_module("data_feature.feature_01_market_regime.generator")
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_feature_01_market_regime.py"
-SCRIPT_SPEC = importlib.util.spec_from_file_location("generate_feature_01_market_regime", SCRIPT_PATH)
-sql_runner = importlib.util.module_from_spec(SCRIPT_SPEC)
-assert SCRIPT_SPEC and SCRIPT_SPEC.loader
-SCRIPT_SPEC.loader.exec_module(sql_runner)
+sql_runner = importlib.import_module("data_feature.feature_01_market_regime.sql")
 
 
 def _bar(symbol: str, day: date, close: float, *, timeframe: str = "1Day", open_: float | None = None, high: float | None = None, low: float | None = None) -> dict[str, str]:

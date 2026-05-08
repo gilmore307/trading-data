@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sys
 
-from data_feature.feature_02_sector_context.sql import *  # noqa: F403
 from data_feature.feature_02_sector_context.sql import main
 
 

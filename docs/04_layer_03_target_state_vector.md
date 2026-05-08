@@ -20,15 +20,17 @@ trading-manager request
   -> trading-model TargetStateVectorModel training/evaluation/review
 ```
 
-Active contracts use target-state names:
+Active contracts use target-state names, with `source_02_target_candidate_holdings` retained as a historical source-contract identifier for Layer 3 input preparation:
 
 ```text
+source_02_target_candidate_holdings
 source_03_target_state
 feature_03_target_state_vector
 ```
 
 Current implementation:
 
+- `src/data_source/source_02_target_candidate_holdings/` prepares Layer 3 anonymous target candidates by transmitting selected/prioritized Layer 2 sector/industry baskets into US-listed ETF holding constituents. It is not a Layer 2 behavior-model source.
 - `src/data_source/source_03_target_state/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.source_03_target_state` rows keyed by `target_candidate_id + timeframe + timestamp`.
 - `src/data_feature/feature_03_target_state_vector/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
 - `src/data_feature/feature_03_target_state_vector/sql.py` reads `source_03_target_state` plus optional Layer 1/2 context rows and writes `trading_data.feature_03_target_state_vector` with JSONB blocks.

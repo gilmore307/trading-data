@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib
-import importlib.util
 import json
 import math
 import unittest
@@ -11,11 +10,7 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
 generator = importlib.import_module("data_feature.feature_02_sector_context.generator")
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "generate_feature_02_sector_context.py"
-SCRIPT_SPEC = importlib.util.spec_from_file_location("generate_feature_02_sector_context", SCRIPT_PATH)
-sql_runner = importlib.util.module_from_spec(SCRIPT_SPEC)
-assert SCRIPT_SPEC and SCRIPT_SPEC.loader
-SCRIPT_SPEC.loader.exec_module(sql_runner)
+sql_runner = importlib.import_module("data_feature.feature_02_sector_context.sql")
 
 
 def _bar(symbol: str, day: date, close: float, *, timeframe: str = "1Day") -> dict[str, str]:

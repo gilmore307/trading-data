@@ -20,6 +20,7 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 ## Rules
 
 - Start from the accepted manager request/source contract, not from a broad domain label.
+- Treat `source_NN_*` as source-contract identifiers, not model-layer numbers.
 - Keep provider details in `data_feed`; keep model-input orchestration in `data_source`.
 - Prefer accepted SQL outputs for numbered model-input sources.
 - Persist only final cleaned artifacts or reviewed SQL rows by default; bulky raw provider payloads stay transient unless an incident/debug artifact is explicitly approved.

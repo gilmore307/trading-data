@@ -2,8 +2,8 @@
 
 The generator consumes cleaned ``source_01_market_regime`` bar rows plus the reviewed
 market-regime ETF universe and relative-strength combination CSVs. It performs no
-provider calls and no database writes; the SQL script wrapper under ``scripts/`` owns
-runtime reads/writes.
+provider calls and no database writes; the package CLI / SQL module owns runtime
+reads/writes.
 """
 from __future__ import annotations
 

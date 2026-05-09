@@ -110,9 +110,9 @@ Layer 2 sector-context features derive deterministic sector/industry behavior ev
 
 Live-call policy, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, ready signals, and ThetaData runbook rules can be defined before accumulated production labels exist. They do not approve unattended production orchestration, production labels, or model promotion.
 
-## D020 — Scripts stay thin
+## D020 — Package CLIs are the executable surface
 
-Reusable logic belongs in `src/`. `scripts/` may contain thin compatibility or operational wrappers only. Stable callable entrypoints should be exposed through package CLIs and registered through `trading-manager` when shared.
+Reusable logic belongs in `src/`. `trading-data` does not keep a top-level `scripts/` wrapper directory; stable callable entrypoints should be exposed through package CLIs declared in `pyproject.toml` and registered through `trading-manager` when shared.
 
 ## D021 — Price-action events belong inside Layer 4 event overlay
 

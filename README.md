@@ -16,7 +16,6 @@ It does not own model training, promotion, strategy/backtest logic, broker execu
 docs/        Repository boundary, data routes, source/feed rules, and acceptance notes.
 src/         Importable feed, source, feature, layer-catalog, storage, and probe packages.
 tests/       Fixture-safe tests for feeds, sources, features, storage, and probes.
-scripts/     Thin operational wrappers only; reusable logic belongs in src/.
 ```
 
 ## Current Route

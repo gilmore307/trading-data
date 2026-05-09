@@ -110,4 +110,4 @@ trading-data-source-01-market-regime
 trading-data-feature-01-market-regime
 ```
 
-Reusable logic belongs in `src/`. `scripts/` is for thin wrappers only.
+Reusable logic belongs in `src/`. Stable callable surfaces should use package CLIs declared in `pyproject.toml`; this repository does not keep a top-level `scripts/` wrapper directory.

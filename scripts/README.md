@@ -8,8 +8,11 @@ Reusable implementation belongs in `src/`. A script may import `src` code and pa
 
 - `generate_feature_01_market_regime.py` — wrapper for `data_feature.feature_01_market_regime.sql`.
 - `generate_feature_02_sector_context.py` — wrapper for `data_feature.feature_02_sector_context.sql`.
+- `generate_feature_03_target_state_vector.py` — wrapper for `data_feature.feature_03_target_state_vector.sql`.
+- `generate_feature_04_event_overlay.py` — wrapper for `data_feature.feature_04_event_overlay.sql`.
+- `generate_feature_08_option_expression.py` — wrapper for `data_feature.feature_08_option_expression.sql`.
 
-Installed package entrypoints in `pyproject.toml` are the preferred CLI surface for feeds, sources, and features.
+Installed package entrypoints in `pyproject.toml` remain the preferred package CLI surface for feeds, sources, and features. The `scripts/generate_feature_*.py` wrappers provide a complete repo-local operational surface for accepted `trading-data` feature tables.
 
 ## Layer CLI posture
 

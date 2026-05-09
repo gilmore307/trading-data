@@ -49,6 +49,16 @@ class LayerStructureCatalogTests(unittest.TestCase):
                 with self.subTest(layer=contract.layer, command=command):
                     self.assertIn(command, scripts)
 
+    def test_feature_sql_wrappers_exist_for_owned_feature_surfaces(self) -> None:
+        for contract in LAYER_CONTRACTS:
+            for package in contract.feature_packages:
+                feature_name = package.rsplit(".", 1)[-1]
+                script = REPO_ROOT / "scripts" / f"generate_{feature_name}.py"
+                with self.subTest(layer=contract.layer, script=script.name):
+                    self.assertTrue(script.exists(), script)
+                    text = script.read_text(encoding="utf-8")
+                    self.assertIn(f"from {package}.sql import main", text)
+
     def test_target_candidate_source_belongs_to_layer_three_input_preparation(self) -> None:
         layer_2 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 2)
         layer_3 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 3)

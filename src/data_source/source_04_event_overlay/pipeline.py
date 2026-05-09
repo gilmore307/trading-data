@@ -17,7 +17,16 @@ MODEL_ID = "event_overlay_model"
 OUTPUT_TABLE = "source_04_event_overlay"
 ET = ZoneInfo("America/New_York")
 INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
-EVENT_CATEGORIES = {"macro_data", "macro_news", "sector_news", "symbol_news", "sec_filing", "option_abnormal_activity", "equity_abnormal_activity"}
+EVENT_CATEGORIES = {
+    "macro_data",
+    "macro_news",
+    "sector_news",
+    "symbol_news",
+    "sec_filing",
+    "option_abnormal_activity",
+    "equity_abnormal_activity",
+    "price_action",
+}
 SCOPE_TYPES = {"macro", "sector", "symbol"}
 REFERENCE_TYPES = {"web_url", "sec_file_path", "internal_artifact_path", "source_reference"}
 DEDUP_STATUSES = {"canonical", "covered_by_canonical_event", "duplicate_of_canonical_event", "related_followup", "new_information", "unresolved"}
@@ -165,7 +174,7 @@ def _source_priority(row: Mapping[str, Any]) -> str:
         return "official_disclosure"
     if category == "macro_data":
         return "official_data_release"
-    if category in {"option_abnormal_activity", "equity_abnormal_activity"}:
+    if category in {"option_abnormal_activity", "equity_abnormal_activity", "price_action"}:
         return "source_detector"
     if category in {"macro_news", "sector_news", "symbol_news"}:
         return "verified_news"

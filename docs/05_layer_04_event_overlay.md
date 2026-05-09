@@ -15,6 +15,8 @@ Nested event-overlay data-source helpers may produce source evidence before it i
 src/data_source/source_04_event_overlay/equity_abnormal_activity/
 ```
 
+`price_action` is an accepted Layer 4 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
+
 ## Boundary
 
 Layer 4 data is an event index plus deterministic event-overview features, not the full `event_context_vector`.
@@ -34,6 +36,7 @@ Accepted event rows may include:
 - SEC/company/regulatory filings or disclosures;
 - option abnormal-activity evidence;
 - equity/ETF abnormal-activity evidence;
+- price-action detector evidence such as false breakouts, failed breakdowns, liquidity sweeps, bull traps, or bear traps;
 - source references, web URLs, SEC paths, or internal artifact paths.
 
 Required semantics:

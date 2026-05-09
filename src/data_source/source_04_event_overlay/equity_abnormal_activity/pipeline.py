@@ -164,7 +164,57 @@ def _returns_by_timestamp(rows: list[dict[str, str]]) -> dict[str, float]:
     return out
 
 
-def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, str]] | None = None, liquidity_rows: list[dict[str, str]] | None = None, lookback_intervals: int = 20, min_abs_return_zscore: float = 3.0, min_volume_zscore: float = 3.0, min_abs_relative_strength_zscore: float = 3.0, min_abs_gap_pct: float = 0.04, min_liquidity_spread_zscore: float = 3.0, model_standard: str = "equity_abnormal_activity_v0") -> list[dict[str, str]]:
+def _wick_ratio(*, high: float | None, low: float | None, open_: float | None, close: float | None, side: str) -> float | None:
+    if high is None or low is None or open_ is None or close is None:
+        return None
+    bar_range = high - low
+    if bar_range <= 0:
+        return None
+    if side == "upper":
+        return max(0.0, high - max(open_, close)) / bar_range
+    if side == "lower":
+        return max(0.0, min(open_, close) - low) / bar_range
+    return None
+
+
+def _price_action_activity(
+    *,
+    high: float | None,
+    low: float | None,
+    open_: float | None,
+    close: float | None,
+    high_window: list[float],
+    low_window: list[float],
+    min_breakout_pct: float,
+    min_wick_ratio: float,
+) -> tuple[list[str], dict[str, float | str]]:
+    if high is None or low is None or close is None or not high_window or not low_window:
+        return [], {}
+    prior_high = max(high_window)
+    prior_low = min(low_window)
+    upper_wick = _wick_ratio(high=high, low=low, open_=open_, close=close, side="upper")
+    lower_wick = _wick_ratio(high=high, low=low, open_=open_, close=close, side="lower")
+    activity: list[str] = []
+    details: dict[str, float | str] = {
+        "prior_range_high": prior_high,
+        "prior_range_low": prior_low,
+    }
+    if prior_high > 0:
+        breakout_pct = high / prior_high - 1.0
+        details["breakout_pct"] = breakout_pct
+        if breakout_pct >= min_breakout_pct and close <= prior_high and (upper_wick or 0.0) >= min_wick_ratio:
+            activity.extend(["false_breakout", "liquidity_sweep_high", "bull_trap"])
+            details["upper_wick_ratio"] = upper_wick or 0.0
+    if prior_low > 0:
+        breakdown_pct = 1.0 - low / prior_low
+        details["breakdown_pct"] = breakdown_pct
+        if breakdown_pct >= min_breakout_pct and close >= prior_low and (lower_wick or 0.0) >= min_wick_ratio:
+            activity.extend(["false_breakdown", "liquidity_sweep_low", "bear_trap"])
+            details["lower_wick_ratio"] = lower_wick or 0.0
+    return activity, details
+
+
+def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, str]] | None = None, liquidity_rows: list[dict[str, str]] | None = None, lookback_intervals: int = 20, min_abs_return_zscore: float = 3.0, min_volume_zscore: float = 3.0, min_abs_relative_strength_zscore: float = 3.0, min_abs_gap_pct: float = 0.04, min_liquidity_spread_zscore: float = 3.0, min_price_action_breakout_pct: float = 0.001, min_price_action_wick_ratio: float = 0.35, model_standard: str = "equity_abnormal_activity_v0") -> list[dict[str, str]]:
     sorted_bars = sorted(bars, key=lambda row: str(row.get("timestamp") or ""))
     symbol = str(sorted_bars[0].get("symbol") or "").upper() if sorted_bars else ""
     timeframe = str(sorted_bars[0].get("timeframe") or "") if sorted_bars else ""
@@ -174,12 +224,16 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
     volume_history: list[float] = []
     relative_history: list[float] = []
     spread_history: list[float] = []
+    high_history: list[float] = []
+    low_history: list[float] = []
     prev_close: float | None = None
     events: list[dict[str, str]] = []
     for row in sorted_bars:
         ts = str(row.get("timestamp") or "")
         close = _float(row.get("bar_close", row.get("close")))
         open_ = _float(row.get("bar_open", row.get("open")))
+        high = _float(row.get("bar_high", row.get("high")))
+        low = _float(row.get("bar_low", row.get("low")))
         volume = _float(row.get("bar_volume", row.get("volume")))
         if not ts or close is None:
             continue
@@ -208,15 +262,26 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
             activity.append("gap")
         if spread_z is not None and spread_z >= min_liquidity_spread_zscore:
             activity.append("liquidity_spread")
+        price_action, price_action_details = _price_action_activity(
+            high=high,
+            low=low,
+            open_=open_,
+            close=close,
+            high_window=high_history[-lookback_intervals:] if len(high_history) >= lookback_intervals else [],
+            low_window=low_history[-lookback_intervals:] if len(low_history) >= lookback_intervals else [],
+            min_breakout_pct=min_price_action_breakout_pct,
+            min_wick_ratio=min_price_action_wick_ratio,
+        )
+        activity.extend(price_action)
         if activity:
             event_id = f"eq_abn_{symbol}_{ts.replace('-', '').replace(':', '').replace('+', '').replace('T', '_')[:24]}"
-            evidence_window = {"timeframe": timeframe, "event_time": ts, "lookback_intervals": lookback_intervals}
+            evidence_window = {"timeframe": timeframe, "event_time": ts, "lookback_intervals": lookback_intervals, **price_action_details}
             refs = [f"01_feed_alpaca_bars:{symbol}:{ts}"]
             if liq:
                 refs.append(f"02_feed_alpaca_liquidity:{symbol}:{ts}")
             if benchmark_ret is not None:
                 refs.append(f"benchmark_return:{ts}")
-            taxonomy = {"detector": model_standard, "benchmark_present": benchmark_ret is not None}
+            taxonomy = {"detector": model_standard, "benchmark_present": benchmark_ret is not None, "price_action_event_types": price_action}
             events.append({
                 "event_id": event_id,
                 "symbol": symbol,
@@ -244,6 +309,10 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
             relative_history.append(relative)
         if spread is not None:
             spread_history.append(spread)
+        if high is not None:
+            high_history.append(high)
+        if low is not None:
+            low_history.append(low)
         prev_close = close
     return events
 
@@ -263,6 +332,8 @@ def clean(context: SourceContext, payload: SourcePayload) -> StepResult:
         min_abs_relative_strength_zscore=float(effective.get("min_abs_relative_strength_zscore", 3.0)),
         min_abs_gap_pct=float(effective.get("min_abs_gap_pct", 0.04)),
         min_liquidity_spread_zscore=float(effective.get("min_liquidity_spread_zscore", 3.0)),
+        min_price_action_breakout_pct=float(effective.get("min_price_action_breakout_pct", 0.001)),
+        min_price_action_wick_ratio=float(effective.get("min_price_action_wick_ratio", 0.35)),
         model_standard=str(effective.get("model_standard", "equity_abnormal_activity_v0")),
     )
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)

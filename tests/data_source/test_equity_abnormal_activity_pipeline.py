@@ -40,6 +40,36 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
         self.assertIn("gap", event["abnormal_activity_type"])
         self.assertEqual(event["event_type"], "equity_abnormal_activity_event")
 
+
+    def test_detects_false_breakout_price_action_events(self):
+        bars = [_bar("NVDA", i, 100 + i * 0.05, 1000 + i) for i in range(6)]
+        bars.append({
+            **_bar("NVDA", 6, 100.2, 1200, open_=100.7),
+            "high": "102.0",
+            "low": "100.0",
+            "close": "100.2",
+        })
+
+        events = detect_events(
+            bars=bars,
+            lookback_intervals=5,
+            min_abs_return_zscore=99.0,
+            min_volume_zscore=99.0,
+            min_abs_gap_pct=99.0,
+            min_price_action_breakout_pct=0.001,
+            min_price_action_wick_ratio=0.35,
+        )
+
+        self.assertEqual(len(events), 1)
+        event = events[0]
+        self.assertIn("false_breakout", event["abnormal_activity_type"])
+        self.assertIn("liquidity_sweep_high", event["abnormal_activity_type"])
+        self.assertIn("bull_trap", event["abnormal_activity_type"])
+        evidence = json.loads(event["evidence_window"])
+        self.assertIn("prior_range_high", evidence)
+        taxonomy = json.loads(event["taxonomy_context"])
+        self.assertIn("false_breakout", taxonomy["price_action_event_types"])
+
     def test_pipeline_saves_event_csv_from_saved_bar_inputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             bars_path = Path(tmp) / "equity_bar.csv"

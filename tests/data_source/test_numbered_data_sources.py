@@ -216,6 +216,20 @@ class NumberedDataSourceTests(unittest.TestCase):
                             "reference_type": "web_url",
                             "reference": "https://tradingeconomics.com/united-states/calendar",
                         },
+                        {
+                            "event_id": "evt_nvda_false_breakout_1",
+                            "event_time": "2026-04-24T10:15:00-04:00",
+                            "available_time": "2026-04-24T10:16:00-04:00",
+                            "information_role_type": "prior_signal",
+                            "event_category_type": "price_action",
+                            "scope_type": "symbol",
+                            "symbol": "NVDA",
+                            "title": "NVDA false breakout detector event",
+                            "summary": "Price-action detector flagged false_breakout;liquidity_sweep_high.",
+                            "source_name": "source_04_event_overlay.equity_abnormal_activity",
+                            "reference_type": "internal_artifact_path",
+                            "reference": "storage/events/nvda_false_breakout.json",
+                        },
                     ],
                 },
                 "output_root": str(Path(tmp) / "task"),
@@ -223,7 +237,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_04_event_overlay"], 3)
+            self.assertEqual(result.row_counts["source_04_event_overlay"], 4)
             call = writer.calls[0]
             self.assertEqual(call["table"], "source_04_event_overlay")
             self.assertEqual(call["key_columns"], ["event_id"])
@@ -242,6 +256,8 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(by_event["evt_nvda_news_covered_1"]["covered_by_event_id"], "evt_nvda_10q_2026q1")
             self.assertEqual(by_event["evt_nvda_news_covered_1"]["dedup_status"], "covered_by_canonical_event")
             self.assertEqual(by_event["evt_nvda_news_covered_1"]["source_priority"], "derivative_news")
+            self.assertEqual(by_event["evt_nvda_false_breakout_1"]["event_category_type"], "price_action")
+            self.assertEqual(by_event["evt_nvda_false_breakout_1"]["source_priority"], "source_detector")
 
     def test_event_overlay_sql_ddl_includes_dedup_contract_fields(self):
         from storage.sql import _table_ddl

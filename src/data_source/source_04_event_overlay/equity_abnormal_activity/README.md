@@ -16,12 +16,13 @@ It converts saved equity/ETF bars, optional benchmark bars, and optional liquidi
 - `bar_grain`
 - `lookback_intervals`
 - return/volume/relative-strength/gap/liquidity thresholds
+- price-action thresholds for false breakouts, failed breakdowns, liquidity sweeps, bull traps, and bear traps
 - `model_standard` — default `equity_abnormal_activity_conservative_v1`
 - `calibration_status` — default marks the standard as conservative fixture/default behavior, not production-calibrated label evidence
 
 ## Output
 
-`saved/equity_abnormal_activity_event.csv` with compact event-style rows for abnormal price, volume, relative-strength, gap, and liquidity behavior. Full details remain in evidence/reference fields rather than in the Layer 04 event overview table.
+`saved/equity_abnormal_activity_event.csv` with compact event-style rows for abnormal price, volume, relative-strength, gap, liquidity, and price-action behavior. Full details remain in evidence/reference fields rather than in the Layer 04 event overview table.
 
 ## Production rule
 

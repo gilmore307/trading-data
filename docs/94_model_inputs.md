@@ -100,7 +100,7 @@ Source: `src/data_source/source_04_event_overlay/equity_abnormal_activity/`
 
 Config: `src/data_source/source_04_event_overlay/equity_abnormal_activity/config.json`
 
-Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, or liquidity behavior.
+Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, liquidity, or price-action behavior.
 
 It is analogous to option activity events but uses equity/ETF market data:
 
@@ -109,13 +109,14 @@ It is analogous to option activity events but uses equity/ETF market data:
 - relative strength z-score versus benchmark/sector ETF
 - gap percentage
 - spread/liquidity abnormality
+- false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap price-action tokens
 - evidence window and source refs
 
 Boundary:
 
 - Source-backed event-style aggregation, not raw trades/quotes.
 - Should be created only from observable market data at/after the event effective time.
-- Implemented first as a conservative detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs.
+- Implemented first as a conservative detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs. Price-action tokens are detector evidence for Layer 4 `price_action` events; they are not a separate model layer and are not production-calibrated labels without reviewed historical evidence.
 - If this becomes a generated signal, candidate decision, or label rather than source evidence, move that behavior out of `trading-data` and into the owning model/evaluation boundary.
 
 ## Current Guardrails

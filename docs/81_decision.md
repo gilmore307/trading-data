@@ -113,3 +113,11 @@ Live-call policy, retry/rate-limit rules, checkpoint/resume evidence, manifests,
 ## D020 — Scripts stay thin
 
 Reusable logic belongs in `src/`. `scripts/` may contain thin compatibility or operational wrappers only. Stable callable entrypoints should be exposed through package CLIs and registered through `trading-manager` when shared.
+
+## D021 — Price-action events belong inside Layer 4 event overlay
+
+Date: 2026-05-09
+
+`price_action` is an accepted `source_04_event_overlay` event category for detector-visible board/tape behavior such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
+
+These rows are source-detector event evidence. They do not create a ninth model layer, action signal, label, order instruction, or execution permission. Detector details remain behind references or compact nested detector artifacts; the overview table keeps only the event envelope, clocks, category, scope, and reference.

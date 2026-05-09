@@ -9,7 +9,7 @@ Deterministic generator for the Layer 1 MarketRegimeModel market-context feature
   - `market_regime_relative_strength_combinations.csv`
 - Output: in-memory feature rows for the single `feature_01_market_regime` table. SQL storage keeps one row per `snapshot_time` and stores generated feature values in `feature_payload_json` JSONB to avoid PostgreSQL row-size limits. The shared CSV `model_layer` column is the authoritative scope discriminator: Layer 1 consumes only `layer_01_market_regime` universe/combination rows. Sector/industry rotation, daily-context pair features, sector-observation breadth/dispersion aggregates, and raw ratio moving-average level keys and standalone SHY return/trend keys are excluded; rotation evidence belongs to `feature_02_sector_context`, while normalized ratio distance/slope/spread/alignment features remain in Layer 1 when the pair is broad market/cross-asset evidence.
 - No provider calls.
-- Runtime SQL writes are isolated in `sql.py`; `scripts/generate_feature_01_market_regime.py` is the executable wrapper and unit tests do not touch a durable database.
+- Runtime SQL writes are isolated in `sql.py`; the package CLI `trading-data-feature-01-market-regime` is the executable surface and unit tests do not touch a durable database.
 - No generated artifacts committed to Git.
 
 ## Key file

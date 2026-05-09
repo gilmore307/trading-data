@@ -1,18 +1,20 @@
 # scripts
 
-Thin executable wrappers for `trading-data`.
+Thin executable maintenance and operational wrappers for `trading-data`.
 
 Reusable implementation belongs in `src/`. A script may import `src` code and pass through CLI arguments, but it should not own business logic, contracts, or source-specific behavior.
 
-## Files
+## Current posture
 
-- `generate_feature_01_market_regime.py` — wrapper for `data_feature.feature_01_market_regime.sql`.
-- `generate_feature_02_sector_context.py` — wrapper for `data_feature.feature_02_sector_context.sql`.
-- `generate_feature_03_target_state_vector.py` — wrapper for `data_feature.feature_03_target_state_vector.sql`.
-- `generate_feature_04_event_overlay.py` — wrapper for `data_feature.feature_04_event_overlay.sql`.
-- `generate_feature_08_option_expression.py` — wrapper for `data_feature.feature_08_option_expression.sql`.
+`trading-data` feature generation does not keep duplicate `scripts/generate_feature_*.py` wrappers. Feature implementations live under `src/data_feature/`, and their stable callable CLI surface is the package entrypoint declared in `pyproject.toml`:
 
-Installed package entrypoints in `pyproject.toml` remain the preferred package CLI surface for feeds, sources, and features. The `scripts/generate_feature_*.py` wrappers provide a complete repo-local operational surface for accepted `trading-data` feature tables.
+- `trading-data-feature-01-market-regime`
+- `trading-data-feature-02-sector-context`
+- `trading-data-feature-03-target-state-vector`
+- `trading-data-feature-04-event-overlay`
+- `trading-data-feature-08-option-expression`
+
+This keeps one implementation surface (`src/data_feature/`) and one package CLI surface (`pyproject.toml`) instead of maintaining parallel script wrappers.
 
 ## Layer CLI posture
 

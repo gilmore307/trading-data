@@ -2,18 +2,26 @@
 
 ## Active Tasks
 
-- None for the accepted local feed/source/feature route. The current data route is structurally closed; see `docs/95_data_stack_closeout.md`.
+- None for the historical-data training preparation boundary.
 
-## Production-Hardening Queue
+The accepted local feed/source/feature route is structurally closed; see `docs/95_data_stack_closeout.md`. Current historical training may proceed through manager-planned request payloads, dry-run handoff validation, and explicitly approved provider acquisition only when `live_call_approval_v1` is present.
 
-These are ready-now hardening items, separate from accumulated production-data/model-label evidence:
+## Historical-Training Todo Status
 
-- Implement physical manager/storage queue and SQL/storage handling for `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1`.
-- Define source-specific production parameter dictionaries for registered `data_kind` rows.
-- Expand ETF issuer adapters after the issuer priority list and source-file formats are reviewed.
-- Promote an optionability summary interface only when the model/control-plane contract needs it.
-- Produce reviewed historical calibration reports before any data-derived event standard becomes a production label or gate.
-- Configure ThetaData runtime as an intentional service/autostart item if unattended option data runs become accepted.
+- Current route coverage is accepted for the bounded historical training start: Alpaca bars/liquidity/news, GDELT news, SEC company financials, ThetaData option primary tracking, and ThetaData option event timeline.
+- Source-specific dry-run parameter defaults are now manager-owned in `trading-manager/src/trading_manager_tasks/request_payloads.py`; `trading-data` should not duplicate that control-plane policy locally.
+- Manager/storage V1 request, manifest, artifact, and ready-signal contracts are accepted and implemented through the current manager/storage MVP path; `trading-data` consumes task-key payloads and emits component evidence, not manager lifecycle state.
+- Event standards remain conservative evidence until reviewed historical calibration reports promote them into labels/gates.
+
+## Not Current Historical-Training Scope
+
+These items are intentionally outside the current no-broker historical-training run and must not be treated as open repository work items:
+
+- broader production packaging/service management beyond local source slices;
+- unattended ThetaData service/autostart setup;
+- optionability-summary promotion before a model/control-plane consumer requires it;
+- broader ETF issuer adapters before historical point-in-time source archives are reviewed;
+- production data-derived event label/gate calibration before reviewed historical reports exist.
 
 ## Recently Accepted
 

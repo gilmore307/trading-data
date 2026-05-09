@@ -32,15 +32,16 @@ Two previously active hardening items are now resolved as conservative closeout 
 1. ETF holdings / target-candidate preparation must preserve point-in-time visibility. If no explicit `available_time` is supplied, `source_02_target_candidate_holdings` now defaults holdings rows to the next regular US session open after `as_of_date` (`09:30 America/New_York`, skipping weekends). Same-day availability requires explicit source evidence or reviewed task input.
 2. `equity_abnormal_activity_event` now uses the explicit default `model_standard = equity_abnormal_activity_conservative_v1` with `calibration_status = conservative_fixture_default_not_production_calibrated`. The default may produce conservative event evidence, but production training labels or promoted gates still require a reviewed historical calibration report.
 
-## Remaining work classification
+## Historical-training readiness classification
 
-Remaining items are production hardening / manager-storage orchestration, not open data-stack design blockers. The non-data-accumulation policy layer is defined in `docs/96_production_hardening.md`; remaining implementation work is narrower:
+There are no active data-stack design work items for the current no-broker historical-training preparation boundary. The non-data-accumulation policy layer is defined in `docs/96_production_hardening.md`, and the current manager/storage MVP owns request, manifest, artifact, ready-signal, payload, and receipt flow.
 
-- physical manager/storage queue and SQL/storage implementation for `manager_request_v1`, `run_manifest_v1`, `artifact_ref_v1`, and `ready_signal_v1`;
+The following are deliberately not current historical-training work items:
+
 - production packaging/service decisions beyond the implemented local source slices;
-- source-specific parameter dictionaries and broader production coverage source files;
-- optionability summary promotion after the model/control-plane contract needs it;
-- optional ThetaData service/autostart setup if unattended option data runs become accepted;
+- broader production coverage source files beyond the accepted bounded start;
+- optionability summary promotion before the model/control-plane contract needs it;
+- optional ThetaData service/autostart setup before unattended option runs are accepted;
 - production calibration reports for data-derived event standards before labels depend on them.
 
 ## Boundary closeout

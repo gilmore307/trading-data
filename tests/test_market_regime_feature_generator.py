@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import csv
 import importlib
+import json
 import math
+import tempfile
 import unittest
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -10,6 +13,7 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo("America/New_York")
 generator = importlib.import_module("data_feature.feature_01_market_regime.generator")
 sql_runner = importlib.import_module("data_feature.feature_01_market_regime.sql")
+from_feed_artifacts = importlib.import_module("data_feature.feature_01_market_regime.from_feed_artifacts")
 
 
 def _bar(symbol: str, day: date, close: float, *, timeframe: str = "1Day", open_: float | None = None, high: float | None = None, low: float | None = None) -> dict[str, str]:
@@ -172,6 +176,59 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertIn(snapshot, inferred)
         self.assertIn(snapshot - timedelta(minutes=30), inferred)
         self.assertNotIn(snapshot.replace(hour=9, minute=30), inferred)
+
+
+    def test_feed_artifact_materializer_discovers_successful_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            root = Path(raw_tmp)
+            saved = root / "monthly_backfill_v1" / "alpaca_bars" / "SPY" / "2016-01" / "runs" / "run_1" / "saved"
+            saved.mkdir(parents=True)
+            csv_path = saved / "equity_bar.csv"
+            with csv_path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
+                writer.writerow(["SPY", "1Min", "2016-01-04T09:30:00-05:00", "200", "201", "199", "200.5", "1000", "200.25", "12"])
+            receipt = root / "monthly_backfill_v1" / "alpaca_bars" / "SPY" / "2016-01" / "completion_receipt.json"
+            receipt.write_text(
+                json.dumps(
+                    {
+                        "runs": [
+                            {
+                                "status": "succeeded",
+                                "outputs": [str(csv_path)],
+                            }
+                        ]
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            artifacts = from_feed_artifacts.discover_feed_artifacts(storage_root=root, month="2016-01")
+            rows = from_feed_artifacts.read_equity_bar_rows(artifacts)
+
+        self.assertEqual(artifacts, [csv_path])
+        self.assertEqual(rows[0]["symbol"], "SPY")
+        self.assertEqual(rows[0]["bar_close"], 200.5)
+        self.assertEqual(rows[0]["bar_volume"], 1000)
+
+    def test_materializer_writes_source_rows_with_market_regime_key(self) -> None:
+        class FakeWriter:
+            def __init__(self) -> None:
+                self.calls = []
+
+            def write_rows(self, *, table, columns, rows, key_columns):
+                self.calls.append((table, tuple(columns), list(rows), tuple(key_columns)))
+                return {"rows_written": len(rows)}
+
+        writer = FakeWriter()
+        rows = [{"symbol": "SPY", "timeframe": "1Min", "timestamp": "2016-01-04T09:30:00-05:00", "bar_open": 200, "bar_high": 201, "bar_low": 199, "bar_close": 200.5, "bar_volume": 1000, "bar_vwap": 200.25, "bar_trade_count": 12}]
+
+        written = from_feed_artifacts.materialize_source_rows(rows, sql_writer=writer)
+
+        self.assertEqual(written, 1)
+        self.assertEqual(writer.calls[0][0], "source_01_market_regime")
+        self.assertEqual(writer.calls[0][3], ("symbol", "timeframe", "timestamp"))
 
     @unittest.skipUnless(
         Path("/root/projects/trading-storage/main/shared/market_regime_etf_universe.csv").exists()

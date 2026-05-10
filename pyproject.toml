@@ -39,3 +39,6 @@ trading-data-feature-08-option-expression = "data_feature.feature_08_option_expr
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"data_source.source_04_event_overlay.equity_abnormal_activity" = ["config.json"]

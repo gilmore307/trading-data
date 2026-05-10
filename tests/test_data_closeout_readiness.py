@@ -5,6 +5,8 @@ import json
 import unittest
 from pathlib import Path
 
+from data_source.config import load_source_config
+
 holdings_pipeline = importlib.import_module("data_source.source_02_target_candidate_holdings.pipeline")
 equity_activity_pipeline = importlib.import_module("data_source.source_04_event_overlay.equity_abnormal_activity.pipeline")
 
@@ -37,6 +39,11 @@ class DataCloseoutReadinessTests(unittest.TestCase):
         self.assertEqual(config["calibration_status"], "conservative_fixture_default_not_production_calibrated")
         self.assertGreaterEqual(config["min_abs_return_zscore"], 3.0)
         self.assertGreaterEqual(config["min_volume_zscore"], 3.0)
+
+    def test_source_config_loader_supports_nested_packaged_config(self) -> None:
+        config = load_source_config("source_04_event_overlay/equity_abnormal_activity")
+
+        self.assertEqual(config["model_standard"], "equity_abnormal_activity_conservative_v1")
 
     def test_equity_abnormal_activity_events_carry_model_standard(self) -> None:
         rows = []

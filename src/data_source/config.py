@@ -1,9 +1,9 @@
-"""Source-local configuration loader.
+"""Optional source-local configuration loader.
 
-Each manager-facing data source owns its own ``config.json`` next to the source
-code. The task key may override config values for one run, but stable source
-choices such as ETF lists, issuers, grains, and detector defaults should live
-with the source that uses them.
+Most manager-facing sources keep stable defaults in pipeline code or reviewed
+shared artifacts. Use this helper only for source subcomponents that explicitly
+own a small reviewed ``config.json`` next to their code, such as detector
+threshold defaults.
 """
 
 from __future__ import annotations
@@ -21,9 +21,11 @@ class SourceConfigError(ValueError):
 def load_source_config(source: str, *, config_path: str | None = None) -> dict[str, Any]:
     """Load a source-local config file.
 
-    ``source`` is the data_source package name, e.g. ``stock_etf_exposure``.
+    ``source`` is the data_source package name that owns a packaged config, e.g.
+    ``source_04_event_overlay/equity_abnormal_activity``.
     ``config_path`` is an optional task-key override for tests or reviewed one-off
-    runs. Normal production use should prefer the packaged source config.
+    runs. Normal production use should prefer the reviewed packaged config when
+    the component has one.
     """
     if config_path:
         path = Path(config_path)
@@ -33,10 +35,10 @@ def load_source_config(source: str, *, config_path: str | None = None) -> dict[s
             raise SourceConfigError(f"missing source config path {config_path!r}") from exc
         except json.JSONDecodeError as exc:
             raise SourceConfigError(f"invalid JSON in source config path {config_path!r}: {exc}") from exc
-    safe = source.replace("/", "_").replace("\\", "_").strip()
-    if not safe:
+    package = source.replace("/", ".").replace("\\", ".").strip(" .")
+    if not package or ".." in package:
         raise SourceConfigError("source name is required")
-    resource = files(f"data_source.{safe}").joinpath("config.json")
+    resource = files(f"data_source.{package}").joinpath("config.json")
     try:
         return json.loads(resource.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:

@@ -2,7 +2,7 @@
 
 Design each acquisition/source route before writing connector code.
 
-Reusable starter templates live in `trading-manager/templates/data_tasks/`. They help shape local source design; they are not automatically accepted cross-repository schemas.
+Reusable starter templates live in `trading-storage/main/templates/data_tasks/`; `trading-manager` owns review, registry, and contract promotion for shared template vocabulary. They help shape local source design; they are parked drafts unless the owning docs and registry explicitly accept a concrete contract.
 
 ## Template Sources
 

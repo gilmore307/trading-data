@@ -1,7 +1,7 @@
 """ETF holdings source for downstream target-candidate preparation.
 
-The physical source/table name remains ``source_02_target_candidate_holdings`` for now,
-but holdings are no longer a core Layer 2 behavior-model input. They support the
+``source_02_target_candidate_holdings`` is the accepted source/table identifier,
+but holdings are not a core Layer 2 behavior-model input. They support the
 anonymous target candidate builder / Layer 3 input-preparation boundary after
 Layer 2 selects or prioritizes sector/industry baskets.
 """

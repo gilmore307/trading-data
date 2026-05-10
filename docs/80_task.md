@@ -6,7 +6,7 @@
 
 The accepted local feed/source/feature route is structurally closed; see `docs/95_data_stack_closeout.md`. Current historical training may proceed through manager-planned request payloads, dry-run handoff validation, and explicitly approved provider acquisition only when `live_call_approval_v1` is present.
 
-## Historical-Training Todo Status
+## Historical-Training Readiness Status
 
 - Current route coverage is accepted for the bounded historical training start: Alpaca bars/liquidity/news, GDELT news, SEC company financials, ThetaData option primary tracking, and ThetaData option event timeline.
 - Source-specific dry-run parameter defaults are now manager-owned in `trading-manager/src/trading_manager_tasks/request_payloads.py`; `trading-data` should not duplicate that control-plane policy locally.

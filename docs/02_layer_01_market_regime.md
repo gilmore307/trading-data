@@ -11,6 +11,8 @@ trading_data.feature_01_market_regime
 
 `source_01_market_regime` owns point-in-time ETF bar rows for the reviewed market-context universe. `feature_01_market_regime` owns deterministic point-in-time Layer 1 feature payloads consumed by `model_01_market_regime`.
 
+Historical feeds may legitimately produce zero rows for a requested symbol/month when the instrument was not yet listed or the provider returns a reviewed no-data response. `trading-data` preserves that absence as explicit receipt/manifest evidence with schema headers where possible. It must not fabricate bars, and it should not convert valid absent history into a component failure. Downstream models consume this through coverage and data-quality diagnostics.
+
 ## Input boundary
 
 Layer 1 data may use broad and cross-asset market evidence such as market ETF bars, rates/duration proxies, dollar/commodity proxies, volatility, correlation, breadth, concentration, credit, liquidity, and risk-appetite sensors.

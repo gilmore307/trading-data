@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import csv
 import importlib
 import json
 import math
+import tempfile
 import unittest
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -11,6 +13,7 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo("America/New_York")
 generator = importlib.import_module("data_feature.feature_02_sector_context.generator")
 sql_runner = importlib.import_module("data_feature.feature_02_sector_context.sql")
+from_feed_artifacts = importlib.import_module("data_feature.feature_02_sector_context.from_feed_artifacts")
 
 
 def _bar(symbol: str, day: date, close: float, *, timeframe: str = "1Day") -> dict[str, str]:
@@ -215,6 +218,30 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(insert_params[:7], ["2026-01-02T16:00:00-05:00", "XLK", "sector_industry_etf", "SPY", "xlk_spy", "sector_rotation", "30m"])
         payload = json.loads(insert_params[7])  # type: ignore[index]
         self.assertEqual(payload, {"relative_strength_return": 0.01})
+
+    def test_feed_artifact_materializer_reads_existing_layer_two_outputs_without_provider_calls(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            root = Path(raw_tmp)
+            saved = root / "monthly_backfill_v1" / "alpaca_bars" / "XLK" / "2016-01" / "runs" / "run_1" / "saved"
+            saved.mkdir(parents=True)
+            csv_path = saved / "equity_bar.csv"
+            with csv_path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
+                writer.writerow(["XLK", "30Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
+            receipt = root / "monthly_backfill_v1" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
+            receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": [str(csv_path)]}]}) + "\n", encoding="utf-8")
+
+            summary = from_feed_artifacts.run_from_feed_artifacts(storage_root=root, month="2016-01", dry_run=True)
+
+        self.assertEqual(summary.contract_type, "feature_02_sector_context_from_feed_artifacts_v1")
+        self.assertEqual(summary.artifact_count, 1)
+        self.assertEqual(summary.source_rows_found, 1)
+        self.assertEqual(summary.source_rows_written, 0)
+        self.assertEqual(summary.feature_rows_written, 0)
+        self.assertEqual(summary.provider_calls, 0)
+        self.assertFalse(summary.model_activation_performed)
+        self.assertFalse(summary.broker_execution_performed)
 
     @unittest.skipUnless(
         Path("/root/projects/trading-storage/main/shared/market_regime_etf_universe.csv").exists()

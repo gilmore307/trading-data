@@ -7,6 +7,9 @@ from feed_availability.http import HttpResult
 class FakeBarsClient:
     def get(self,url,*,params=None,headers=None):
         return HttpResult(url=url,status=200,headers={},body=json.dumps({'bars':[{'t':'2024-01-02T05:00:00Z','o':187.15,'h':188.44,'l':183.885,'c':185.64,'v':82496943,'vw':185.846233,'n':1009074}]}).encode())
+class FakeEmptyBarsClient:
+    def get(self,url,*,params=None,headers=None):
+        return HttpResult(url=url,status=200,headers={},body=json.dumps({'bars':None}).encode())
 class FakeNewsClient:
     def get(self,url,*,params=None,headers=None):
         return HttpResult(url=url,status=200,headers={},body=json.dumps({'news':[{'id':1,'headline':'h','source':'benzinga','author':'a','created_at':'2024-01-09T19:46:19Z','updated_at':'2024-01-09T19:46:19Z','symbols':['AAPL'],'summary':'s','content':'','url':'https://example.test','images':[{}]}]}).encode())
@@ -26,6 +29,27 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                     row=next(csv.DictReader(handle))
                 self.assertEqual(row['timestamp'],'2024-01-02T00:00:00-05:00')
                 self.assertFalse((Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test/saved/equity_bar.jsonl').exists())
+        finally: p.load_secret_alias=old
+    def test_bars_pipeline_treats_null_bars_as_empty_success(self):
+        p = import_module("data_feed.01_feed_alpaca_bars.pipeline")
+        old=p.load_secret_alias; p.load_secret_alias=lambda alias: Secret()
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                tk={'task_id':'01_feed_alpaca_bars_empty_test','feed':'01_feed_alpaca_bars','params':{'symbol':'BITW','timeframe':'1Day','start':'2016-01-01T00:00:00Z','end':'2016-02-01T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
+                r=p.run(tk,run_id='01_feed_alpaca_bars_empty_run_test',client=FakeEmptyBarsClient())
+                self.assertEqual(r.status,'succeeded')
+                csv_path=Path(tk['output_root'])/'runs/01_feed_alpaca_bars_empty_run_test/saved/equity_bar.csv'
+                with csv_path.open(newline='') as handle:
+                    reader=csv.DictReader(handle)
+                    self.assertEqual(reader.fieldnames,p.EQUITY_BAR_FIELDS)
+                    self.assertEqual(list(reader),[])
+                receipt=json.loads((Path(tk['output_root'])/'completion_receipt.json').read_text())
+                run=receipt['runs'][0]
+                self.assertEqual(run['row_counts'],{'equity_bar':0})
+                self.assertTrue(run['steps']['fetch']['references'])
+                manifest=json.loads(Path(run['steps']['fetch']['references'][0]).read_text())
+                self.assertEqual(manifest['raw_count'],0)
+                self.assertTrue(manifest['bar_pages'][0]['no_data_response'])
         finally: p.load_secret_alias=old
     def test_news_pipeline_et_timestamps(self):
         p = import_module("data_feed.03_feed_alpaca_news.pipeline")

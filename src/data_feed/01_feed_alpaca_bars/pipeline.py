@@ -38,10 +38,12 @@ def _fetch_paginated(client,url,row_key,params,headers,max_pages):
         page=dict(params)
         if token: page['page_token']=token
         result=client.get(url,params=page,headers=headers); payload=_json_response(result)
-        batch=payload.get(row_key,[]) if isinstance(payload,dict) else []
+        raw_batch=payload.get(row_key,[]) if isinstance(payload,dict) else []
+        no_data_response=raw_batch is None
+        batch=[] if no_data_response else raw_batch
         if not isinstance(batch,list): raise AlpacaBarsError(f'Alpaca field {row_key!r} was not a list')
         rows.extend(batch); token=payload.get('next_page_token') if isinstance(payload,dict) else None
-        evidence.append({'endpoint':sanitize_url(result.url),'http_status':result.status,'row_count':len(batch),'has_next_page':bool(token)})
+        evidence.append({'endpoint':sanitize_url(result.url),'http_status':result.status,'row_count':len(batch),'has_next_page':bool(token),'no_data_response':no_data_response})
         if not token: break
     else: evidence.append({'warning':f'max_pages={max_pages} reached before pagination completed'})
     return rows,evidence

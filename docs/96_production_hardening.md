@@ -107,6 +107,12 @@ Controlled smoke checklist:
 
 Current local check: ThetaData Terminal is installed at `/root/tools/thetadata-terminal/ThetaTerminalv3.jar` and can be started locally with the checked-in runtime config plus secret material kept outside Git. On 2026-05-08, a controlled live smoke succeeded against `127.0.0.1:25503` using `10_feed_thetadata_option_primary_tracking` for AAPL 2026-05-15 270 CALL on 2026-04-24 at `1Min`: 443 active transient OHLC rows aggregated into 242 saved `option_bar` rows under `/tmp/thetadata-live-smoke-20260508044010/`. If the port is closed, the task is runtime-not-started rather than connector-not-integrated.
 
+## Realtime validation handoff
+
+Realtime or live-observed source rows can support model forward-validation only after the manager/model stack treats them as append-only point-in-time evidence. Required handoff facts include observation time, provider available time, tradeable time, frozen model/config refs, prediction/output refs, label maturity time, and outcome label refs.
+
+The handoff must remain separate from historical provider backfill: realtime capture can become `forward_holdout` or `shadow_monitoring` evidence, but it must not silently rewrite historical train/calibration/validation/test snapshots and must not be used for refit before a reviewed dataset snapshot boundary.
+
 ## Non-Production Status
 
 These policies make production entry stricter; they do not create production labels, approve model promotion, or authorize unattended live orchestration.

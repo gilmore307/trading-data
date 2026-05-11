@@ -2,9 +2,9 @@
 
 ## Active Tasks
 
-- None for the historical-data training preparation boundary.
+- None for the repository-design boundary in the current promote-first model phase.
 
-The accepted local feed/source/feature route is structurally closed; see `docs/95_data_stack_closeout.md`. Current historical training may proceed through manager-planned request payloads, dry-run handoff validation, and explicitly approved provider acquisition only when `live_call_approval_v1` is present.
+The accepted local feed/source/feature route is structurally closed; see `docs/95_data_stack_closeout.md`. Current data work should support historical evidence production for the first usable production-promotable model version, starting with Layer 1 `MarketRegimeModel` evidence/gate repair. Historical training may proceed through manager-planned request payloads, dry-run handoff validation, and explicitly approved provider acquisition only when `live_call_approval_v1` is present. Realtime feed/source expansion is parked until a model has an approved/promotable version.
 
 ## Historical-Training Readiness Status
 
@@ -15,8 +15,9 @@ The accepted local feed/source/feature route is structurally closed; see `docs/9
 
 ## Not Current Historical-Training Scope
 
-These items are intentionally outside the current no-broker historical-training run and must not be treated as open repository work items:
+These items are intentionally outside the current promote-first historical-training run and must not be treated as open repository work items:
 
+- realtime feed/source expansion before a model has an approved/promotable version;
 - broader production packaging/service management beyond local source slices;
 - unattended ThetaData service/autostart setup;
 - optionability-summary promotion before a model/control-plane consumer requires it;

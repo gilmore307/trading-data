@@ -15,7 +15,7 @@ Reusable starter templates live in `trading-storage/main/templates/data_tasks/`;
 | `clean_spec.md` | Normalization and validation-prep requirements. |
 | `save_spec.md` | Local development output and reviewed handoff mapping. |
 | `completion_receipt.json` | Success/failure evidence shape. |
-| `fixture_policy.md` | Fixture, mock, and live-call guardrails. |
+| `fixture_policy.md` | Fixture, mock, and provider-call guardrails. |
 
 Stable fields, statuses, task types, receipt shapes, artifact refs, and storage contracts require `trading-manager` / `trading-storage` review.
 
@@ -30,7 +30,7 @@ For each feed/source:
 5. Define raw/transient handling and final cleaned outputs.
 6. Define SQL table or reviewed artifact handoff.
 7. Define receipt/manifest evidence for success and failure.
-8. Define fixture-safe tests and live-call guardrails.
+8. Define fixture-safe tests and provider-call guardrails.
 9. Implement `pipeline.py` under the accepted package path.
 
 ## Runtime JSON Minimalism

@@ -13,13 +13,14 @@ Local ignored `storage/` outputs remain development evidence. Production handoff
 - `artifact_ref_v1`
 - `ready_signal_v1`
 
-## Live-Call Guardrails
+## Provider-Call Guardrails
 
-Live provider/API calls are disabled by default for manager-issued requests unless the request includes an explicit `live_call_policy`.
+Historical provider/API acquisition may run autonomously when issued by `trading-manager` under bounded manager controls. The retired manual approval-packet path is not part of the active historical route.
 
-Required live-call policy fields:
+Required manager-control fields for autonomous historical acquisition:
 
-- `allow_live_calls`
+- `allow_live_provider_calls`
+- `autonomous_historical_provider_acquisition`
 - `allowed_providers`
 - `allowed_endpoint_families`
 - `max_requests`
@@ -29,14 +30,14 @@ Required live-call policy fields:
 - `retry_policy_ref`
 - `rate_limit_policy_ref`
 - `secret_alias_refs`
-- `manual_approval_ref` for `production` mode
 
 Rules:
 
 - Secret values must never be logged, persisted, committed, or embedded in manifests.
 - Provider errors, HTTP statuses, rate-limit responses, and retry counts belong in sanitized manifest evidence.
 - `Retry-After` or provider-specific backoff headers must be respected.
-- Any missing/unsupported live-call policy must fail closed.
+- Missing or unsupported manager controls must fail closed.
+- Broker execution, account/order mutation, storage lifecycle mutation, and production model activation remain separate hard-gated surfaces.
 
 ## Retry / Rate-Limit Policy
 

@@ -4,7 +4,7 @@
 
 - None for the repository-design boundary in the current promote-first model phase.
 
-The accepted local feed/source/feature route is structurally closed; see `docs/95_data_stack_closeout.md`. Current data work should support historical evidence production for the first usable production-promotable model version, starting with Layer 1 `MarketRegimeModel` evidence/gate repair. Historical training may proceed through manager-planned request payloads, dry-run handoff validation, and explicitly approved provider acquisition only when `live_call_approval_v1` is present. Realtime feed/source expansion is parked until a model has an approved/promotable version.
+The accepted local feed/source/feature route is structurally closed; see `docs/95_data_stack_closeout.md`. Current data work should support historical evidence production for the first usable production-promotable model version, starting with Layer 1 `MarketRegimeModel` evidence/gate repair. Historical training may proceed through manager-planned request payloads, handoff validation, and autonomous historical provider acquisition under bounded manager controls. Realtime feed/source expansion is parked until a model has an approved/promotable version.
 
 ## Historical-Training Readiness Status
 
@@ -28,7 +28,7 @@ These items are intentionally outside the current promote-first historical-train
 
 - Alpaca bars now treats provider `bars: null` no-data responses as empty successful acquisitions with headers/schema/manifests rather than failed component receipts. This supports historical months where current-universe symbols did not yet have bars.
 - Repository data-stack closeout: current feed/source/feature surfaces cover the accepted local Layers 1-8 model-input route.
-- Production hardening policy: live-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/96_production_hardening.md`.
+- Production hardening policy: provider-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/96_production_hardening.md`.
 - Storage-owned V1 handoff contracts are the production handoff vocabulary; local ignored `storage/` remains development evidence.
 - ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.
 - `source_02_target_candidate_holdings` preserves point-in-time visibility with a conservative next-session-open default when no explicit availability timestamp exists.

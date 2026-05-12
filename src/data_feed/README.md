@@ -10,6 +10,6 @@ Boundary:
 - credential lookup by alias only;
 - timestamp normalization and feed-level cleaning;
 - final cleaned feed artifacts or transient rows for a source;
-- fixture-safe tests and explicit live-call guardrails.
+- fixture-safe tests and explicit provider-call guardrails.
 
 Manager-facing composition belongs in `data_source`. Deterministic model-layer feature construction belongs in `data_feature`.

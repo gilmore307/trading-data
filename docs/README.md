@@ -18,12 +18,12 @@ This directory is the documentation spine for `trading-data`.
 - `81_decision.md` — ratified decision history.
 - `82_memory.md` — durable local notes that do not fit narrower docs.
 - `90_data_organization.md` — feed/source/feature organization and output rules.
-- `91_data_feed.md` — provider/feed boundaries, credentials, and live-call rules.
+- `91_data_feed.md` — provider/feed boundaries, credentials, and provider-call rules.
 - `92_api_templates.md` — source/feed design order and template usage.
 - `93_feed_availability.md` — provider/data-kind availability inventory.
 - `94_model_inputs.md` — mapping from data outputs to model-layer consumers.
 - `95_data_stack_closeout.md` — accepted local data-stack closeout.
-- `96_production_hardening.md` — live-call, retry, checkpoint, manifest, ready-signal, and ThetaData hardening rules.
+- `96_production_hardening.md` — provider-call, retry, checkpoint, manifest, ready-signal, and ThetaData hardening rules.
 
 Current direct route:
 

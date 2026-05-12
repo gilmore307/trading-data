@@ -8,10 +8,10 @@ This document records the production-hardening contracts that can be defined bef
 
 Local ignored `storage/` outputs remain development evidence. Production handoff must use the storage-owned V1 contracts:
 
-- `manager_request_v1`
-- `run_manifest_v1`
-- `artifact_ref_v1`
-- `ready_signal_v1`
+- `manager_request`
+- `run_manifest`
+- `artifact_ref`
+- `ready_signal`
 
 ## Provider-Call Guardrails
 
@@ -75,16 +75,16 @@ Resume rules:
 
 - resume by segment id and parameter fingerprint, not by mutable local filenames;
 - succeeded immutable segments must not be re-fetched unless a new request supersedes the original;
-- partial or failed segments must not emit `ready_signal_v1` with `ready_status = ready`;
+- partial or failed segments must not emit `ready_signal` with `ready_status = ready`;
 - partial coverage may emit `partial_ready` only when the downstream request explicitly permits partial input coverage.
 
 ## Manifest / Ready Signal Rules
 
 Every production candidate run must emit or persist:
 
-1. `run_manifest_v1` with request, git commit, config refs, provider evidence, validation checks, input refs, and output refs.
-2. `artifact_ref_v1` for every durable output artifact.
-3. `ready_signal_v1` only after required validation checks pass.
+1. `run_manifest` with request, git commit, config refs, provider evidence, validation checks, input refs, and output refs.
+2. `artifact_ref` for every durable output artifact.
+3. `ready_signal` only after required validation checks pass.
 
 Consumers must reject artifacts without a compatible ready signal.
 

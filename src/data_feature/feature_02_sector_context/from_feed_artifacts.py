@@ -75,7 +75,7 @@ def run_from_feed_artifacts(
             snapshot_times=None,
         )
     return SectorFeedArtifactMaterializationSummary(
-        contract_type="feature_02_sector_context_from_feed_artifacts_v1",
+        contract_type="feature_02_sector_context_from_feed_artifacts",
         month=month,
         receipt_count=len(artifacts),
         artifact_count=len(artifacts),

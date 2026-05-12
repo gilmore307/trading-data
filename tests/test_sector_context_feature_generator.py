@@ -222,19 +222,19 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
     def test_feed_artifact_materializer_reads_existing_layer_two_outputs_without_provider_calls(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             root = Path(raw_tmp)
-            saved = root / "monthly_backfill_v1" / "alpaca_bars" / "XLK" / "2016-01" / "runs" / "run_1" / "saved"
+            saved = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "runs" / "run_1" / "saved"
             saved.mkdir(parents=True)
             csv_path = saved / "equity_bar.csv"
             with csv_path.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.writer(handle)
                 writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
                 writer.writerow(["XLK", "30Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
-            receipt = root / "monthly_backfill_v1" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
+            receipt = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
             receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": [str(csv_path)]}]}) + "\n", encoding="utf-8")
 
             summary = from_feed_artifacts.run_from_feed_artifacts(storage_root=root, month="2016-01", dry_run=True)
 
-        self.assertEqual(summary.contract_type, "feature_02_sector_context_from_feed_artifacts_v1")
+        self.assertEqual(summary.contract_type, "feature_02_sector_context_from_feed_artifacts")
         self.assertEqual(summary.artifact_count, 1)
         self.assertEqual(summary.source_rows_found, 1)
         self.assertEqual(summary.source_rows_written, 0)

@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
 FEATURE = "feature_03_target_state_vector"
-DEFAULT_VECTOR_VERSION = "target_context_state_v1"
+DEFAULT_VECTOR_VERSION = "target_context_state"
 DEFAULT_RUN_ID = "adhoc"
 STATE_WINDOWS = (5, 15, 60, 390)
 STATE_WINDOW_LABELS = tuple(f"{window}min" for window in STATE_WINDOWS)
@@ -350,8 +350,8 @@ def _target_state_features(
     state["target_liquidity_tradability_state"]["dollar_volume"] = dollar_volumes[index]
     state["target_vwap_location_state"]["vwap_distance_pct"] = _safe_ratio_delta(close, vwaps[index])
     state["target_session_position_state"].update(_session_position_state(index, closes, highs, lows, vwaps))
-    state["target_shortability_state"].update({"shortable_state": None, "borrow_availability_score": None, "borrow_cost_score": None, "hard_to_borrow_flag": None, "locate_quality_score": None, "short_sale_constraint_score": None, "data_policy": "optional_overlay_not_required_for_state_vector_v1"})
-    state["target_event_risk_state"].update({"earnings_proximity_score": None, "scheduled_event_risk_score": None, "news_shock_state": None, "halt_risk_score": None, "macro_event_window_flag": None, "data_policy": "optional_overlay_not_required_for_state_vector_v1"})
+    state["target_shortability_state"].update({"shortable_state": None, "borrow_availability_score": None, "borrow_cost_score": None, "hard_to_borrow_flag": None, "locate_quality_score": None, "short_sale_constraint_score": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
+    state["target_event_risk_state"].update({"earnings_proximity_score": None, "scheduled_event_risk_score": None, "news_shock_state": None, "halt_risk_score": None, "macro_event_window_flag": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
     state["target_data_quality_state"]["has_close"] = close is not None
     state["target_data_quality_state"]["has_high_low"] = highs[index] is not None and lows[index] is not None
     state["target_data_quality_state"]["has_volume"] = volumes[index] is not None

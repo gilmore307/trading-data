@@ -257,7 +257,7 @@ def main(argv: list[str] | None = None) -> int:
         "--target-context-state-version",
         "--target-state-vector-version",
         dest="target_context_state_version",
-        default="target_context_state_v1",
+        default="target_context_state",
         help="Layer 3 target context state contract version; --target-state-vector-version is a deprecated alias.",
     )
     args = parser.parse_args(argv)

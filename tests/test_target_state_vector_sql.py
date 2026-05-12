@@ -29,7 +29,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             "target_candidate_id": "tcand_001",
             "market_context_state_ref": "mkt_001",
             "sector_context_state_ref": "sec_001",
-            "target_context_state_version": "target_context_state_v1",
+            "target_context_state_version": "target_context_state",
             "market_state_features": {"state_observation_windows": ["5min"]},
             "sector_state_features": {"state_observation_windows": ["5min"]},
             "target_state_features": {"target_direction_return_shape": {"return_5min": 0.01}},

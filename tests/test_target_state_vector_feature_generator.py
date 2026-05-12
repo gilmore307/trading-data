@@ -51,13 +51,13 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
             ],
         )
 
-        rows = generator.generate_rows(inputs, run_id="state_v1")
+        rows = generator.generate_rows(inputs, run_id="state")
 
         self.assertEqual(len(rows), 20)
         self.assertEqual({row["target_candidate_id"] for row in rows}, {"tc_001"})
         self.assertFalse(any("symbol" in row for row in rows))
         row = rows[15]
-        self.assertEqual(row["run_id"], "state_v1")
+        self.assertEqual(row["run_id"], "state")
         self.assertEqual(row["market_context_state_ref"], "mkt_001")
         self.assertEqual(row["sector_context_state_ref"], "sec_001")
         expected_windows = ["5min", "15min", "60min", "390min"]

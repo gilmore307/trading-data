@@ -32,10 +32,10 @@ class DataCloseoutReadinessTests(unittest.TestCase):
             "2026-05-07T16:30:00-04:00",
         )
 
-    def test_equity_abnormal_activity_default_standard_is_conservative_v1(self) -> None:
+    def test_equity_abnormal_activity_default_standard_is_conservative(self) -> None:
         config = json.loads(Path("src/data_source/source_04_event_overlay/equity_abnormal_activity/config.json").read_text())
 
-        self.assertEqual(config["model_standard"], "equity_abnormal_activity_conservative_v1")
+        self.assertEqual(config["model_standard"], "equity_abnormal_activity_conservative")
         self.assertEqual(config["calibration_status"], "conservative_fixture_default_not_production_calibrated")
         self.assertGreaterEqual(config["min_abs_return_zscore"], 3.0)
         self.assertGreaterEqual(config["min_volume_zscore"], 3.0)
@@ -43,7 +43,7 @@ class DataCloseoutReadinessTests(unittest.TestCase):
     def test_source_config_loader_supports_nested_packaged_config(self) -> None:
         config = load_source_config("source_04_event_overlay/equity_abnormal_activity")
 
-        self.assertEqual(config["model_standard"], "equity_abnormal_activity_conservative_v1")
+        self.assertEqual(config["model_standard"], "equity_abnormal_activity_conservative")
 
     def test_equity_abnormal_activity_events_carry_model_standard(self) -> None:
         rows = []
@@ -63,12 +63,12 @@ class DataCloseoutReadinessTests(unittest.TestCase):
             min_abs_relative_strength_zscore=3.0,
             min_abs_gap_pct=0.04,
             min_liquidity_spread_zscore=3.0,
-            model_standard="equity_abnormal_activity_conservative_v1",
+            model_standard="equity_abnormal_activity_conservative",
         )
 
         self.assertTrue(events)
         taxonomy = json.loads(events[-1]["taxonomy_context"])
-        self.assertEqual(taxonomy["detector"], "equity_abnormal_activity_conservative_v1")
+        self.assertEqual(taxonomy["detector"], "equity_abnormal_activity_conservative")
 
 
 if __name__ == "__main__":

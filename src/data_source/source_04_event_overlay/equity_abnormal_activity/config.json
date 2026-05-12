@@ -10,6 +10,6 @@
   "min_liquidity_spread_zscore": 3.0,
   "min_price_action_breakout_pct": 0.001,
   "min_price_action_wick_ratio": 0.35,
-  "model_standard": "equity_abnormal_activity_conservative_v1",
+  "model_standard": "equity_abnormal_activity_conservative",
   "calibration_status": "conservative_fixture_default_not_production_calibrated"
 }

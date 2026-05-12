@@ -124,5 +124,5 @@ Boundary:
 - `source_05_option_expression` is source-number 05 for option-expression input; it is not model Layer 5 `AlphaConfidenceModel` acquisition.
 - SQL business tables keep `run_id`, `task_id`, and write audit timestamps in receipts/run metadata rather than business rows.
 - ETF holdings freshness is conservative by default: explicit source/task `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
-- `equity_abnormal_activity_event` default standard is `equity_abnormal_activity_conservative_v1`; production labels or promoted gates require reviewed historical calibration evidence before threshold changes are trusted.
+- `equity_abnormal_activity_event` default standard is `equity_abnormal_activity_conservative`; production labels or promoted gates require reviewed historical calibration evidence before threshold changes are trusted.
 - Optionability summary shape should be defined only when the model/control-plane contract needs a durable shared interface.

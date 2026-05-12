@@ -181,14 +181,14 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
     def test_feed_artifact_materializer_discovers_successful_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             root = Path(raw_tmp)
-            saved = root / "monthly_backfill_v1" / "alpaca_bars" / "SPY" / "2016-01" / "runs" / "run_1" / "saved"
+            saved = root / "monthly_backfill" / "alpaca_bars" / "SPY" / "2016-01" / "runs" / "run_1" / "saved"
             saved.mkdir(parents=True)
             csv_path = saved / "equity_bar.csv"
             with csv_path.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.writer(handle)
                 writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
                 writer.writerow(["SPY", "1Min", "2016-01-04T09:30:00-05:00", "200", "201", "199", "200.5", "1000", "200.25", "12"])
-            receipt = root / "monthly_backfill_v1" / "alpaca_bars" / "SPY" / "2016-01" / "completion_receipt.json"
+            receipt = root / "monthly_backfill" / "alpaca_bars" / "SPY" / "2016-01" / "completion_receipt.json"
             receipt.write_text(
                 json.dumps(
                     {

@@ -64,7 +64,7 @@ def discover_feed_artifacts(*, storage_root: Path, month: str, symbols: Sequence
     """Return saved equity_bar.csv artifacts from successful monthly feed receipts."""
 
     symbol_filter = {symbol.upper() for symbol in symbols}
-    receipt_paths = sorted((storage_root / "monthly_backfill_v1" / "alpaca_bars").glob(f"*/{month}/completion_receipt.json"))
+    receipt_paths = sorted((storage_root / "monthly_backfill" / "alpaca_bars").glob(f"*/{month}/completion_receipt.json"))
     artifacts: list[Path] = []
     for receipt_path in receipt_paths:
         symbol = receipt_path.parent.parent.name.upper()
@@ -149,7 +149,7 @@ def run_from_feed_artifacts(
             snapshot_times=None,
         )
     return FeedArtifactMaterializationSummary(
-        contract_type="feature_01_market_regime_from_feed_artifacts_v1",
+        contract_type="feature_01_market_regime_from_feed_artifacts",
         month=month,
         receipt_count=len(artifacts),
         artifact_count=len(artifacts),

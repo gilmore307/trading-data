@@ -214,7 +214,7 @@ def _price_action_activity(
     return activity, details
 
 
-def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, str]] | None = None, liquidity_rows: list[dict[str, str]] | None = None, lookback_intervals: int = 20, min_abs_return_zscore: float = 3.0, min_volume_zscore: float = 3.0, min_abs_relative_strength_zscore: float = 3.0, min_abs_gap_pct: float = 0.04, min_liquidity_spread_zscore: float = 3.0, min_price_action_breakout_pct: float = 0.001, min_price_action_wick_ratio: float = 0.35, model_standard: str = "equity_abnormal_activity_v0") -> list[dict[str, str]]:
+def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, str]] | None = None, liquidity_rows: list[dict[str, str]] | None = None, lookback_intervals: int = 20, min_abs_return_zscore: float = 3.0, min_volume_zscore: float = 3.0, min_abs_relative_strength_zscore: float = 3.0, min_abs_gap_pct: float = 0.04, min_liquidity_spread_zscore: float = 3.0, min_price_action_breakout_pct: float = 0.001, min_price_action_wick_ratio: float = 0.35, model_standard: str = "equity_abnormal_activity_conservative") -> list[dict[str, str]]:
     sorted_bars = sorted(bars, key=lambda row: str(row.get("timestamp") or ""))
     symbol = str(sorted_bars[0].get("symbol") or "").upper() if sorted_bars else ""
     timeframe = str(sorted_bars[0].get("timeframe") or "") if sorted_bars else ""
@@ -334,7 +334,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> StepResult:
         min_liquidity_spread_zscore=float(effective.get("min_liquidity_spread_zscore", 3.0)),
         min_price_action_breakout_pct=float(effective.get("min_price_action_breakout_pct", 0.001)),
         min_price_action_wick_ratio=float(effective.get("min_price_action_wick_ratio", 0.35)),
-        model_standard=str(effective.get("model_standard", "equity_abnormal_activity_v0")),
+        model_standard=str(effective.get("model_standard", "equity_abnormal_activity_conservative")),
     )
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     output = context.cleaned_dir / "equity_abnormal_activity_event.jsonl"

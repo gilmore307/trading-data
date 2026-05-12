@@ -30,7 +30,7 @@ This closes the current data-design/model-input phase. It does not approve unatt
 Two previously active hardening items are now resolved as conservative closeout rules:
 
 1. ETF holdings / target-candidate preparation must preserve point-in-time visibility. If no explicit `available_time` is supplied, `source_02_target_candidate_holdings` now defaults holdings rows to the next regular US session open after `as_of_date` (`09:30 America/New_York`, skipping weekends). Same-day availability requires explicit source evidence or reviewed task input.
-2. `equity_abnormal_activity_event` now uses the explicit default `model_standard = equity_abnormal_activity_conservative_v1` with `calibration_status = conservative_fixture_default_not_production_calibrated`. The default may produce conservative event evidence, but production training labels or promoted gates still require a reviewed historical calibration report.
+2. `equity_abnormal_activity_event` now uses the explicit default `model_standard = equity_abnormal_activity_conservative` with `calibration_status = conservative_fixture_default_not_production_calibrated`. The default may produce conservative event evidence, but production training labels or promoted gates still require a reviewed historical calibration report.
 
 ## Historical-training readiness classification
 

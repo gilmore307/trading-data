@@ -57,7 +57,7 @@ class StepResult:
     details: dict[str, Any] = field(default_factory=dict)
 
 
-LOCAL_FIELD_PAYLOADS = {
+LOCAL_FIELD_NAMES = {
     "fld_A7K3P2Q9": "id",
     "fld_ABN002": "evidence_window",
     "fld_ABN008": "source_references",
@@ -186,28 +186,28 @@ class ThetaDataOptionEventTimelineError(ValueError):
 
 
 class RegistryNames:
-    """Resolve retained registry fields and code-local output field names."""
+    """Resolve retained registry fields and stable code-local output field names."""
 
     def __init__(self, registry_csv: Path = DEFAULT_REGISTRY_CSV) -> None:
         with registry_csv.open(newline="", encoding="utf-8") as handle:
             self._rows = {row["id"]: row for row in csv.DictReader(handle)}
 
-    def payload(self, ref: RegistryRef) -> str:
+    def field_name(self, ref: RegistryRef) -> str:
+        try:
+            field_name = LOCAL_FIELD_NAMES[ref.id]
+        except KeyError as exc:
+            raise ThetaDataOptionEventTimelineError(f"stable field id not found: {ref.id}") from exc
         row = self._rows.get(ref.id)
-        if row is None:
-            try:
-                return LOCAL_FIELD_PAYLOADS[ref.id]
-            except KeyError as exc:
-                raise ThetaDataOptionEventTimelineError(f"registry id not found: {ref.id}") from exc
-        if row["kind"] not in ref.expected_kinds:
+        if row is not None and row["kind"] not in ref.expected_kinds:
             raise ThetaDataOptionEventTimelineError(
                 f"registry id {ref.id} expected kind in {ref.expected_kinds}, got kind={row['kind']}"
             )
-        return row["payload"]
+        return field_name
 
 
-# Local-output field ids. Current registry rows are used when present;
-# code-local ids fall back to local names and must not be re-registered.
+
+# Local-output field ids. Registry rows validate retained ids when present;
+# code-local names own emitted field names and must not be inferred from registry payload.
 def field(item_id: str) -> RegistryRef:
     return RegistryRef(item_id, ("field", "identity_field", "path_field", "temporal_field", "classification_field", "text_field", "parameter_field"))
 
@@ -638,7 +638,7 @@ def _trigger_iv_high(iv_context: Mapping[str, Any], standard: Mapping[str, Any])
 
 
 def _standard_by_registry_names(names: RegistryNames, standard: Mapping[str, Any]) -> dict[str, Any]:
-    f = names.payload
+    f = names.field_name
     mapping = {
         "max_price_vs_ask": f(OPTION_EVENT_STANDARD_MAX_PRICE_VS_ASK),
         "min_ask_touch_ratio": f(OPTION_EVENT_STANDARD_MIN_ASK_TOUCH_RATIO),
@@ -667,7 +667,7 @@ def _build_event(
     window_rows: Sequence[dict[str, Any]],
     prior_window_volume: int,
 ) -> EventRecord | None:
-    f = names.payload
+    f = names.field_name
     standards = fetched.current_standard
     trade_at_ask_key = f(OPTION_EVENT_TRIGGER_TRADE_AT_ASK)
     opening_key = f(OPTION_EVENT_TRIGGER_OPENING_ACTIVITY)
@@ -834,7 +834,7 @@ def clean(context: FeedContext, fetched: FetchedTradeQuote) -> StepResult:
             handle.write(json.dumps({"row": event.row, "detail": event.detail}, sort_keys=True) + "\n")
     schema_path = context.cleaned_dir / "schema.json"
     schema_path.write_text(
-        json.dumps({"option_activity_event": [names.payload(ref) for ref in CSV_FIELD_REFS]}, indent=2, sort_keys=True)
+        json.dumps({"option_activity_event": [names.field_name(ref) for ref in CSV_FIELD_REFS]}, indent=2, sort_keys=True)
         + "\n",
         encoding="utf-8",
     )
@@ -865,7 +865,7 @@ def _read_cleaned_events(path: Path) -> list[EventRecord]:
 
 def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     names = RegistryNames(context.registry_csv)
-    fields = [names.payload(ref) for ref in CSV_FIELD_REFS]
+    fields = [names.field_name(ref) for ref in CSV_FIELD_REFS]
     events = _read_cleaned_events(context.cleaned_dir / "option_activity_event.jsonl")
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     csv_path = context.saved_dir / "option_activity_event.csv"
@@ -877,44 +877,44 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     os.replace(tmp_csv, csv_path)
 
     references = [str(csv_path)]
-    url_field = names.payload(TIMELINE_URL)
+    url_field = names.field_name(TIMELINE_URL)
     detail_fields = [
-        names.payload(OPTION_EVENT_DETAIL_EVENT_ID),
-        names.payload(TIMELINE_CREATED_AT),
-        names.payload(TIMELINE_UPDATED_AT),
-        names.payload(OPTION_UNDERLYING),
-        names.payload(OPTION_EXPIRATION),
-        names.payload(OPTION_RIGHT_TYPE),
-        names.payload(OPTION_STRIKE),
-        names.payload(OPTION_CONTRACT_SYMBOL),
-        names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS),
-        names.payload(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW),
-        names.payload(OPTION_EVENT_DETAIL_TRIGGERING_TRADE),
-        names.payload(OPTION_EVENT_DETAIL_QUOTE_CONTEXT),
-        names.payload(OPTION_EVENT_DETAIL_IV_CONTEXT),
-        names.payload(OPTION_EVENT_DETAIL_SOURCE_REFS),
+        names.field_name(OPTION_EVENT_DETAIL_EVENT_ID),
+        names.field_name(TIMELINE_CREATED_AT),
+        names.field_name(TIMELINE_UPDATED_AT),
+        names.field_name(OPTION_UNDERLYING),
+        names.field_name(OPTION_EXPIRATION),
+        names.field_name(OPTION_RIGHT_TYPE),
+        names.field_name(OPTION_STRIKE),
+        names.field_name(OPTION_CONTRACT_SYMBOL),
+        names.field_name(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS),
+        names.field_name(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW),
+        names.field_name(OPTION_EVENT_DETAIL_TRIGGERING_TRADE),
+        names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT),
+        names.field_name(OPTION_EVENT_DETAIL_IV_CONTEXT),
+        names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS),
     ]
-    contract_field = names.payload(OPTION_EVENT_DETAIL_CONTRACT)
+    contract_field = names.field_name(OPTION_EVENT_DETAIL_CONTRACT)
     for event in events:
         detail_path = context.saved_dir / event.row[url_field]
         tmp_detail = detail_path.with_suffix(detail_path.suffix + ".tmp")
         detail = event.detail
         contract = detail.get(contract_field, {})
         detail_row = {
-            names.payload(OPTION_EVENT_DETAIL_EVENT_ID): detail.get(names.payload(OPTION_EVENT_DETAIL_EVENT_ID)),
-            names.payload(TIMELINE_CREATED_AT): detail.get(names.payload(TIMELINE_CREATED_AT)),
-            names.payload(TIMELINE_UPDATED_AT): detail.get(names.payload(TIMELINE_UPDATED_AT)),
-            names.payload(OPTION_UNDERLYING): detail.get(names.payload(OPTION_UNDERLYING)),
-            names.payload(OPTION_EXPIRATION): contract.get(names.payload(OPTION_EXPIRATION)),
-            names.payload(OPTION_RIGHT_TYPE): contract.get(names.payload(OPTION_RIGHT_TYPE)),
-            names.payload(OPTION_STRIKE): contract.get(names.payload(OPTION_STRIKE)),
-            names.payload(OPTION_CONTRACT_SYMBOL): contract.get(names.payload(OPTION_CONTRACT_SYMBOL)),
-            names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS), {}), separators=(",", ":")),
-            names.payload(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW), {}), separators=(",", ":")),
-            names.payload(OPTION_EVENT_DETAIL_TRIGGERING_TRADE): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_TRIGGERING_TRADE), {}), separators=(",", ":")),
-            names.payload(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_QUOTE_CONTEXT), {}), separators=(",", ":")),
-            names.payload(OPTION_EVENT_DETAIL_IV_CONTEXT): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_IV_CONTEXT), {}), separators=(",", ":")),
-            names.payload(OPTION_EVENT_DETAIL_SOURCE_REFS): json.dumps(detail.get(names.payload(OPTION_EVENT_DETAIL_SOURCE_REFS), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_EVENT_ID): detail.get(names.field_name(OPTION_EVENT_DETAIL_EVENT_ID)),
+            names.field_name(TIMELINE_CREATED_AT): detail.get(names.field_name(TIMELINE_CREATED_AT)),
+            names.field_name(TIMELINE_UPDATED_AT): detail.get(names.field_name(TIMELINE_UPDATED_AT)),
+            names.field_name(OPTION_UNDERLYING): detail.get(names.field_name(OPTION_UNDERLYING)),
+            names.field_name(OPTION_EXPIRATION): contract.get(names.field_name(OPTION_EXPIRATION)),
+            names.field_name(OPTION_RIGHT_TYPE): contract.get(names.field_name(OPTION_RIGHT_TYPE)),
+            names.field_name(OPTION_STRIKE): contract.get(names.field_name(OPTION_STRIKE)),
+            names.field_name(OPTION_CONTRACT_SYMBOL): contract.get(names.field_name(OPTION_CONTRACT_SYMBOL)),
+            names.field_name(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_TRIGGERING_TRADE): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_TRIGGERING_TRADE), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_IV_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_IV_CONTEXT), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS), {}), separators=(",", ":")),
         }
         with tmp_detail.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.DictWriter(handle, fieldnames=detail_fields, extrasaction="ignore")

@@ -45,7 +45,7 @@ class StepResult:
     details: dict[str, Any] = field(default_factory=dict)
 
 
-LOCAL_FIELD_PAYLOADS = {
+LOCAL_FIELD_NAMES = {
     "fld_A7K3P2Q9": "id",
     "fld_ABN002": "evidence_window",
     "fld_ABN008": "source_references",
@@ -166,7 +166,7 @@ class ThetaDataOptionSelectionSnapshotError(ValueError):
 
 
 class RegistryNames:
-    """Resolve retained registry fields and code-local output field names."""
+    """Resolve retained registry fields and stable code-local output field names."""
 
     def __init__(self, registry_csv: Path = DEFAULT_REGISTRY_CSV) -> None:
         with registry_csv.open(newline="", encoding="utf-8") as handle:
@@ -174,22 +174,22 @@ class RegistryNames:
 
             self._rows = {row["id"]: row for row in csv.DictReader(handle)}
 
-    def payload(self, ref: RegistryRef) -> str:
+    def field_name(self, ref: RegistryRef) -> str:
+        try:
+            field_name = LOCAL_FIELD_NAMES[ref.id]
+        except KeyError as exc:
+            raise ThetaDataOptionSelectionSnapshotError(f"stable field id not found: {ref.id}") from exc
         row = self._rows.get(ref.id)
-        if row is None:
-            try:
-                return LOCAL_FIELD_PAYLOADS[ref.id]
-            except KeyError as exc:
-                raise ThetaDataOptionSelectionSnapshotError(f"registry id not found: {ref.id}") from exc
-        if row["kind"] not in ref.expected_kinds:
+        if row is not None and row["kind"] not in ref.expected_kinds:
             raise ThetaDataOptionSelectionSnapshotError(
                 f"registry id {ref.id} expected kind in {ref.expected_kinds}, got kind={row['kind']}"
             )
-        return row["payload"]
+        return field_name
 
 
-# Local-output field ids. Current registry rows are used when present;
-# code-local ids fall back to local names and must not be re-registered.
+
+# Local-output field ids. Registry rows validate retained ids when present;
+# code-local names own emitted field names and must not be inferred from registry payload.
 def field(item_id: str) -> RegistryRef:
     return RegistryRef(item_id, ("field", "identity_field", "path_field", "temporal_field", "classification_field", "text_field", "parameter_field"))
 
@@ -486,7 +486,7 @@ def _right_sort_value(right: str) -> int:
 
 def clean(context: FeedContext, fetched: FetchedSnapshot) -> tuple[StepResult, dict[str, Any]]:
     names = RegistryNames(context.registry_csv)
-    f = names.payload
+    f = names.field_name
     quote_index = _index_rows(fetched.quote_rows)
     iv_index = _index_rows(fetched.iv_rows)
     greeks_index = _index_rows(fetched.greeks_rows)
@@ -582,13 +582,13 @@ def clean(context: FeedContext, fetched: FetchedSnapshot) -> tuple[StepResult, d
 def save(context: FeedContext, clean_result: StepResult, snapshot: dict[str, Any]) -> StepResult:
     names = RegistryNames(context.registry_csv)
     fields = [
-        names.payload(OPTION_UNDERLYING),
-        names.payload(SNAPSHOT_TIME),
-        names.payload(OPTION_CONTRACT_COUNT),
-        names.payload(OPTION_CONTRACTS),
+        names.field_name(OPTION_UNDERLYING),
+        names.field_name(SNAPSHOT_TIME),
+        names.field_name(OPTION_CONTRACT_COUNT),
+        names.field_name(OPTION_CONTRACTS),
     ]
     row = dict(snapshot)
-    row[names.payload(OPTION_CONTRACTS)] = json.dumps(row.get(names.payload(OPTION_CONTRACTS), []), separators=(",", ":"))
+    row[names.field_name(OPTION_CONTRACTS)] = json.dumps(row.get(names.field_name(OPTION_CONTRACTS), []), separators=(",", ":"))
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     path = context.saved_dir / "option_chain_snapshot.csv"
     tmp_path = path.with_suffix(path.suffix + ".tmp")

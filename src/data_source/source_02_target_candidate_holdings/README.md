@@ -20,7 +20,7 @@ Optional task key fields:
 
 - `params.symbols`: comma string or list selecting a reviewed ETF subset from the universe
 - `params.available_time`: explicit model-availability timestamp for all output rows. If omitted, the source derives a conservative session-open timestamp from `as_of_date`.
-- `params.market_regime_etf_universe_path`: reviewed universe override. Normal runs use `/root/projects/trading-storage/main/shared/layer_1_2_market_context_etf_universe.csv`.
+- `params.market_regime_etf_universe_path`: reviewed universe override. Normal runs use `/root/projects/trading-storage/main/shared/layer_01_02_market_context_etf_universe.csv`.
 - `output_root`: local receipt/request-manifest root
 
 The universe CSV supplies `symbol`, `issuer_name`, `model_layer`, `universe_type`, and `exposure_type`. Only `model_layer = layer_02_sector_context` rows require holdings analysis; `layer_01_market_regime` rows are Layer 1 regime/bar instruments and are intentionally skipped here. The holdings source supplies constituent rows.

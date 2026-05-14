@@ -12,8 +12,8 @@ Current numbered data sources are cataloged in `src/data_layers/catalog.py` and 
 
 Note: Layers 5-7 currently do not need new `trading-data` sources because they consume upstream SQL outputs, model outputs, labels, position/risk/control-plane context, and reviewed evaluation artifacts without new source acquisition.
 
-- `source_01_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `market_regime_etf_universe.csv`.
-- `source_02_target_candidate_holdings` — SQL-only filtered US-listed equity ETF holdings table for anonymous target candidate preparation after Layer 2 sector/basket prioritization; ETF universe comes from `market_regime_etf_universe.csv`.
+- `source_01_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `layer_1_2_market_context_etf_universe.csv`.
+- `source_02_target_candidate_holdings` — SQL-only filtered US-listed equity ETF holdings table for anonymous target candidate preparation after Layer 2 sector/basket prioritization; ETF universe comes from `layer_1_2_market_context_etf_universe.csv`.
 - `source_03_target_state` — SQL-only target-local bar/liquidity input table for anonymous target state-vector construction.
 - `source_04_event_overlay` — SQL-only EventOverlayModel overview table; one row per event, with details behind references.
 - `source_04_event_overlay/equity_abnormal_activity` — nested event-overlay detector for equity/ETF abnormal activity evidence rows.

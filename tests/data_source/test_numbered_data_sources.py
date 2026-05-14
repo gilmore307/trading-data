@@ -53,7 +53,7 @@ class NumberedDataSourceTests(unittest.TestCase):
         module.load_secret_alias = lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:
-                universe_path = Path(tmp) / "market_regime_etf_universe.csv"
+                universe_path = Path(tmp) / "layer_1_2_market_context_etf_universe.csv"
                 universe_path.write_text(
                     "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
                     "SPY,broad_market,core,1d,SPDR S&P 500 ETF,State Street\n"

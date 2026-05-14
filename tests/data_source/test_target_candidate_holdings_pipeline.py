@@ -18,7 +18,7 @@ class FakeSqlWriter:
 class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
     def test_candidate_builder_holdings_source_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
-            universe = Path(tmp) / "market_regime_etf_universe.csv"
+            universe = Path(tmp) / "layer_1_2_market_context_etf_universe.csv"
             universe.write_text(
                 "symbol,universe_type,model_layer,exposure_type,bar_grain,fund_name,issuer_name\n"
                 "SPY,market_state_etf,layer_01_market_regime,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"

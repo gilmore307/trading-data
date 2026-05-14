@@ -45,11 +45,11 @@ model_NN_<layer_slug>_diagnostics
 
 Each accepted model layer that needs new `trading-data` acquisition has a control-plane-facing source-backed source under `src/data_source/source_NN_<layer_slug>/`. These sources fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
 
-Layer 1 accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
+Layer 1 accepts `params.start` and `params.end`, reads the reviewed `layer_1_2_market_context_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
 
 Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `feature_02_sector_context`. It owns deterministic point-in-time evidence for sector/industry behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. It does not consume ETF holdings or `stock_etf_exposure` as core behavior-model inputs.
 
-The downstream target-candidate preparation boundary accepts `params.start` and `params.end`, reads the reviewed `market_regime_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_target_candidate_holdings`. Its semantic owner is the anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected/prioritized sector baskets.
+The downstream target-candidate preparation boundary accepts `params.start` and `params.end`, reads the reviewed `layer_1_2_market_context_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_target_candidate_holdings`. Its semantic owner is the anonymous target candidate builder / Layer 3 input-preparation boundary after Layer 2 has selected/prioritized sector baskets.
 
 Layer 3 has two target-state surfaces with different maturity.
 

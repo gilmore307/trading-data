@@ -74,6 +74,21 @@ Rows are transient. The feed groups them into ET evidence windows and emits a fi
 
 Only `saved/option_activity_event.csv` and `saved/<event_id>.json` are final saved outputs. Cleaned JSONL is run-local development evidence. Raw provider responses are not persisted by default.
 
+## Directional evidence boundary
+
+This feed preserves option activity evidence; it does not decide final directional alpha.
+
+Current event detail records include option right, quote context, triggering trade, `trade_side_type` when ask-side standards are triggered, ask-touch statistics, window volume/opening statistics, and optional IV context. These fields can support later directional studies.
+
+Direction hypotheses must remain explicit and reviewable:
+
+- ask-side CALL activity may be bullish;
+- ask-side PUT activity may be bearish;
+- IV-only expansion without side evidence is direction-unknown path/risk expansion;
+- raw call/put volume alone is not directional proof because it may be hedging, closing, or inventory flow.
+
+If side/aggressor or opening/closing context is missing, downstream interpretation should use `unknown_direction_activity` or `review_required` rather than force bullish/bearish labels.
+
 ## Failure and retry
 
 Final CSV/JSON writes are atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.

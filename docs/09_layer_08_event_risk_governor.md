@@ -137,3 +137,26 @@ bridge_relation_type
 ```
 
 Source outputs must preserve market/sector/theme controls and avoid mixing detector windows with forward labels.
+
+## Option-direction evidence requirement
+
+For option activity, `trading-data` must preserve direction evidence separately from generic activity evidence. Minimum retained evidence should include:
+
+```text
+option_right
+trade_side_or_aggressor_side
+ask_touch_ratio
+bid_touch_ratio
+sweep_or_block_context
+trade_size
+trade_notional
+window_volume
+open_interest_change
+opening_or_closing_context
+iv_change
+skew_direction
+term_structure_direction
+direction_confidence
+```
+
+Ask-side call activity may be bullish and ask-side put activity may be bearish, but this is a hypothesis for model evaluation, not a guaranteed fact. Raw call/put volume without side/aggressor/opening context should usually map to `unknown_direction_activity` or `review_required`.

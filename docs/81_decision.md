@@ -204,3 +204,11 @@ Accepted: 2026-05-15
 `trading-data` evidence for abnormal activity must preserve directional orientation when available. For option activity this means call/put side, buy/sell or aggressor-side evidence when available, sweep/block context, open-interest context, and whether direction is confident or ambiguous.
 
 Raw option volume alone is not enough to assert bullish or bearish direction. Directional fields must support `bullish_activity`, `bearish_activity`, `neutral_activity`, `mixed_or_conflicting_activity`, and `unknown_direction_activity` so `trading-model` can evaluate signed directional forward returns separately from direction-neutral path expansion.
+
+## D031 — Option activity direction requires right, side, and opening context
+
+Accepted: 2026-05-15
+
+Option activity cannot be treated as directionally bullish or bearish from volume alone. Directional option evidence requires at least option right and trade side/aggressor evidence when available; stronger evidence includes sweep/block context, open-interest or opening/closing context, IV/skew/term-structure direction, and direction confidence.
+
+Initial hypotheses are: ask-side call activity is bullish, ask-side put activity is bearish, bid-side call activity can be bearish/call-selling, bid-side put activity can be bullish/put-selling, and IV-only expansion without side evidence is direction unknown. These hypotheses must be tested by signed directional forward labels.

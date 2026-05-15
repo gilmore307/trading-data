@@ -188,3 +188,11 @@ Accepted: 2026-05-15
 The activity-price proof study must not rely on a single story stock. `trading-data` must support cross-sectional samples across size buckets, sector/theme buckets, and event families when preparing evidence for the proof gate.
 
 The data boundary must preserve symbol, sector/theme control refs, market-cap bucket when available, event family refs, activity class refs, detection windows, event availability windows, and forward label windows separately. This is required to distinguish real activity-price relationships from small-cap liquidity noise or same-window price tautology.
+
+## D029 — Activity-price labels must include direction-neutral tradability metrics
+
+Accepted: 2026-05-15
+
+Activity-price proof labels must include direction-neutral measures before directional alpha labels. `trading-data` evidence should support absolute forward returns, forward path range, max favorable/adverse excursion, tradeable excursion, volatility expansion, absolute gap/jump, and path asymmetry.
+
+Signed forward returns remain useful, but they are secondary. Downside paths are tradable and must not be canceled out by upside paths in the primary proof metric.

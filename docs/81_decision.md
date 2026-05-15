@@ -180,3 +180,11 @@ Before abnormal activity can support a separate model layer, the project must pr
 Source artifacts must make it possible to distinguish the activity detection window, the event/availability window, and forward label horizons. Price-derived detectors cannot be evaluated against the same price window used to create them.
 
 Required future proof labels include forward return, drawdown, reversal, volatility expansion, gap/jump, and path asymmetry across short and event-relevant horizons.
+
+## D028 — Activity-price study data must support cross-sectional proof
+
+Accepted: 2026-05-15
+
+The activity-price proof study must not rely on a single story stock. `trading-data` must support cross-sectional samples across size buckets, sector/theme buckets, and event families when preparing evidence for the proof gate.
+
+The data boundary must preserve symbol, sector/theme control refs, market-cap bucket when available, event family refs, activity class refs, detection windows, event availability windows, and forward label windows separately. This is required to distinguish real activity-price relationships from small-cap liquidity noise or same-window price tautology.

@@ -124,3 +124,16 @@ Layer 8 data changes are acceptable when they:
 - use canonical/dedup fields for represented duplicate coverage;
 - keep full bulky evidence behind references unless a reviewed artifact contract says otherwise;
 - route reusable names through `trading-manager` before cross-repository dependence.
+## Cross-sectional proof-study data requirement
+
+A single symbol can debug the activity-price relationship workflow, but it cannot prove the relationship. `trading-data` evidence for the proof gate must support samples across:
+
+```text
+size_bucket
+sector_theme_bucket
+event_family
+activity_class
+bridge_relation_type
+```
+
+Source outputs must preserve market/sector/theme controls and avoid mixing detector windows with forward labels.

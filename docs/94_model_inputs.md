@@ -131,6 +131,18 @@ Boundary:
 - Price-action tokens are detector evidence for Layer 8 event-risk governance; they are not a separate model layer, trading action, or production-calibrated label without reviewed historical evidence.
 - If this becomes a generated signal, candidate decision, or label rather than source evidence, move that behavior out of `trading-data` and into the owning model/evaluation boundary.
 
+### `event_activity_bridge` evidence refs
+
+`event_activity_bridge` is model-owned, but `trading-data` may provide point-in-time evidence refs that support it:
+
+- event evidence refs: news, SEC/company disclosure, macro/calendar, official data, or hard-to-standardize narrative artifacts;
+- price activity refs: compact residual/price-action evidence, not duplicated bar features;
+- liquidity activity refs: spread/depth/quote-quality/halt-pause evidence;
+- option activity refs: IV/skew/term-structure/volume/OI/liquidity evidence when not already consumed as base option-expression inputs;
+- prediction-market activity refs: future Polymarket-style odds/volume/liquidity refs, when that source boundary is accepted.
+
+The bridge is useful when raw news is too ambiguous to standardize confidently but market/odds activity provides stable lead-lag or confirmation/divergence evidence. `trading-data` preserves refs and clocks; `trading-model` owns bridge scoring and interpretation.
+
 ## Current Guardrails
 
 - `source_05_option_expression` is source-number 05 for option-expression input; it is not model Layer 5 `AlphaConfidenceModel` acquisition.

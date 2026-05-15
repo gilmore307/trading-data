@@ -160,3 +160,13 @@ Accepted: 2026-05-15
 The event-risk path may use market-data abnormality only as compact detector provenance, residual evidence after upstream context conditioning, or discrete price-action tokens such as false breakout, failed breakdown, liquidity sweep, bull trap, or bear trap. The source refs may point to `equity_bar` / `equity_liquidity_bar`, but the event row must not re-emit those ordinary features as independent event alpha.
 
 If an abnormal-activity detector is promoted from evidence/provenance into a prediction label, decision signal, or production gate, ownership moves out of `trading-data` into the reviewed model/evaluation boundary.
+
+## D026 — Event-activity bridge evidence refs are source-owned, scoring is model-owned
+
+Accepted: 2026-05-15
+
+`event_activity_bridge` connects event evidence to price, liquidity, option, and prediction-market activity. It lets hard-to-standardize news be represented through stable point-in-time lead/lag, confirmation, or divergence evidence rather than forcing fragile narrative classes.
+
+`trading-data` may own the source refs, availability clocks, windows, and compact detector evidence that support bridge construction. `trading-model` owns bridge scoring, explanation status, event-risk interpretation, prediction-market confirmation/divergence scoring, and any training/evaluation labels.
+
+Source evidence must keep event refs and activity refs separate so later explanations can be added without rewriting the original point-in-time record.

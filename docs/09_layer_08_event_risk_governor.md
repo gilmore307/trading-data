@@ -66,6 +66,22 @@ unknown
 
 `trading-data` does not interpret final risk impact, but it must not destroy source timing needed to distinguish these classes. If a physical table does not yet have dedicated lifecycle columns, source evidence artifacts must retain the clocks/fields behind refs until a reviewed schema migration adds first-class columns.
 
+## Event-activity bridge evidence
+
+`trading-data` may provide evidence refs for the model-owned `event_activity_bridge` contract. The bridge lets hard-to-standardize news be represented through observable activity relationships instead of overfitting fragile narrative categories.
+
+Accepted bridge evidence legs include:
+
+```text
+event_evidence_ref
+price_activity_ref
+liquidity_activity_ref
+option_activity_ref
+prediction_market_activity_ref
+```
+
+`trading-data` owns source refs, windows, availability clocks, and compact detector evidence. It does not decide final bridge scores, prediction-market probabilities, event-risk interventions, or trading actions.
+
 ## Stage flow
 
 ```text

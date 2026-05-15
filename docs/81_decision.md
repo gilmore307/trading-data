@@ -140,3 +140,13 @@ The active conceptual stack moves event intelligence from pre-alpha Layer 4 to p
 Layer 7 trading guidance / option-expression data uses the existing option-expression inputs (`source_05_option_expression`, `feature_08_option_expression`, and `source_06_position_execution`) until a dedicated implementation migration renames physical source/feature surfaces. Layer 8 event-risk data uses the existing event surfaces (`source_04_event_overlay`, `feature_04_event_overlay`, and event-feed artifacts) until a dedicated implementation migration renames physical surfaces.
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation_v1` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
+
+## D024 — Event evidence preserves lifecycle clocks
+
+Accepted: 2026-05-15
+
+Event evidence must preserve enough timing information for downstream event interpretation to distinguish scheduled-known catalysts from unscheduled surprise events. `source_04_event_overlay` remains a light overview/index surface, but referenced source artifacts must retain awareness/scheduled/published/available/interpretation/resolution clocks when the source provides or implies them.
+
+Accepted lifecycle classes for downstream interpretation are `scheduled_known_outcome_later`, `unscheduled_surprise`, `scheduled_recurring_data_release`, `multi_stage_developing_event`, and `unknown`.
+
+`trading-data` does not score final event risk or make trading decisions, but it must not destroy lifecycle evidence. Earnings and macro-calendar shells can be visible before results; result values become valid only after release artifacts are available. Surprise news must not be represented as if the specific headline was known before its first credible source.

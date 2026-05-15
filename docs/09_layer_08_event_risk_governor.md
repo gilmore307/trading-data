@@ -51,6 +51,20 @@ Required semantics:
 - `event_time` is when the event occurred or became effective.
 - `available_time` is when the event evidence may be used by model logic.
 - `canonical_event_id`, `dedup_status`, `source_priority`, `coverage_reason`, and `covered_by_event_id` prevent derivative coverage from becoming duplicate alpha.
+- Event evidence must preserve lifecycle clocks when the source provides or implies them: awareness, scheduled, published, available, interpretation, resolution, and reaction/evaluation windows.
+- Scheduled-known events and unscheduled surprise events must not be collapsed into the same raw timing shape. Earnings and macro-calendar shells may be visible before results; sudden news is only visible after the first credible source.
+
+Accepted lifecycle classes for downstream interpretation:
+
+```text
+scheduled_known_outcome_later
+unscheduled_surprise
+scheduled_recurring_data_release
+multi_stage_developing_event
+unknown
+```
+
+`trading-data` does not interpret final risk impact, but it must not destroy source timing needed to distinguish these classes. If a physical table does not yet have dedicated lifecycle columns, source evidence artifacts must retain the clocks/fields behind refs until a reviewed schema migration adds first-class columns.
 
 ## Stage flow
 

@@ -220,3 +220,11 @@ Accepted: 2026-05-15
 Abnormal-activity pilots may debug labels and expose data gaps, but `trading-data` must not present incomplete abnormality evidence as final bullish/bearish proof. Coverage must preserve the accepted abnormality families: price-action pattern, residual market-structure disturbance, microstructure liquidity disruption, and option-derivatives abnormality.
 
 For option-derived abnormality, a coverage-complete study needs call/put side, aggressor or quote-side evidence, ask/bid touch context, sweep/block context, opening/closing or OI-change context, IV level/change, skew direction, term-structure direction, underlying confirmation/divergence, and direction confidence. Missing coverage should be labeled `diagnostic_only_abnormality_incomplete`.
+
+## D033 — Option event timeline must emit explicit abnormality coverage status
+
+Accepted: 2026-05-15
+
+`11_feed_thetadata_option_event_timeline` must preserve option abnormality evidence as explicit fields instead of relying on implied ask-side proxies. Event detail outputs should include bid/ask touch, trade notional, side evidence, sweep/block context, OI/open-interest context, opening-vs-closing context, IV change, skew direction, term-structure direction, underlying confirmation/divergence, direction confidence, and abnormality coverage status.
+
+Missing upstream evidence must be recorded as missing or partial evidence. The feed must not fabricate OI, skew, term-structure, sweep/block, or direction confidence coverage merely to produce bullish/bearish labels.

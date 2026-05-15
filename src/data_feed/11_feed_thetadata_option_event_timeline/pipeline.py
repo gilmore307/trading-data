@@ -110,6 +110,21 @@ LOCAL_FIELD_NAMES = {
     "fld_OPD052": "min_volume_percentile_20d_same_time",
     "fld_OPD053": "min_iv_percentile_by_expiration",
     "fld_OPD054": "min_iv_zscore_by_expiration",
+    "fld_OPD057": "bid_touch_ratio",
+    "fld_OPD058": "trade_notional",
+    "fld_OPD059": "trade_side_evidence",
+    "fld_OPD060": "sweep_or_block_context",
+    "fld_OPD061": "open_interest_context",
+    "fld_OPD062": "opening_or_closing_context",
+    "fld_OPD063": "iv_change",
+    "fld_OPD064": "skew_direction",
+    "fld_OPD065": "term_structure_direction",
+    "fld_OPD066": "underlying_confirmation_or_divergence",
+    "fld_OPD067": "direction_confidence",
+    "fld_OPD068": "abnormality_evidence_coverage",
+    "fld_OPD069": "trade_at_bid",
+    "fld_OPD070": "max_price_vs_bid",
+    "fld_OPD071": "min_bid_touch_ratio",
     "fld_OPT001": "underlying",
     "fld_OPT002": "expiration",
     "fld_OPT003": "option_right_type",
@@ -176,6 +191,10 @@ class FetchedTradeQuote:
     current_standard: dict[str, Any]
     standard_context: dict[str, Any]
     iv_context: dict[str, Any] | None
+    open_interest_context: dict[str, Any] | None
+    skew_context: dict[str, Any] | None
+    term_structure_context: dict[str, Any] | None
+    underlying_context: dict[str, Any] | None
     request_evidence: dict[str, Any]
     secret_alias: dict[str, Any] | None
     max_events: int
@@ -255,6 +274,7 @@ OPTION_EVENT_DETAIL_RAW_PERSISTENCE = field("fld_OPD015")
 TRADE_TIMESTAMP = field("fld_OPD016")
 TRADE_SIZE = field("fld_OPD018")
 OPTION_EVENT_TRIGGER_TRADE_AT_ASK = field("fld_OPD019")
+OPTION_EVENT_TRIGGER_TRADE_AT_BID = field("fld_OPD069")
 OPTION_EVENT_TRIGGER_OPENING_ACTIVITY = field("fld_OPD020")
 OPTION_EVENT_TRIGGER_IV_HIGH_CROSS_SECTION = field("fld_OPD021")
 OPTION_EVENT_DETAIL_STATISTICS = field("fld_OPD022")
@@ -282,6 +302,20 @@ OPTION_EVENT_STANDARD_MIN_WINDOW_VOLUME = field("fld_OPD051")
 OPTION_EVENT_STANDARD_MIN_VOLUME_PERCENTILE_20D_SAME_TIME = field("fld_OPD052")
 OPTION_EVENT_STANDARD_MIN_IV_PERCENTILE_BY_EXPIRATION = field("fld_OPD053")
 OPTION_EVENT_STANDARD_MIN_IV_ZSCORE_BY_EXPIRATION = field("fld_OPD054")
+OPTION_EVENT_DETAIL_BID_TOUCH_RATIO = field("fld_OPD057")
+OPTION_EVENT_DETAIL_TRADE_NOTIONAL = field("fld_OPD058")
+OPTION_EVENT_DETAIL_TRADE_SIDE_EVIDENCE = field("fld_OPD059")
+OPTION_EVENT_DETAIL_SWEEP_OR_BLOCK_CONTEXT = field("fld_OPD060")
+OPTION_EVENT_DETAIL_OPEN_INTEREST_CONTEXT = field("fld_OPD061")
+OPTION_EVENT_DETAIL_OPENING_OR_CLOSING_CONTEXT = field("fld_OPD062")
+OPTION_EVENT_DETAIL_IV_CHANGE = field("fld_OPD063")
+OPTION_EVENT_DETAIL_SKEW_DIRECTION = field("fld_OPD064")
+OPTION_EVENT_DETAIL_TERM_STRUCTURE_DIRECTION = field("fld_OPD065")
+OPTION_EVENT_DETAIL_UNDERLYING_CONFIRMATION = field("fld_OPD066")
+OPTION_EVENT_DETAIL_DIRECTION_CONFIDENCE = field("fld_OPD067")
+OPTION_EVENT_DETAIL_ABNORMALITY_EVIDENCE_COVERAGE = field("fld_OPD068")
+OPTION_EVENT_STANDARD_MAX_PRICE_VS_BID = field("fld_OPD070")
+OPTION_EVENT_STANDARD_MIN_BID_TOUCH_RATIO = field("fld_OPD071")
 
 OPTION_ACTIVITY_EVENT = data_kind("dki_OPEVENT1")
 OPTION_ACTIVITY_EVENT_DETAIL = data_kind("dki_OPDET01")
@@ -525,6 +559,10 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
         current_standard=current_standard,
         standard_context=standard_context,
         iv_context=dict(params["iv_context"]) if isinstance(params.get("iv_context"), Mapping) else None,
+        open_interest_context=dict(params["open_interest_context"]) if isinstance(params.get("open_interest_context"), Mapping) else None,
+        skew_context=dict(params["skew_context"]) if isinstance(params.get("skew_context"), Mapping) else None,
+        term_structure_context=dict(params["term_structure_context"]) if isinstance(params.get("term_structure_context"), Mapping) else None,
+        underlying_context=dict(params["underlying_context"]) if isinstance(params.get("underlying_context"), Mapping) else None,
         request_evidence=evidence,
         secret_alias=secret_summary,
         max_events=max_events,
@@ -575,6 +613,12 @@ def _price_vs_ask(row: Mapping[str, Any]) -> float | None:
     return price - ask if price is not None and ask is not None else None
 
 
+def _price_vs_bid(row: Mapping[str, Any]) -> float | None:
+    price = _float(row.get("price"))
+    bid = _float(row.get("bid"))
+    return bid - price if price is not None and bid is not None else None
+
+
 def _ask_touch_ratio(row: Mapping[str, Any]) -> float | None:
     price = _float(row.get("price"))
     bid = _float(row.get("bid"))
@@ -584,6 +628,248 @@ def _ask_touch_ratio(row: Mapping[str, Any]) -> float | None:
     if ask == bid:
         return 1.0 if price >= ask else 0.0
     return (price - bid) / (ask - bid)
+
+
+def _bid_touch_ratio(row: Mapping[str, Any]) -> float | None:
+    price = _float(row.get("price"))
+    bid = _float(row.get("bid"))
+    ask = _float(row.get("ask"))
+    if price is None or bid is None or ask is None:
+        return None
+    if ask == bid:
+        return 1.0 if price <= bid else 0.0
+    return (ask - price) / (ask - bid)
+
+
+def _trade_notional(row: Mapping[str, Any]) -> float | None:
+    price = _float(row.get("price"))
+    if price is None:
+        return None
+    return price * _int(row.get("size"))
+
+
+def _trade_side_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
+    ask_ratio = _ask_touch_ratio(row)
+    bid_ratio = _bid_touch_ratio(row)
+    price = _float(row.get("price"))
+    bid = _float(row.get("bid"))
+    ask = _float(row.get("ask"))
+    if price is None or bid is None or ask is None or ask_ratio is None or bid_ratio is None:
+        side = "unknown_quote_context_missing"
+        status = "missing"
+    elif price > ask:
+        side = "above_ask"
+        status = "present"
+    elif price < bid:
+        side = "below_bid"
+        status = "present"
+    elif ask_ratio >= 0.95:
+        side = "ask_side"
+        status = "present"
+    elif bid_ratio >= 0.95:
+        side = "bid_side"
+        status = "present"
+    else:
+        side = "inside_spread_or_midpoint"
+        status = "present"
+    return {
+        "coverage_status": status,
+        "classification_method": "quote_touch_inferred",
+        "trade_side_type": side,
+        "ask_touch_ratio": ask_ratio,
+        "bid_touch_ratio": bid_ratio,
+        "price": price,
+        "bid": bid,
+        "ask": ask,
+    }
+
+
+def _sweep_or_block_context(row: Mapping[str, Any], standard: Mapping[str, Any]) -> dict[str, Any]:
+    size = _int(row.get("size"))
+    notional = _trade_notional(row)
+    condition = row.get("condition")
+    sweep_flag = row.get("is_sweep")
+    min_block_size = _float(standard.get("min_block_trade_size"))
+    min_block_notional = _float(standard.get("min_block_notional"))
+    sweep_codes = {str(item) for item in standard.get("sweep_condition_codes", [])} if isinstance(standard.get("sweep_condition_codes"), Sequence) and not isinstance(standard.get("sweep_condition_codes"), (str, bytes)) else set()
+    is_block = (min_block_size is not None and size >= min_block_size) or (
+        min_block_notional is not None and notional is not None and notional >= min_block_notional
+    )
+    is_sweep = bool(sweep_flag) or (condition is not None and str(condition) in sweep_codes)
+    if is_sweep and is_block:
+        classification = "sweep_block"
+    elif is_sweep:
+        classification = "sweep_trade"
+    elif is_block:
+        classification = "block_trade"
+    elif min_block_size is None and min_block_notional is None and not sweep_codes and sweep_flag is None:
+        classification = "not_evaluated_missing_standard_or_provider_flag"
+    else:
+        classification = "ordinary_print"
+    return {
+        "coverage_status": "present" if classification != "not_evaluated_missing_standard_or_provider_flag" else "missing",
+        "classification": classification,
+        "condition": condition,
+        "is_sweep_provider_flag": sweep_flag if sweep_flag is not None else None,
+        "trade_size": size,
+        "trade_notional": notional,
+        "min_block_trade_size": min_block_size,
+        "min_block_notional": min_block_notional,
+        "sweep_condition_codes": sorted(sweep_codes),
+    }
+
+
+def _open_interest_context(raw: Mapping[str, Any] | None) -> dict[str, Any]:
+    if not raw:
+        return {"coverage_status": "missing", "open_interest_change": None, "source": None}
+    before = _float(raw.get("open_interest_before"))
+    after = _float(raw.get("open_interest_after"))
+    change = _float(raw.get("open_interest_change"))
+    if change is None and before is not None and after is not None:
+        change = after - before
+    return {
+        "coverage_status": "present" if change is not None or before is not None or after is not None else "missing",
+        "open_interest_before": before,
+        "open_interest_after": after,
+        "open_interest_change": change,
+        "source": raw.get("source") or raw.get("source_ref"),
+    }
+
+
+def _opening_or_closing_context(oi_context: Mapping[str, Any], window_statistics: Mapping[str, Any]) -> dict[str, Any]:
+    change = _float(oi_context.get("open_interest_change"))
+    volume = _int(window_statistics.get("window_volume"))
+    if change is not None:
+        if change > 0:
+            classification = "net_opening_activity"
+        elif change < 0:
+            classification = "net_closing_activity"
+        else:
+            classification = "no_open_interest_change"
+        status = "present"
+    elif window_statistics.get("first_seen_in_window"):
+        classification = "possible_opening_activity_volume_only"
+        status = "partial"
+    else:
+        classification = "unknown_opening_or_closing"
+        status = "missing"
+    return {
+        "coverage_status": status,
+        "classification": classification,
+        "open_interest_change": change,
+        "window_volume": volume,
+        "first_seen_in_window": window_statistics.get("first_seen_in_window"),
+    }
+
+
+def _iv_context(raw: Mapping[str, Any] | None) -> dict[str, Any]:
+    if not raw:
+        return {"coverage_status": "missing", "implied_vol": None, "iv_change": None}
+    implied = _float(raw.get("implied_vol"))
+    prior = _float(raw.get("prior_implied_vol"))
+    change = _float(raw.get("iv_change"))
+    if change is None and implied is not None and prior is not None:
+        change = implied - prior
+    return {
+        "coverage_status": "present" if implied is not None or change is not None else "missing",
+        "implied_vol": implied,
+        "prior_implied_vol": prior,
+        "iv_change": change,
+        "iv_percentile_by_expiration": _float(raw.get("iv_percentile_by_expiration")),
+        "iv_zscore_by_expiration": _float(raw.get("iv_zscore_by_expiration")),
+    }
+
+
+def _simple_direction_context(raw: Mapping[str, Any] | None, key: str) -> dict[str, Any]:
+    if not raw:
+        return {"coverage_status": "missing", key: None}
+    value = raw.get(key) or raw.get("direction") or raw.get("classification")
+    return {"coverage_status": "present" if value not in (None, "") else "missing", key: value, "source": raw.get("source") or raw.get("source_ref")}
+
+
+def _underlying_confirmation_context(raw: Mapping[str, Any] | None, right: str, side_type: str) -> dict[str, Any]:
+    if not raw:
+        return {"coverage_status": "missing", "classification": None, "underlying_return": None}
+    underlying_return = _float(raw.get("underlying_return") or raw.get("underlying_return_during_window"))
+    expected_sign = None
+    if side_type in {"ask_side", "above_ask"} and right == "CALL":
+        expected_sign = 1
+    elif side_type in {"ask_side", "above_ask"} and right == "PUT":
+        expected_sign = -1
+    elif side_type in {"bid_side", "below_bid"} and right == "CALL":
+        expected_sign = -1
+    elif side_type in {"bid_side", "below_bid"} and right == "PUT":
+        expected_sign = 1
+    if underlying_return is None or expected_sign is None:
+        classification = "unknown_underlying_confirmation"
+    elif underlying_return == 0:
+        classification = "underlying_neutral"
+    elif underlying_return * expected_sign > 0:
+        classification = "underlying_confirming"
+    else:
+        classification = "underlying_diverging"
+    return {
+        "coverage_status": "present" if underlying_return is not None else "missing",
+        "classification": classification,
+        "underlying_return": underlying_return,
+        "source": raw.get("source") or raw.get("source_ref"),
+    }
+
+
+def _direction_confidence(
+    *,
+    right: str,
+    side_evidence: Mapping[str, Any],
+    sweep_or_block: Mapping[str, Any],
+    opening_or_closing: Mapping[str, Any],
+    oi_context: Mapping[str, Any],
+    iv_context: Mapping[str, Any],
+    skew_context: Mapping[str, Any],
+    term_context: Mapping[str, Any],
+    underlying_context: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    side_type = str(side_evidence.get("trade_side_type"))
+    if side_type in {"ask_side", "above_ask"} and right == "CALL":
+        hypothesis = "bullish_activity"
+    elif side_type in {"ask_side", "above_ask"} and right == "PUT":
+        hypothesis = "bearish_activity"
+    elif side_type in {"bid_side", "below_bid"} and right == "CALL":
+        hypothesis = "bearish_activity_or_call_selling"
+    elif side_type in {"bid_side", "below_bid"} and right == "PUT":
+        hypothesis = "bullish_activity_or_put_selling"
+    elif side_type == "inside_spread_or_midpoint":
+        hypothesis = "mixed_or_conflicting_activity"
+    else:
+        hypothesis = "unknown_direction_activity"
+
+    required = {
+        "call_put_side": True,
+        "aggressor_or_quote_side": side_evidence.get("coverage_status") == "present",
+        "ask_bid_touch_context": side_evidence.get("ask_touch_ratio") is not None and side_evidence.get("bid_touch_ratio") is not None,
+        "sweep_or_block_context": sweep_or_block.get("coverage_status") == "present",
+        "opening_or_closing_context": opening_or_closing.get("coverage_status") == "present",
+        "open_interest_or_oi_change": oi_context.get("coverage_status") == "present",
+        "iv_level_and_change": iv_context.get("coverage_status") == "present" and iv_context.get("iv_change") is not None,
+        "skew_direction": skew_context.get("coverage_status") == "present",
+        "term_structure_direction": term_context.get("coverage_status") == "present",
+        "underlying_confirmation_or_divergence": underlying_context.get("coverage_status") == "present",
+    }
+    missing = [key for key, present in required.items() if not present]
+    score = (len(required) - len(missing)) / len(required)
+    coverage = {
+        "coverage_status": "complete" if not missing else "partial",
+        "abnormality_coverage_complete": not missing,
+        "present_fields": [key for key, present in required.items() if present],
+        "missing_fields": missing,
+    }
+    confidence = {
+        "direction_hypothesis": hypothesis,
+        "confidence_status": "evidence_complete" if not missing else "insufficient_evidence",
+        "confidence_score": round(score, 3),
+        "abnormality_coverage_complete": not missing,
+        "missing_fields": missing,
+    }
+    return confidence, coverage
 
 
 def _trigger_trade_at_ask(row: Mapping[str, Any], standard: Mapping[str, Any]) -> bool:
@@ -596,6 +882,20 @@ def _trigger_trade_at_ask(row: Mapping[str, Any], standard: Mapping[str, Any]) -
     if max_price_vs_ask is not None and price_vs_ask > max_price_vs_ask:
         return False
     if min_ask_touch_ratio is not None and ask_touch_ratio < min_ask_touch_ratio:
+        return False
+    return True
+
+
+def _trigger_trade_at_bid(row: Mapping[str, Any], standard: Mapping[str, Any]) -> bool:
+    price_vs_bid = _price_vs_bid(row)
+    bid_touch_ratio = _bid_touch_ratio(row)
+    max_price_vs_bid = _float(standard.get("max_price_vs_bid"))
+    min_bid_touch_ratio = _float(standard.get("min_bid_touch_ratio"))
+    if price_vs_bid is None or bid_touch_ratio is None:
+        return False
+    if max_price_vs_bid is not None and price_vs_bid > max_price_vs_bid:
+        return False
+    if min_bid_touch_ratio is not None and bid_touch_ratio < min_bid_touch_ratio:
         return False
     return True
 
@@ -642,6 +942,8 @@ def _standard_by_registry_names(names: RegistryNames, standard: Mapping[str, Any
     mapping = {
         "max_price_vs_ask": f(OPTION_EVENT_STANDARD_MAX_PRICE_VS_ASK),
         "min_ask_touch_ratio": f(OPTION_EVENT_STANDARD_MIN_ASK_TOUCH_RATIO),
+        "max_price_vs_bid": f(OPTION_EVENT_STANDARD_MAX_PRICE_VS_BID),
+        "min_bid_touch_ratio": f(OPTION_EVENT_STANDARD_MIN_BID_TOUCH_RATIO),
         "min_window_volume": f(OPTION_EVENT_STANDARD_MIN_WINDOW_VOLUME),
         "min_volume_percentile_20d_same_time": f(OPTION_EVENT_STANDARD_MIN_VOLUME_PERCENTILE_20D_SAME_TIME),
         "min_iv_percentile_by_expiration": f(OPTION_EVENT_STANDARD_MIN_IV_PERCENTILE_BY_EXPIRATION),
@@ -653,6 +955,7 @@ def _standard_by_registry_names(names: RegistryNames, standard: Mapping[str, Any
 def _event_headline(contract_symbol: str, triggered: Sequence[str]) -> str:
     phrases = {
         "trade_at_ask": "ask-side activity",
+        "trade_at_bid": "bid-side activity",
         "opening_activity": "opening activity",
         "iv_high_cross_section": "elevated IV",
     }
@@ -670,17 +973,27 @@ def _build_event(
     f = names.field_name
     standards = fetched.current_standard
     trade_at_ask_key = f(OPTION_EVENT_TRIGGER_TRADE_AT_ASK)
+    trade_at_bid_key = f(OPTION_EVENT_TRIGGER_TRADE_AT_BID)
     opening_key = f(OPTION_EVENT_TRIGGER_OPENING_ACTIVITY)
     iv_key = f(OPTION_EVENT_TRIGGER_IV_HIGH_CROSS_SECTION)
     contract_symbol = _contract_symbol(fetched.underlying, fetched.expiration, fetched.strike, fetched.right)
-    candidate = next(
+    ask_candidate = next(
         (
             row
             for row in window_rows
             if trade_at_ask_key in standards and _trigger_trade_at_ask(row, standards[trade_at_ask_key])
         ),
-        max(window_rows, key=lambda row: _int(row.get("size"))),
+        None,
     )
+    bid_candidate = next(
+        (
+            row
+            for row in window_rows
+            if trade_at_bid_key in standards and _trigger_trade_at_bid(row, standards[trade_at_bid_key])
+        ),
+        None,
+    )
+    candidate = ask_candidate or bid_candidate or max(window_rows, key=lambda row: _int(row.get("size")))
     trade_ts = _parse_thetadata_timestamp(candidate.get("trade_timestamp"))
     quote_ts = _parse_thetadata_timestamp(candidate.get("quote_timestamp"))
     quote = _quote_stats(candidate)
@@ -688,7 +1001,31 @@ def _build_event(
     size = _int(candidate.get("size"))
     price_vs_ask = _price_vs_ask(candidate)
     ask_touch_ratio = _ask_touch_ratio(candidate)
+    bid_touch_ratio = _bid_touch_ratio(candidate)
+    trade_notional = _trade_notional(candidate)
+    side_evidence = _trade_side_evidence(candidate)
     window_statistics = _window_stats(window_rows, prior_window_volume)
+    sweep_standard = standards.get("sweep_or_block_activity") if isinstance(standards.get("sweep_or_block_activity"), Mapping) else {}
+    sweep_or_block = _sweep_or_block_context(candidate, sweep_standard)
+    oi_context = _open_interest_context(fetched.open_interest_context)
+    opening_or_closing = _opening_or_closing_context(oi_context, window_statistics)
+    iv_context = _iv_context(fetched.iv_context)
+    skew_context = _simple_direction_context(fetched.skew_context, "skew_direction")
+    term_context = _simple_direction_context(fetched.term_structure_context, "term_structure_direction")
+    underlying_context = _underlying_confirmation_context(
+        fetched.underlying_context, fetched.right, str(side_evidence.get("trade_side_type"))
+    )
+    direction_confidence, evidence_coverage = _direction_confidence(
+        right=fetched.right,
+        side_evidence=side_evidence,
+        sweep_or_block=sweep_or_block,
+        opening_or_closing=opening_or_closing,
+        oi_context=oi_context,
+        iv_context=iv_context,
+        skew_context=skew_context,
+        term_context=term_context,
+        underlying_context=underlying_context,
+    )
 
     triggered: dict[str, Any] = {}
     order: list[str] = []
@@ -698,6 +1035,8 @@ def _build_event(
                 f(TRADE_PRICE): price,
                 f(OPTION_EVENT_DETAIL_PRICE_VS_ASK): price_vs_ask,
                 f(OPTION_EVENT_DETAIL_ASK_TOUCH_RATIO): ask_touch_ratio,
+                f(OPTION_EVENT_DETAIL_BID_TOUCH_RATIO): bid_touch_ratio,
+                f(OPTION_EVENT_DETAIL_TRADE_NOTIONAL): trade_notional,
                 f(QUOTE_BID): quote["bid"],
                 f(QUOTE_ASK): quote["ask"],
                 f(QUOTE_MID): quote["mid"],
@@ -705,6 +1044,19 @@ def _build_event(
             f(OPTION_EVENT_DETAIL_CURRENT_STANDARD): _standard_by_registry_names(names, standards[trade_at_ask_key]),
         }
         order.append(trade_at_ask_key)
+    if trade_at_bid_key in standards and _trigger_trade_at_bid(candidate, standards[trade_at_bid_key]):
+        triggered[trade_at_bid_key] = {
+            f(OPTION_EVENT_DETAIL_STATISTICS): {
+                f(TRADE_PRICE): price,
+                f(OPTION_EVENT_DETAIL_BID_TOUCH_RATIO): bid_touch_ratio,
+                f(OPTION_EVENT_DETAIL_TRADE_NOTIONAL): trade_notional,
+                f(QUOTE_BID): quote["bid"],
+                f(QUOTE_ASK): quote["ask"],
+                f(QUOTE_MID): quote["mid"],
+            },
+            f(OPTION_EVENT_DETAIL_CURRENT_STANDARD): _standard_by_registry_names(names, standards[trade_at_bid_key]),
+        }
+        order.append(trade_at_bid_key)
     if opening_key in standards and _trigger_opening_activity(window_statistics, standards[opening_key]):
         triggered[opening_key] = {
             f(OPTION_EVENT_DETAIL_STATISTICS): {
@@ -764,11 +1116,24 @@ def _build_event(
             f(WINDOW_END): window_end.isoformat(),
         },
         f(OPTION_EVENT_DETAIL_TRIGGERING_TRADE): {
-            f(TRADE_SIDE_TYPE): "ask_side" if trade_at_ask_key in triggered else None,
+            f(TRADE_SIDE_TYPE): side_evidence.get("trade_side_type"),
             f(TRADE_TIMESTAMP): created_at,
             f(TRADE_PRICE): price,
             f(TRADE_SIZE): size,
+            f(OPTION_EVENT_DETAIL_TRADE_NOTIONAL): trade_notional,
+            f(OPTION_EVENT_DETAIL_ASK_TOUCH_RATIO): ask_touch_ratio,
+            f(OPTION_EVENT_DETAIL_BID_TOUCH_RATIO): bid_touch_ratio,
         },
+        f(OPTION_EVENT_DETAIL_TRADE_SIDE_EVIDENCE): side_evidence,
+        f(OPTION_EVENT_DETAIL_SWEEP_OR_BLOCK_CONTEXT): sweep_or_block,
+        f(OPTION_EVENT_DETAIL_OPEN_INTEREST_CONTEXT): oi_context,
+        f(OPTION_EVENT_DETAIL_OPENING_OR_CLOSING_CONTEXT): opening_or_closing,
+        f(OPTION_EVENT_DETAIL_IV_CHANGE): iv_context.get("iv_change"),
+        f(OPTION_EVENT_DETAIL_SKEW_DIRECTION): skew_context.get("skew_direction"),
+        f(OPTION_EVENT_DETAIL_TERM_STRUCTURE_DIRECTION): term_context.get("term_structure_direction"),
+        f(OPTION_EVENT_DETAIL_UNDERLYING_CONFIRMATION): underlying_context,
+        f(OPTION_EVENT_DETAIL_DIRECTION_CONFIDENCE): direction_confidence,
+        f(OPTION_EVENT_DETAIL_ABNORMALITY_EVIDENCE_COVERAGE): evidence_coverage,
         f(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): {
             f(DATA_TIMESTAMP): _iso(quote_ts),
             f(QUOTE_BID): quote["bid"],
@@ -781,12 +1146,13 @@ def _build_event(
             f(OPTION_EVENT_DETAIL_RAW_PERSISTENCE): "not_persisted_by_default",
         },
     }
-    if fetched.iv_context:
-        detail[f(OPTION_EVENT_DETAIL_IV_CONTEXT)] = {
-            f(IMPLIED_VOL): _float(fetched.iv_context.get("implied_vol")),
-            f(IV_PERCENTILE_BY_EXPIRATION): _float(fetched.iv_context.get("iv_percentile_by_expiration")),
-            f(IV_ZSCORE_BY_EXPIRATION): _float(fetched.iv_context.get("iv_zscore_by_expiration")),
-        }
+    detail[f(OPTION_EVENT_DETAIL_IV_CONTEXT)] = {
+        f(IMPLIED_VOL): iv_context.get("implied_vol"),
+        f(OPTION_EVENT_DETAIL_IV_CHANGE): iv_context.get("iv_change"),
+        f(IV_PERCENTILE_BY_EXPIRATION): iv_context.get("iv_percentile_by_expiration"),
+        f(IV_ZSCORE_BY_EXPIRATION): iv_context.get("iv_zscore_by_expiration"),
+        "coverage_status": iv_context.get("coverage_status"),
+    }
     row = {
         f(TIMELINE_ID): event_id,
         f(TIMELINE_HEADLINE): _event_headline(contract_symbol, order),
@@ -890,8 +1256,18 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
         names.field_name(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS),
         names.field_name(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW),
         names.field_name(OPTION_EVENT_DETAIL_TRIGGERING_TRADE),
-        names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT),
+        names.field_name(OPTION_EVENT_DETAIL_TRADE_SIDE_EVIDENCE),
+        names.field_name(OPTION_EVENT_DETAIL_SWEEP_OR_BLOCK_CONTEXT),
+        names.field_name(OPTION_EVENT_DETAIL_OPEN_INTEREST_CONTEXT),
+        names.field_name(OPTION_EVENT_DETAIL_OPENING_OR_CLOSING_CONTEXT),
         names.field_name(OPTION_EVENT_DETAIL_IV_CONTEXT),
+        names.field_name(OPTION_EVENT_DETAIL_IV_CHANGE),
+        names.field_name(OPTION_EVENT_DETAIL_SKEW_DIRECTION),
+        names.field_name(OPTION_EVENT_DETAIL_TERM_STRUCTURE_DIRECTION),
+        names.field_name(OPTION_EVENT_DETAIL_UNDERLYING_CONFIRMATION),
+        names.field_name(OPTION_EVENT_DETAIL_DIRECTION_CONFIDENCE),
+        names.field_name(OPTION_EVENT_DETAIL_ABNORMALITY_EVIDENCE_COVERAGE),
+        names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT),
         names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS),
     ]
     contract_field = names.field_name(OPTION_EVENT_DETAIL_CONTRACT)
@@ -912,8 +1288,18 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
             names.field_name(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_TRIGGERED_INDICATORS), {}), separators=(",", ":")),
             names.field_name(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_EVIDENCE_WINDOW), {}), separators=(",", ":")),
             names.field_name(OPTION_EVENT_DETAIL_TRIGGERING_TRADE): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_TRIGGERING_TRADE), {}), separators=(",", ":")),
-            names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_TRADE_SIDE_EVIDENCE): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_TRADE_SIDE_EVIDENCE), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_SWEEP_OR_BLOCK_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_SWEEP_OR_BLOCK_CONTEXT), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_OPEN_INTEREST_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_OPEN_INTEREST_CONTEXT), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_OPENING_OR_CLOSING_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_OPENING_OR_CLOSING_CONTEXT), {}), separators=(",", ":")),
             names.field_name(OPTION_EVENT_DETAIL_IV_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_IV_CONTEXT), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_IV_CHANGE): detail.get(names.field_name(OPTION_EVENT_DETAIL_IV_CHANGE)),
+            names.field_name(OPTION_EVENT_DETAIL_SKEW_DIRECTION): detail.get(names.field_name(OPTION_EVENT_DETAIL_SKEW_DIRECTION)),
+            names.field_name(OPTION_EVENT_DETAIL_TERM_STRUCTURE_DIRECTION): detail.get(names.field_name(OPTION_EVENT_DETAIL_TERM_STRUCTURE_DIRECTION)),
+            names.field_name(OPTION_EVENT_DETAIL_UNDERLYING_CONFIRMATION): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_UNDERLYING_CONFIRMATION), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_DIRECTION_CONFIDENCE): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_DIRECTION_CONFIDENCE), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_ABNORMALITY_EVIDENCE_COVERAGE): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_ABNORMALITY_EVIDENCE_COVERAGE), {}), separators=(",", ":")),
+            names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT), {}), separators=(",", ":")),
             names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS), {}), separators=(",", ":")),
         }
         with tmp_detail.open("w", newline="", encoding="utf-8") as handle:

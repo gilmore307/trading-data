@@ -30,6 +30,15 @@ Example `current_standard`:
     "max_price_vs_ask": 0.01,
     "min_ask_touch_ratio": 0.95
   },
+  "trade_at_bid": {
+    "max_price_vs_bid": 0.01,
+    "min_bid_touch_ratio": 0.95
+  },
+  "sweep_or_block_activity": {
+    "min_block_trade_size": 100,
+    "min_block_notional": 100000,
+    "sweep_condition_codes": []
+  },
   "opening_activity": {
     "min_window_volume": 100,
     "min_volume_percentile_20d_same_time": null
@@ -48,7 +57,11 @@ Example `current_standard`:
 - `timeout_seconds` — request timeout; defaults to `30`.
 - `registry_csv` — optional registry snapshot for retained registered fields; defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
 - `max_events` — cap emitted events for bounded development runs; defaults to `100`.
-- `iv_context` — optional event-local IV context values used by `iv_high_cross_section`.
+- `iv_context` — optional event-local IV context values used by `iv_high_cross_section`; include `prior_implied_vol` or `iv_change` for direction-study coverage.
+- `open_interest_context` — optional point-in-time OI evidence such as `open_interest_before`, `open_interest_after`, `open_interest_change`, and `source_ref`.
+- `skew_context` — optional point-in-time skew evidence; include `skew_direction` plus source metadata.
+- `term_structure_context` — optional point-in-time term-structure evidence; include `term_structure_direction` plus source metadata.
+- `underlying_context` — optional point-in-time underlying confirmation/divergence evidence such as `underlying_return_during_window` and `source_ref`.
 
 ## Source endpoint
 
@@ -78,7 +91,9 @@ Only `saved/option_activity_event.csv` and `saved/<event_id>.csv` are final save
 
 This feed preserves option activity evidence; it does not decide final directional alpha.
 
-Current event detail records include option right, quote context, triggering trade, `trade_side_type` when ask-side standards are triggered, ask-touch statistics, window volume/opening statistics, and optional IV context. These fields can support later directional studies.
+Current event detail records include option right, quote context, triggering trade, explicit `trade_side_type`, ask-side and bid-side trigger support, ask-touch and bid-touch statistics, trade notional, sweep/block context, OI/open-interest context, opening-vs-closing context, IV level/change, skew direction, term-structure direction, underlying confirmation/divergence, direction confidence, and an `abnormality_evidence_coverage` object.
+
+Coverage is explicit. If upstream task keys do not provide OI, skew, term-structure, IV-change, sweep/block standards, or underlying confirmation inputs, the feed records the corresponding field as missing or partial; it does not silently infer a bullish/bearish conclusion.
 
 Direction hypotheses must remain explicit and reviewable:
 
@@ -87,7 +102,7 @@ Direction hypotheses must remain explicit and reviewable:
 - IV-only expansion without side evidence is direction-unknown path/risk expansion;
 - raw call/put volume alone is not directional proof because it may be hedging, closing, or inventory flow.
 
-If side/aggressor or opening/closing context is missing, downstream interpretation should use `unknown_direction_activity` or `review_required` rather than force bullish/bearish labels.
+If side/aggressor, sweep/block, OI/opening-vs-closing, IV-change, skew, term-structure, or underlying confirmation context is missing, downstream interpretation should use `unknown_direction_activity`, `insufficient_evidence`, or `review_required` rather than force bullish/bearish labels.
 
 ## Failure and retry
 

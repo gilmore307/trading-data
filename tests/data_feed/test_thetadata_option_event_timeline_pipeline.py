@@ -53,6 +53,30 @@ class FakeThetaDataClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
+class FakeThetaDataBidClient:
+    def get(self, url, *, params=None, headers=None):
+        payload = {
+            "response": [
+                {
+                    "contract": {"symbol": "AAPL", "expiration": "2026-05-15", "right": "PUT", "strike": 270.0},
+                    "data": [
+                        {
+                            "trade_timestamp": "2026-04-24T09:31:02.267",
+                            "quote_timestamp": "2026-04-24T09:31:02.260",
+                            "price": 1.10,
+                            "size": 25,
+                            "bid": 1.10,
+                            "ask": 1.25,
+                            "condition": 130,
+                            "sequence": 1,
+                        }
+                    ],
+                }
+            ]
+        }
+        return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+
+
 class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
     def test_run_saves_event_csv_and_detail_csv(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -83,6 +107,33 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                             "min_window_volume": 100,
                             "min_volume_percentile_20d_same_time": None,
                         },
+                        "sweep_or_block_activity": {
+                            "min_block_trade_size": 75,
+                            "min_block_notional": 5000,
+                        },
+                    },
+                    "open_interest_context": {
+                        "open_interest_before": 100,
+                        "open_interest_after": 220,
+                        "source_ref": "test_oi_snapshot",
+                    },
+                    "iv_context": {
+                        "implied_vol": 0.55,
+                        "prior_implied_vol": 0.50,
+                        "iv_percentile_by_expiration": 0.96,
+                        "iv_zscore_by_expiration": 2.1,
+                    },
+                    "skew_context": {
+                        "skew_direction": "call_skew_richening",
+                        "source_ref": "test_skew_snapshot",
+                    },
+                    "term_structure_context": {
+                        "term_structure_direction": "front_month_richening",
+                        "source_ref": "test_term_snapshot",
+                    },
+                    "underlying_context": {
+                        "underlying_return_during_window": 0.01,
+                        "source_ref": "test_underlying_bar",
                     },
                 },
                 "output_root": str(output_root),
@@ -120,8 +171,23 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             self.assertEqual(set(triggered), {"trade_at_ask", "opening_activity"})
             self.assertEqual(triggered["trade_at_ask"]["statistics"]["trade_price"], 1.25)
             self.assertEqual(triggered["opening_activity"]["statistics"]["window_volume"], 120)
-            self.assertEqual(json.loads(detail["triggering_trade"])["trade_size"], 80)
+            triggering_trade = json.loads(detail["triggering_trade"])
+            self.assertEqual(triggering_trade["trade_size"], 80)
+            self.assertEqual(triggering_trade["trade_side_type"], "ask_side")
+            self.assertEqual(triggering_trade["trade_notional"], 100.0)
+            self.assertEqual(triggering_trade["bid_touch_ratio"], 0.0)
             self.assertEqual(json.loads(detail["quote_context"])["ask"], 1.25)
+            self.assertEqual(json.loads(detail["sweep_or_block_context"])["classification"], "block_trade")
+            self.assertEqual(json.loads(detail["open_interest_context"])["open_interest_change"], 120.0)
+            self.assertEqual(json.loads(detail["opening_or_closing_context"])["classification"], "net_opening_activity")
+            self.assertAlmostEqual(float(detail["iv_change"]), 0.05)
+            self.assertEqual(detail["skew_direction"], "call_skew_richening")
+            self.assertEqual(detail["term_structure_direction"], "front_month_richening")
+            self.assertEqual(json.loads(detail["underlying_confirmation_or_divergence"])["classification"], "underlying_confirming")
+            direction_confidence = json.loads(detail["direction_confidence"])
+            self.assertEqual(direction_confidence["direction_hypothesis"], "bullish_activity")
+            self.assertTrue(direction_confidence["abnormality_coverage_complete"])
+            self.assertEqual(json.loads(detail["abnormality_evidence_coverage"])["coverage_status"], "complete")
             self.assertEqual(json.loads(detail["source_references"])["raw_persistence"], "not_persisted_by_default")
 
             self.assertTrue((output_root / "runs" / "11_feed_thetadata_option_event_timeline_run_test" / "cleaned" / "option_activity_event.jsonl").exists())
@@ -130,6 +196,51 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             self.assertEqual(receipt["feed"], "11_feed_thetadata_option_event_timeline")
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_activity_event"], 1)
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_activity_event_detail"], 1)
+
+
+    def test_run_can_emit_bid_side_event(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "bid_task"
+            task_key = {
+                "task_id": "bid_task",
+                "feed": "11_feed_thetadata_option_event_timeline",
+                "params": {
+                    "underlying": "AAPL",
+                    "expiration": "2026-05-15",
+                    "right": "PUT",
+                    "strike": 270,
+                    "start_date": "2026-04-24",
+                    "end_date": "2026-04-24",
+                    "timeframe": "30Min",
+                    "current_standard": {
+                        "standard_context": {
+                            "standard_source": "task_key_current_standard",
+                            "standard_id": "opt_evt_std_BID1234",
+                            "generated_at": "2026-04-24T09:31:02.500000-04:00",
+                        },
+                        "trade_at_bid": {
+                            "max_price_vs_bid": 0.01,
+                            "min_bid_touch_ratio": 0.95,
+                        },
+                    },
+                },
+                "output_root": str(output_root),
+            }
+            result = run(task_key, run_id="bid_run", client=FakeThetaDataBidClient())
+
+            self.assertEqual(result.status, "succeeded")
+            saved_dir = output_root / "runs" / "bid_run" / "saved"
+            with (saved_dir / "option_activity_event.csv").open(newline="") as handle:
+                event = next(csv.DictReader(handle))
+            self.assertEqual(event["summary"], "trade_at_bid")
+            with (saved_dir / event["event_link_url"]).open(newline="") as handle:
+                detail = next(csv.DictReader(handle))
+            trigger = json.loads(detail["triggering_trade"])
+            self.assertEqual(trigger["trade_side_type"], "bid_side")
+            self.assertEqual(trigger["bid_touch_ratio"], 1.0)
+            confidence = json.loads(detail["direction_confidence"])
+            self.assertEqual(confidence["direction_hypothesis"], "bullish_activity_or_put_selling")
+            self.assertFalse(confidence["abnormality_coverage_complete"])
 
     def test_requires_current_standard(self):
         with tempfile.TemporaryDirectory() as tmp:

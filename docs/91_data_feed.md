@@ -42,7 +42,7 @@ Provider credentials must never be committed. Secret material stays outside Git 
 | OKX | Crypto market data; private surfaces only when separately approved. | `OKX_SECRET_ALIAS` -> `okx` | Public market data may not need private credentials. |
 | SEC EDGAR | Company submissions, facts, concepts, frames, filing metadata. | no key | Requires fair-access behavior and identifying User-Agent. |
 | ETF issuers | Holdings rows, weights, fund metadata. | issuer-specific/no key | Preserve source URL, as-of date, retrieval time, and file/page format. |
-| Trading Economics visible calendar | Macro calendar/value rows visible on pages. | no API key for accepted route | No API/download/WAF/captcha bypass. |
+| Trading Economics visible calendar | Macro calendar/value rows visible on logged-in pages. | authenticated browser-session cookie jar; no API key for accepted route | Session/cookie helper maintains login; feed tasks consume cookies. No API/download/WAF/captcha bypass. |
 | FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes unless separately accepted. |
 | FOMC/official release pages | Official calendar events. | no key | Use official source pages and preserve retrieval metadata. |
 
@@ -65,6 +65,21 @@ Installed entrypoints mirror package modules:
 | ThetaData option selection snapshot | `trading-data-09-feed-thetadata-option-selection-snapshot` / `python -m data_feed.09_feed_thetadata_option_selection_snapshot` | final option-chain snapshot artifact |
 | ThetaData option primary tracking | `trading-data-10-feed-thetadata-option-primary-tracking` / `python -m data_feed.10_feed_thetadata_option_primary_tracking` | final `option_bar.csv` for a supplied contract |
 | ThetaData option event timeline | `trading-data-11-feed-thetadata-option-event-timeline` / `python -m data_feed.11_feed_thetadata_option_event_timeline` | event CSV plus compact per-event detail JSON |
+
+## Browser-Scraped Web Feeds
+
+Browser-scraped provider routes use the shared session-cookie pattern:
+
+- keep one authenticated browser profile/session for login, consent, and cookie refresh;
+- export provider cookies to local secret storage such as `/root/secrets/<provider>-cookies.txt`;
+- normal feed tasks fetch provider pages through bounded HTTP requests that consume the cookie jar and task-specific date/filter cookies or query params;
+- do not start a new browser or log in for every data task;
+- do not make normal data acquisition depend on mutating a long-lived page/tab state;
+- when cookies expire, refresh the authenticated profile/session first, then rerun the feed task;
+- if captcha, MFA, permission prompts, or WAF blocks appear, stop and require operator action instead of bypassing them;
+- parser output must be filtered to the requested time/window and record skipped out-of-window rows in receipt warnings/details.
+
+This policy applies to Trading Economics and any future browser-scraped source accepted into `data_feed`.
 
 ## Implementation Rules
 

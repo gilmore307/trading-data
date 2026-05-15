@@ -121,3 +121,12 @@ Date: 2026-05-09
 `price_action` is an accepted `source_04_event_overlay` event category for detector-visible board/tape behavior such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
 
 These rows are source-detector event evidence. They do not create a ninth model layer, action signal, label, order instruction, or execution permission. Detector details remain behind references or compact nested detector artifacts; the overview table keeps only the event envelope, clocks, category, scope, and reference.
+
+## D022 — Browser-scraped data uses session-cookie acquisition
+
+Date: 2026-05-15
+Status: Accepted
+
+For browser-scraped sources such as Trading Economics, the browser should maintain authenticated session state and refresh cookies, but normal historical feed acquisition should not repeatedly open/login browser pages or rely on a mutable long-lived tab. Feed tasks consume an exported local cookie jar plus task-specific date/filter parameters through bounded HTTP page fetches. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
+
+All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.

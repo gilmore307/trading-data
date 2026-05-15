@@ -27,7 +27,7 @@ Optional task key fields:
 
 Each event row requires:
 
-- `event_id` or enough fields for a deterministic generated id
+- `event_id` or enough fields for a deterministic generated id. Generated ids use event category, event time, symbol, and reference; when those collide inside the same batch, source name plus title/headline are added as deterministic disambiguators so same-time calendar releases with different titles remain distinct rows.
 - `event_time`
 - `available_time` or defaults to `event_time`
 - `information_role_type`: `lagging_evidence` or `prior_signal`

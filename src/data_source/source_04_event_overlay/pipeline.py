@@ -176,16 +176,34 @@ def _enum(value: Any, allowed: set[str], field_name: str) -> str:
     return text
 
 
-def _event_id(row: Mapping[str, Any]) -> str:
-    explicit = str(row.get("event_id") or "").strip()
-    if explicit:
-        return explicit
+def _event_id_base(row: Mapping[str, Any]) -> str:
     category = str(row.get("event_category_type") or "event").strip().lower()
     event_time = str(row.get("event_time") or row.get("available_time") or "").strip()
     reference = str(row.get("reference") or row.get("event_link_url") or row.get("source_reference") or "").strip()
     symbol = str(row.get("symbol") or "").strip().upper()
     base = "|".join([category, event_time, symbol, reference])
     return "evt_" + hashlib.sha256(base.encode("utf-8")).hexdigest()[:16]
+
+
+def _event_id_disambiguated(row: Mapping[str, Any]) -> str:
+    category = str(row.get("event_category_type") or "event").strip().lower()
+    source_name = str(row.get("source_name") or row.get("source") or "").strip().lower()
+    event_time = str(row.get("event_time") or row.get("available_time") or "").strip()
+    reference = str(row.get("reference") or row.get("event_link_url") or row.get("source_reference") or "").strip()
+    symbol = str(row.get("symbol") or "").strip().upper()
+    title = str(row.get("title") or row.get("headline") or row.get("event") or "").strip().lower()
+    base = "|".join([category, event_time, symbol, reference, source_name, title])
+    return "evt_" + hashlib.sha256(base.encode("utf-8")).hexdigest()[:16]
+
+
+def _event_id(row: Mapping[str, Any], *, existing_event_ids: set[str] | None = None) -> str:
+    explicit = str(row.get("event_id") or "").strip()
+    if explicit:
+        return explicit
+    event_id = _event_id_base(row)
+    if existing_event_ids is not None and event_id in existing_event_ids:
+        event_id = _event_id_disambiguated(row)
+    return event_id
 
 
 def _source_priority(row: Mapping[str, Any]) -> str:
@@ -238,6 +256,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
     if end <= start:
         raise EventOverlayInputsError("params.end must be after params.start")
     out_of_window_count = 0
+    event_ids: set[str] = set()
     for source in payload.events:
         if not _in_window(_required(source, "event_time"), start=start, end=end):
             out_of_window_count += 1
@@ -245,7 +264,8 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
         reference = str(source.get("reference") or source.get("event_link_url") or source.get("source_reference") or source.get("sec_file_path") or "").strip()
         if not reference:
             raise EventOverlayInputsError("each event requires reference/link/path")
-        event_id = _event_id(source)
+        event_id = _event_id(source, existing_event_ids=event_ids)
+        event_ids.add(event_id)
         row = {
             "event_id": event_id,
             **_dedup_fields(source, event_id),

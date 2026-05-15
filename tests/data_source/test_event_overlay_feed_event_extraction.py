@@ -79,6 +79,29 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_name"], "03_feed_alpaca_news")
 
+    def test_source_pipeline_preserves_same_time_macro_calendar_events(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            tmp = Path(raw_tmp)
+            te = tmp / "trading_economics_calendar_event.csv"
+            with te.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["event_time", "country", "event", "source_event_type", "reference", "actual", "previous", "consensus", "te_forecast", "revised", "importance", "symbol", "source_url"])
+                writer.writeheader()
+                writer.writerow({"event_time": "2024-01-20T08:30:00-05:00", "country": "United States", "event": "Core Inflation Rate YoY", "actual": "2.1%", "importance": "3", "source_url": "https://tradingeconomics.com/united-states/calendar"})
+                writer.writerow({"event_time": "2024-01-20T08:30:00-05:00", "country": "United States", "event": "Inflation Rate YoY", "actual": "0.7%", "importance": "3", "source_url": "https://tradingeconomics.com/united-states/calendar"})
+            task_key = {
+                "task_id": "source_04_event_overlay_same_time_macro_task",
+                "source": "source_04_event_overlay",
+                "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(te)]},
+                "output_root": str(tmp / "task"),
+            }
+            writer = FakeSqlWriter()
+            result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["source_04_event_overlay"], 2)
+            rows = writer.calls[0]["rows"]
+            self.assertEqual({row["title"] for row in rows}, {"Core Inflation Rate YoY", "Inflation Rate YoY"})
+            self.assertEqual(len({row["event_id"] for row in rows}), 2)
+
     def test_source_pipeline_skips_feed_events_outside_requested_window(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             tmp = Path(raw_tmp)

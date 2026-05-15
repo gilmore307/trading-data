@@ -12,6 +12,8 @@ from zoneinfo import ZoneInfo
 from feed_availability.sanitize import sanitize_value
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
+from .feed_event_extraction import extract_events_from_artifact_paths
+
 SOURCE = "source_04_event_overlay"
 MODEL_ID = "event_overlay_model"
 OUTPUT_TABLE = "source_04_event_overlay"
@@ -135,13 +137,16 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     end = str(_required(params, "end"))
     focus_sectors = _string_list(params.get("focus_sectors") or params.get("sectors"))
     symbols = [item.upper() for item in _string_list(params.get("symbols"))]
-    events = [dict(item) for item in _as_list(_required(params, "events")) if isinstance(item, Mapping)]
+    events = [dict(item) for item in _as_list(params.get("events")) if isinstance(item, Mapping)]
+    artifact_paths = _string_list(params.get("event_artifact_paths") or params.get("feed_artifact_paths"))
+    if artifact_paths:
+        events.extend(extract_events_from_artifact_paths(artifact_paths))
     if not events:
-        raise EventOverlayInputsError("params.events must contain at least one event overview row")
+        raise EventOverlayInputsError("params.events or params.event_artifact_paths must contain at least one event overview row")
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "focus_sectors": focus_sectors, "symbols": symbols, "event_count": len(events), "raw_persistence": "event details remain behind references; SQL stores overview rows only", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], {"raw_event_overview_rows": len(events)}, details={"event_count": len(events)}), SourcePayload(start, end, focus_sectors, symbols, events)
+    manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "focus_sectors": focus_sectors, "symbols": symbols, "event_count": len(events), "event_artifact_paths": artifact_paths, "raw_persistence": "event details remain behind references; SQL stores overview rows only", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(manifest)], {"raw_event_overview_rows": len(events)}, details={"event_count": len(events), "event_artifact_path_count": len(artifact_paths)}), SourcePayload(start, end, focus_sectors, symbols, events)
 
 
 def _enum(value: Any, allowed: set[str], field_name: str) -> str:

@@ -16,12 +16,13 @@ Required task key fields:
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date
-- `params.events`: non-empty list of event overview rows
+- `params.events` or `params.event_artifact_paths`: at least one explicit event overview row or one reviewed local feed artifact path
 
 Optional task key fields:
 
 - `params.focus_sectors`: focused sectors/themes
 - `params.symbols`: focused symbols
+- `params.event_artifact_paths` / `params.feed_artifact_paths`: reviewed local saved artifacts to normalize into event overview rows. Supported artifacts are `03_feed_alpaca_news` `equity_news.csv` (`symbol_news`), `05_feed_gdelt_news` `gdelt_article.csv` (`macro_news` / `sector_news` / `symbol_news` by scope hints), `07_feed_trading_economics_calendar_web` `trading_economics_calendar_event.csv` (`macro_data`), and `08_feed_sec_company_financials` SEC CSV outputs (`sec_filing` / financial disclosure events).
 - `output_root`: local receipt/request-manifest root
 
 Each event row requires:
@@ -83,6 +84,8 @@ Columns:
 - `reference`
 
 The table stores overview rows only. It does not store full article text, SEC filing contents, browser/agent analysis transcripts, event artifact payloads, model impact scores, labels, alpha confidence, or trade recommendations.
+
+Feed-artifact extraction is local and offline only. It reads already-saved artifacts and never calls providers, dispatches manager requests, activates models, writes dashboard read models, or mutates broker/account state. Missing required event feed artifacts must block Layer 4+ rebuild rather than allowing abnormal-activity-only outputs to stand as complete.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

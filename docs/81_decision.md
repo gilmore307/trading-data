@@ -212,3 +212,11 @@ Accepted: 2026-05-15
 Option activity cannot be treated as directionally bullish or bearish from volume alone. Directional option evidence requires at least option right and trade side/aggressor evidence when available; stronger evidence includes sweep/block context, open-interest or opening/closing context, IV/skew/term-structure direction, and direction confidence.
 
 Initial hypotheses are: ask-side call activity is bullish, ask-side put activity is bearish, bid-side call activity can be bearish/call-selling, bid-side put activity can be bullish/put-selling, and IV-only expansion without side evidence is direction unknown. These hypotheses must be tested by signed directional forward labels.
+
+## D032 — Abnormality coverage must be complete before directional judgment
+
+Accepted: 2026-05-15
+
+Abnormal-activity pilots may debug labels and expose data gaps, but `trading-data` must not present incomplete abnormality evidence as final bullish/bearish proof. Coverage must preserve the accepted abnormality families: price-action pattern, residual market-structure disturbance, microstructure liquidity disruption, and option-derivatives abnormality.
+
+For option-derived abnormality, a coverage-complete study needs call/put side, aggressor or quote-side evidence, ask/bid touch context, sweep/block context, opening/closing or OI-change context, IV level/change, skew direction, term-structure direction, underlying confirmation/divergence, and direction confidence. Missing coverage should be labeled `diagnostic_only_abnormality_incomplete`.

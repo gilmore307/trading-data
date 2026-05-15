@@ -102,11 +102,24 @@ Config: `src/data_source/source_04_event_overlay/equity_abnormal_activity/config
 
 Purpose: residual/trigger evidence for abnormal stock/ETF board/tape behavior when the event-risk path needs a point-in-time evidence row that is not merely a duplicate of ordinary bar/liquidity features already consumed by the base model stack.
 
-It is analogous to option activity events but uses equity/ETF market data only as detector evidence:
+It is analogous to option activity events but uses equity/ETF market data only as detector evidence.
+
+Accepted abnormal-activity evidence categories:
+
+```text
+price_action_pattern
+residual_market_structure_disturbance
+microstructure_liquidity_disruption
+option_derivatives_abnormality
+```
+
+Typical source evidence:
 
 - detector-trigger return/volume/relative-strength/gap/spread evidence refs;
 - residual abnormality flags after conditioning on upstream market/sector/target state, when reviewed;
 - false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap price-action tokens;
+- spread widening, depth/quote-quality disruption, halt/pause/anomalous quote evidence, when source-visible;
+- option IV/skew/term-structure/volume/OI/liquidity abnormality refs, when accepted as not already consumed by the base option-expression path;
 - evidence window, detector standard, and source refs.
 
 Boundary:

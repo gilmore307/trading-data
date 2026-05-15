@@ -14,7 +14,7 @@ Required params:
 
 Optional params:
 
-- `start_date`, `end_date` — `YYYY-MM-DD` partition date bounds.
+- `start_date`, `end_date` — `YYYY-MM-DD` partition date bounds; `end_date` is exclusive.
 - `lookback_days` — used when `start_date` is omitted; defaults to `1`.
 - `max_rows` — 1 to 1000; defaults to `100`.
 - `maximum_bytes_billed` — optional BigQuery per-query cap. Omit for normal day-window fetches within the free/credit budget.
@@ -37,6 +37,6 @@ Outputs:
 Boundary:
 
 - This feed pre-filters at the BigQuery query layer; do not fetch global all-news rows and filter them locally by default.
-- This feed saves GDELT article/source evidence, not final canonical events.
+- This feed saves requested-window GDELT article/source evidence, not final canonical events. Rows outside `[start_date, end_date)` are skipped and reported in receipt warnings.
 - Event extraction/clustering is a separate reviewed boundary that projects `gdelt_article` into canonical event/evidence outputs.
 - SEC/company official disclosures still outrank derivative news coverage for canonical event identity.

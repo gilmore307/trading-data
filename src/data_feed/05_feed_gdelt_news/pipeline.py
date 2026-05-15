@@ -204,8 +204,8 @@ def build_sql(params: Mapping[str, Any]) -> tuple[str, int]:
     lookback_days = int(params.get("lookback_days", 1))
     start = _date_param(params, "start_date", today - timedelta(days=lookback_days))
     end = _date_param(params, "end_date", today)
-    if end < start:
-        raise GdeltNewsError("params.end_date must be >= start_date")
+    if end <= start:
+        raise GdeltNewsError("params.end_date must be after start_date; end_date is exclusive")
     max_rows = int(params.get("max_rows", DEFAULT_MAX_ROWS))
     if max_rows < 1 or max_rows > 1000:
         raise GdeltNewsError("params.max_rows must be between 1 and 1000")
@@ -243,7 +243,8 @@ SELECT
   SharingImage AS sharing_image,
   TranslationInfo AS translation_info
 FROM `gdelt-bq.gdeltv2.gkg_partitioned`
-WHERE DATE(_PARTITIONTIME) BETWEEN DATE({_sql_string(start.isoformat())}) AND DATE({_sql_string(end.isoformat())})
+WHERE DATE(_PARTITIONTIME) >= DATE({_sql_string(start.isoformat())})
+  AND DATE(_PARTITIONTIME) < DATE({_sql_string(end.isoformat())})
   AND {topic_clause}{extra_clause}
 ORDER BY DATE DESC
 LIMIT {max_rows}
@@ -286,6 +287,28 @@ def _seen_at(row: Mapping[str, Any]) -> str:
     return ""
 
 
+def _window_bounds(params: Mapping[str, Any]) -> tuple[datetime, datetime]:
+    today = datetime.now(UTC).date()
+    lookback_days = int(params.get("lookback_days", 1))
+    start = _date_param(params, "start_date", today - timedelta(days=lookback_days))
+    end = _date_param(params, "end_date", today)
+    if end <= start:
+        raise GdeltNewsError("params.end_date must be after start_date; end_date is exclusive")
+    return datetime.combine(start, datetime.min.time(), tzinfo=ET), datetime.combine(end, datetime.min.time(), tzinfo=ET)
+
+
+def _parse_seen_at(value: str) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=ET)
+    return parsed.astimezone(ET)
+
+
 def _tone(row: Mapping[str, Any]) -> str:
     tone = row.get("tone")
     if tone is None:
@@ -324,6 +347,16 @@ def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> 
 def clean(context: FeedContext, fetched: FetchedGdeltRows) -> StepResult:
     params = dict(context.task_key.get("params") or {})
     rows = normalize_rows(fetched.rows, params=params)
+    start_dt, end_dt = _window_bounds(params)
+    in_window_rows: list[dict[str, Any]] = []
+    out_of_window_count = 0
+    for row in rows:
+        seen_at = _parse_seen_at(str(row.get("seen_at") or ""))
+        if seen_at is None or not (start_dt <= seen_at < end_dt):
+            out_of_window_count += 1
+            continue
+        in_window_rows.append(row)
+    rows = in_window_rows
     if not rows:
         raise GdeltNewsError("GDELT query produced zero usable article rows")
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
@@ -333,7 +366,10 @@ def clean(context: FeedContext, fetched: FetchedGdeltRows) -> StepResult:
             handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
     schema_path = context.cleaned_dir / "schema.json"
     schema_path.write_text(json.dumps({"gdelt_article": ARTICLE_FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(path), str(schema_path)], {"gdelt_article": len(rows)}, details={"columns": ARTICLE_FIELDS})
+    warnings = []
+    if out_of_window_count:
+        warnings.append(f"out_of_window_gdelt_rows_skipped={out_of_window_count}")
+    return StepResult("succeeded", [str(path), str(schema_path)], {"gdelt_article": len(rows)}, warnings=warnings, details={"columns": ARTICLE_FIELDS, "window_start": start_dt.isoformat(), "window_end_exclusive": end_dt.isoformat()})
 
 
 def save(context: FeedContext, clean_result: StepResult) -> StepResult:

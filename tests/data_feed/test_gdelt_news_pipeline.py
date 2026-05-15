@@ -46,7 +46,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             task_key = {
                 "task_id": "05_feed_gdelt_news_task_test",
                 "feed": "05_feed_gdelt_news",
-                "params": {"query_terms": ["inflation", "semiconductor"], "start_date": "2026-04-27", "end_date": "2026-04-27", "max_rows": 10},
+                "params": {"query_terms": ["inflation", "semiconductor"], "start_date": "2026-04-27", "end_date": "2026-04-28", "max_rows": 10},
                 "output_root": str(Path(tmp) / "05_feed_gdelt_news_task_test"),
             }
             client = FakeBigQueryClient(rows)
@@ -55,6 +55,8 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             self.assertEqual(result.row_counts["gdelt_article"], 1)
             sql, max_results, maximum_bytes_billed, dry_run = client.requests[0]
             self.assertIn("gdelt-bq.gdeltv2.gkg_partitioned", sql)
+            self.assertIn("date(_partitiontime) >= date('2026-04-27')", sql.lower())
+            self.assertIn("date(_partitiontime) < date('2026-04-28')", sql.lower())
             self.assertIn("united states", sql.lower())
             self.assertIn("reuters.com", sql.lower())
             self.assertEqual(max_results, 10)
@@ -72,7 +74,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
     def test_default_topics_allow_omitting_query_terms(self):
         rows = [{"article_id": "a", "gdelt_date": "20260427123000", "source_domain": "reuters.com", "event_link_url": "https://reuters.com/a"}]
         with tempfile.TemporaryDirectory() as tmp:
-            task_key = {"task_id": "05_feed_gdelt_news_task_default", "feed": "05_feed_gdelt_news", "params": {"max_rows": 1}, "output_root": str(Path(tmp) / "task")}
+            task_key = {"task_id": "05_feed_gdelt_news_task_default", "feed": "05_feed_gdelt_news", "params": {"max_rows": 1, "start_date": "2026-04-27", "end_date": "2026-04-28"}, "output_root": str(Path(tmp) / "task")}
             client = FakeBigQueryClient(rows)
             result = run(task_key, run_id="run", client=client)
             self.assertEqual(result.status, "succeeded")
@@ -81,6 +83,23 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             self.assertIn("inflation", sql)
             self.assertIn("war", sql)
             self.assertIn("semiconductor", sql)
+
+    def test_out_of_window_rows_are_skipped(self):
+        rows = [
+            {"article_id": "inside", "gdelt_date": "20260427123000", "source_domain": "reuters.com", "event_link_url": "https://reuters.com/inside"},
+            {"article_id": "outside", "gdelt_date": "20260428123000", "source_domain": "reuters.com", "event_link_url": "https://reuters.com/outside"},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {"task_id": "05_feed_gdelt_news_task_window", "feed": "05_feed_gdelt_news", "params": {"query_terms": ["inflation"], "start_date": "2026-04-27", "end_date": "2026-04-28"}, "output_root": str(Path(tmp) / "task")}
+            result = run(task_key, run_id="run", client=FakeBigQueryClient(rows))
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["gdelt_article"], 1)
+            receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
+            self.assertEqual(receipt["runs"][0]["steps"]["clean"]["warnings"], ["out_of_window_gdelt_rows_skipped=1"])
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "gdelt_article.csv"
+            with saved.open(newline="") as handle:
+                saved_rows = list(csv.DictReader(handle))
+            self.assertEqual([row["article_id"] for row in saved_rows], ["inside"])
 
     def test_bad_topic_category_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

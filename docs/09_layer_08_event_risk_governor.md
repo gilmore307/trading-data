@@ -41,8 +41,8 @@ Accepted event rows may include:
 - macro calendar/data-release events;
 - macro, sector, symbol, or broad-market news events;
 - SEC/company/regulatory filings or disclosures;
-- option abnormal-activity evidence;
-- equity/ETF abnormal-activity evidence;
+- option abnormal-activity evidence, when not duplicating option-expression inputs already consumed by the base path;
+- equity/ETF residual abnormal-activity evidence, only as trigger/provenance/residual evidence rather than duplicated bar/liquidity features;
 - price-action detector evidence such as false breakouts, failed breakdowns, liquidity sweeps, bull traps, or bear traps;
 - source references, web URLs, SEC paths, or internal artifact paths.
 

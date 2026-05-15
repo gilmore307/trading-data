@@ -150,3 +150,13 @@ Event evidence must preserve enough timing information for downstream event inte
 Accepted lifecycle classes for downstream interpretation are `scheduled_known_outcome_later`, `unscheduled_surprise`, `scheduled_recurring_data_release`, `multi_stage_developing_event`, and `unknown`.
 
 `trading-data` does not score final event risk or make trading decisions, but it must not destroy lifecycle evidence. Earnings and macro-calendar shells can be visible before results; result values become valid only after release artifacts are available. Surprise news must not be represented as if the specific headline was known before its first credible source.
+
+## D025 — Abnormal activity is residual evidence, not duplicate bar features
+
+Accepted: 2026-05-15
+
+`equity_abnormal_activity_event` must not become a second copy of bar, volume, spread, liquidity, volatility, gap, VWAP, trend, or target-state features that already feed the base model stack.
+
+The event-risk path may use market-data abnormality only as compact detector provenance, residual evidence after upstream context conditioning, or discrete price-action tokens such as false breakout, failed breakdown, liquidity sweep, bull trap, or bear trap. The source refs may point to `equity_bar` / `equity_liquidity_bar`, but the event row must not re-emit those ordinary features as independent event alpha.
+
+If an abnormal-activity detector is promoted from evidence/provenance into a prediction label, decision signal, or production gate, ownership moves out of `trading-data` into the reviewed model/evaluation boundary.

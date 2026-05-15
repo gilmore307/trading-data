@@ -100,23 +100,22 @@ Source: `src/data_source/source_04_event_overlay/equity_abnormal_activity/`
 
 Config: `src/data_source/source_04_event_overlay/equity_abnormal_activity/config.json`
 
-Purpose: EventOverlayModel prior-signal row for abnormal stock/ETF price, volume, relative-strength, gap, liquidity, or price-action behavior.
+Purpose: residual/trigger evidence for abnormal stock/ETF board/tape behavior when the event-risk path needs a point-in-time evidence row that is not merely a duplicate of ordinary bar/liquidity features already consumed by the base model stack.
 
-It is analogous to option activity events but uses equity/ETF market data:
+It is analogous to option activity events but uses equity/ETF market data only as detector evidence:
 
-- return z-score
-- volume z-score
-- relative strength z-score versus benchmark/sector ETF
-- gap percentage
-- spread/liquidity abnormality
-- false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap price-action tokens
-- evidence window and source refs
+- detector-trigger return/volume/relative-strength/gap/spread evidence refs;
+- residual abnormality flags after conditioning on upstream market/sector/target state, when reviewed;
+- false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap price-action tokens;
+- evidence window, detector standard, and source refs.
 
 Boundary:
 
 - Source-backed event-style aggregation, not raw trades/quotes.
 - Should be created only from observable market data at/after the event effective time.
-- Implemented first as a conservative detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs. Price-action tokens are detector evidence for Layer 4 `price_action` events; they are not a separate model layer and are not production-calibrated labels without reviewed historical evidence.
+- Must not duplicate ordinary `equity_bar`, `equity_liquidity_bar`, volatility, gap, volume, spread, trend, or target-state features that already feed Layer 1-3 or the base trading-guidance path.
+- Implemented first as a conservative detector over saved `equity_bar.csv`, optional benchmark bars, and optional `equity_liquidity_bar.csv` inputs. Those inputs are provenance for a compact event token/residual evidence row, not permission to re-emit the same bar-derived fields as independent event alpha.
+- Price-action tokens are detector evidence for Layer 8 event-risk governance; they are not a separate model layer, trading action, or production-calibrated label without reviewed historical evidence.
 - If this becomes a generated signal, candidate decision, or label rather than source evidence, move that behavior out of `trading-data` and into the owning model/evaluation boundary.
 
 ## Current Guardrails

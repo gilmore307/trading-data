@@ -77,6 +77,96 @@ class FakeThetaDataBidClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
+
+class FakeThetaDataAutoContextClient:
+    def get(self, url, *, params=None, headers=None):
+        params = params or {}
+        if "trade_quote" in url:
+            payload = {
+                "response": [
+                    {
+                        "contract": {"symbol": "AAPL", "expiration": "2026-05-15", "right": "CALL", "strike": 270.0},
+                        "data": [
+                            {
+                                "trade_timestamp": "2026-04-24T09:35:02.000",
+                                "quote_timestamp": "2026-04-24T09:35:01.900",
+                                "price": 1.25,
+                                "size": 80,
+                                "bid": 1.15,
+                                "ask": 1.25,
+                                "condition": 134,
+                                "sequence": 1,
+                            },
+                            {
+                                "trade_timestamp": "2026-04-24T09:35:10.000",
+                                "quote_timestamp": "2026-04-24T09:35:09.900",
+                                "price": 1.25,
+                                "size": 40,
+                                "bid": 1.15,
+                                "ask": 1.25,
+                                "condition": 130,
+                                "sequence": 2,
+                            },
+                        ],
+                    }
+                ]
+            }
+        elif "open_interest" in url:
+            open_interest = 120 if params.get("date") == "2026-04-24" else 100
+            payload = {
+                "response": [
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": params.get("expiration", "2026-05-15"),
+                            "right": str(params.get("right", "call")).upper(),
+                            "strike": 270.0,
+                        },
+                        "data": [{"timestamp": f"{params.get('date')}T06:30:00.000", "open_interest": open_interest}],
+                    }
+                ]
+            }
+        elif "implied_volatility" in url:
+            right = str(params.get("right", "call")).upper()
+            expiration = str(params.get("expiration", "2026-05-15"))
+            if expiration == "2026-05-22":
+                vols = [0.28, 0.29]
+            elif right == "PUT":
+                vols = [0.34, 0.35]
+            else:
+                vols = [0.30, 0.32]
+            payload = {
+                "response": [
+                    {
+                        "contract": {"symbol": "AAPL", "expiration": expiration, "right": right, "strike": 270.0},
+                        "data": [
+                            {
+                                "timestamp": "2026-04-24T09:30:00.000",
+                                "underlying_timestamp": "2026-04-24T09:30:00.000",
+                                "underlying_price": 100.0,
+                                "implied_vol": vols[0],
+                                "iv_error": 0.0,
+                                "bid": 1.0,
+                                "ask": 1.2,
+                            },
+                            {
+                                "timestamp": "2026-04-24T09:35:00.000",
+                                "underlying_timestamp": "2026-04-24T09:35:00.000",
+                                "underlying_price": 101.0,
+                                "implied_vol": vols[1],
+                                "iv_error": 0.0,
+                                "bid": 1.1,
+                                "ask": 1.3,
+                            },
+                        ],
+                    }
+                ]
+            }
+        else:
+            payload = {"response": []}
+        return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+
+
 class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
     def test_run_saves_event_csv_and_detail_csv(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -241,6 +331,68 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             confidence = json.loads(detail["direction_confidence"])
             self.assertEqual(confidence["direction_hypothesis"], "bullish_activity_or_put_selling")
             self.assertFalse(confidence["abnormality_coverage_complete"])
+
+    def test_auto_enrich_option_context_from_thetadata_context_endpoints(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "auto_context_task"
+            task_key = {
+                "task_id": "auto_context_task",
+                "feed": "11_feed_thetadata_option_event_timeline",
+                "params": {
+                    "underlying": "AAPL",
+                    "expiration": "2026-05-15",
+                    "right": "CALL",
+                    "strike": 270,
+                    "start_date": "2026-04-24",
+                    "end_date": "2026-04-24",
+                    "timeframe": "30Min",
+                    "auto_enrich_option_context": True,
+                    "prior_context_date": "2026-04-23",
+                    "term_structure_expiration": "2026-05-22",
+                    "current_standard": {
+                        "standard_context": {
+                            "standard_source": "task_key_current_standard",
+                            "standard_id": "opt_evt_std_AUTO123",
+                            "generated_at": "2026-04-24T09:35:02.500000-04:00",
+                        },
+                        "trade_at_ask": {
+                            "max_price_vs_ask": 0.01,
+                            "min_ask_touch_ratio": 0.95,
+                        },
+                        "opening_activity": {
+                            "min_window_volume": 100,
+                            "min_volume_percentile_20d_same_time": None,
+                        },
+                        "sweep_or_block_activity": {
+                            "min_block_trade_size": 75,
+                            "min_block_notional": 5000,
+                        },
+                    },
+                },
+                "output_root": str(output_root),
+            }
+
+            result = run(task_key, run_id="auto_context_run", client=FakeThetaDataAutoContextClient())
+
+            self.assertEqual(result.status, "succeeded")
+            saved_dir = output_root / "runs" / "auto_context_run" / "saved"
+            with (saved_dir / "option_activity_event.csv").open(newline="") as handle:
+                event = next(csv.DictReader(handle))
+            with (saved_dir / event["event_link_url"]).open(newline="") as handle:
+                detail = next(csv.DictReader(handle))
+            self.assertEqual(json.loads(detail["open_interest_context"])["open_interest_change"], 20.0)
+            self.assertAlmostEqual(float(detail["iv_change"]), 0.02)
+            self.assertEqual(detail["skew_direction"], "put_skew_richening")
+            self.assertEqual(detail["term_structure_direction"], "front_month_richening")
+            self.assertEqual(
+                json.loads(detail["underlying_confirmation_or_divergence"])["classification"],
+                "underlying_confirming",
+            )
+            coverage = json.loads(detail["abnormality_evidence_coverage"])
+            self.assertTrue(coverage["abnormality_coverage_complete"])
+            self.assertEqual(coverage["missing_fields"], [])
+            manifest = json.loads((output_root / "runs" / "auto_context_run" / "request_manifest.json").read_text())
+            self.assertEqual(len(manifest["auto_context_requests"]), 5)
 
     def test_requires_current_standard(self):
         with tempfile.TemporaryDirectory() as tmp:

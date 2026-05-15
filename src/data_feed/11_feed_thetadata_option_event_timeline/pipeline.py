@@ -195,6 +195,7 @@ class FetchedTradeQuote:
     skew_context: dict[str, Any] | None
     term_structure_context: dict[str, Any] | None
     underlying_context: dict[str, Any] | None
+    auto_context: dict[str, Any]
     request_evidence: dict[str, Any]
     secret_alias: dict[str, Any] | None
     max_events: int
@@ -437,6 +438,134 @@ def _current_standard(params: Mapping[str, Any]) -> tuple[dict[str, Any], dict[s
     return {key: dict(value) for key, value in indicators.items()}, context
 
 
+
+def _previous_weekday(value: date) -> date:
+    prior = value - timedelta(days=1)
+    while prior.weekday() >= 5:
+        prior -= timedelta(days=1)
+    return prior
+
+
+def _next_weekly_expiration(expiration: str) -> str | None:
+    try:
+        return (date.fromisoformat(expiration) + timedelta(days=7)).isoformat()
+    except ValueError:
+        return None
+
+
+def _flatten_contract_data(response_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    flattened: list[dict[str, Any]] = []
+    for response_row in response_rows:
+        contract = response_row.get("contract") if isinstance(response_row.get("contract"), Mapping) else {}
+        data = response_row.get("data")
+        if isinstance(data, Sequence) and not isinstance(data, (str, bytes)):
+            for item in data:
+                if isinstance(item, Mapping):
+                    row = dict(item)
+                    row["contract"] = dict(contract)
+                    flattened.append(row)
+    return flattened
+
+
+def _safe_fetch_rows(
+    client: HttpClient,
+    base_url: str,
+    endpoint: str,
+    params: Mapping[str, str],
+    label: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    result = client.get(f"{base_url}{endpoint}", params=dict(params), headers={"Accept": "application/json"})
+    evidence = {"label": label, "endpoint": sanitize_url(result.url), "http_status": result.status}
+    if result.status is None or result.status < 200 or result.status >= 300:
+        evidence["error"] = result.error_message or result.text()[:240]
+        return [], evidence
+    try:
+        payload = result.json()
+        response_rows = _response_rows(payload)
+    except Exception as exc:  # context enrichment must expose missing coverage, not hide it
+        evidence["error"] = f"{type(exc).__name__}: {exc}"
+        return [], evidence
+    flattened = _flatten_contract_data(response_rows)
+    evidence["row_count"] = len(flattened)
+    return flattened, evidence
+
+
+def _build_auto_context(
+    *,
+    client: HttpClient,
+    base_url: str,
+    underlying: str,
+    expiration: str,
+    right: str,
+    strike: float,
+    start_date: date,
+    end_date: date,
+    params: Mapping[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    right_lower = right.lower()
+    opposite_right = "put" if right == "CALL" else "call"
+    prior_date = _parse_date(params.get("prior_context_date"), "prior_context_date") if params.get("prior_context_date") else _previous_weekday(start_date)
+    term_expiration = str(params.get("term_structure_expiration") or _next_weekly_expiration(expiration) or expiration)
+    interval = str(params.get("option_context_interval") or "1m")
+    common = {
+        "symbol": underlying,
+        "strike": _thetadata_strike(strike),
+        "format": "json",
+    }
+    iv_common = {**common, "interval": interval}
+    evidence: list[dict[str, Any]] = []
+    target_iv, ev = _safe_fetch_rows(
+        client,
+        base_url,
+        "/v3/option/history/greeks/implied_volatility",
+        {**iv_common, "expiration": expiration, "right": right_lower, "start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
+        "target_history_implied_volatility",
+    )
+    evidence.append(ev)
+    skew_iv, ev = _safe_fetch_rows(
+        client,
+        base_url,
+        "/v3/option/history/greeks/implied_volatility",
+        {**iv_common, "expiration": expiration, "right": opposite_right, "start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
+        "opposite_right_history_implied_volatility",
+    )
+    evidence.append(ev)
+    term_iv, ev = _safe_fetch_rows(
+        client,
+        base_url,
+        "/v3/option/history/greeks/implied_volatility",
+        {**iv_common, "expiration": term_expiration, "right": right_lower, "start_date": start_date.isoformat(), "end_date": end_date.isoformat()},
+        "term_structure_history_implied_volatility",
+    )
+    evidence.append(ev)
+    current_oi, ev = _safe_fetch_rows(
+        client,
+        base_url,
+        "/v3/option/history/open_interest",
+        {**common, "expiration": expiration, "right": right_lower, "date": start_date.isoformat()},
+        "target_open_interest_current_date",
+    )
+    evidence.append(ev)
+    prior_oi, ev = _safe_fetch_rows(
+        client,
+        base_url,
+        "/v3/option/history/open_interest",
+        {**common, "expiration": expiration, "right": right_lower, "date": prior_date.isoformat()},
+        "target_open_interest_prior_date",
+    )
+    evidence.append(ev)
+    return {
+        "enabled": True,
+        "prior_context_date": prior_date.isoformat(),
+        "term_structure_expiration": term_expiration,
+        "option_context_interval": interval,
+        "target_iv_rows": target_iv,
+        "skew_iv_rows": skew_iv,
+        "term_iv_rows": term_iv,
+        "current_oi_rows": current_oi,
+        "prior_oi_rows": prior_oi,
+    }, evidence
+
 def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     if task_key.get("feed") != FEED:
         raise ThetaDataOptionEventTimelineError(f"task_key.feed must be {FEED}")
@@ -505,12 +634,28 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
                 if isinstance(item, Mapping):
                     rows.append(dict(item))
 
+    auto_context: dict[str, Any] = {"enabled": False}
+    auto_context_evidence: list[dict[str, Any]] = []
+    if params.get("auto_enrich_option_context"):
+        auto_context, auto_context_evidence = _build_auto_context(
+            client=client,
+            base_url=base_url,
+            underlying=underlying,
+            expiration=expiration,
+            right=right,
+            strike=strike,
+            start_date=start_date,
+            end_date=end_date,
+            params=params,
+        )
+
     context.run_dir.mkdir(parents=True, exist_ok=True)
     evidence = {
         "endpoint": sanitize_url(result.url),
         "http_status": result.status,
         "response_contract_count": len(response_rows),
         "source_row_count": len(rows),
+        "auto_context_request_count": len(auto_context_evidence),
     }
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(
@@ -526,6 +671,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
                 "current_standard": sanitize_value(current_standard),
                 "standard_context": sanitize_value(standard_context),
                 "request": evidence,
+                "auto_context_requests": sanitize_value(auto_context_evidence),
                 "secret_alias": secret_summary,
                 "raw_persistence": "not_persisted_by_default",
                 "fetched_at_utc": _now_utc(),
@@ -563,6 +709,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
         skew_context=dict(params["skew_context"]) if isinstance(params.get("skew_context"), Mapping) else None,
         term_structure_context=dict(params["term_structure_context"]) if isinstance(params.get("term_structure_context"), Mapping) else None,
         underlying_context=dict(params["underlying_context"]) if isinstance(params.get("underlying_context"), Mapping) else None,
+        auto_context=auto_context,
         request_evidence=evidence,
         secret_alias=secret_summary,
         max_events=max_events,
@@ -872,6 +1019,136 @@ def _direction_confidence(
     return confidence, coverage
 
 
+
+def _row_timestamp(row: Mapping[str, Any]) -> datetime | None:
+    return _parse_thetadata_timestamp(row.get("timestamp"))
+
+
+def _row_at_or_before(rows: Sequence[Mapping[str, Any]], timestamp: datetime | None) -> dict[str, Any] | None:
+    if timestamp is None:
+        return None
+    best: tuple[datetime, Mapping[str, Any]] | None = None
+    for row in rows:
+        row_ts = _row_timestamp(row)
+        if row_ts is None or row_ts > timestamp:
+            continue
+        if best is None or row_ts > best[0]:
+            best = (row_ts, row)
+    return dict(best[1]) if best is not None else None
+
+
+def _valid_iv_rows(rows: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    valid: list[Mapping[str, Any]] = []
+    for row in rows:
+        implied = _float(row.get("implied_vol"))
+        iv_error = _float(row.get("iv_error"))
+        if implied is None or implied <= 0:
+            continue
+        if iv_error is not None and iv_error >= 50:
+            continue
+        valid.append(row)
+    return valid
+
+
+def _first_row(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any] | None:
+    return dict(rows[0]) if rows else None
+
+
+def _auto_event_context(fetched: FetchedTradeQuote, window_start: datetime, trade_ts: datetime | None) -> dict[str, Any]:
+    auto = fetched.auto_context if isinstance(fetched.auto_context, Mapping) else {}
+    if not auto.get("enabled"):
+        return {}
+    target_rows = auto.get("target_iv_rows") if isinstance(auto.get("target_iv_rows"), Sequence) else []
+    skew_rows = auto.get("skew_iv_rows") if isinstance(auto.get("skew_iv_rows"), Sequence) else []
+    term_rows = auto.get("term_iv_rows") if isinstance(auto.get("term_iv_rows"), Sequence) else []
+    target_rows = _valid_iv_rows(target_rows)
+    skew_rows = _valid_iv_rows(skew_rows)
+    term_rows = _valid_iv_rows(term_rows)
+    current = _row_at_or_before(target_rows, trade_ts)
+    prior = _row_at_or_before(target_rows, window_start)
+    opposite = _row_at_or_before(skew_rows, trade_ts)
+    term = _row_at_or_before(term_rows, trade_ts)
+
+    current_iv = _float(current.get("implied_vol")) if current else None
+    prior_iv = _float(prior.get("implied_vol")) if prior else None
+    iv_change = current_iv - prior_iv if current_iv is not None and prior_iv is not None else None
+
+    current_oi = _first_row(auto.get("current_oi_rows", []))
+    prior_oi = _first_row(auto.get("prior_oi_rows", []))
+    current_oi_value = _float(current_oi.get("open_interest")) if current_oi else None
+    prior_oi_value = _float(prior_oi.get("open_interest")) if prior_oi else None
+
+    opposite_iv = _float(opposite.get("implied_vol")) if opposite else None
+    skew_direction = None
+    if current_iv is not None and opposite_iv is not None:
+        call_iv = current_iv if fetched.right == "CALL" else opposite_iv
+        put_iv = opposite_iv if fetched.right == "CALL" else current_iv
+        diff = call_iv - put_iv
+        if abs(diff) < 0.005:
+            skew_direction = "balanced_call_put_skew"
+        elif diff > 0:
+            skew_direction = "call_skew_richening"
+        else:
+            skew_direction = "put_skew_richening"
+
+    term_iv = _float(term.get("implied_vol")) if term else None
+    term_direction = None
+    if current_iv is not None and term_iv is not None:
+        diff = current_iv - term_iv
+        if abs(diff) < 0.005:
+            term_direction = "flat_term_structure"
+        elif diff > 0:
+            term_direction = "front_month_richening"
+        else:
+            term_direction = "back_month_richening"
+
+    underlying_current = _float(current.get("underlying_price")) if current else None
+    underlying_prior = _float(prior.get("underlying_price")) if prior else None
+    underlying_return = (underlying_current - underlying_prior) / underlying_prior if underlying_current is not None and underlying_prior not in (None, 0) else None
+
+    context: dict[str, Any] = {}
+    if current_iv is not None or prior_iv is not None:
+        context["iv_context"] = {
+            "implied_vol": current_iv,
+            "prior_implied_vol": prior_iv,
+            "iv_change": iv_change,
+            "source": "thetadata_history_greeks_implied_volatility",
+            "current_timestamp": current.get("timestamp") if current else None,
+            "prior_timestamp": prior.get("timestamp") if prior else None,
+        }
+    if current_oi_value is not None or prior_oi_value is not None:
+        context["open_interest_context"] = {
+            "open_interest_before": prior_oi_value,
+            "open_interest_after": current_oi_value,
+            "source": "thetadata_history_open_interest",
+            "current_date": fetched.start_date.isoformat(),
+            "prior_date": auto.get("prior_context_date"),
+        }
+    if skew_direction is not None:
+        context["skew_context"] = {
+            "skew_direction": skew_direction,
+            "target_implied_vol": current_iv,
+            "opposite_right_implied_vol": opposite_iv,
+            "source": "thetadata_history_greeks_implied_volatility_same_strike_opposite_right",
+        }
+    if term_direction is not None:
+        context["term_structure_context"] = {
+            "term_structure_direction": term_direction,
+            "front_expiration": fetched.expiration,
+            "back_expiration": auto.get("term_structure_expiration"),
+            "front_implied_vol": current_iv,
+            "back_implied_vol": term_iv,
+            "source": "thetadata_history_greeks_implied_volatility_same_strike_next_expiration",
+        }
+    if underlying_return is not None:
+        context["underlying_context"] = {
+            "underlying_return_during_window": underlying_return,
+            "underlying_price_before": underlying_prior,
+            "underlying_price_after": underlying_current,
+            "source": "thetadata_history_greeks_underlying_price",
+        }
+    return context
+
 def _trigger_trade_at_ask(row: Mapping[str, Any], standard: Mapping[str, Any]) -> bool:
     price_vs_ask = _price_vs_ask(row)
     ask_touch_ratio = _ask_touch_ratio(row)
@@ -1004,16 +1281,39 @@ def _build_event(
     bid_touch_ratio = _bid_touch_ratio(candidate)
     trade_notional = _trade_notional(candidate)
     side_evidence = _trade_side_evidence(candidate)
+    auto_context = _auto_event_context(fetched, window_start, trade_ts)
     window_statistics = _window_stats(window_rows, prior_window_volume)
     sweep_standard = standards.get("sweep_or_block_activity") if isinstance(standards.get("sweep_or_block_activity"), Mapping) else {}
     sweep_or_block = _sweep_or_block_context(candidate, sweep_standard)
-    oi_context = _open_interest_context(fetched.open_interest_context)
+    oi_context = _open_interest_context(
+        fetched.open_interest_context or auto_context.get("open_interest_context")
+        if isinstance(auto_context.get("open_interest_context"), Mapping) or fetched.open_interest_context
+        else None
+    )
     opening_or_closing = _opening_or_closing_context(oi_context, window_statistics)
-    iv_context = _iv_context(fetched.iv_context)
-    skew_context = _simple_direction_context(fetched.skew_context, "skew_direction")
-    term_context = _simple_direction_context(fetched.term_structure_context, "term_structure_direction")
+    iv_context = _iv_context(
+        fetched.iv_context or auto_context.get("iv_context")
+        if isinstance(auto_context.get("iv_context"), Mapping) or fetched.iv_context
+        else None
+    )
+    skew_context = _simple_direction_context(
+        fetched.skew_context or auto_context.get("skew_context")
+        if isinstance(auto_context.get("skew_context"), Mapping) or fetched.skew_context
+        else None,
+        "skew_direction",
+    )
+    term_context = _simple_direction_context(
+        fetched.term_structure_context or auto_context.get("term_structure_context")
+        if isinstance(auto_context.get("term_structure_context"), Mapping) or fetched.term_structure_context
+        else None,
+        "term_structure_direction",
+    )
     underlying_context = _underlying_confirmation_context(
-        fetched.underlying_context, fetched.right, str(side_evidence.get("trade_side_type"))
+        fetched.underlying_context or auto_context.get("underlying_context")
+        if isinstance(auto_context.get("underlying_context"), Mapping) or fetched.underlying_context
+        else None,
+        fetched.right,
+        str(side_evidence.get("trade_side_type")),
     )
     direction_confidence, evidence_coverage = _direction_confidence(
         right=fetched.right,

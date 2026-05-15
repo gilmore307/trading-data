@@ -85,7 +85,7 @@ Columns:
 
 The table stores overview rows only. It does not store full article text, SEC filing contents, browser/agent analysis transcripts, event artifact payloads, model impact scores, labels, alpha confidence, or trade recommendations.
 
-Feed-artifact extraction is local and offline only. It reads already-saved artifacts and never calls providers, dispatches manager requests, activates models, writes dashboard read models, or mutates broker/account state. Missing required event feed artifacts must block Layer 4+ rebuild rather than allowing abnormal-activity-only outputs to stand as complete.
+Feed-artifact extraction is local and offline only. It reads already-saved artifacts and never calls providers, dispatches manager requests, activates models, writes dashboard read models, or mutates broker/account state. Missing required event feed artifacts must block Layer 4+ rebuild rather than allowing abnormal-activity-only outputs to stand as complete. Extracted feed rows are filtered to the requested `[params.start, params.end)` window before SQL persistence; out-of-window rows are skipped and reported in the clean-step warning/details so current-page artifacts cannot leak into historical rebuilds.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

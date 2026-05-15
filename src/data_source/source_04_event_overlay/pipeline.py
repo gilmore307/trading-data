@@ -114,14 +114,34 @@ def _string_list(value: Any) -> list[str]:
     return [str(item).strip() for item in _as_list(value) if str(item).strip()]
 
 
-def _et_iso(value: Any) -> str:
+def _parse_et_datetime(value: Any) -> datetime:
+    text = str(value or "").strip()
+    if not text:
+        raise EventOverlayInputsError("timestamp is required")
     try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise EventOverlayInputsError(f"invalid timestamp {value!r}") from exc
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        parsed = None
+        for fmt in ("%A %B %d %Y", "%B %d %Y", "%Y-%m-%d"):
+            try:
+                parsed = datetime.strptime(text, fmt)
+                break
+            except ValueError:
+                continue
+        if parsed is None:
+            raise EventOverlayInputsError(f"invalid timestamp {value!r}")
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=ET)
-    return parsed.astimezone(ET).isoformat()
+    return parsed.astimezone(ET)
+
+
+def _et_iso(value: Any) -> str:
+    return _parse_et_datetime(value).isoformat()
+
+
+def _in_window(value: Any, *, start: datetime, end: datetime) -> bool:
+    event_time = _parse_et_datetime(value)
+    return start <= event_time < end
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
@@ -213,7 +233,15 @@ def _dedup_fields(source: Mapping[str, Any], event_id: str) -> dict[str, str | N
 
 def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
     rows: list[dict[str, Any]] = []
+    start = _parse_et_datetime(payload.start)
+    end = _parse_et_datetime(payload.end)
+    if end <= start:
+        raise EventOverlayInputsError("params.end must be after params.start")
+    out_of_window_count = 0
     for source in payload.events:
+        if not _in_window(_required(source, "event_time"), start=start, end=end):
+            out_of_window_count += 1
+            continue
         reference = str(source.get("reference") or source.get("event_link_url") or source.get("source_reference") or source.get("sec_file_path") or "").strip()
         if not reference:
             raise EventOverlayInputsError("each event requires reference/link/path")
@@ -221,7 +249,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
         row = {
             "event_id": event_id,
             **_dedup_fields(source, event_id),
-            "event_time": _et_iso(_required(source, "event_time")),
+            "event_time": _et_iso(source.get("event_time")),
             "available_time": _et_iso(source.get("available_time") or source.get("event_time")),
             "information_role_type": _enum(source.get("information_role_type"), INFORMATION_ROLES, "information_role_type"),
             "event_category_type": _enum(source.get("event_category_type"), EVENT_CATEGORIES, "event_category_type"),
@@ -237,8 +265,13 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
         if not row["title"]:
             raise EventOverlayInputsError("each event requires title/headline")
         rows.append(row)
+    if not rows:
+        raise EventOverlayInputsError("no event overview rows remained after requested-window filtering")
     rows.sort(key=lambda item: (item["event_time"], item["event_id"]))
-    return StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"table": OUTPUT_TABLE, "columns": SQL_FIELDS, "natural_key": KEY_COLUMNS}), CleanedPayload(rows)
+    warnings = []
+    if out_of_window_count:
+        warnings.append(f"out_of_window_event_rows_skipped={out_of_window_count}")
+    return StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, warnings=warnings, details={"table": OUTPUT_TABLE, "columns": SQL_FIELDS, "natural_key": KEY_COLUMNS, "out_of_window_event_rows_skipped": out_of_window_count}), CleanedPayload(rows)
 
 
 def save(context: SourceContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
@@ -262,7 +295,11 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != entry["run_id"]] + [entry]
     existing.update({"task_id": context.task_key.get("task_id"), "source": SOURCE})
     context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
+    warnings = []
+    for step in (fetch_result, clean_result, save_result):
+        if step:
+            warnings.extend(step.warnings)
+    return StepResult(status, [str(context.receipt_path), *outputs], row_counts, warnings=warnings, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
 def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None) -> StepResult:

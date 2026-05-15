@@ -130,3 +130,13 @@ Status: Accepted
 For browser-scraped sources such as Trading Economics, the browser should maintain authenticated session state and refresh cookies, but normal historical feed acquisition should not repeatedly open/login browser pages or rely on a mutable long-lived tab. Feed tasks consume an exported local cookie jar plus task-specific date/filter parameters through bounded HTTP page fetches. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
 
 All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.
+
+## D023 — Event evidence moves to Layer 8 event-risk governor use
+
+Accepted: 2026-05-15
+
+The active conceptual stack moves event intelligence from pre-alpha Layer 4 to post-guidance Layer 8. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the Layer 8 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 4 AlphaConfidenceModel.
+
+Layer 7 trading guidance / option-expression data uses the existing option-expression inputs (`source_05_option_expression`, `feature_08_option_expression`, and `source_06_position_execution`) until a dedicated implementation migration renames physical source/feature surfaces. Layer 8 event-risk data uses the existing event surfaces (`source_04_event_overlay`, `feature_04_event_overlay`, and event-feed artifacts) until a dedicated implementation migration renames physical surfaces.
+
+Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation_v1` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.

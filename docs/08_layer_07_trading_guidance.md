@@ -1,6 +1,13 @@
-# Layer 08 - Option Expression Data
+# Layer 07 — Trading Guidance / Option Expression Data Boundary
 
-`trading-data` owns option-expression source inputs for Layer 8. Model-side contract ranking, expression choice, labels, evaluation, and promotion belong to `trading-model`.
+<!-- ACTIVE_LAYER_REVISION -->
+Status: active architecture revision. Layer 7 owns base trading guidance; `trading-data` owns option-expression source inputs used by the option-expression subset of Layer 7.
+
+Current physical feature/source names remain `source_05_option_expression`, `feature_08_option_expression`, and `source_06_position_execution` until a dedicated implementation migration renames surfaces. The conceptual layer is now Layer 7.
+<!-- /ACTIVE_LAYER_REVISION -->
+
+
+`trading-data` owns option-expression source inputs for Layer 7. Model-side contract ranking, expression choice, labels, evaluation, and promotion belong to `trading-model`.
 
 ## Owned artifacts
 
@@ -12,14 +19,14 @@ trading_data.source_06_position_execution
 
 The source numbers remain historical/accepted source identifiers:
 
-- `source_05_option_expression` is the option-chain snapshot input for `OptionExpressionModel`.
+- `source_05_option_expression` is the option-chain snapshot input for `TradingGuidanceModel / OptionExpressionModel`.
 - `source_06_position_execution` is selected-contract option market-data tracking for replay/evaluation.
 
 Neither source is model Layer 5 or Layer 6.
 
 ## Boundary
 
-Layer 8 data covers visible option-chain evidence, deterministic option-candidate features, and selected-contract market paths.
+Layer 7 data covers visible option-chain evidence, deterministic option-candidate features, and selected-contract market paths.
 
 `source_05_option_expression` writes one row per visible contract at an explicit entry/exit snapshot time. It captures quote, spread, IV, first-order Greeks, and contract identity where provider data is available.
 
@@ -33,7 +40,7 @@ Layer 8 data covers visible option-chain evidence, deterministic option-candidat
 ThetaData option feeds
   -> source_05_option_expression option-chain snapshot
   -> feature_08_option_expression
-  -> trading-model OptionExpressionModel
+  -> trading-model TradingGuidanceModel / OptionExpressionModel
   -> selected contract handoff
   -> source_06_position_execution selected-contract tracking
   -> replay/evaluation outside trading-data
@@ -54,7 +61,7 @@ ThetaData option feeds
 
 ## Acceptance notes
 
-Layer 8 data changes are acceptable when they:
+Layer 7 data changes are acceptable when they:
 
 - preserve explicit point-in-time snapshot times;
 - keep ThetaData raw provider rows transient by default;

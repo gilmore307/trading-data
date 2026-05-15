@@ -1,4 +1,8 @@
-"""Deterministic feature builder for Layer 4 event-overlay source rows."""
+"""Deterministic feature builder for legacy event-overlay source rows.
+
+Conceptually these rows now feed Layer 8 EventRiskGovernor inputs; the physical
+`feature_04_event_overlay` name remains legacy until a dedicated migration.
+"""
 
 from __future__ import annotations
 

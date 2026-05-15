@@ -17,11 +17,11 @@ Date: 2026-05-08
 | Layer 1 data | `source_01_market_regime`, `feature_01_market_regime` | accepted market-regime input/feature surfaces |
 | Layer 2 data | `feature_02_sector_context` | accepted sector-context feature surface; no dedicated Layer 2 source package |
 | Layer 3 data | `source_02_target_candidate_holdings`, `source_03_target_state`, `feature_03_target_state_vector` | accepted target-candidate preparation, target-state observed-input, and feature-block surfaces |
-| Layer 4 data | `source_04_event_overlay`, `feature_04_event_overlay` plus event sub-sources | accepted event overview/index and deterministic event-feature boundary with canonical dedup fields |
-| Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
-| Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
-| Layer 7 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
-| Layer 8 data | `source_05_option_expression`, `feature_08_option_expression`, `source_06_position_execution` | accepted option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries |
+| Layer 4 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
+| Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
+| Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
+| Layer 7 data | `source_05_option_expression`, `feature_08_option_expression`, `source_06_position_execution` | accepted trading-guidance / option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries; physical names remain legacy until migration |
+| Layer 8 data | `source_04_event_overlay`, `feature_04_event_overlay` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use; physical names remain legacy until migration |
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 

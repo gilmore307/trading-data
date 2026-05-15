@@ -196,3 +196,11 @@ Accepted: 2026-05-15
 Activity-price proof labels must include direction-neutral measures before directional alpha labels. `trading-data` evidence should support absolute forward returns, forward path range, max favorable/adverse excursion, tradeable excursion, volatility expansion, absolute gap/jump, and path asymmetry.
 
 Signed forward returns remain useful, but they are secondary. Downside paths are tradable and must not be canceled out by upside paths in the primary proof metric.
+
+## D030 — Directional activity evidence must preserve side and confidence
+
+Accepted: 2026-05-15
+
+`trading-data` evidence for abnormal activity must preserve directional orientation when available. For option activity this means call/put side, buy/sell or aggressor-side evidence when available, sweep/block context, open-interest context, and whether direction is confident or ambiguous.
+
+Raw option volume alone is not enough to assert bullish or bearish direction. Directional fields must support `bullish_activity`, `bearish_activity`, `neutral_activity`, `mixed_or_conflicting_activity`, and `unknown_direction_activity` so `trading-model` can evaluate signed directional forward returns separately from direction-neutral path expansion.

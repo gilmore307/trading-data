@@ -84,6 +84,8 @@ prediction_market_activity_ref
 
 Event-family scouting adds one data requirement: raw provider rows must preserve enough source metadata for `trading-model` to create reviewed `event_family_scouting_packet_v1` evidence. For news this means source name, provider id, headline/summary or source artifact ref, URL/ref, published/updated times, available time when known, symbol/entity tags, and dedup/canonical refs when available. `trading-data` should not collapse raw news into a final family label or event-risk conclusion; it may provide deterministic source fields and evidence refs.
 
+For `earnings_guidance_event_family`, `trading-data` source artifacts must distinguish scheduling shells from result artifacts. Nasdaq earnings-calendar style rows may support `scheduled_time` / `event_awareness_time` only; SEC EDGAR/company official artifacts or an accepted company-IR route must supply result/guidance facts. Alpaca/GDELT news remains discovery or narrative-residual evidence unless linked to a canonical result artifact.
+
 Before bridge evidence can be used for model-layer promotion, `trading-data` must preserve separate windows for:
 
 ```text

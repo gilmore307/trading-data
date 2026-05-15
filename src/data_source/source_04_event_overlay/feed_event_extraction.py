@@ -230,6 +230,55 @@ def _trading_economics_events(path: Path, rows: Sequence[Mapping[str, str]]) -> 
     return events
 
 
+def _release_calendar_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
+    """Normalize reviewed calendar-discovery artifacts into event shells.
+
+    Earnings calendar rows are scheduling shells only. They establish a visible
+    catalyst clock but intentionally do not carry result, beat/miss, guidance,
+    or post-release interpretation fields.
+    """
+
+    events: list[dict[str, Any]] = []
+    for row in rows:
+        calendar_source = _first(row, "calendar_source")
+        release_time = _first(row, "release_time", "event_time")
+        event_name = _first(row, "event_name", "event", "title")
+        if not calendar_source or not release_time or not event_name:
+            continue
+        source_url = _first(row, "source_url")
+        raw_summary = _first(row, "raw_summary")
+        symbol = ""
+        if calendar_source == "nasdaq_earnings_calendar" and " earnings release" in event_name.lower():
+            symbol = event_name.split(" ", 1)[0].strip().upper()
+        category = "earnings_guidance" if calendar_source == "nasdaq_earnings_calendar" else "macro_data"
+        summary_parts = [
+            "event_phase=scheduled_shell" if category == "earnings_guidance" else "event_phase=scheduled_release",
+            "lifecycle_class=scheduled_known_outcome_later" if category == "earnings_guidance" else "lifecycle_class=scheduled_release",
+            "result_fields=not_available_from_calendar_shell" if category == "earnings_guidance" else "result_fields=calendar_schedule_only",
+        ]
+        if raw_summary:
+            summary_parts.append(f"raw_summary={raw_summary}")
+        events.append(
+            _base_event(
+                artifact_path=path,
+                event_time=release_time,
+                available_time=release_time,
+                information_role_type="prior_signal",
+                event_category_type=category,
+                scope_type="symbol" if symbol else "macro",
+                symbol=symbol or None,
+                title=event_name,
+                summary="; ".join(summary_parts),
+                source_name=calendar_source,
+                reference_type="web_url" if source_url else "source_reference",
+                reference=_reference(path, row, "source_url", "event_id"),
+                source_priority="approved_calendar" if calendar_source == "nasdaq_earnings_calendar" else "official_data_release",
+                coverage_reason="earnings_guidance_scheduled_shell_from_approved_calendar" if calendar_source == "nasdaq_earnings_calendar" else "canonical_scheduled_release_from_calendar_artifact",
+            )
+        )
+    return events
+
+
 def _sec_group_key(path: Path, row: Mapping[str, str]) -> tuple[str, str, str, str]:
     accession = _first(row, "accession_number")
     if accession:
@@ -272,13 +321,27 @@ def _sec_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str,
             summary_bits.append(f"grouped_rows={len(group_rows)}")
             if tags:
                 summary_bits.append("tags=" + ",".join(tags[:12]))
+        form_upper = form.upper()
+        is_earnings_result = form_upper in {"10-Q", "10-K"} or (
+            form_upper == "8-K"
+            and any("earning" in tag.lower() or "revenue" in tag.lower() or "income" in tag.lower() for tag in tags)
+        )
+        if is_earnings_result:
+            summary_bits.extend(
+                [
+                    "event_phase=release_result",
+                    "event_family=earnings_guidance_event_family",
+                    "result_source_type=sec_edgar",
+                    "lifecycle_class=scheduled_known_outcome_later",
+                ]
+            )
         events.append(
             _base_event(
                 artifact_path=path,
                 event_time=event_time,
                 available_time=_date_to_event_time(filed) or event_time,
                 information_role_type="prior_signal",
-                event_category_type="sec_filing",
+                event_category_type="earnings_guidance" if is_earnings_result else "sec_filing",
                 scope_type="symbol",
                 symbol=_first(row, "symbol") or None,
                 title=" ".join(title_bits),
@@ -287,7 +350,7 @@ def _sec_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str,
                 reference_type="sec_file_path" if accession else "source_reference",
                 reference=accession or str(path),
                 source_priority="official_disclosure",
-                coverage_reason="canonical_sec_event_from_company_financials_feed",
+                coverage_reason="earnings_guidance_result_artifact_from_sec_feed" if is_earnings_result else "canonical_sec_event_from_company_financials_feed",
             )
         )
     return events
@@ -302,6 +365,8 @@ def _detect_artifact_kind(path: Path, rows: Sequence[Mapping[str, str]]) -> str:
         return "gdelt_news"
     if "trading_economics_calendar_event" in name or {"event", "actual", "consensus"}.intersection(columns) and "source_url" in columns:
         return "trading_economics_calendar"
+    if "release_calendar" in name or {"calendar_source", "event_name", "release_time"}.issubset(columns):
+        return "release_calendar"
     if name.startswith("sec_") or "accession_number" in columns or {"cik", "taxonomy", "tag"}.issubset(columns):
         return "sec_company_financials"
     raise FeedEventExtractionError(f"unsupported event feed artifact shape: {path}")
@@ -323,6 +388,8 @@ def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict
             events.extend(_gdelt_news_events(path, rows))
         elif kind == "trading_economics_calendar":
             events.extend(_trading_economics_events(path, rows))
+        elif kind == "release_calendar":
+            events.extend(_release_calendar_events(path, rows))
         elif kind == "sec_company_financials":
             events.extend(_sec_events(path, rows))
         else:  # pragma: no cover - guarded by detector

@@ -50,12 +50,42 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
 
             rows = extract_events_from_artifact_paths([alpaca, gdelt, te, sec])
             categories = {row["event_category_type"] for row in rows}
-            self.assertEqual(categories, {"symbol_news", "macro_news", "macro_data", "sec_filing"})
+            self.assertEqual(categories, {"symbol_news", "macro_news", "macro_data", "earnings_guidance"})
             self.assertEqual({row["source_name"] for row in rows}, {"03_feed_alpaca_news", "05_feed_gdelt_news", "07_feed_trading_economics_calendar_web", "08_feed_sec_company_financials"})
-            sec_rows = [row for row in rows if row["event_category_type"] == "sec_filing"]
+            sec_rows = [row for row in rows if row["event_category_type"] == "earnings_guidance" and row["source_name"] == "08_feed_sec_company_financials"]
             self.assertEqual(len(sec_rows), 1)
             self.assertIn("grouped_rows=2", sec_rows[0]["summary"])
+            self.assertIn("event_phase=release_result", sec_rows[0]["summary"])
             self.assertEqual([row for row in rows if row.get("symbol") == "AAPL"][0]["scope_type"], "symbol")
+
+
+    def test_extracts_nasdaq_earnings_calendar_as_scheduled_shell(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            tmp = Path(raw_tmp)
+            calendar = tmp / "release_calendar.csv"
+            with calendar.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["event_id", "calendar_source", "event_name", "release_time", "event_date", "timezone", "source_url", "raw_summary"])
+                writer.writeheader()
+                writer.writerow({
+                    "event_id": "cal1",
+                    "calendar_source": "nasdaq_earnings_calendar",
+                    "event_name": "AAPL earnings release (Apple Inc.)",
+                    "release_time": "2026-04-24T08:00:00-04:00",
+                    "event_date": "2026-04-24",
+                    "timezone": "America/New_York",
+                    "source_url": "https://api.nasdaq.com/api/calendar/earnings?date=2026-04-24",
+                    "raw_summary": "{\"time\": \"time-pre-market\"}",
+                })
+
+            rows = extract_events_from_artifact_paths([calendar])
+            self.assertEqual(len(rows), 1)
+            row = rows[0]
+            self.assertEqual(row["event_category_type"], "earnings_guidance")
+            self.assertEqual(row["information_role_type"], "prior_signal")
+            self.assertEqual(row["source_priority"], "approved_calendar")
+            self.assertEqual(row["symbol"], "AAPL")
+            self.assertIn("event_phase=scheduled_shell", row["summary"])
+            self.assertIn("result_fields=not_available_from_calendar_shell", row["summary"])
 
     def test_source_pipeline_accepts_event_artifact_paths(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:

@@ -22,7 +22,7 @@ Optional task key fields:
 
 - `params.focus_sectors`: focused sectors/themes
 - `params.symbols`: focused symbols
-- `params.event_artifact_paths` / `params.feed_artifact_paths`: reviewed local saved artifacts to normalize into event overview rows. Supported artifacts are `03_feed_alpaca_news` `equity_news.csv` (`symbol_news`), `05_feed_gdelt_news` `gdelt_article.csv` (`macro_news` / `sector_news` / `symbol_news` by scope hints), `07_feed_trading_economics_calendar_web` `trading_economics_calendar_event.csv` (`macro_data`), and `08_feed_sec_company_financials` SEC CSV outputs (`sec_filing` / financial disclosure events).
+- `params.event_artifact_paths` / `params.feed_artifact_paths`: reviewed local saved artifacts to normalize into event overview rows. Supported artifacts are `03_feed_alpaca_news` `equity_news.csv` (`symbol_news`), `05_feed_gdelt_news` `gdelt_article.csv` (`macro_news` / `sector_news` / `symbol_news` by scope hints), `07_feed_trading_economics_calendar_web` `trading_economics_calendar_event.csv` (`macro_data`), `trading-execution` `calendar_discovery` `release_calendar.csv` (`earnings_guidance` scheduled shells for `nasdaq_earnings_calendar`), and `08_feed_sec_company_financials` SEC CSV outputs (`earnings_guidance` result artifacts for 10-Q/10-K or earnings-related 8-K rows; otherwise `sec_filing`).
 - `output_root`: local receipt/request-manifest root
 
 Each event row requires:
@@ -31,7 +31,7 @@ Each event row requires:
 - `event_time`
 - `available_time` or defaults to `event_time`
 - `information_role_type`: `lagging_evidence` or `prior_signal`
-- `event_category_type`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `option_abnormal_activity`, `equity_abnormal_activity`, or `price_action`. Here `macro_data` is an event category label, not an active executable feed.
+- `event_category_type`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `earnings_guidance`, `option_abnormal_activity`, `equity_abnormal_activity`, or `price_action`. Here `macro_data` is an event category label, not an active executable feed. `earnings_guidance` rows must distinguish calendar-only scheduled shells from official result/guidance artifacts in `summary` / `coverage_reason`.
 - `scope_type`: `macro`, `sector`, or `symbol`
 - `title` or `headline`
 - `source_name`
@@ -42,7 +42,7 @@ Optional deduplication fields:
 
 - `canonical_event_id`: canonical event identity after deduplication; defaults to `event_id` for canonical rows
 - `dedup_status`: one of `canonical`, `covered_by_canonical_event`, `duplicate_of_canonical_event`, `related_followup`, `new_information`, or `unresolved`; defaults to `canonical`
-- `source_priority`: one of `official_disclosure`, `official_data_release`, `company_disclosure`, `regulatory_disclosure`, `source_detector`, `verified_news`, `broad_news`, `derivative_news`, or `unknown`; inferred when omitted
+- `source_priority`: one of `official_disclosure`, `official_data_release`, `approved_calendar`, `company_disclosure`, `regulatory_disclosure`, `source_detector`, `verified_news`, `broad_news`, `derivative_news`, or `unknown`; inferred when omitted
 - `coverage_reason`: short reason for canonical/covered/new-information status; full browser/agent analysis should stay in an artifact/report reference
 - `covered_by_event_id`: canonical event id that covers this row; required for `covered_by_canonical_event` and `duplicate_of_canonical_event` rows unless supplied through `canonical_event_id`
 

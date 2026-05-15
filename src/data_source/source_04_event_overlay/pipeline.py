@@ -25,6 +25,7 @@ EVENT_CATEGORIES = {
     "sector_news",
     "symbol_news",
     "sec_filing",
+    "earnings_guidance",
     "option_abnormal_activity",
     "equity_abnormal_activity",
     "price_action",
@@ -32,7 +33,7 @@ EVENT_CATEGORIES = {
 SCOPE_TYPES = {"macro", "sector", "symbol"}
 REFERENCE_TYPES = {"web_url", "sec_file_path", "internal_artifact_path", "source_reference"}
 DEDUP_STATUSES = {"canonical", "covered_by_canonical_event", "duplicate_of_canonical_event", "related_followup", "new_information", "unresolved"}
-SOURCE_PRIORITIES = {"official_disclosure", "official_data_release", "company_disclosure", "regulatory_disclosure", "source_detector", "verified_news", "broad_news", "derivative_news", "unknown"}
+SOURCE_PRIORITIES = {"official_disclosure", "official_data_release", "approved_calendar", "company_disclosure", "regulatory_disclosure", "source_detector", "verified_news", "broad_news", "derivative_news", "unknown"}
 SQL_FIELDS = [
     "event_id",
     "canonical_event_id",
@@ -215,6 +216,8 @@ def _source_priority(row: Mapping[str, Any]) -> str:
     reference_type = str(row.get("reference_type") or "").strip().lower()
     if category == "sec_filing" or reference_type == "sec_file_path" or "sec" in source_name:
         return "official_disclosure"
+    if "nasdaq_earnings_calendar" in source_name:
+        return "approved_calendar"
     if category == "macro_data":
         return "official_data_release"
     if category in {"option_abnormal_activity", "equity_abnormal_activity", "price_action"}:

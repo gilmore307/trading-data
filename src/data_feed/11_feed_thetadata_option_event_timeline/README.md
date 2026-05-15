@@ -4,7 +4,7 @@ ThetaData specified-contract option activity event feed.
 
 ## Purpose
 
-Produce `option_activity_event.csv` rows and one compact `<event_id>.json` detail artifact for each triggered option activity event. The feed emits events only; it does not save rolling process state, raw trade/quote rows, or periodic chain snapshots by default.
+Produce `option_activity_event.csv` rows and one compact `<event_id>.csv` detail artifact for each triggered option activity event. The feed emits events only; it does not save rolling process state, raw trade/quote rows, or periodic chain snapshots by default.
 
 ## Required params
 
@@ -68,11 +68,11 @@ Rows are transient. The feed groups them into ET evidence windows and emits a fi
     schema.json
   saved/
     option_activity_event.csv
-    <event_id>.json
+    <event_id>.csv
 <output_root>/completion_receipt.json
 ```
 
-Only `saved/option_activity_event.csv` and `saved/<event_id>.json` are final saved outputs. Cleaned JSONL is run-local development evidence. Raw provider responses are not persisted by default.
+Only `saved/option_activity_event.csv` and `saved/<event_id>.csv` are final saved outputs. Cleaned JSONL is run-local development evidence. Raw provider responses are not persisted by default.
 
 ## Directional evidence boundary
 

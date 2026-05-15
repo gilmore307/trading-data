@@ -1,7 +1,7 @@
 """ThetaData option activity event timeline feed.
 
 Development-stage final outputs are ``option_activity_event.csv`` and one
-``<event_id>.json`` detail artifact per emitted event. Provider trade/quote
+``<event_id>.csv`` detail artifact per emitted event. Provider trade/quote
 rows are transient and are not persisted by default.
 """
 

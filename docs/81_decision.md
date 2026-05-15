@@ -170,3 +170,13 @@ Accepted: 2026-05-15
 `trading-data` may own the source refs, availability clocks, windows, and compact detector evidence that support bridge construction. `trading-model` owns bridge scoring, explanation status, event-risk interpretation, prediction-market confirmation/divergence scoring, and any training/evaluation labels.
 
 Source evidence must keep event refs and activity refs separate so later explanations can be added without rewriting the original point-in-time record.
+
+## D027 — Activity-price proof data must preserve detector inputs and forward labels separately
+
+Accepted: 2026-05-15
+
+Before abnormal activity can support a separate model layer, the project must prove its point-in-time relationship to subsequent price/path labels. `trading-data` must therefore preserve detector evidence windows separately from forward outcome labels.
+
+Source artifacts must make it possible to distinguish the activity detection window, the event/availability window, and forward label horizons. Price-derived detectors cannot be evaluated against the same price window used to create them.
+
+Required future proof labels include forward return, drawdown, reversal, volatility expansion, gap/jump, and path asymmetry across short and event-relevant horizons.

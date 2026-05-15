@@ -82,6 +82,16 @@ prediction_market_activity_ref
 
 `trading-data` owns source refs, windows, availability clocks, and compact detector evidence. It does not decide final bridge scores, prediction-market probabilities, event-risk interventions, or trading actions.
 
+Before bridge evidence can be used for model-layer promotion, `trading-data` must preserve separate windows for:
+
+```text
+activity_detection_window
+event_availability_window
+forward_label_window
+```
+
+This prevents price-derived abnormality from being validated against the same price interval that created it. Required future labels include forward return, drawdown, reversal, volatility expansion, gap/jump, and path asymmetry.
+
 ## Stage flow
 
 ```text

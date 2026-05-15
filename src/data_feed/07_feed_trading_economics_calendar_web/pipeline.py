@@ -1,9 +1,9 @@
 """Trading Economics visible calendar-page interface feed.
 
-This feed intentionally handles only normal web-page-visible calendar rows. It
-must not call Trading Economics API or download/export endpoints. Bulk historical
-collection is out of scope until model needs and subscription constraints are
-accepted explicitly.
+This feed intentionally handles only normal logged-in web-page-visible calendar
+rows. It must not call Trading Economics API or download/export endpoints. Live
+fetches use authenticated website cookies plus a request-specific custom date
+range cookie, then parse the returned page table.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -25,6 +26,7 @@ from feed_availability.sanitize import sanitize_value
 FEED = "07_feed_trading_economics_calendar_web"
 SOURCE_URL = "https://tradingeconomics.com/united-states/calendar"
 DEFAULT_COOKIE_JAR = Path("/root/secrets/tradingeconomics-cookies.txt")
+ET = ZoneInfo("America/New_York")
 FIELDS = [
     "event_time",
     "country",
@@ -105,17 +107,22 @@ def _window(params: Mapping[str, Any]) -> tuple[date, date]:
     return start, end
 
 
-def _cookie_header(cookie_jar: Path = DEFAULT_COOKIE_JAR) -> str:
-    if not cookie_jar.exists():
-        return ""
-    cookies: list[str] = []
-    for line in cookie_jar.read_text(encoding="utf-8", errors="replace").splitlines():
-        if not line or line.startswith("#"):
-            continue
-        parts = line.split("\t")
-        if len(parts) >= 7:
-            cookies.append(f"{parts[5]}={parts[6]}")
-    return "; ".join(cookies)
+def _cookie_header(params: Mapping[str, Any], cookie_jar: Path = DEFAULT_COOKIE_JAR) -> str:
+    cookie_by_name: dict[str, str] = {}
+    if cookie_jar.exists():
+        for line in cookie_jar.read_text(encoding="utf-8", errors="replace").splitlines():
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split("\t")
+            if len(parts) >= 7:
+                cookie_by_name[parts[5]] = parts[6]
+    start, end = _window(params)
+    cookie_by_name["cal-custom-range"] = f"{start.isoformat()} 00:00|{end.isoformat()} 00:00"
+    cookie_by_name["calendar-range"] = "0"
+    cookie_by_name["calendar-importance"] = str(params.get("importance") or "3")
+    offset_minutes = int(datetime.combine(start, datetime.min.time(), ET).utcoffset().total_seconds() // 60)
+    cookie_by_name["cal-timezone-offset"] = str(offset_minutes)
+    return "; ".join(f"{name}={value}" for name, value in cookie_by_name.items())
 
 
 def _build_url(params: Mapping[str, Any]) -> str:
@@ -138,7 +145,7 @@ def fetch(context: FeedContext) -> tuple[StepResult, FetchedPage]:
             "User-Agent": "Mozilla/5.0",
             "Accept": "text/html,application/xhtml+xml",
         }
-        cookie_header = _cookie_header()
+        cookie_header = _cookie_header(params)
         if cookie_header:
             headers["Cookie"] = cookie_header
         request = urllib.request.Request(source_url, headers=headers)
@@ -208,7 +215,67 @@ def _header_index(header: list[str]) -> dict[str, int]:
     return result
 
 
+def _attr(tag: str, name: str) -> str:
+    match = re.search(rf"\b{name}=(['\"])(.*?)\1", tag, flags=re.I | re.S)
+    return html.unescape(match.group(2)).strip() if match else ""
+
+
+def _first_text(pattern: str, text: str) -> str:
+    match = re.search(pattern, text, flags=re.I | re.S)
+    return _clean_cell(match.group(match.lastindex or 1)) if match else ""
+
+
+def _event_time_from_row(row_html: str, fallback_date: str) -> str:
+    date_match = re.search(r"<td\b[^>]*class=(['\"])[^'\"]*(\d{4}-\d{2}-\d{2})[^'\"]*\1", row_html, flags=re.I | re.S)
+    date_text = date_match.group(2) if date_match else ""
+    time_text = _first_text(r"<span\b[^>]*class=(['\"])[^'\"]*calendar-date[^'\"]*\1[^>]*>(.*?)</span>", row_html)
+    if date_text and time_text:
+        try:
+            return datetime.strptime(f"{date_text} {time_text}", "%Y-%m-%d %I:%M %p").replace(tzinfo=ET).isoformat()
+        except ValueError:
+            pass
+    return fallback_date
+
+
+def _parse_calendar_data_rows(html_text: str, *, source_url: str, default_country: str, default_importance: str) -> list[dict[str, str]]:
+    date_markers = [(match.start(), _clean_cell(match.group(1))) for match in re.finditer(r"<th\b[^>]*colspan=['\"]3['\"][^>]*>(.*?)</th>", html_text, flags=re.I | re.S)]
+    row_matches = list(re.finditer(r"<tr\b[^>]*\bdata-url=(['\"]).*?\1[^>]*>", html_text, flags=re.I | re.S))
+    if not row_matches:
+        return []
+    parsed: list[dict[str, str]] = []
+    date_i = 0
+    for idx, row_match in enumerate(row_matches):
+        while date_i + 1 < len(date_markers) and date_markers[date_i + 1][0] < row_match.start():
+            date_i += 1
+        fallback_date = date_markers[date_i][1] if date_markers else ""
+        end = row_matches[idx + 1].start() if idx + 1 < len(row_matches) else len(html_text)
+        row_html = html_text[row_match.start():end]
+        tag = row_match.group(0)
+        event = _first_text(r"<a\b[^>]*class=(['\"])[^'\"]*calendar-event[^'\"]*\1[^>]*>(.*?)</a>", row_html) or _clean_cell(_attr(tag, "data-event")).title()
+        if not event:
+            continue
+        parsed.append({
+            "event_time": _event_time_from_row(row_html, fallback_date),
+            "country": (_clean_cell(_attr(tag, "data-country")).title() or default_country),
+            "event": event,
+            "source_event_type": _clean_cell(_attr(tag, "data-category")),
+            "reference": _first_text(r"<span\b[^>]*class=(['\"])[^'\"]*calendar-reference[^'\"]*\1[^>]*>(.*?)</span>", row_html),
+            "actual": _first_text(r"<span\b[^>]*id=['\"]actual['\"][^>]*>(.*?)</span>", row_html),
+            "previous": _first_text(r"<span\b[^>]*id=['\"]previous['\"][^>]*>(.*?)</span>", row_html),
+            "consensus": _first_text(r"<span\b[^>]*id=['\"]consensus['\"][^>]*>(.*?)</span>", row_html),
+            "te_forecast": _first_text(r"<span\b[^>]*id=['\"]forecast['\"][^>]*>(.*?)</span>", row_html),
+            "revised": _first_text(r"<span\b[^>]*id=['\"]revised['\"][^>]*>(.*?)</span>", row_html),
+            "importance": default_importance,
+            "symbol": "",
+            "source_url": source_url,
+        })
+    return parsed
+
+
 def parse_calendar_rows(html_text: str, *, source_url: str, default_country: str, default_importance: str) -> list[dict[str, str]]:
+    parsed = _parse_calendar_data_rows(html_text, source_url=source_url, default_country=default_country, default_importance=default_importance)
+    if parsed:
+        return parsed
     rows = _table_rows(html_text)
     if not rows:
         return []
@@ -216,7 +283,7 @@ def parse_calendar_rows(html_text: str, *, source_url: str, default_country: str
     if header_i < 0:
         return []
     index = _header_index(rows[header_i])
-    parsed: list[dict[str, str]] = []
+    parsed = []
     for row in rows[header_i + 1 :]:
         if len(row) < 4:
             continue
@@ -224,7 +291,7 @@ def parse_calendar_rows(html_text: str, *, source_url: str, default_country: str
             idx = index.get(name)
             return row[idx] if idx is not None and idx < len(row) else ""
         event = at("event") or (row[2] if len(row) > 2 else "")
-        if not event or event.lower() in {"event", "calendar"}:
+        if not event or event.lower() in {"event", "calendar", "previous"}:
             continue
         parsed.append({
             "event_time": at("event_time") or row[0],
@@ -244,11 +311,26 @@ def parse_calendar_rows(html_text: str, *, source_url: str, default_country: str
     return parsed
 
 
+def _row_in_window(row: Mapping[str, str], *, start: date, end: date) -> bool:
+    value = str(row.get("event_time") or "").strip()
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+    except ValueError:
+        try:
+            parsed = datetime.strptime(value, "%A %B %d %Y").date()
+        except ValueError:
+            return False
+    return start <= parsed < end
+
+
 def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
     params = dict(context.task_key.get("params") or {})
-    rows = parse_calendar_rows(fetched.html_text, source_url=fetched.source_url, default_country=str(params.get("country") or "United States"), default_importance=str(params.get("importance") or "3"))
+    start, end = _window(params)
+    parsed_rows = parse_calendar_rows(fetched.html_text, source_url=fetched.source_url, default_country=str(params.get("country") or "United States"), default_importance=str(params.get("importance") or "3"))
+    rows = [row for row in parsed_rows if _row_in_window(row, start=start, end=end)]
+    out_of_window_count = len(parsed_rows) - len(rows)
     if not rows:
-        raise TradingEconomicsCalendarError("Trading Economics page produced zero parseable calendar rows")
+        raise TradingEconomicsCalendarError("Trading Economics page produced zero parseable in-window calendar rows")
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     path = context.cleaned_dir / "trading_economics_calendar_event.jsonl"
     with path.open("w", encoding="utf-8") as handle:
@@ -256,7 +338,8 @@ def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
             handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
     schema = context.cleaned_dir / "schema.json"
     schema.write_text(json.dumps({"trading_economics_calendar_event": FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(path), str(schema)], {"trading_economics_calendar_event": len(rows)}, details={"columns": FIELDS})
+    warnings = [f"out_of_window_calendar_rows_skipped={out_of_window_count}"] if out_of_window_count else []
+    return StepResult("succeeded", [str(path), str(schema)], {"trading_economics_calendar_event": len(rows)}, warnings=warnings, details={"columns": FIELDS, "out_of_window_calendar_rows_skipped": out_of_window_count})
 
 
 def save(context: FeedContext, clean_result: StepResult) -> StepResult:
@@ -284,7 +367,11 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != entry["run_id"]] + [entry]
     existing.update({"task_id": context.task_key.get("task_id"), "feed": FEED})
     context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
+    warnings = []
+    for step in (fetch_result, clean_result, save_result):
+        if step:
+            warnings.extend(step.warnings)
+    return StepResult(status, [str(context.receipt_path), *outputs], row_counts, warnings=warnings, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
 def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:

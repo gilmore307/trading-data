@@ -73,7 +73,7 @@ def _quality(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "feature_04_event_overlay") -> list[dict[str, Any]]:
-    """Return deterministic Layer 4 feature rows from source overview rows."""
+    """Return deterministic event-risk evidence feature rows from source overview rows."""
 
     output: list[dict[str, Any]] = []
     for row in rows:

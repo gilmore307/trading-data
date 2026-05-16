@@ -1,10 +1,10 @@
 # source_04_event_overlay
 
-Manager-facing EventOverlayModel data source.
+Manager-facing EventRiskGovernor data source.
 
-Layer 04 supplies bounded, point-in-time event overview rows for the event overlay model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
+Layer 04 supplies bounded, point-in-time event overview rows for the event-risk model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
 
-This source is an event index, not the full `event_context_vector`. `EventOverlayModel` combines these overview rows with point-in-time event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and scope/sensitivity metadata inside `trading-model`.
+This source is an event index, not the full `event_context_vector`. `EventRiskGovernor` combines these overview rows with point-in-time event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and scope/sensitivity metadata inside `trading-model`.
 
 Stable defaults live in pipeline code; there is no source-local `config.json`.
 
@@ -85,7 +85,7 @@ Columns:
 
 The table stores overview rows only. It does not store full article text, SEC filing contents, browser/agent analysis transcripts, event artifact payloads, model impact scores, labels, alpha confidence, or trade recommendations.
 
-Feed-artifact extraction is local and offline only. It reads already-saved artifacts and never calls providers, dispatches manager requests, activates models, writes dashboard read models, or mutates broker/account state. Missing required event feed artifacts must block Layer 4+ rebuild rather than allowing abnormal-activity-only outputs to stand as complete. Extracted feed rows are filtered to the requested `[params.start, params.end)` window before SQL persistence; out-of-window rows are skipped and reported in the clean-step warning/details so current-page artifacts cannot leak into historical rebuilds.
+Feed-artifact extraction is local and offline only. It reads already-saved artifacts and never calls providers, dispatches manager requests, activates models, writes dashboard read models, or mutates broker/account state. Missing required event feed artifacts must block event-risk rebuild rather than allowing abnormal-activity-only outputs to stand as complete. Extracted feed rows are filtered to the requested `[params.start, params.end)` window before SQL persistence; out-of-window rows are skipped and reported in the clean-step warning/details so current-page artifacts cannot leak into historical rebuilds.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

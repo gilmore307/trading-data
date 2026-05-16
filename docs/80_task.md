@@ -33,7 +33,7 @@ These items are intentionally outside the current promote-first historical-train
 - ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.
 - `source_02_target_candidate_holdings` preserves point-in-time visibility with a conservative next-session-open default when no explicit availability timestamp exists.
 - `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative` with `conservative_fixture_default_not_production_calibrated` until reviewed calibration exists.
-- `price_action` is accepted as a Layer 4 event category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-overlay evidence, not a new model layer or trading action.
+- `price_action` is accepted as a Layer 8 event-risk category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
 - `source_03_target_state` and `feature_03_target_state_vector` implement deterministic target-local observed-input and feature-block surfaces.
 - Layer 2 / candidate / Layer 3 boundaries are aligned: ETF holdings and `stock_etf_exposure` support anonymous target candidate preparation, not Layer 2 core behavior.
 - Event overlay sources are accepted through `source_04_event_overlay`, including equity abnormal activity evidence.

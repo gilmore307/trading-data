@@ -114,7 +114,7 @@ Live-call policy, retry/rate-limit rules, checkpoint/resume evidence, manifests,
 
 Reusable logic belongs in `src/`. `trading-data` does not keep a top-level `scripts/` wrapper directory; stable callable entrypoints should be exposed through package CLIs declared in `pyproject.toml` and registered through `trading-manager` when shared.
 
-## D021 — Price-action events belong inside Layer 4 event overlay
+## D021 — Price-action events belong inside Layer 8 event-risk overlay
 
 Date: 2026-05-09
 

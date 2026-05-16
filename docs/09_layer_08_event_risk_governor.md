@@ -103,7 +103,7 @@ trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
   -> source_04_event_overlay
   -> feature_04_event_overlay
-  -> trading-model EventRiskGovernor / EventOverlayModel event_risk_intervention / event_context_vector construction
+  -> trading-model EventRiskGovernor / EventRiskGovernor event_risk_intervention / event_context_vector construction
   -> evaluation/promotion review outside trading-data
 ```
 

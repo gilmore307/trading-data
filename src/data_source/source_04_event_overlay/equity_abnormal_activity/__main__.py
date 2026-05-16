@@ -1,4 +1,4 @@
-"""CLI runner for the EventOverlayModel equity abnormal activity detector."""
+"""CLI runner for the EventRiskGovernor equity abnormal activity detector."""
 from __future__ import annotations
 
 import argparse

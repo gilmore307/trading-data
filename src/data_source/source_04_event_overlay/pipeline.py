@@ -1,4 +1,4 @@
-"""Manager-facing 04 EventOverlayModel event overview source."""
+"""Manager-facing 04 event-risk event overview source."""
 from __future__ import annotations
 
 import json
@@ -15,7 +15,7 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 from .feed_event_extraction import extract_events_from_artifact_paths
 
 SOURCE = "source_04_event_overlay"
-MODEL_ID = "event_overlay_model"
+MODEL_ID = "event_risk_governor"
 OUTPUT_TABLE = "source_04_event_overlay"
 ET = ZoneInfo("America/New_York")
 INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
@@ -88,8 +88,8 @@ class CleanedPayload:
     rows: list[dict[str, Any]]
 
 
-class EventOverlayInputsError(ValueError):
-    """Raised for invalid EventOverlayModel input tasks."""
+class EventRiskInputsError(ValueError):
+    """Raised for invalid EventRiskGovernor input tasks."""
 
 
 def _now_utc() -> str:
@@ -99,7 +99,7 @@ def _now_utc() -> str:
 def _required(mapping: Mapping[str, Any], key: str) -> Any:
     value = mapping.get(key)
     if value in (None, "", []):
-        raise EventOverlayInputsError(f"params.{key} is required")
+        raise EventRiskInputsError(f"params.{key} is required")
     return value
 
 
@@ -118,7 +118,7 @@ def _string_list(value: Any) -> list[str]:
 def _parse_et_datetime(value: Any) -> datetime:
     text = str(value or "").strip()
     if not text:
-        raise EventOverlayInputsError("timestamp is required")
+        raise EventRiskInputsError("timestamp is required")
     try:
         parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
     except ValueError:
@@ -130,7 +130,7 @@ def _parse_et_datetime(value: Any) -> datetime:
             except ValueError:
                 continue
         if parsed is None:
-            raise EventOverlayInputsError(f"invalid timestamp {value!r}")
+            raise EventRiskInputsError(f"invalid timestamp {value!r}")
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=ET)
     return parsed.astimezone(ET)
@@ -147,7 +147,7 @@ def _in_window(value: Any, *, start: datetime, end: datetime) -> bool:
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
-        raise EventOverlayInputsError(f"task_key.source must be {SOURCE}")
+        raise EventRiskInputsError(f"task_key.source must be {SOURCE}")
     output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', SOURCE + '_task')}"))
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
@@ -163,7 +163,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     if artifact_paths:
         events.extend(extract_events_from_artifact_paths(artifact_paths))
     if not events:
-        raise EventOverlayInputsError("params.events or params.event_artifact_paths must contain at least one event overview row")
+        raise EventRiskInputsError("params.events or params.event_artifact_paths must contain at least one event overview row")
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "focus_sectors": focus_sectors, "symbols": symbols, "event_count": len(events), "event_artifact_paths": artifact_paths, "raw_persistence": "event details remain behind references; SQL stores overview rows only", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -173,7 +173,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
 def _enum(value: Any, allowed: set[str], field_name: str) -> str:
     text = str(value or "").strip().lower()
     if text not in allowed:
-        raise EventOverlayInputsError(f"{field_name} must be one of {sorted(allowed)}")
+        raise EventRiskInputsError(f"{field_name} must be one of {sorted(allowed)}")
     return text
 
 
@@ -234,10 +234,10 @@ def _dedup_fields(source: Mapping[str, Any], event_id: str) -> dict[str, str | N
     if not canonical_event_id:
         canonical_event_id = covered_by_event_id or event_id
     if dedup_status == "canonical" and canonical_event_id != event_id:
-        raise EventOverlayInputsError("canonical event rows must use canonical_event_id equal to event_id")
+        raise EventRiskInputsError("canonical event rows must use canonical_event_id equal to event_id")
     if dedup_status in {"covered_by_canonical_event", "duplicate_of_canonical_event"}:
         if canonical_event_id == event_id:
-            raise EventOverlayInputsError(f"{dedup_status} rows require canonical_event_id or covered_by_event_id for the canonical event")
+            raise EventRiskInputsError(f"{dedup_status} rows require canonical_event_id or covered_by_event_id for the canonical event")
         if not covered_by_event_id:
             covered_by_event_id = canonical_event_id
     coverage_reason = str(source.get("coverage_reason") or "").strip()
@@ -257,7 +257,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
     start = _parse_et_datetime(payload.start)
     end = _parse_et_datetime(payload.end)
     if end <= start:
-        raise EventOverlayInputsError("params.end must be after params.start")
+        raise EventRiskInputsError("params.end must be after params.start")
     out_of_window_count = 0
     event_ids: set[str] = set()
     for source in payload.events:
@@ -266,7 +266,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
             continue
         reference = str(source.get("reference") or source.get("event_link_url") or source.get("source_reference") or source.get("sec_file_path") or "").strip()
         if not reference:
-            raise EventOverlayInputsError("each event requires reference/link/path")
+            raise EventRiskInputsError("each event requires reference/link/path")
         event_id = _event_id(source, existing_event_ids=event_ids)
         event_ids.add(event_id)
         row = {
@@ -286,10 +286,10 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
             "reference": reference,
         }
         if not row["title"]:
-            raise EventOverlayInputsError("each event requires title/headline")
+            raise EventRiskInputsError("each event requires title/headline")
         rows.append(row)
     if not rows:
-        raise EventOverlayInputsError("no event overview rows remained after requested-window filtering")
+        raise EventRiskInputsError("no event overview rows remained after requested-window filtering")
     rows.sort(key=lambda item: (item["event_time"], item["event_id"]))
     warnings = []
     if out_of_window_count:

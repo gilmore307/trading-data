@@ -15,8 +15,8 @@ Note: Layers 5-7 currently do not need new `trading-data` sources because they c
 - `source_01_market_regime` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `layer_01_02_market_context_etf_universe.csv`.
 - `source_02_target_candidate_holdings` — SQL-only filtered US-listed equity ETF holdings table for anonymous target candidate preparation after Layer 2 sector/basket prioritization; ETF universe comes from `layer_01_02_market_context_etf_universe.csv`.
 - `source_03_target_state` — SQL-only target-local bar/liquidity input table for anonymous target state-vector construction.
-- `source_04_event_overlay` — SQL-only EventOverlayModel overview table; one row per event, with details behind references.
-- `source_04_event_overlay/equity_abnormal_activity` — nested event-overlay detector for equity/ETF abnormal activity evidence rows.
+- `source_04_event_overlay` — SQL-only EventRiskGovernor overview table; one row per event, with details behind references.
+- `source_04_event_overlay/equity_abnormal_activity` — nested event-risk detector for equity/ETF abnormal activity evidence rows.
 - `source_05_option_expression` — SQL-only contract-level ThetaData option-chain snapshot table for OptionExpressionModel; one row per visible contract per entry/exit snapshot.
 - `source_06_position_execution` — SQL-only selected option contract time-series source for OptionExpressionModel replay/evaluation; covers entry through exit plus one hour and emits market data only.
 

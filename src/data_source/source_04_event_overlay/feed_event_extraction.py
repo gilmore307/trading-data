@@ -2,7 +2,7 @@
 
 This module intentionally performs no provider calls. It converts already-saved
 feed artifacts into the compact ``source_04_event_overlay`` overview contract
-used by Layer 4. Raw article/filing/calendar detail remains behind references.
+used by the Layer 8 event-risk governor. Raw article/filing/calendar detail remains behind references.
 """
 
 from __future__ import annotations
@@ -373,7 +373,7 @@ def _detect_artifact_kind(path: Path, rows: Sequence[Mapping[str, str]]) -> str:
 
 
 def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict[str, Any]]:
-    """Extract canonical Layer 4 event rows from saved feed artifacts."""
+    """Extract canonical Layer 8 event-risk rows from saved feed artifacts."""
 
     events: list[dict[str, Any]] = []
     for raw_path in paths:

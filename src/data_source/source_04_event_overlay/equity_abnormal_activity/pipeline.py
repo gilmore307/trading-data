@@ -1,7 +1,7 @@
 """Derived equity abnormal activity event detector.
 
-This EventOverlayModel detector projects observable stock/ETF bars and optional liquidity bars into
-compact event-style rows for EventOverlayModel. It does not acquire market data;
+This EventRiskGovernor detector projects observable stock/ETF bars and optional liquidity bars into
+compact event-style rows for EventRiskGovernor. It does not acquire market data;
 Alpaca data feeds own bar/liquidity acquisition.
 """
 
@@ -68,7 +68,7 @@ class SourcePayload:
 
 
 class EquityAbnormalActivityError(ValueError):
-    """Raised for invalid EventOverlayModel equity abnormal activity detector tasks."""
+    """Raised for invalid EventRiskGovernor equity abnormal activity detector tasks."""
 
 
 def _now_utc() -> str:

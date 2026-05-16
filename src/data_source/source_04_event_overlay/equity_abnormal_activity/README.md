@@ -1,6 +1,6 @@
 # source_04_event_overlay/equity_abnormal_activity
 
-Derived event detector inside the `source_04_event_overlay` EventOverlayModel layer. This is not a standalone manager-facing numbered data source.
+Derived event detector inside the `source_04_event_overlay` EventRiskGovernor layer. This is not a standalone manager-facing numbered data source.
 
 It converts saved equity/ETF bars, optional benchmark bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows that Layer 04 can reference as prior signals.
 

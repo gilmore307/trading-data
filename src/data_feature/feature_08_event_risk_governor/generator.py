@@ -1,8 +1,4 @@
-"""Deterministic feature builder for legacy event-overlay source rows.
-
-Conceptually these rows now feed Layer 8 EventRiskGovernor inputs; the physical
-`feature_04_event_overlay` name remains legacy until a dedicated migration.
-"""
+"""Deterministic feature builder for Layer 8 EventRiskGovernor source rows."""
 
 from __future__ import annotations
 
@@ -68,11 +64,11 @@ def _quality(row: Mapping[str, Any]) -> dict[str, Any]:
         "missing_required_fields": missing,
         "has_required_fields": not missing,
         "point_in_time_clock": "available_time",
-        "source_table": "source_04_event_overlay",
+        "source_table": "source_08_event_risk_governor",
     }
 
 
-def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "feature_04_event_overlay") -> list[dict[str, Any]]:
+def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "feature_08_event_risk_governor") -> list[dict[str, Any]]:
     """Return deterministic event-risk evidence feature rows from source overview rows."""
 
     output: list[dict[str, Any]] = []
@@ -84,7 +80,7 @@ def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "feature_0
         output.append(
             {
                 "run_id": run_id,
-                "source_run_ref": row.get("source_run_ref") or row.get("run_id") or "source_04_event_overlay",
+                "source_run_ref": row.get("source_run_ref") or row.get("run_id") or "source_08_event_risk_governor",
                 "event_id": str(event_id),
                 "canonical_event_id": str(row.get("canonical_event_id") or event_id),
                 "event_time": row.get("event_time"),

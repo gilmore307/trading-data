@@ -1,7 +1,7 @@
 """Canonical event extraction from reviewed local feed artifacts.
 
 This module intentionally performs no provider calls. It converts already-saved
-feed artifacts into the compact ``source_04_event_overlay`` overview contract
+feed artifacts into the compact ``source_08_event_risk_governor`` overview contract
 used by the Layer 8 event-risk governor. Raw article/filing/calendar detail remains behind references.
 """
 

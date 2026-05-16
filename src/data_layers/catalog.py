@@ -122,7 +122,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         doc_path="docs/08_layer_07_trading_guidance.md",
         owns_dedicated_data_surface=True,
         source_packages=("data_source.source_05_option_expression", "data_source.source_06_position_execution"),
-        feature_packages=("data_feature.feature_08_option_expression",),
+        feature_packages=("data_feature.feature_07_option_expression",),
         feed_packages=(
             "data_feed.09_feed_thetadata_option_selection_snapshot",
             "data_feed.10_feed_thetadata_option_primary_tracking",
@@ -131,7 +131,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         cli_commands=(
             "trading-data-source-05-option-expression",
             "trading-data-source-06-position-execution",
-            "trading-data-feature-08-option-expression",
+            "trading-data-feature-07-option-expression",
             "trading-data-09-feed-thetadata-option-selection-snapshot",
             "trading-data-10-feed-thetadata-option-primary-tracking",
             "trading-data-11-feed-thetadata-option-event-timeline",
@@ -150,9 +150,9 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         model_name="EventRiskGovernor / EventIntelligenceOverlay",
         doc_path="docs/09_layer_08_event_risk_governor.md",
         owns_dedicated_data_surface=True,
-        source_packages=("data_source.source_04_event_overlay",),
-        feature_packages=("data_feature.feature_04_event_overlay",),
-        cli_commands=("trading-data-source-04-event-overlay", "trading-data-feature-04-event-overlay"),
+        source_packages=("data_source.source_08_event_risk_governor",),
+        feature_packages=("data_feature.feature_08_event_risk_governor",),
+        cli_commands=("trading-data-source-08-event-risk-governor", "trading-data-feature-08-event-risk-governor"),
         test_paths=(
             "tests/data_source/test_numbered_data_sources.py",
             "tests/data_source/test_equity_abnormal_activity_pipeline.py",

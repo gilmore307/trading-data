@@ -24,7 +24,7 @@ Layer 5 may consume:
 - cost/risk-budget context;
 - model-side projection/evaluation artifacts.
 
-`trading-data` may provide upstream observed market/source features used before this layer, but it does not create `feature_06_position_projection` or produce the `position_projection_vector`.
+`trading-data` may provide upstream observed market/source features used before this layer, but it does not create `feature_05_position_projection` or produce the `position_projection_vector`.
 
 ## Stage flow
 

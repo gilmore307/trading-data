@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. Layer 7 owns base trading guidance; `trading-data` owns option-expression source inputs used by the option-expression subset of Layer 7.
 
-Current physical feature/source names remain `source_05_option_expression`, `feature_08_option_expression`, and `source_06_position_execution` until a dedicated implementation migration renames surfaces. The conceptual layer is now Layer 7.
+Current feature/source names are `source_05_option_expression`, `feature_07_option_expression`, and `source_06_position_execution`. The source numbers are accepted data-source identifiers; the conceptual model boundary is Layer 7.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
@@ -13,7 +13,7 @@ Current physical feature/source names remain `source_05_option_expression`, `fea
 
 ```text
 trading_data.source_05_option_expression
-trading_data.feature_08_option_expression
+trading_data.feature_07_option_expression
 trading_data.source_06_position_execution
 ```
 
@@ -30,7 +30,7 @@ Layer 7 data covers visible option-chain evidence, deterministic option-candidat
 
 `source_05_option_expression` writes one row per visible contract at an explicit entry/exit snapshot time. It captures quote, spread, IV, first-order Greeks, and contract identity where provider data is available.
 
-`feature_08_option_expression` derives source-only per-contract candidate features from accepted snapshot rows: moneyness, spread/liquidity, IV, Greeks availability, and quality diagnostics. It prepares model inputs without ranking contracts or choosing an expression.
+`feature_07_option_expression` derives source-only per-contract candidate features from accepted snapshot rows: moneyness, spread/liquidity, IV, Greeks availability, and quality diagnostics. It prepares model inputs without ranking contracts or choosing an expression.
 
 `source_06_position_execution` writes selected option contract bars from entry time through exit time plus one hour. It emits market data only.
 
@@ -39,7 +39,7 @@ Layer 7 data covers visible option-chain evidence, deterministic option-candidat
 ```text
 ThetaData option feeds
   -> source_05_option_expression option-chain snapshot
-  -> feature_08_option_expression
+  -> feature_07_option_expression
   -> trading-model TradingGuidanceModel / OptionExpressionModel
   -> selected contract handoff
   -> source_06_position_execution selected-contract tracking

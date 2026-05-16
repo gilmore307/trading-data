@@ -24,7 +24,7 @@ Layer 6 may consume:
 - reviewed model-side evaluation artifacts;
 - action-policy context owned outside `trading-data`.
 
-`trading-data` supplies only upstream observed data and deterministic features from owned source layers. It does not create `feature_07_underlying_action` or choose final underlying actions.
+`trading-data` supplies only upstream observed data and deterministic features from owned source layers. It does not create `feature_06_underlying_action` or choose final underlying actions.
 
 ## Stage flow
 

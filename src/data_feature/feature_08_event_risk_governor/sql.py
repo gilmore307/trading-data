@@ -1,4 +1,4 @@
-"""SQL wrapper for feature_04_event_overlay production."""
+"""SQL wrapper for feature_08_event_risk_governor production."""
 
 from __future__ import annotations
 
@@ -120,12 +120,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url")
     parser.add_argument("--source-schema", default="trading_data")
-    parser.add_argument("--source-table", default="source_04_event_overlay")
+    parser.add_argument("--source-table", default="source_08_event_risk_governor")
     parser.add_argument("--target-schema", default="trading_data")
-    parser.add_argument("--target-table", default="feature_04_event_overlay")
+    parser.add_argument("--target-table", default="feature_08_event_risk_governor")
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
-    parser.add_argument("--run-id", default="feature_04_event_overlay_sql")
+    parser.add_argument("--run-id", default="feature_08_event_risk_governor_sql")
     args = parser.parse_args(argv)
     count = generate_sql(database_url=_database_url(args.database_url), source_schema=args.source_schema, source_table=args.source_table, target_schema=args.target_schema, target_table=args.target_table, source_start=args.source_start, source_end=args.source_end, run_id=args.run_id)
     print(f"generated {count} rows into {args.target_schema}.{args.target_table}")

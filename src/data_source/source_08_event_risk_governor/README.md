@@ -1,4 +1,4 @@
-# source_04_event_overlay
+# source_08_event_risk_governor
 
 Manager-facing EventRiskGovernor data source.
 
@@ -12,7 +12,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `source_04_event_overlay`
+- `source`: `source_08_event_risk_governor`
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date
@@ -53,7 +53,7 @@ Official SEC/exchange/company/regulatory disclosures outrank derivative news cov
 Final saved output is SQL-only:
 
 ```text
-source_04_event_overlay
+source_08_event_risk_governor
 ```
 
 Natural key:

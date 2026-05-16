@@ -38,7 +38,7 @@ accepted Layer 1-3 outputs and references
 
 ## Non-ownership
 
-`trading-data` must not create a symmetry-only `source_05_alpha_confidence` or `feature_05_alpha_confidence` just because Layer 4 exists. It also must not emit:
+`trading-data` must not create a symmetry-only `source_04_alpha_confidence` or `feature_04_alpha_confidence` just because Layer 4 exists. It also must not emit:
 
 - alpha confidence scores;
 - return labels;

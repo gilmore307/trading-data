@@ -1,4 +1,4 @@
-"""CLI entrypoint for feature_04_event_overlay SQL generation."""
+"""CLI entrypoint for feature_07_option_expression SQL generation."""
 from __future__ import annotations
 
 from .sql import main

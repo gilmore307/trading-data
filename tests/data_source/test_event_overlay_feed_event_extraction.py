@@ -8,9 +8,9 @@ from importlib import import_module
 
 
 extract_events_from_artifact_paths = import_module(
-    "data_source.source_04_event_overlay.feed_event_extraction"
+    "data_source.source_08_event_risk_governor.feed_event_extraction"
 ).extract_events_from_artifact_paths
-source_pipeline = import_module("data_source.source_04_event_overlay.pipeline")
+source_pipeline = import_module("data_source.source_08_event_risk_governor.pipeline")
 
 
 class FakeSqlWriter:
@@ -96,15 +96,15 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writeheader()
                 writer.writerow({"id": "n1", "timeline_headline": "Apple files earnings story", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Article", "event_link_url": "https://example.com/aapl"})
             task_key = {
-                "task_id": "source_04_event_overlay_artifact_task",
-                "source": "source_04_event_overlay",
+                "task_id": "source_08_event_risk_governor_artifact_task",
+                "source": "source_08_event_risk_governor",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(alpaca)]},
                 "output_root": str(tmp / "task"),
             }
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_04_event_overlay"], 1)
+            self.assertEqual(result.row_counts["source_08_event_risk_governor"], 1)
             row = writer.calls[0]["rows"][0]
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_name"], "03_feed_alpaca_news")
@@ -119,15 +119,15 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"event_time": "2024-01-20T08:30:00-05:00", "country": "United States", "event": "Core Inflation Rate YoY", "actual": "2.1%", "importance": "3", "source_url": "https://tradingeconomics.com/united-states/calendar"})
                 writer.writerow({"event_time": "2024-01-20T08:30:00-05:00", "country": "United States", "event": "Inflation Rate YoY", "actual": "0.7%", "importance": "3", "source_url": "https://tradingeconomics.com/united-states/calendar"})
             task_key = {
-                "task_id": "source_04_event_overlay_same_time_macro_task",
-                "source": "source_04_event_overlay",
+                "task_id": "source_08_event_risk_governor_same_time_macro_task",
+                "source": "source_08_event_risk_governor",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(te)]},
                 "output_root": str(tmp / "task"),
             }
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_04_event_overlay"], 2)
+            self.assertEqual(result.row_counts["source_08_event_risk_governor"], 2)
             rows = writer.calls[0]["rows"]
             self.assertEqual({row["title"] for row in rows}, {"Core Inflation Rate YoY", "Inflation Rate YoY"})
             self.assertEqual(len({row["event_id"] for row in rows}), 2)
@@ -142,15 +142,15 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"event_time": "Thursday May 14 2026", "country": "United States", "event": "Current-page row", "importance": "3", "source_url": "https://tradingeconomics.com/united-states/calendar"})
                 writer.writerow({"event_time": "2024-01-05T08:30:00-05:00", "country": "United States", "event": "Non Farm Payrolls", "actual": "216K", "importance": "3", "source_url": "https://tradingeconomics.com/united-states/calendar"})
             task_key = {
-                "task_id": "source_04_event_overlay_artifact_task",
-                "source": "source_04_event_overlay",
+                "task_id": "source_08_event_risk_governor_artifact_task",
+                "source": "source_08_event_risk_governor",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(te)]},
                 "output_root": str(tmp / "task"),
             }
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_04_event_overlay"], 1)
+            self.assertEqual(result.row_counts["source_08_event_risk_governor"], 1)
             self.assertIn("out_of_window_event_rows_skipped=1", result.warnings)
             self.assertEqual(writer.calls[0]["rows"][0]["event_category_type"], "macro_data")
 

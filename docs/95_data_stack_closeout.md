@@ -21,7 +21,7 @@ Date: 2026-05-08
 | Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
 | Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
 | Layer 7 data | `source_05_option_expression`, `feature_07_option_expression`, `source_06_position_execution` | accepted trading-guidance / option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries; source numbers are accepted source identifiers, not model-layer numbers |
-| Layer 8 data | `source_08_event_risk_governor`, `feature_08_event_risk_governor` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use; physical names remain legacy until migration |
+| Layer 8 data | `source_08_event_risk_governor`, `feature_08_event_risk_governor` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 

@@ -84,6 +84,35 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_submission"], 1)
 
+    def test_filing_document_fetch_saves_metadata_and_text_artifact(self):
+        payload = "<html><body>Company reports earnings and updates outlook.</body></html>"
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "08_feed_sec_company_financials_task_doc",
+                "feed": "08_feed_sec_company_financials",
+                "params": {
+                    "data_kind": "sec_filing_document",
+                    "cik": "320193",
+                    "accession_number": "0000320193-24-000001",
+                    "document_name": "aapl-20240101.htm",
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            client = FakeSecClient(payload)
+            result = run(task_key, run_id="run", client=client, sec_user_agent="test")
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["sec_filing_document"], 1)
+            self.assertIn("/Archives/edgar/data/320193/000032019324000001/aapl-20240101.htm", client.requests[0][0])
+            saved_dir = Path(task_key["output_root"]) / "runs" / "run" / "saved"
+            with (saved_dir / "sec_filing_document.csv").open(newline="", encoding="utf-8") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["accession_number"], "0000320193-24-000001")
+            self.assertEqual(row["document_name"], "aapl-20240101.htm")
+            self.assertTrue(row["text_sha256"])
+            text_path = Path(row["document_text_path"])
+            self.assertTrue(text_path.exists())
+            self.assertIn("updates outlook", text_path.read_text(encoding="utf-8"))
+
     def test_bad_kind_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "08_feed_sec_company_financials_task_bad", "feed": "08_feed_sec_company_financials", "params": {"data_kind": "bad", "cik": "320193"}, "output_root": str(Path(tmp) / "task")}

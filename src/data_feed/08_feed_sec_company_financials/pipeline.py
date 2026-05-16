@@ -7,6 +7,7 @@ Raw SEC responses are not persisted by default because companyfacts can be large
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -19,12 +20,13 @@ from feed_availability.sanitize import sanitize_url, sanitize_value
 
 FEED = "08_feed_sec_company_financials"
 DEFAULT_TIMEOUT_SECONDS = 20
-SUPPORTED_DATA_KINDS = {"sec_submission", "sec_company_fact", "sec_company_concept", "sec_xbrl_frame"}
+SUPPORTED_DATA_KINDS = {"sec_submission", "sec_company_fact", "sec_company_concept", "sec_xbrl_frame", "sec_filing_document"}
 FIELD_ORDER = {
     "sec_submission": ["cik", "company_name", "accession_number", "filing_date", "report_date", "form", "primary_document", "primary_doc_description"],
     "sec_company_fact": ["cik", "entity_name", "taxonomy", "tag", "label", "description", "unit", "fy", "fp", "form", "filed", "frame", "end", "value", "accession_number"],
     "sec_company_concept": ["cik", "entity_name", "taxonomy", "tag", "label", "description", "unit", "fy", "fp", "form", "filed", "frame", "end", "value", "accession_number"],
     "sec_xbrl_frame": ["taxonomy", "tag", "unit", "frame", "cik", "entity_name", "loc", "end", "value", "accession_number"],
+    "sec_filing_document": ["cik", "accession_number", "document_name", "document_url", "content_type", "http_status", "fetched_at_utc", "text_length", "text_sha256", "text_excerpt", "document_text_path"],
 }
 
 
@@ -115,19 +117,33 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, sec_user_ag
         tag = str(_required(params, "tag"))
         endpoint = f"https://data.sec.gov/api/xbrl/companyconcept/CIK{cik}/{taxonomy}/{tag}.json"
         request = {"data_kind": data_kind, "cik": cik, "taxonomy": taxonomy, "tag": tag}
-    else:
+    elif data_kind == "sec_xbrl_frame":
         taxonomy = str(params.get("taxonomy") or "us-gaap")
         tag = str(_required(params, "tag"))
         unit = str(params.get("unit") or "USD")
         frame = str(_required(params, "frame"))
         endpoint = f"https://data.sec.gov/api/xbrl/frames/{taxonomy}/{tag}/{unit}/{frame}.json"
         request = {"data_kind": data_kind, "taxonomy": taxonomy, "tag": tag, "unit": unit, "frame": frame}
+    else:
+        accession_number = str(_required(params, "accession_number"))
+        document_name = str(_required(params, "document_name"))
+        accession_path = accession_number.replace("-", "")
+        endpoint = f"https://www.sec.gov/Archives/edgar/data/{int(cik or '0')}/{accession_path}/{document_name}"
+        request = {"data_kind": data_kind, "cik": cik, "accession_number": accession_number, "document_name": document_name}
 
     result = client.get(endpoint, headers=headers)
-    payload = _json_response(result)
+    if data_kind == "sec_filing_document":
+        if result.status is None:
+            raise SecCompanyFinancialsError(f"request failed before HTTP response: {result.error_type}: {result.error_message}")
+        if result.status < 200 or result.status >= 300:
+            raise SecCompanyFinancialsError(f"request returned HTTP {result.status}: {result.error_message or result.text()[:240]}")
+        payload = {"text": result.text(), "content_type": result.headers.get("content-type") or result.headers.get("Content-Type")}
+    else:
+        payload = _json_response(result)
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = context.run_dir / "request_manifest.json"
-    manifest_path.write_text(json.dumps({"endpoint": sanitize_url(result.url), "http_status": result.status, "request": sanitize_value(request), "fetched_at_utc": _now_utc(), "raw_persistence": "not_persisted_by_default", "user_agent_present": bool(sec_user_agent)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    raw_policy = "saved_text_artifact" if data_kind == "sec_filing_document" else "not_persisted_by_default"
+    manifest_path.write_text(json.dumps({"endpoint": sanitize_url(result.url), "http_status": result.status, "request": sanitize_value(request), "fetched_at_utc": _now_utc(), "raw_persistence": raw_policy, "user_agent_present": bool(sec_user_agent)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(manifest_path)], {"raw_sec_payloads": 1}, details=request), FetchedSecPayload(data_kind, cik, result.url, payload, result.status, request)
 
 
@@ -209,6 +225,25 @@ def normalize_rows(fetched: FetchedSecPayload, *, params: Mapping[str, Any] | No
             if isinstance(item, Mapping):
                 rows.append({"taxonomy": fetched.request.get("taxonomy"), "tag": fetched.request.get("tag"), "unit": fetched.request.get("unit"), "frame": fetched.request.get("frame"), "cik": item.get("cik"), "entity_name": item.get("entityName"), "loc": item.get("loc"), "end": item.get("end"), "value": item.get("val"), "accession_number": item.get("accn")})
         return rows
+    if data_kind == "sec_filing_document":
+        if not isinstance(payload, Mapping):
+            raise SecCompanyFinancialsError("SEC filing document response was not available")
+        text = str(payload.get("text") or "")
+        if not text:
+            raise SecCompanyFinancialsError("SEC filing document response produced empty text")
+        return [{
+            "cik": fetched.cik,
+            "accession_number": fetched.request.get("accession_number"),
+            "document_name": fetched.request.get("document_name"),
+            "document_url": fetched.endpoint,
+            "content_type": payload.get("content_type"),
+            "http_status": fetched.http_status,
+            "fetched_at_utc": _now_utc(),
+            "text_length": len(text),
+            "text_sha256": hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest(),
+            "text_excerpt": text[:1000],
+            "document_text": text,
+        }]
     raise AssertionError(data_kind)
 
 
@@ -218,6 +253,12 @@ def clean(context: FeedContext, fetched: FetchedSecPayload) -> StepResult:
     if not rows:
         raise SecCompanyFinancialsError(f"{fetched.data_kind} response produced zero normalized rows")
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
+    if fetched.data_kind == "sec_filing_document":
+        for index, row in enumerate(rows, start=1):
+            text = str(row.pop("document_text", ""))
+            text_path = context.cleaned_dir / ("sec_filing_document_text.txt" if len(rows) == 1 else f"sec_filing_document_text_{index}.txt")
+            text_path.write_text(text, encoding="utf-8")
+            row["document_text_path"] = str(text_path)
     jsonl_path = context.cleaned_dir / f"{fetched.data_kind}.jsonl"
     with jsonl_path.open("w", encoding="utf-8") as handle:
         for row in rows:
@@ -231,12 +272,21 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     data_kind = next(iter(clean_result.row_counts))
     rows = [json.loads(line) for line in (context.cleaned_dir / f"{data_kind}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     context.saved_dir.mkdir(parents=True, exist_ok=True)
+    references: list[str] = []
+    if data_kind == "sec_filing_document":
+        for index, row in enumerate(rows, start=1):
+            source_text_path = Path(str(row.get("document_text_path") or ""))
+            saved_text_path = context.saved_dir / ("sec_filing_document_text.txt" if len(rows) == 1 else f"sec_filing_document_text_{index}.txt")
+            if source_text_path.exists():
+                saved_text_path.write_text(source_text_path.read_text(encoding="utf-8"), encoding="utf-8")
+                row["document_text_path"] = str(saved_text_path)
+                references.append(str(saved_text_path))
     path = context.saved_dir / f"{data_kind}.csv"
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=FIELD_ORDER[data_kind], extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
-    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELD_ORDER[data_kind]})
+    return StepResult("succeeded", [str(path), *references], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELD_ORDER[data_kind]})
 
 
 def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:

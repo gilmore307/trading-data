@@ -136,12 +136,12 @@ Boundary:
 `event_activity_bridge` is model-owned, but `trading-data` may provide point-in-time evidence refs that support it. Current model evidence shows raw option abnormality plus raw news proximity is too broad for promotion; future bridge work must route through reviewed event-family scouting packets rather than headline-only family guesses.
 
 - event evidence refs: news, SEC/company disclosure, macro/calendar, official data, or hard-to-standardize narrative artifacts;
-- price activity refs: compact residual/price-action evidence, not duplicated bar features;
-- liquidity activity refs: spread/depth/quote-quality/halt-pause evidence;
-- option activity refs: IV/skew/term-structure/volume/OI/liquidity evidence when not already consumed as base option-expression inputs;
+- price activity refs: compact residual/price-action evidence, not duplicated bar features, and only with an upstream non-overlap/residual audit trail;
+- liquidity activity refs: spread/depth/quote-quality/halt-pause evidence that is not already represented by upstream liquidity/context features for the same decision context;
+- option activity refs: IV/skew/term-structure/volume/OI/liquidity evidence when not already consumed as base option-expression inputs, or when explicitly marked residual after that upstream path;
 - prediction-market activity refs: future Polymarket-style odds/volume/liquidity refs, when that source boundary is accepted.
 
-The bridge is useful when raw news is too ambiguous to standardize confidently but market/odds activity provides stable lead-lag or confirmation/divergence evidence. `trading-data` preserves refs and clocks; `trading-model` owns bridge scoring and interpretation.
+The bridge is useful when raw news is too ambiguous to standardize confidently but market/odds activity provides stable lead-lag or confirmation/divergence evidence. `trading-data` preserves refs, clocks, and non-overlap/provenance evidence; `trading-model` owns bridge scoring and interpretation.
 
 ## Current Guardrails
 

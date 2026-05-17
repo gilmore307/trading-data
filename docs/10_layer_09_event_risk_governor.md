@@ -80,6 +80,8 @@ option_activity_ref
 prediction_market_activity_ref
 ```
 
+Startup abnormality scope is limited to compact point-in-time detector refs for: false breakout/breakdown, liquidity sweep high/low, bull/bear trap, residual board/tape disturbance after upstream conditioning, spread/depth/quote-quality/halt or one-sided liquidity disruption, and reviewed option IV/skew/term-structure/volume/OI/liquidity disturbance. Raw bar, target-state, liquidity-feature, option-expression, Layer 8 guidance, strategy-failure, and post-event realized-label fields are excluded from activity evidence unless a later reviewed artifact proves residual/non-overlap status.
+
 `trading-data` owns source refs, windows, availability clocks, and compact detector evidence. It does not decide final bridge scores, prediction-market probabilities, event-risk interventions, or trading actions.
 
 Bridge evidence must preserve a non-overlap audit trail. Price, liquidity, and option activity refs are eligible for model-side scoring only when the artifact can show that the activity leg is not already represented in upstream market/sector/target-state features, liquidity features, option-expression inputs, or Layer 8 trading-guidance payloads for the same decision context. If overlap is unknown, `trading-data` should keep the ref as provenance/review evidence and let `trading-model` mark the bridge `review_required_overlap_unknown` rather than treating it as incremental event evidence.

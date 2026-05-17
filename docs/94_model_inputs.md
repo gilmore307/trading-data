@@ -133,7 +133,7 @@ Boundary:
 
 ### `event_activity_bridge` evidence refs
 
-`event_activity_bridge` is model-owned, but `trading-data` may provide point-in-time evidence refs that support it. Current model evidence shows raw option abnormality plus raw news proximity is too broad for promotion; future bridge work must route through reviewed event-family scouting packets rather than headline-only family guesses.
+`event_activity_bridge` is model-owned, but `trading-data` may provide point-in-time evidence refs that support it. Current model evidence shows raw option abnormality plus raw news proximity is too broad for promotion; future bridge work must route through reviewed event-family scouting packets rather than headline-only family guesses. Startup abnormality scope is restricted to compact non-overlapping/residual detector refs; duplicated upstream feature payloads, strategy-failure labels, and post-event realized labels are excluded.
 
 - event evidence refs: news, SEC/company disclosure, macro/calendar, official data, or hard-to-standardize narrative artifacts;
 - price activity refs: compact residual/price-action evidence, not duplicated bar features, and only with an upstream non-overlap/residual audit trail;

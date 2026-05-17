@@ -1,4 +1,4 @@
-# Layer 06 — Underlying Action Data Boundary
+# Layer 07 — Underlying Action Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. `trading-data` owns no dedicated Layer 6 source/feature by default unless a real point-in-time observed data input is accepted. Direct-underlying action thesis belongs to `trading-model` and control-plane policy.
@@ -7,7 +7,7 @@ Status: active architecture revision. `trading-data` owns no dedicated Layer 6 s
 
 `trading-data` does not own a dedicated Layer 6 source or feature package. This is intentional.
 
-Layer 6 is `UnderlyingActionModel` in `trading-model`. It evaluates offline action context after upstream model states and position projection are available. It is not a provider acquisition or source-normalization layer.
+Layer 7 is `UnderlyingActionModel` in `trading-model`. It evaluates offline action context after upstream model states and position projection are available. It is not a provider acquisition or source-normalization layer.
 
 ## Owned artifact
 
@@ -24,7 +24,7 @@ Layer 6 may consume:
 - reviewed model-side evaluation artifacts;
 - action-policy context owned outside `trading-data`.
 
-`trading-data` supplies only upstream observed data and deterministic features from owned source layers. It does not create `feature_06_underlying_action` or choose final underlying actions.
+`trading-data` supplies only upstream observed data and deterministic features from owned source layers. It does not create `feature_07_underlying_action` or choose final underlying actions.
 
 ## Stage flow
 

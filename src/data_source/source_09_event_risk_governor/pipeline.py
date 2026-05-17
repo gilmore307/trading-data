@@ -14,9 +14,9 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 from .feed_event_extraction import extract_events_from_artifact_paths
 
-SOURCE = "source_08_event_risk_governor"
+SOURCE = "source_09_event_risk_governor"
 MODEL_ID = "event_risk_governor"
-OUTPUT_TABLE = "source_08_event_risk_governor"
+OUTPUT_TABLE = "source_09_event_risk_governor"
 ET = ZoneInfo("America/New_York")
 INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
 EVENT_CATEGORIES = {

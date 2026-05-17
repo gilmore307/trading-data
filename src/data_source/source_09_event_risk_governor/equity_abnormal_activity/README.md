@@ -1,6 +1,6 @@
-# source_08_event_risk_governor/equity_abnormal_activity
+# source_09_event_risk_governor/equity_abnormal_activity
 
-Derived event detector inside the `source_08_event_risk_governor` EventRiskGovernor layer. This is not a standalone manager-facing numbered data source.
+Derived event detector inside the `source_09_event_risk_governor` Layer 9 EventRiskGovernor surface. This is not a standalone manager-facing numbered data source.
 
 It converts saved equity/ETF bars, optional benchmark bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows that Layer 04 can reference as prior signals.
 

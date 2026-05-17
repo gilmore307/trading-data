@@ -9,11 +9,11 @@ This directory is the documentation spine for `trading-data`.
 - `02_layer_01_market_regime.md` — Layer 1 data workflow and acceptance gates.
 - `03_layer_02_sector_context.md` — Layer 2 feature workflow and acceptance gates.
 - `04_layer_03_target_state_vector.md` — Layer 3 target-state data workflow and gates.
-- `05_layer_04_alpha_confidence.md` — Layer 4 no-new-source/no-feature boundary.
-- `06_layer_05_position_projection.md` — Layer 5 no-new-source/no-feature boundary.
-- `07_layer_06_underlying_action.md` — Layer 6 no-new-source/no-feature boundary.
+- `05_layer_05_alpha_confidence.md` — Layer 4 no-new-source/no-feature boundary.
+- `06_layer_06_position_projection.md` — Layer 5 no-new-source/no-feature boundary.
+- `07_layer_07_underlying_action.md` — Layer 6 no-new-source/no-feature boundary.
 - `08_layer_07_trading_guidance.md` — Layer 7 trading-guidance / option-expression data boundary.
-- `09_layer_08_event_risk_governor.md` — Layer 8 event-risk-governor data boundary.
+- `09_layer_09_event_risk_governor.md` — Layer 8 event-risk-governor data boundary.
 - `80_task.md` — active queue and accepted work summary.
 - `81_decision.md` — ratified decision history.
 - `82_memory.md` — durable local notes that do not fit narrower docs.

@@ -1,36 +1,36 @@
-# Layer 08 — Event Risk Governor Data Boundary
+# Layer 09 — Event Risk Governor Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. Layer 8 owns `EventRiskGovernor / EventIntelligenceOverlay` event intelligence / event-risk intervention. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features, not event interpretation, risk policy, execution, or broker mutation.
+Status: active architecture revision. Layer 9 owns `EventRiskGovernor / EventIntelligenceOverlay` event intelligence / event-risk intervention. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features, not event interpretation, risk policy, execution, or broker mutation.
 
-Current physical source/feature names remain `source_08_event_risk_governor` and `feature_08_event_risk_governor` until a dedicated implementation migration renames surfaces. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation_v1` and event-risk governor use.
+Current physical source/feature names remain `source_09_event_risk_governor` and `feature_09_event_risk_governor` until a dedicated implementation migration renames surfaces. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation_v1` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
-`trading-data` owns the point-in-time event evidence index for Layer 8. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
+`trading-data` owns the point-in-time event evidence index for Layer 9. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
 
 ## Owned artifacts
 
 ```text
-trading_data.source_08_event_risk_governor
-trading_data.feature_08_event_risk_governor
+trading_data.source_09_event_risk_governor
+trading_data.feature_09_event_risk_governor
 ```
 
 Nested event-overlay data-source helpers may produce source evidence before it is written into the overview table, for example:
 
 ```text
-src/data_source/source_08_event_risk_governor/equity_abnormal_activity/
+src/data_source/source_09_event_risk_governor/equity_abnormal_activity/
 ```
 
-`price_action` is an accepted Layer 8 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
+`price_action` is an accepted Layer 9 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
 
 ## Boundary
 
-Layer 8 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector`.
+Layer 9 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector`.
 
-`source_08_event_risk_governor` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
+`source_09_event_risk_governor` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
 
-`feature_08_event_risk_governor` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
+`feature_09_event_risk_governor` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
 
 `trading-model` builds `event_risk_intervention / event_context_vector` from the feature rows plus referenced artifacts and upstream context states.
 
@@ -101,8 +101,8 @@ This prevents price-derived abnormality from being validated against the same pr
 ```text
 trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
-  -> source_08_event_risk_governor
-  -> feature_08_event_risk_governor
+  -> source_09_event_risk_governor
+  -> feature_09_event_risk_governor
   -> trading-model EventRiskGovernor / EventRiskGovernor event_risk_intervention / event_context_vector construction
   -> evaluation/promotion review outside trading-data
 ```
@@ -121,7 +121,7 @@ trading-manager event/source request
 
 ## Acceptance notes
 
-Layer 8 data changes are acceptable when they:
+Layer 9 data changes are acceptable when they:
 
 - preserve point-in-time availability;
 - keep source evidence separate from model labels and alpha scores;

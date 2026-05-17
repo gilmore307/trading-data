@@ -12,9 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class LayerStructureCatalogTests(unittest.TestCase):
-    def test_catalog_covers_layers_one_through_eight(self) -> None:
-        self.assertEqual([contract.layer for contract in LAYER_CONTRACTS], list(range(1, 9)))
-        self.assertEqual(len({contract.slug for contract in LAYER_CONTRACTS}), 8)
+    def test_catalog_covers_layers_one_through_nine(self) -> None:
+        self.assertEqual([contract.layer for contract in LAYER_CONTRACTS], list(range(1, 10)))
+        self.assertEqual(len({contract.slug for contract in LAYER_CONTRACTS}), 9)
 
     def test_each_layer_has_a_top_level_doc(self) -> None:
         for contract in LAYER_CONTRACTS:

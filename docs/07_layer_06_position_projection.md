@@ -1,4 +1,4 @@
-# Layer 05 — Position Projection Data Boundary
+# Layer 06 — Position Projection Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. `trading-data` owns no dedicated Layer 5 source/feature by default; PositionProjectionModel belongs to `trading-model` / control-plane state boundaries.
@@ -7,7 +7,7 @@ Status: active architecture revision. `trading-data` owns no dedicated Layer 5 s
 
 `trading-data` does not own a dedicated Layer 5 source or feature package. This is intentional.
 
-Layer 5 is `PositionProjectionModel` in `trading-model`. It relates alpha confidence to current/pending position state, target exposure, costs, and risk-budget context. Those inputs are model/control-plane/execution-state concerns, not new historical provider acquisition owned by `trading-data`.
+Layer 6 is `PositionProjectionModel` in `trading-model`. It relates alpha confidence to current/pending position state, target exposure, costs, and risk-budget context. Those inputs are model/control-plane/execution-state concerns, not new historical provider acquisition owned by `trading-data`.
 
 ## Owned artifact
 

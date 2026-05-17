@@ -19,7 +19,7 @@ from typing import Any, Mapping
 from data_source.config import load_source_config
 from feed_availability.sanitize import sanitize_value
 
-SOURCE = "source_08_event_risk_governor.equity_abnormal_activity"
+SOURCE = "source_09_event_risk_governor.equity_abnormal_activity"
 FIELDS = [
     "event_id",
     "symbol",

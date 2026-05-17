@@ -161,13 +161,13 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_source_writes_one_row_per_event(self):
-        module = import_module("data_source.source_08_event_risk_governor.pipeline")
+        module = import_module("data_source.source_09_event_risk_governor.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "source_08_event_risk_governor_task_test",
-                "source": "source_08_event_risk_governor",
+                "task_id": "source_09_event_risk_governor_task_test",
+                "source": "source_09_event_risk_governor",
                 "params": {
-                    "start": "2026-04-24T09:30:00-04:00",
+                    "start": "2026-04-24T08:00:00-04:00",
                     "end": "2026-04-24T16:00:00-04:00",
                     "focus_sectors": ["semiconductor"],
                     "symbols": ["NVDA"],
@@ -226,7 +226,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                             "symbol": "NVDA",
                             "title": "NVDA false breakout detector event",
                             "summary": "Price-action detector flagged false_breakout;liquidity_sweep_high.",
-                            "source_name": "source_08_event_risk_governor.equity_abnormal_activity",
+                            "source_name": "source_09_event_risk_governor.equity_abnormal_activity",
                             "reference_type": "internal_artifact_path",
                             "reference": "storage/events/nvda_false_breakout.json",
                         },
@@ -237,9 +237,9 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_08_event_risk_governor"], 4)
+            self.assertEqual(result.row_counts["source_09_event_risk_governor"], 4)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "source_08_event_risk_governor")
+            self.assertEqual(call["table"], "source_09_event_risk_governor")
             self.assertEqual(call["key_columns"], ["event_id"])
             self.assertNotIn("run_id", call["columns"])
             self.assertIn("canonical_event_id", call["columns"])
@@ -262,7 +262,7 @@ class NumberedDataSourceTests(unittest.TestCase):
     def test_event_overlay_sql_ddl_includes_dedup_contract_fields(self):
         from storage.sql import _table_ddl
 
-        ddl = _table_ddl("source_08_event_risk_governor", '"trading_data"."source_08_event_risk_governor"')
+        ddl = _table_ddl("source_09_event_risk_governor", '"trading_data"."source_09_event_risk_governor"')
         self.assertIsNotNone(ddl)
         for column in {
             "canonical_event_id TEXT NOT NULL",

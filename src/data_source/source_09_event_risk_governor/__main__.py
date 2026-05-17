@@ -1,4 +1,4 @@
-"""CLI runner for the source_08_event_risk_governor data source."""
+"""CLI runner for the source_09_event_risk_governor data source."""
 from __future__ import annotations
 
 import argparse
@@ -9,8 +9,8 @@ from .pipeline import run
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m data_source.source_08_event_risk_governor")
-    parser.add_argument("task_key", type=Path, help="Path to a source_08_event_risk_governor task key JSON file")
+    parser = argparse.ArgumentParser(prog="python -m data_source.source_09_event_risk_governor")
+    parser.add_argument("task_key", type=Path, help="Path to a source_09_event_risk_governor task key JSON file")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
     result = run(json.loads(args.task_key.read_text(encoding="utf-8")), run_id=args.run_id)

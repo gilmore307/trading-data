@@ -1,4 +1,4 @@
-# feature_07_option_expression
+# feature_08_option_expression
 
 Deterministic legacy-named option-expression feature builder for the conceptual Layer 7 trading-guidance option-expression subset.
 
@@ -16,7 +16,7 @@ for the per-snapshot candidate feature table.
 ## Output table
 
 ```text
-trading_data.feature_07_option_expression
+trading_data.feature_08_option_expression
 ```
 
 Rows are keyed by `underlying + snapshot_time + snapshot_type + option_symbol`

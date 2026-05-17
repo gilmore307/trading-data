@@ -1,8 +1,8 @@
-# source_08_event_risk_governor
+# source_09_event_risk_governor
 
 Manager-facing EventRiskGovernor data source.
 
-Layer 04 supplies bounded, point-in-time event overview rows for the event-risk model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
+Layer 09 supplies bounded, point-in-time event overview rows for the event-risk governor model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
 
 This source is an event index, not the full `event_context_vector`. `EventRiskGovernor` combines these overview rows with point-in-time event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and scope/sensitivity metadata inside `trading-model`.
 
@@ -12,7 +12,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `source_08_event_risk_governor`
+- `source`: `source_09_event_risk_governor`
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date
@@ -53,7 +53,7 @@ Official SEC/exchange/company/regulatory disclosures outrank derivative news cov
 Final saved output is SQL-only:
 
 ```text
-source_08_event_risk_governor
+source_09_event_risk_governor
 ```
 
 Natural key:

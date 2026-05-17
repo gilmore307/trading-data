@@ -16,6 +16,23 @@ class FakeSqlWriter:
 
 
 class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
+    def test_holdings_window_is_half_open(self):
+        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+        task_key = {"task_id": "source_02_window", "source": "source_02_target_candidate_holdings", "params": {"start": "2026-04-24", "end": "2026-04-25"}, "output_root": "/tmp/source_02_window"}
+        context = module.build_context(task_key, "run")
+        universe = [{"symbol": "SMH", "issuer_name": "VanEck", "universe_type": "sector_observation_etf", "exposure_type": "industry_chain"}]
+        payload = module.SourcePayload(
+            universe_rows=universe,
+            raw_rows=[
+                {"etf_symbol": "SMH", "holding_symbol": "NVDA", "holding_name": "NVIDIA Corp", "asset_class": "Equity", "as_of_date": "2026-04-24"},
+                {"etf_symbol": "SMH", "holding_symbol": "AMD", "holding_name": "Advanced Micro Devices", "asset_class": "Equity", "as_of_date": "2026-04-25"},
+            ],
+        )
+        result, cleaned = module.clean(context, payload)
+        self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 1)
+        self.assertEqual(result.details["skipped"]["outside_window"], 1)
+        self.assertEqual(cleaned.rows[0]["holding_symbol"], "NVDA")
+
     def test_candidate_builder_holdings_source_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
             universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"

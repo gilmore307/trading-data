@@ -20,11 +20,12 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.config import manager_registry_csv, resolve_output_root
 from data_runtime.io import write_receipt_bundle
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
-DEFAULT_REGISTRY_CSV = Path("/root/projects/trading-manager/scripts/registry/current.csv")
+DEFAULT_REGISTRY_CSV = manager_registry_csv()
 FEED = "09_feed_thetadata_option_selection_snapshot"
 
 

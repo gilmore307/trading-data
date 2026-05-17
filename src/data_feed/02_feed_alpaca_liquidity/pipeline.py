@@ -15,6 +15,7 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 
 ET = ZoneInfo("America/New_York")
@@ -97,7 +98,7 @@ def _json_response(result: HttpResult) -> Any:
 def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     if task_key.get("feed") != "02_feed_alpaca_liquidity":
         raise AlpacaLiquidityError("task_key.feed must be 02_feed_alpaca_liquidity")
-    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', '02_feed_alpaca_liquidity_task')}"))
+    output_root = resolve_output_root(task_key, default_task_id="02_feed_alpaca_liquidity_task")
     run_dir = output_root / "runs" / run_id
     return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 

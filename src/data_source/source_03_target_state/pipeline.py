@@ -17,6 +17,7 @@ from typing import Any, Iterable, Mapping
 from zoneinfo import ZoneInfo
 
 from feed_availability.sanitize import sanitize_value
+from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
@@ -91,7 +92,7 @@ def _now_utc() -> str:
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
         raise TargetStateSourceError(f"task_key.source must be {SOURCE}")
-    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', SOURCE + '_task')}"))
+    output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
@@ -337,7 +338,7 @@ def _parse_optional_ts(value: Any) -> datetime | None:
 
 def _within_window(timestamp: str, start: datetime | None, end: datetime | None) -> bool:
     parsed = _parse_ts(timestamp)
-    return (start is None or parsed >= start) and (end is None or parsed <= end)
+    return (start is None or parsed >= start) and (end is None or parsed < end)
 
 
 def _number(value: Any) -> float | None:

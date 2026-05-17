@@ -19,6 +19,7 @@ from typing import Any, Mapping, Protocol
 
 from feed_availability.sanitize import sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 
 FEED = "05_feed_gdelt_news"
@@ -112,7 +113,7 @@ def _now_utc() -> str:
 def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     if task_key.get("feed") != FEED:
         raise GdeltNewsError(f"task_key.feed must be {FEED}")
-    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', FEED + '_task')}"))
+    output_root = resolve_output_root(task_key, default_task_id=f"{FEED}_task")
     run_dir = output_root / "runs" / run_id
     return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
@@ -258,7 +259,7 @@ def _default_client() -> QueryClient:
     try:
         from trading_bigquery import BigQueryClient
     except ModuleNotFoundError as exc:
-        raise GdeltNewsError("trading_bigquery helper is required; set PYTHONPATH to include /root/projects/trading-manager/src") from exc
+        raise GdeltNewsError("trading_bigquery helper is required; install or expose the trading-manager helper package on PYTHONPATH") from exc
     return BigQueryClient()
 
 

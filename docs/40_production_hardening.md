@@ -4,7 +4,7 @@ This document records the production-hardening contracts that can be defined bef
 
 ## Boundary
 
-`trading-data` owns provider/source acquisition and normalized source/feature outputs. `trading-manager` owns requests, scheduling, approvals, and control-plane policy. `trading-storage` owns durable manifests, artifact references, ready signals, retention, backup, and restore.
+`trading-data` owns provider/source acquisition and normalized source/feature outputs. `trading-manager` owns requests, scheduling, approvals, and control-plane policy. `trading-storage` owns durable manifests, artifact references, ready signals, retention, backup, and restore. Runtime path defaults live in `src/data_runtime/config.py` and can be overridden with environment variables such as `TRADING_DATA_STORAGE_ROOT`, `TRADING_MANAGER_REGISTRY_CSV`, and `TRADING_STORAGE_REPO_ROOT` instead of hard-coded host paths.
 
 Local ignored `storage/` outputs remain development evidence. Production handoff must use the storage-owned V1 contracts:
 
@@ -39,6 +39,7 @@ Data feed/source receipts use `src/data_runtime/io.py` for same-directory atomic
 
 Rules:
 
+- Bounded source/feed windows use `[start, end)` semantics unless a provider-specific endpoint contract explicitly says the provider request parameter itself is inclusive.
 - Secret values must never be logged, persisted, committed, or embedded in manifests.
 - Provider errors, HTTP statuses, rate-limit responses, and retry counts belong in sanitized manifest evidence.
 - `Retry-After` or provider-specific backoff headers must be respected.

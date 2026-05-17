@@ -13,6 +13,7 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.config import projects_root, resolve_output_root, shared_path
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
@@ -23,7 +24,7 @@ OUTPUT_TABLE = "source_01_market_regime"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]
 SQL_FIELDS = FIELDS
-MARKET_REGIME_ETF_UNIVERSE_PATH = Path("/root/projects/trading-storage/main/shared/layer_01_02_market_context_etf_universe.csv")
+MARKET_REGIME_ETF_UNIVERSE_PATH = shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")
 DEFAULT_LIMIT = 1000
 DEFAULT_MAX_PAGES = 10
 DEFAULT_TIMEOUT_SECONDS = 20
@@ -101,7 +102,7 @@ def _normalize_timeframe(value: str) -> str:
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
         raise MarketRegimeInputsError(f"task_key.source must be {SOURCE}")
-    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', SOURCE + '_task')}"))
+    output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     run_dir = output_root / "runs" / run_id
     return SourceContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
@@ -155,7 +156,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
     end = str(_required(params, "end"))
     universe_path = Path(str(params.get("market_regime_etf_universe_path") or params.get("market_etf_universe_path") or MARKET_REGIME_ETF_UNIVERSE_PATH))
     if not universe_path.is_absolute():
-        universe_path = Path("/root/projects/trading-manager") / universe_path
+        universe_path = projects_root() / "trading-manager" / universe_path
     universe_rows = _read_universe(universe_path)
     symbols = sorted({row["symbol"].upper() for row in universe_rows})
     universe_by_symbol = {row["symbol"].upper(): row for row in universe_rows}

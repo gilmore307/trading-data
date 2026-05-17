@@ -7,11 +7,13 @@ import json
 import os
 import re
 from pathlib import Path
+
+from data_runtime.config import shared_path
 from typing import Any, Mapping, Sequence
 
 DEFAULT_DB_URL_FILE = Path("/root/secrets/openclaw/database-url")
-DEFAULT_UNIVERSE_CSV = Path("/root/projects/trading-storage/main/shared/layer_01_02_market_context_etf_universe.csv")
-DEFAULT_COMBINATIONS_CSV = Path("/root/projects/trading-storage/main/shared/layer_01_02_market_context_relative_strength_combinations.csv")
+DEFAULT_UNIVERSE_CSV = shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")
+DEFAULT_COMBINATIONS_CSV = shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv")
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 

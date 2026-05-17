@@ -22,6 +22,7 @@ fetch_holding_feed = _holding_feed.fetch
 build_holding_context = _holding_feed.build_context
 RAW_HOLDING_FIELDS = _holding_feed.FIELDS
 from feed_availability.sanitize import sanitize_value
+from data_runtime.config import projects_root, resolve_output_root, shared_path
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
@@ -43,7 +44,7 @@ SQL_FIELDS = [
     "sector_type",
 ]
 KEY_COLUMNS = ["etf_symbol", "as_of_date", "holding_symbol"]
-MARKET_REGIME_ETF_UNIVERSE_PATH = Path("/root/projects/trading-storage/main/shared/layer_01_02_market_context_etf_universe.csv")
+MARKET_REGIME_ETF_UNIVERSE_PATH = shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")
 HOLDINGS_UNIVERSE_TYPE = "sector_observation_etf"
 EXCLUDED_ASSET_PATTERNS = re.compile(r"\b(cash|money market|treasury|bond|fixed income|future|futures|swap|option|warrant|fund|etf|preferred)\b", re.I)
 NON_US_MARKER = re.compile(r"\b(adr|gdr|foreign|depositary|ltd|plc|s\.a\.|ag|nv|oyj|asa|spa|se|kk|co ltd|limited)\b", re.I)
@@ -88,7 +89,7 @@ def _now_utc() -> str:
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
         raise TargetCandidateHoldingsInputsError(f"task_key.source must be {SOURCE}")
-    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', SOURCE + '_task')}"))
+    output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
@@ -111,7 +112,7 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
 
 def _resolve_path(value: str) -> Path:
     path = Path(value)
-    return path if path.is_absolute() else Path("/root/projects/trading-manager") / path
+    return path if path.is_absolute() else projects_root() / "trading-manager" / path
 
 
 def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
@@ -194,7 +195,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
         if not holding_symbol:
             skipped["missing_symbol"] += 1
             continue
-        if as_of_date and (as_of_date < start[:10] or as_of_date > end[:10]):
+        if as_of_date and (as_of_date < start[:10] or as_of_date >= end[:10]):
             skipped["outside_window"] += 1
             continue
         if not _is_us_equity_holding(raw):

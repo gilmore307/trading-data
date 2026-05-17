@@ -47,19 +47,9 @@ See `docs/20_data_feed.md` and `docs/22_feed_availability.md`.
 
 ## Environment
 
-Development path:
+Development checkout is expected under the shared projects root, normally as the sibling repositories `trading-data`, `trading-manager`, and `trading-storage`. Runtime defaults can be overridden with `TRADING_DATA_REPO_ROOT`, `TRADING_PROJECTS_ROOT`, `TRADING_DATA_STORAGE_ROOT`, `TRADING_MANAGER_REGISTRY_CSV`, and `TRADING_STORAGE_REPO_ROOT`.
 
-```text
-/root/projects/trading-data
-```
-
-Shared Python environment:
-
-```text
-/root/projects/trading-manager/.venv
-```
-
-Do not create an independent virtual environment unless a documented exception is accepted. US Eastern time is the default project planning and market-research timezone unless a storage/field contract states otherwise.
+Use the shared trading Python environment unless a documented exception is accepted. US Eastern time is the default project planning and market-research timezone unless a storage/field contract states otherwise.
 
 ## Dependencies
 

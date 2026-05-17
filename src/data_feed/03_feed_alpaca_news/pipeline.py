@@ -10,6 +10,7 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
 NEWS_FIELDS=['id','timeline_headline','created_at','updated_at','symbols','summary','event_link_url']
@@ -32,7 +33,7 @@ def _json_response(r:HttpResult):
     return r.json()
 def build_context(task_key,run_id):
     if task_key.get('feed')!='03_feed_alpaca_news': raise AlpacaNewsError('task_key.feed must be 03_feed_alpaca_news')
-    root=Path(str(task_key.get('output_root') or f"storage/{task_key.get('task_id','03_feed_alpaca_news_task')}")); run=root/'runs'/run_id
+    root=resolve_output_root(task_key, default_task_id="03_feed_alpaca_news_task"); run=root/'runs'/run_id
     return FeedContext(task_key,run,run/'cleaned',run/'saved',root/'completion_receipt.json',{'run_id':run_id,'started_at':_now_utc()})
 def _symbols(v):
     if isinstance(v,str): return [x.strip().upper() for x in v.split(',') if x.strip()]

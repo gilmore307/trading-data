@@ -1,0 +1,65 @@
+"""Runtime path/config defaults for trading-data.
+
+The manager task key remains the authoritative source for a run. These helpers
+only centralize local defaults so feeds/sources do not hard-code host paths or
+repeat output-root logic.
+"""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any, Mapping
+
+
+def repo_root() -> Path:
+    return Path(os.environ.get("TRADING_DATA_REPO_ROOT") or Path(__file__).resolve().parents[2])
+
+
+def projects_root() -> Path:
+    return Path(os.environ.get("TRADING_PROJECTS_ROOT") or repo_root().parent)
+
+
+def storage_root() -> Path:
+    """Return the local development storage root.
+
+    Defaults to `storage/` to preserve existing CLI behavior; set
+    `TRADING_DATA_STORAGE_ROOT` for service/test environments that need an
+    absolute or isolated root.
+    """
+
+    return Path(os.environ.get("TRADING_DATA_STORAGE_ROOT") or "storage")
+
+
+def manager_registry_csv() -> Path:
+    return Path(
+        os.environ.get("TRADING_MANAGER_REGISTRY_CSV")
+        or projects_root() / "trading-manager" / "scripts" / "registry" / "current.csv"
+    )
+
+
+def shared_storage_repo_root() -> Path:
+    return Path(os.environ.get("TRADING_STORAGE_REPO_ROOT") or projects_root() / "trading-storage")
+
+
+def shared_path(*parts: str) -> Path:
+    return shared_storage_repo_root().joinpath(*parts)
+
+
+def resolve_output_root(task_key: Mapping[str, Any], *, default_task_id: str) -> Path:
+    explicit = task_key.get("output_root")
+    if explicit:
+        return Path(str(explicit))
+    task_id = str(task_key.get("task_id") or default_task_id)
+    return storage_root() / task_id
+
+
+__all__ = [
+    "manager_registry_csv",
+    "projects_root",
+    "repo_root",
+    "resolve_output_root",
+    "shared_path",
+    "shared_storage_repo_root",
+    "storage_root",
+]

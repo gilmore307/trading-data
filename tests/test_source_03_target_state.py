@@ -19,6 +19,12 @@ class FakeWriter:
 
 
 class Source03TargetStateTests(unittest.TestCase):
+    def test_target_state_window_is_half_open(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        end = datetime(2026, 1, 2, 16, 0, tzinfo=ET)
+        self.assertTrue(pipeline._within_window("2026-01-02T09:30:00-05:00", start, end))
+        self.assertFalse(pipeline._within_window("2026-01-02T16:00:00-05:00", start, end))
+
     def test_normalizes_candidate_mapped_bars_and_liquidity_without_model_facing_identity_claims(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET).isoformat()
         task_key = {

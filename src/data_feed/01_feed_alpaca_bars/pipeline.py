@@ -10,6 +10,7 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
 EQUITY_BAR_FIELDS=['symbol','timeframe','timestamp','bar_open','bar_high','bar_low','bar_close','bar_volume','bar_vwap','bar_trade_count']
@@ -32,7 +33,7 @@ def _json_response(r:HttpResult):
     return r.json()
 def build_context(task_key,run_id):
     if task_key.get('feed')!='01_feed_alpaca_bars': raise AlpacaBarsError('task_key.feed must be 01_feed_alpaca_bars')
-    root=Path(str(task_key.get('output_root') or f"storage/{task_key.get('task_id','01_feed_alpaca_bars_task')}")); run=root/'runs'/run_id
+    root=resolve_output_root(task_key, default_task_id="01_feed_alpaca_bars_task"); run=root/'runs'/run_id
     return FeedContext(task_key,run,run/'cleaned',run/'saved',root/'completion_receipt.json',{'run_id':run_id,'started_at':_now_utc()})
 def _fetch_paginated(client,url,row_key,params,headers,max_pages):
     rows=[]; evidence=[]; token=None

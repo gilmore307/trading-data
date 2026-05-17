@@ -2,6 +2,7 @@
 
 Shared runtime helpers for `trading-data` feeds and sources.
 
+- `config.py` owns environment-overridable local path defaults.
 - `provider_policy.py` owns fail-closed live-provider execution checks.
 - `io.py` owns atomic text/JSON writes and run-scoped receipt writes.
 

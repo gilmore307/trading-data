@@ -18,6 +18,7 @@ from typing import Any, Mapping
 
 from data_source.config import load_source_config
 from feed_availability.sanitize import sanitize_value
+from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 
 SOURCE = "source_09_event_risk_governor.equity_abnormal_activity"
@@ -79,7 +80,7 @@ def _now_utc() -> str:
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
         raise EquityAbnormalActivityError(f"task_key.source must be {SOURCE}")
-    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', SOURCE + '_task')}"))
+    output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     run_dir = output_root / "runs" / run_id
     return SourceContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 

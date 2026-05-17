@@ -14,6 +14,8 @@ import json
 from calendar import monthrange
 from dataclasses import asdict, dataclass
 from pathlib import Path
+
+from data_runtime.config import repo_root, storage_root
 from typing import Any, Iterable, Mapping, Sequence
 
 from data_source.source_01_market_regime.pipeline import FIELDS, OUTPUT_TABLE
@@ -21,7 +23,7 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 from .sql import DEFAULT_COMBINATIONS_CSV, DEFAULT_UNIVERSE_CSV, _database_url, generate_sql
 
-DEFAULT_STORAGE_ROOT = Path("/root/projects/trading-data/storage")
+DEFAULT_STORAGE_ROOT = storage_root()
 
 
 @dataclass(frozen=True)
@@ -79,7 +81,7 @@ def discover_feed_artifacts(*, storage_root: Path, month: str, symbols: Sequence
             continue
         artifact_path = Path(output)
         if not artifact_path.is_absolute():
-            artifact_path = Path("/root/projects/trading-data") / artifact_path
+            artifact_path = repo_root() / artifact_path
         if artifact_path.exists():
             artifacts.append(artifact_path)
     return artifacts

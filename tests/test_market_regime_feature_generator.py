@@ -14,6 +14,7 @@ ET = ZoneInfo("America/New_York")
 generator = importlib.import_module("data_feature.feature_01_market_regime.generator")
 sql_runner = importlib.import_module("data_feature.feature_01_market_regime.sql")
 from_feed_artifacts = importlib.import_module("data_feature.feature_01_market_regime.from_feed_artifacts")
+runtime_config = importlib.import_module("data_runtime.config")
 
 
 def _bar(symbol: str, day: date, close: float, *, timeframe: str = "1Day", open_: float | None = None, high: float | None = None, low: float | None = None) -> dict[str, str]:
@@ -231,15 +232,15 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertEqual(writer.calls[0][3], ("symbol", "timeframe", "timestamp"))
 
     @unittest.skipUnless(
-        Path("/root/projects/trading-storage/main/shared/layer_01_02_market_context_etf_universe.csv").exists()
-        and Path("/root/projects/trading-storage/main/shared/layer_01_02_market_context_relative_strength_combinations.csv").exists(),
+        runtime_config.shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv").exists()
+        and runtime_config.shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv").exists(),
         "shared market-regime CSVs are unavailable",
     )
     def test_current_shared_contract_generates_expected_width(self) -> None:
         inputs = generator.build_inputs(
             bar_rows=[],
-            universe_rows=generator.read_csv_rows("/root/projects/trading-storage/main/shared/layer_01_02_market_context_etf_universe.csv"),
-            combination_rows=generator.read_csv_rows("/root/projects/trading-storage/main/shared/layer_01_02_market_context_relative_strength_combinations.csv"),
+            universe_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")),
+            combination_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv")),
         )
 
         row = generator.generate_row(inputs, datetime(2026, 1, 2, 16, 0, tzinfo=ET))

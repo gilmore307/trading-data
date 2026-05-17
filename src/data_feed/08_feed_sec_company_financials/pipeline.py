@@ -18,6 +18,7 @@ from feed_availability.__main__ import DEFAULT_SEC_USER_AGENT
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 
 FEED = "08_feed_sec_company_financials"
@@ -86,7 +87,7 @@ def _normalize_cik(value: Any) -> str:
 def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     if task_key.get("feed") != FEED:
         raise SecCompanyFinancialsError(f"task_key.feed must be {FEED}")
-    output_root = Path(str(task_key.get("output_root") or f"storage/{task_key.get('task_id', FEED + '_task')}"))
+    output_root = resolve_output_root(task_key, default_task_id=f"{FEED}_task")
     run_dir = output_root / "runs" / run_id
     return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 

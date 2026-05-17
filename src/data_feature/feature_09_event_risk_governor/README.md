@@ -1,6 +1,6 @@
 # feature_09_event_risk_governor
 
-Deterministic legacy-named event-overlay feature builder for conceptual Layer 8 event-risk-governor inputs.
+Deterministic event-overlay feature builder for Layer 9 event-risk-governor inputs.
 
 ## Boundary
 

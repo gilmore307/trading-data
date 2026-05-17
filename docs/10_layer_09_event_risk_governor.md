@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. Layer 9 owns `EventRiskGovernor / EventIntelligenceOverlay` event intelligence / event-risk intervention. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features, not event interpretation, risk policy, execution, or broker mutation.
 
-Current physical source/feature names remain `source_09_event_risk_governor` and `feature_09_event_risk_governor` until a dedicated implementation migration renames surfaces. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation_v1` and event-risk governor use.
+Current physical source/feature names are `source_09_event_risk_governor` and `feature_09_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation_v1` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 

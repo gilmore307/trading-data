@@ -1,7 +1,7 @@
 # Layer 06 — Position Projection Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. `trading-data` owns no dedicated Layer 5 source/feature by default; PositionProjectionModel belongs to `trading-model` / control-plane state boundaries.
+Status: active architecture revision. `trading-data` owns no dedicated Layer 6 source/feature by default; PositionProjectionModel belongs to `trading-model` / control-plane state boundaries.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 

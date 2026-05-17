@@ -114,7 +114,7 @@ Live-call policy, retry/rate-limit rules, checkpoint/resume evidence, manifests,
 
 Reusable logic belongs in `src/`. `trading-data` does not keep a top-level `scripts/` wrapper directory; stable callable entrypoints should be exposed through package CLIs declared in `pyproject.toml` and registered through `trading-manager` when shared.
 
-## D021 — Price-action events belong inside Layer 8 event-risk overlay
+## D021 — Price-action events belong inside Layer 9 event-risk overlay
 
 Date: 2026-05-09
 
@@ -131,13 +131,13 @@ For browser-scraped sources such as Trading Economics, the browser should mainta
 
 All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.
 
-## D023 — Event evidence moves to Layer 8 event-risk governor use
+## D023 — Event evidence moves to Layer 9 event-risk governor use
 
 Accepted: 2026-05-15
 
-The active conceptual stack moves event intelligence from pre-alpha Layer 4 to post-guidance Layer 8. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the Layer 9 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
+The active nine-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the Layer 9 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
 
-Layer 7 trading guidance / option-expression data uses the existing option-expression inputs (`source_05_option_expression`, `feature_08_option_expression`, and `source_06_position_execution`) until a dedicated implementation migration renames physical source/feature surfaces. Layer 8 event-risk data uses the existing event surfaces (`source_09_event_risk_governor`, `feature_09_event_risk_governor`, and event-feed artifacts) until a dedicated implementation migration renames physical surfaces.
+Layer 8 trading guidance / option-expression data uses the current option-expression inputs (`source_05_option_expression`, `feature_08_option_expression`, and `source_06_position_execution`). Layer 9 event-risk data uses the current event surfaces (`source_09_event_risk_governor`, `feature_09_event_risk_governor`, and event-feed artifacts).
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation_v1` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 

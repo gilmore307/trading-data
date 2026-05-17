@@ -1,6 +1,6 @@
 # feature_08_option_expression
 
-Deterministic legacy-named option-expression feature builder for the conceptual Layer 7 trading-guidance option-expression subset.
+Deterministic option-expression feature builder for the Layer 8 trading-guidance option-expression subset.
 
 ## Boundary
 

@@ -1,11 +1,11 @@
 # Layer 07 — Underlying Action Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. `trading-data` owns no dedicated Layer 6 source/feature by default unless a real point-in-time observed data input is accepted. Direct-underlying action thesis belongs to `trading-model` and control-plane policy.
+Status: active architecture revision. `trading-data` owns no dedicated Layer 7 source/feature by default unless a real point-in-time observed data input is accepted. Direct-underlying action thesis belongs to `trading-model` and control-plane policy.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
-`trading-data` does not own a dedicated Layer 6 source or feature package. This is intentional.
+`trading-data` does not own a dedicated Layer 7 source or feature package. This is intentional.
 
 Layer 7 is `UnderlyingActionModel` in `trading-model`. It evaluates offline action context after upstream model states and position projection are available. It is not a provider acquisition or source-normalization layer.
 
@@ -17,9 +17,9 @@ none in trading-data
 
 ## Boundary
 
-Layer 6 may consume:
+Layer 7 may consume:
 
-- `position_projection_vector` from Layer 5;
+- `position_projection_vector` from Layer 6;
 - upstream context/model outputs;
 - reviewed model-side evaluation artifacts;
 - action-policy context owned outside `trading-data`.
@@ -48,4 +48,4 @@ position_projection_vector + upstream context
 
 ## Acceptance notes
 
-A Layer 6-related `trading-data` change is acceptable only if it introduces a real point-in-time observed data input required by an accepted upstream source/feature contract. Action selection and evaluation belong in `trading-model` and the control-plane repositories.
+A Layer 7-related `trading-data` change is acceptable only if it introduces a real point-in-time observed data input required by an accepted upstream source/feature contract. Action selection and evaluation belong in `trading-model` and the control-plane repositories.

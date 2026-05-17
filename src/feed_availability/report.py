@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from data_runtime.io import atomic_write_json
 
 from .registry import FeedCandidate
 
@@ -79,8 +80,5 @@ def write_report(
         .replace(":", "")
     )
     path = report_root / f"feed_availability_{timestamp}.json"
-    path.write_text(
-        json.dumps(report_payload(results, mode=mode), indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    atomic_write_json(path, report_payload(results, mode=mode))
     return path

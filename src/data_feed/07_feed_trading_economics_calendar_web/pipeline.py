@@ -13,6 +13,7 @@ import html
 import json
 import re
 import urllib.parse
+from io import StringIO
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -23,7 +24,7 @@ from feed_availability.http import HttpClient
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root, trading_economics_cookie_jar
-from data_runtime.io import write_receipt_bundle
+from data_runtime.io import atomic_write_json, atomic_write_text, write_receipt_bundle
 
 FEED = "07_feed_trading_economics_calendar_web"
 SOURCE_URL = "https://tradingeconomics.com/united-states/calendar"
@@ -178,7 +179,7 @@ def fetch(context: FeedContext) -> tuple[StepResult, FetchedPage]:
         "boundary": "visible web page only; no API or download/export endpoint",
     }
     path = context.run_dir / "request_manifest.json"
-    path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    atomic_write_json(path, sanitize_value(manifest))
     return StepResult("succeeded", [str(path)], {"html_pages": 1}, details={"source_url": source_url}), fetched
 
 
@@ -344,11 +345,9 @@ def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
         raise TradingEconomicsCalendarError("Trading Economics page produced zero parseable in-window calendar rows")
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     path = context.cleaned_dir / "trading_economics_calendar_event.jsonl"
-    with path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
+    atomic_write_text(path, "".join(json.dumps(sanitize_value(row), sort_keys=True) + "\n" for row in rows))
     schema = context.cleaned_dir / "schema.json"
-    schema.write_text(json.dumps({"trading_economics_calendar_event": FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    atomic_write_json(schema, {"trading_economics_calendar_event": FIELDS, "row_count": len(rows)})
     warnings = [f"out_of_window_calendar_rows_skipped={out_of_window_count}"] if out_of_window_count else []
     return StepResult("succeeded", [str(path), str(schema)], {"trading_economics_calendar_event": len(rows)}, warnings=warnings, details={"columns": FIELDS, "out_of_window_calendar_rows_skipped": out_of_window_count})
 
@@ -357,10 +356,11 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     rows = [json.loads(line) for line in (context.cleaned_dir / "trading_economics_calendar_event.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     path = context.saved_dir / "trading_economics_calendar_event.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
+    buffer = StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=FIELDS, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+    atomic_write_text(path, buffer.getvalue())
     return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
 
 

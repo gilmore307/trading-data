@@ -31,14 +31,14 @@ Accepted SQL outputs are the preferred model-input boundary. Local ignored `stor
 ## Key Docs
 
 - `docs/00_scope.md` — repository purpose and boundaries.
-- `docs/90_data_organization.md` — feed/source/feature organization.
-- `docs/91_data_feed.md` — provider and feed rules.
-- `docs/92_api_templates.md` — task/source design order.
-- `docs/93_feed_availability.md` — provider/data-kind availability inventory.
+- `docs/11_data_organization.md` — feed/source/feature organization.
+- `docs/12_data_feed.md` — provider and feed rules.
+- `docs/13_api_templates.md` — task/source design order.
+- `docs/14_feed_availability.md` — provider/data-kind availability inventory.
 - `docs/02_layer_01_market_regime.md` through `docs/09_layer_09_event_risk_governor.md` — layer-specific data boundaries.
-- `docs/94_model_inputs.md` — mapping from data outputs to model layers.
-- `docs/95_data_stack_closeout.md` — accepted local data-stack closeout.
-- `docs/96_production_hardening.md` — non-production hardening contracts.
+- `docs/15_model_inputs.md` — mapping from data outputs to model layers.
+- `docs/16_data_stack_acceptance.md` — accepted local data-stack closeout.
+- `docs/17_production_hardening.md` — non-production hardening contracts.
 
 ## Platform Boundaries
 

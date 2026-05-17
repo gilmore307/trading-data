@@ -35,7 +35,7 @@ Two previously active hardening items are now resolved as conservative closeout 
 
 ## Historical-training readiness classification
 
-There are no active data-stack design work items for the current no-broker historical-training preparation boundary. The non-data-accumulation policy layer is defined in `docs/96_production_hardening.md`, and the current manager/storage MVP owns request, manifest, artifact, ready-signal, payload, and receipt flow.
+There are no active data-stack design work items for the current no-broker historical-training preparation boundary. The non-data-accumulation policy layer is defined in `docs/17_production_hardening.md`, and the current manager/storage MVP owns request, manifest, artifact, ready-signal, payload, and receipt flow.
 
 The following are deliberately not current historical-training work items:
 

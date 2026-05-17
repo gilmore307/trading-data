@@ -28,7 +28,7 @@ provider/API/web/file -> data_feed -> data_source -> data_feature -> SQL/artifac
 - `data_source` composes feeds into manager-facing model-input source outputs.
 - `data_feature` builds deterministic point-in-time feature blocks from accepted source outputs.
 
-See `docs/11_data_organization.md` and `docs/15_model_inputs.md`.
+See `docs/02_architecture.md` and `docs/30_model_inputs.md`.
 
 ## External Interfaces
 
@@ -43,7 +43,7 @@ Current provider/source surfaces include:
 - official FOMC and macro release pages;
 - optional reviewed official macro/economic APIs such as FRED, BLS, Census, BEA, and Treasury.
 
-See `docs/12_data_feed.md` and `docs/14_feed_availability.md`.
+See `docs/20_data_feed.md` and `docs/22_feed_availability.md`.
 
 ## Environment
 

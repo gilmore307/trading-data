@@ -1,10 +1,19 @@
-# Data Organization
+# Architecture
 
 `trading-data` is organized by the data route, not by broad product domains.
 
 ```text
 data_feed -> data_source -> data_feature -> SQL/artifact handoff
 ```
+
+## Module Map
+
+| Docs band | Implementation surface | Purpose |
+|---|---|---|
+| `10_*` | `src/data_source/source_*`, `src/data_feature/feature_*`, `src/data_layers/` | Layer-specific data boundaries for Layers 1-9. |
+| `20_*` | `src/data_feed/`, `src/feed_interfaces/`, `src/feed_availability/`, `storage/templates/` | Provider feeds, feed availability, and API/data-kind templates. |
+| `30_*` | model-input bundle interfaces | Data-output to model-input handoff rules. |
+| `40_*` | repository-wide hardening surfaces | Production hardening and non-production safety policy. |
 
 ## Layers
 

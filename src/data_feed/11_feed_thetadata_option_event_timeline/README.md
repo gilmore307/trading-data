@@ -55,7 +55,7 @@ Example `current_standard`:
 - `output_root` — development output root at task-key top level; defaults to `storage/<task_id>`.
 - `thetadata_base_url` — local ThetaData Terminal base URL; defaults to `http://127.0.0.1:25503`.
 - `timeout_seconds` — request timeout; defaults to `30`.
-- `registry_csv` — optional registry snapshot for retained registered fields; defaults to `/root/projects/trading-manager/scripts/registry/current.csv`.
+- `registry_csv` — optional registry snapshot for retained registered-field validation; when missing, fixture/local runs use code-local field names without reading an external repository path.
 - `max_events` — cap emitted events for bounded development runs; defaults to `100`.
 - `auto_enrich_option_context` — when true, fetches point-in-time context from ThetaData option context endpoints instead of requiring caller-supplied OI/IV/skew/term/underlying context.
 - `option_context_interval` — ThetaData historical Greeks interval for auto enrichment; defaults to `1m` to avoid oversized/truncated one-second Greek responses.

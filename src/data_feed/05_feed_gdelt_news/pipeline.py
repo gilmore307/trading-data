@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from feed_availability.sanitize import sanitize_value
+from data_runtime.provider_policy import require_provider_execution_allowed
 
 FEED = "05_feed_gdelt_news"
 ET = ZoneInfo("America/New_York")
@@ -263,6 +264,14 @@ def _default_client() -> QueryClient:
 def fetch(context: FeedContext, *, client: QueryClient | None = None) -> tuple[StepResult, FetchedGdeltRows]:
     params = dict(context.task_key.get("params") or {})
     sql, max_rows = build_sql(params)
+    if client is None:
+        require_provider_execution_allowed(
+            context.task_key,
+            provider="gdelt_bigquery",
+            endpoint_family="news_query",
+            requested_rows=max_rows,
+            requested_requests=1,
+        )
     client = client or _default_client()
     maximum_bytes_billed = params.get("maximum_bytes_billed")
     maximum_bytes_billed_int = int(maximum_bytes_billed) if maximum_bytes_billed not in (None, "") else None

@@ -113,6 +113,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
         "feed": "09_feed_thetadata_option_selection_snapshot",
         "params": params,
         "output_root": str(context.run_dir / "feed" / "option_chain_snapshot"),
+        "manager_controls": context.task_key.get("manager_controls"),
     }
     feed_context = build_snapshot_context(feed_task, str(context.metadata["run_id"]))
     fetch_result, fetched = fetch_snapshot(feed_context, client=client)

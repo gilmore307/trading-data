@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
+from data_runtime.provider_policy import require_provider_execution_allowed
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
 NEWS_FIELDS=['id','timeline_headline','created_at','updated_at','symbols','summary','event_link_url']
 @dataclass(frozen=True)
@@ -51,7 +52,10 @@ def _fetch_paginated(client,url,params,headers,max_pages):
     return rows,evidence
 def fetch(context,*,client=None):
     params=dict(context.task_key.get('params') or {}); symbols=_symbols(_required(params,'symbols')); start=str(_required(params,'start')); end=str(_required(params,'end'))
-    req={'symbols':','.join(symbols),'start':start,'end':end,'limit':str(params.get('limit',50))}; max_pages=int(params.get('max_pages',10)); client=client or HttpClient(timeout_seconds=int(params.get('timeout_seconds',20)))
+    req={'symbols':','.join(symbols),'start':start,'end':end,'limit':str(params.get('limit',50))}; max_pages=int(params.get('max_pages',10))
+    if client is None:
+        require_provider_execution_allowed(context.task_key, provider='alpaca', endpoint_family='news', requested_symbols=len(symbols), requested_rows=int(params.get('limit',50)), requested_requests=max_pages)
+    client=client or HttpClient(timeout_seconds=int(params.get('timeout_seconds',20)))
     secret=load_secret_alias('alpaca'); key=secret.values.get('api_key'); sec=secret.values.get('secret_key')
     if not key or not sec: raise AlpacaNewsError('Alpaca requires api_key and secret_key')
     base=str(secret.values.get('data_endpoint') or 'https://data.alpaca.markets').rstrip('/'); headers={'APCA-API-KEY-ID':str(key),'APCA-API-SECRET-KEY':str(sec)}

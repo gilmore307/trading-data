@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
+from data_runtime.provider_policy import require_provider_execution_allowed
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
 EQUITY_BAR_FIELDS=['symbol','timeframe','timestamp','bar_open','bar_high','bar_low','bar_close','bar_volume','bar_vwap','bar_trade_count']
 @dataclass(frozen=True)
@@ -51,7 +52,10 @@ def fetch(context,*,client=None):
     params=dict(context.task_key.get('params') or {}); symbol=str(_required(params,'symbol')).upper(); timeframe=str(params.get('timeframe','1Day'))
     req={'timeframe':timeframe,'start':str(_required(params,'start')),'end':str(_required(params,'end')),'limit':str(params.get('limit',1000)),'adjustment':str(params.get('adjustment','raw'))}
     if params.get('feed'): req['feed']=str(params['feed'])
-    max_pages=int(params.get('max_pages',10)); client=client or HttpClient(timeout_seconds=int(params.get('timeout_seconds',20)))
+    max_pages=int(params.get('max_pages',10))
+    if client is None:
+        require_provider_execution_allowed(context.task_key, provider='alpaca', endpoint_family='bars', requested_symbols=1, requested_rows=int(params.get('limit',1000)), requested_requests=max_pages)
+    client=client or HttpClient(timeout_seconds=int(params.get('timeout_seconds',20)))
     secret=load_secret_alias('alpaca'); key=secret.values.get('api_key'); sec=secret.values.get('secret_key')
     if not key or not sec: raise AlpacaBarsError('Alpaca requires api_key and secret_key')
     base=str(secret.values.get('data_endpoint') or 'https://data.alpaca.markets').rstrip('/'); headers={'APCA-API-KEY-ID':str(key),'APCA-API-SECRET-KEY':str(sec)}

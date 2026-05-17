@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url
 from feed_availability.secrets import load_secret_alias, public_secret_summary
+from data_runtime.provider_policy import require_provider_execution_allowed
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 SOURCE = "source_01_market_regime"
@@ -163,6 +164,17 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
     if not symbols:
         raise MarketRegimeInputsError("no market ETF symbols selected")
 
+    limit = str(params.get("limit", DEFAULT_LIMIT))
+    max_pages = int(params.get("max_pages", DEFAULT_MAX_PAGES))
+    if client is None:
+        require_provider_execution_allowed(
+            context.task_key,
+            provider="alpaca",
+            endpoint_family="bars",
+            requested_symbols=len(symbols),
+            requested_rows=int(limit) * len(symbols),
+            requested_requests=max_pages * len(symbols),
+        )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     secret = load_secret_alias(str(params.get("secret_alias") or DEFAULT_SECRET_ALIAS))
     api_key = secret.values.get("api_key")
@@ -171,8 +183,6 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
         raise MarketRegimeInputsError("Alpaca requires api_key and secret_key")
     base_url = str(secret.values.get("data_endpoint") or "https://data.alpaca.markets").rstrip("/")
     headers = {"APCA-API-KEY-ID": str(api_key), "APCA-API-SECRET-KEY": str(secret_key)}
-    limit = str(params.get("limit", DEFAULT_LIMIT))
-    max_pages = int(params.get("max_pages", DEFAULT_MAX_PAGES))
     adjustment = str(params.get("adjustment", DEFAULT_ADJUSTMENT))
     feed = str(params.get("feed", "")).strip()
 

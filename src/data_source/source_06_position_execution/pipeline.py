@@ -164,6 +164,7 @@ def _fetch_contract_rows(context: SourceContext, contract: Mapping[str, Any], *,
             "timeframe": timeframe,
         },
         "output_root": str(context.run_dir / "feed" / _option_symbol(contract)),
+        "manager_controls": context.task_key.get("manager_controls"),
     }
     for passthrough in ("thetadata_base_url", "timeout_seconds", "registry_csv"):
         if passthrough in contract:

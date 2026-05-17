@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from feed_availability.sanitize import sanitize_value
+from data_runtime.provider_policy import require_provider_execution_allowed
 
 FEED = "07_feed_trading_economics_calendar_web"
 SOURCE_URL = "https://tradingeconomics.com/united-states/calendar"
@@ -141,6 +142,12 @@ def fetch(context: FeedContext) -> tuple[StepResult, FetchedPage]:
     elif params.get("html"):
         fetched = FetchedPage(str(params["html"]), source_url, _now_utc())
     elif params.get("allow_live_fetch"):
+        require_provider_execution_allowed(
+            context.task_key,
+            provider="trading_economics",
+            endpoint_family="calendar_web",
+            requested_requests=1,
+        )
         headers = {
             "User-Agent": "Mozilla/5.0",
             "Accept": "text/html,application/xhtml+xml",

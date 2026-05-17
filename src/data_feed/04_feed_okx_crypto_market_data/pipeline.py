@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
+from data_runtime.provider_policy import require_provider_execution_allowed
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
@@ -115,6 +116,15 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
     if timeframe not in OKX_BAR_MAP:
         raise OkxCryptoMarketDataError(f"unsupported timeframe {timeframe!r}; supported={sorted(OKX_BAR_MAP)}")
     limit = str(params.get("limit", 100))
+    if client is None:
+        require_provider_execution_allowed(
+            context.task_key,
+            provider="okx",
+            endpoint_family="market_data",
+            requested_symbols=1,
+            requested_rows=int(limit),
+            requested_requests=2,
+        )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     headers = {"User-Agent": "trading-data-04-feed-okx-crypto-market-data/0.1", "Accept": "application/json"}
     base = str(params.get("base_url") or "https://www.okx.com").rstrip("/")

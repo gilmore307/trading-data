@@ -2,7 +2,7 @@
 
 Derived event detector inside the `source_09_event_risk_governor` Layer 9 EventRiskGovernor surface. This is not a standalone manager-facing numbered data source.
 
-It converts saved equity/ETF bars, optional benchmark bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows that Layer 04 can reference as prior signals.
+It converts saved equity/ETF bars, optional benchmark bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the Layer 9 event-risk evidence surface. Layer 4 may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
 
 ## Inputs
 
@@ -22,7 +22,7 @@ It converts saved equity/ETF bars, optional benchmark bars, and optional liquidi
 
 ## Output
 
-`saved/equity_abnormal_activity_event.csv` with compact event-style rows for abnormal price, volume, relative-strength, gap, liquidity, and price-action behavior. Full details remain in evidence/reference fields rather than in the Layer 04 event overview table.
+`saved/equity_abnormal_activity_event.csv` with compact event-style rows for abnormal price, volume, relative-strength, gap, liquidity, and price-action behavior. Full details remain in evidence/reference fields rather than being duplicated as upstream model features.
 
 ## Production rule
 

@@ -21,6 +21,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
+from data_runtime.provider_policy import require_provider_execution_allowed
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
@@ -208,7 +209,10 @@ class ThetaDataOptionEventTimelineError(ValueError):
 class RegistryNames:
     """Resolve retained registry fields and stable code-local output field names."""
 
-    def __init__(self, registry_csv: Path = DEFAULT_REGISTRY_CSV) -> None:
+    def __init__(self, registry_csv: Path | None = DEFAULT_REGISTRY_CSV) -> None:
+        self._rows: dict[str, dict[str, str]] = {}
+        if registry_csv is None or not registry_csv.exists():
+            return
         with registry_csv.open(newline="", encoding="utf-8") as handle:
             self._rows = {row["id"]: row for row in csv.DictReader(handle)}
 
@@ -602,6 +606,14 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
     max_events = int(params.get("max_events", 100))
     base_url = str(params.get("thetadata_base_url") or "http://127.0.0.1:25503").rstrip("/")
     timeout = int(params.get("timeout_seconds", 30))
+    if client is None:
+        require_provider_execution_allowed(
+            context.task_key,
+            provider="thetadata",
+            endpoint_family="option_event_timeline",
+            requested_symbols=1,
+            requested_requests=4,
+        )
     client = client or HttpClient(timeout_seconds=timeout)
 
     secret_summary = None

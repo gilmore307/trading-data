@@ -30,6 +30,14 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 self.assertEqual(row['timestamp'],'2024-01-02T00:00:00-05:00')
                 self.assertFalse((Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test/saved/equity_bar.jsonl').exists())
         finally: p.load_secret_alias=old
+
+    def test_bars_live_client_requires_manager_controls(self):
+        p = import_module("data_feed.01_feed_alpaca_bars.pipeline")
+        with tempfile.TemporaryDirectory() as tmp:
+            tk={'task_id':'01_feed_alpaca_bars_policy_test','feed':'01_feed_alpaca_bars','params':{'symbol':'AAPL','timeframe':'1Day','start':'2024-01-02T00:00:00Z','end':'2024-01-03T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
+            r=p.run(tk,run_id='01_feed_alpaca_bars_policy_run')
+            self.assertEqual(r.status,'failed')
+            self.assertIn('live provider calls are not allowed', r.details['error']['message'])
     def test_bars_pipeline_treats_null_bars_as_empty_success(self):
         p = import_module("data_feed.01_feed_alpaca_bars.pipeline")
         old=p.load_secret_alias; p.load_secret_alias=lambda alias: Secret()

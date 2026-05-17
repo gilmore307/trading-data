@@ -17,6 +17,7 @@ from typing import Any, Mapping
 from feed_availability.__main__ import DEFAULT_SEC_USER_AGENT
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
+from data_runtime.provider_policy import require_provider_execution_allowed
 
 FEED = "08_feed_sec_company_financials"
 DEFAULT_TIMEOUT_SECONDS = 20
@@ -102,6 +103,13 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, sec_user_ag
     data_kind = str(params.get("data_kind") or "sec_company_fact")
     if data_kind not in SUPPORTED_DATA_KINDS:
         raise SecCompanyFinancialsError(f"unsupported SEC data_kind {data_kind!r}; supported={sorted(SUPPORTED_DATA_KINDS)}")
+    if client is None:
+        require_provider_execution_allowed(
+            context.task_key,
+            provider="sec_edgar",
+            endpoint_family="company_financials",
+            requested_requests=1,
+        )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     headers = {"User-Agent": str(sec_user_agent), "Accept-Encoding": "identity", "Accept": "application/json"}
     cik = _normalize_cik(_required(params, "cik")) if data_kind != "sec_xbrl_frame" else (str(params.get("cik")).zfill(10) if params.get("cik") else None)

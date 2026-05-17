@@ -31,6 +31,8 @@ Required manager-control fields for autonomous historical acquisition:
 - `rate_limit_policy_ref`
 - `secret_alias_refs`
 
+Enforcement helper: `src/data_runtime/provider_policy.py` provides `require_provider_execution_allowed(...)`. Live provider clients must call it before loading provider secrets, constructing real clients, or issuing network/API requests. Fixture/fake-client and local-file/text modes remain exempt because they do not perform live provider calls.
+
 Rules:
 
 - Secret values must never be logged, persisted, committed, or embedded in manifests.

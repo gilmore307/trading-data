@@ -23,7 +23,7 @@ tests/       Fixture-safe tests for feeds, sources, features, storage, and probe
 - `data_feed` talks to one provider/API/web/file family and produces normalized feed-level evidence.
 - `data_source` accepts a manager-issued task/request, composes feed evidence, and writes reviewed model-input source outputs.
 - `data_feature` derives deterministic layer-ready feature blocks from accepted source outputs.
-- `data_layers` catalogs the Layer 1-8 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
+- `data_layers` catalogs the Layer 1-9 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
 - `storage` provides low-level persistence helpers; durable layout and retention remain `trading-storage` responsibilities.
 
 Accepted SQL outputs are the preferred model-input boundary. Local ignored `storage/` files are development evidence, not durable interfaces. `source_NN_*` numbers identify accepted source contracts; they do not necessarily equal model layer numbers.
@@ -48,3 +48,7 @@ Accepted SQL outputs are the preferred model-input boundary. Local ignored `stor
 - `trading-execution` owns realtime execution-time data and broker mutation.
 
 Reusable names, fields, statuses, helpers, templates, and cross-repository contracts discovered here must be routed through `trading-manager` before other repositories depend on them.
+
+## Verification
+
+Run the full fixture-safe suite with top-level discovery plus explicit feed/source/interface subdirectory discovery; see `tests/README.md` for the exact command list.

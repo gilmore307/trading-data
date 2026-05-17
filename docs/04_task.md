@@ -27,7 +27,7 @@ These items are intentionally outside the current promote-first historical-train
 ## Recently Accepted
 
 - Alpaca bars now treats provider `bars: null` no-data responses as empty successful acquisitions with headers/schema/manifests rather than failed component receipts. This supports historical months where current-universe symbols did not yet have bars.
-- Repository data-stack acceptance: current feed/source/feature surfaces cover the accepted local Layers 1-8 model-input route.
+- Repository data-stack acceptance: current feed/source/feature surfaces cover the accepted local Layers 1-9 model-input route.
 - Production hardening policy: provider-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/40_production_hardening.md`.
 - Storage-owned V1 handoff contracts are the production handoff vocabulary; local ignored `storage/` remains development evidence.
 - ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.

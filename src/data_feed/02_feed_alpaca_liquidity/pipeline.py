@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
+from data_runtime.provider_policy import require_provider_execution_allowed
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
@@ -108,6 +109,15 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
     limit = str(params.get("limit", 1000))
     max_pages = int(params.get("max_pages", 10))
     feed = params.get("feed")
+    if client is None:
+        require_provider_execution_allowed(
+            context.task_key,
+            provider="alpaca",
+            endpoint_family="trades_quotes",
+            requested_symbols=1,
+            requested_rows=int(limit),
+            requested_requests=max_pages * 2,
+        )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     secret = load_secret_alias("alpaca")
     api_key = secret.values.get("api_key")

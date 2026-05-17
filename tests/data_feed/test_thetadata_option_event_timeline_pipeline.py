@@ -228,7 +228,7 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="11_feed_thetadata_option_event_timeline_run_test", client=FakeThetaDataClient())
+            result = run(task_key, run_id="11_feed_thetadata_option_event_timeline_run_test", client=FakeThetaDataClient(), client_is_fixture=True)
 
             self.assertEqual(result.status, "succeeded")
             saved_dir = output_root / "runs" / "11_feed_thetadata_option_event_timeline_run_test" / "saved"
@@ -316,7 +316,7 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="bid_run", client=FakeThetaDataBidClient())
+            result = run(task_key, run_id="bid_run", client=FakeThetaDataBidClient(), client_is_fixture=True)
 
             self.assertEqual(result.status, "succeeded")
             saved_dir = output_root / "runs" / "bid_run" / "saved"
@@ -372,7 +372,7 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 "output_root": str(output_root),
             }
 
-            result = run(task_key, run_id="auto_context_run", client=FakeThetaDataAutoContextClient())
+            result = run(task_key, run_id="auto_context_run", client=FakeThetaDataAutoContextClient(), client_is_fixture=True)
 
             self.assertEqual(result.status, "succeeded")
             saved_dir = output_root / "runs" / "auto_context_run" / "saved"
@@ -410,7 +410,7 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run_missing_standard", client=FakeThetaDataClient())
+            result = run(task_key, run_id="run_missing_standard", client=FakeThetaDataClient(), client_is_fixture=True)
             self.assertEqual(result.status, "failed")
             self.assertIn("current_standard is required", result.details["error"]["message"])
 

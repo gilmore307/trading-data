@@ -68,7 +68,7 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
                 'params': {'instId': 'BTC-USDT', 'timeframe': '1Min', 'limit': 2},
                 'output_root': str(Path(tmp) / '04_feed_okx_crypto_market_data_task_test'),
             }
-            result = run(task_key, run_id='04_feed_okx_crypto_market_data_run_test', client=FakeOkxClient())
+            result = run(task_key, run_id='04_feed_okx_crypto_market_data_run_test', client=FakeOkxClient(), client_is_fixture=True)
             saved = Path(task_key['output_root']) / 'runs' / '04_feed_okx_crypto_market_data_run_test' / 'saved'
             self.assertEqual(result.row_counts['crypto_bar'], 1)
             self.assertNotIn('crypto_trade', result.row_counts)

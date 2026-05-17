@@ -8,6 +8,8 @@ controls in the task key before credentials or network calls are used.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
+import re
 from typing import Any, Mapping, Sequence
 
 
@@ -25,6 +27,7 @@ class ProviderPolicy:
     max_requests: int | None
     max_rows: int | None
     max_symbols: int | None
+    max_time_window: str | None
     timeout_seconds: int | None
     retry_policy_ref: str | None
     rate_limit_policy_ref: str | None
@@ -72,6 +75,57 @@ def _check_limit(*, name: str, requested: int | None, allowed: int | None) -> No
         raise ProviderPolicyError(f"requested {name} exceeds manager_controls.max_{name}: {requested} > {allowed}")
 
 
+def _parse_datetime(value: str) -> datetime:
+    text = str(value or "").strip()
+    if not text:
+        raise ProviderPolicyError("requested time window bounds must be non-empty strings")
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError as exc:
+        raise ProviderPolicyError(f"requested time window bound is not ISO-like: {value!r}") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _parse_time_window(value: object) -> timedelta | None:
+    if value in (None, ""):
+        return None
+    text = str(value).strip().lower()
+    if not text:
+        return None
+    iso_match = re.fullmatch(r"p(?:(\d+)m)?(?:(\d+)d)?", text)
+    if iso_match:
+        months = int(iso_match.group(1) or 0)
+        days = int(iso_match.group(2) or 0)
+        if months == 0 and days == 0:
+            raise ProviderPolicyError("manager_controls.max_time_window must be positive")
+        return timedelta(days=months * 31 + days)
+    simple_match = re.fullmatch(r"(\d+)(d|day|days|mo|month|months)", text)
+    if simple_match:
+        amount = int(simple_match.group(1))
+        if amount <= 0:
+            raise ProviderPolicyError("manager_controls.max_time_window must be positive")
+        unit = simple_match.group(2)
+        return timedelta(days=amount * 31 if unit.startswith("mo") else amount)
+    raise ProviderPolicyError("manager_controls.max_time_window must use a supported duration such as 1d, 31d, 6mo, or P31D")
+
+
+def _check_time_window(*, requested_start: str | None, requested_end: str | None, allowed_text: object) -> None:
+    allowed = _parse_time_window(allowed_text)
+    if allowed is None or requested_start in (None, "") or requested_end in (None, ""):
+        return
+    start = _parse_datetime(str(requested_start))
+    end = _parse_datetime(str(requested_end))
+    if end < start:
+        raise ProviderPolicyError("requested time window end is before start")
+    requested = end - start
+    if requested > allowed:
+        raise ProviderPolicyError(f"requested time window exceeds manager_controls.max_time_window: {requested} > {allowed}")
+
+
 def require_provider_execution_allowed(
     task_key: Mapping[str, Any],
     *,
@@ -80,6 +134,8 @@ def require_provider_execution_allowed(
     requested_symbols: int | None = None,
     requested_rows: int | None = None,
     requested_requests: int | None = None,
+    requested_start: str | None = None,
+    requested_end: str | None = None,
 ) -> ProviderPolicy:
     """Validate that a manager task key permits live provider execution.
 
@@ -108,10 +164,12 @@ def require_provider_execution_allowed(
     max_requests = _optional_int(controls, "max_requests")
     max_rows = _optional_int(controls, "max_rows")
     max_symbols = _optional_int(controls, "max_symbols")
+    max_time_window = str(controls.get("max_time_window") or "") or None
     timeout_seconds = _optional_int(controls, "timeout_seconds")
     _check_limit(name="requests", requested=requested_requests, allowed=max_requests)
     _check_limit(name="rows", requested=requested_rows, allowed=max_rows)
     _check_limit(name="symbols", requested=requested_symbols, allowed=max_symbols)
+    _check_time_window(requested_start=requested_start, requested_end=requested_end, allowed_text=max_time_window)
     return ProviderPolicy(
         contract_type="provider_execution_policy",
         provider=provider,
@@ -119,6 +177,7 @@ def require_provider_execution_allowed(
         max_requests=max_requests,
         max_rows=max_rows,
         max_symbols=max_symbols,
+        max_time_window=max_time_window,
         timeout_seconds=timeout_seconds,
         retry_policy_ref=str(controls.get("retry_policy_ref") or "") or None,
         rate_limit_policy_ref=str(controls.get("rate_limit_policy_ref") or "") or None,

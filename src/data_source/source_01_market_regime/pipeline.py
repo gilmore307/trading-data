@@ -150,7 +150,7 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
     return rows
 
 
-def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[StepResult, SourcePayload]:
+def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     start = str(_required(params, "start"))
     end = str(_required(params, "end"))
@@ -168,14 +168,16 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
 
     limit = str(params.get("limit", DEFAULT_LIMIT))
     max_pages = int(params.get("max_pages", DEFAULT_MAX_PAGES))
-    if client is None:
+    if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="alpaca",
             endpoint_family="bars",
             requested_symbols=len(symbols),
-            requested_rows=int(limit) * len(symbols),
+            requested_rows=int(limit) * max_pages * len(symbols),
             requested_requests=max_pages * len(symbols),
+            requested_start=start,
+            requested_end=end,
         )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     secret = load_secret_alias(str(params.get("secret_alias") or DEFAULT_SECRET_ALIAS))
@@ -241,11 +243,11 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, feed_payload = fetch(context, client=client)
+        fetch_result, feed_payload = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result, cleaned_payload = clean(context, feed_payload)
         save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

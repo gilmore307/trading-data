@@ -111,20 +111,20 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
-def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[StepResult, FetchedPayload]:
+def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedPayload]:
     params = dict(context.task_key.get("params") or {})
     symbol = str(_required(params, "instId")).upper()
     timeframe = str(params.get("timeframe", "1Min"))
     if timeframe not in OKX_BAR_MAP:
         raise OkxCryptoMarketDataError(f"unsupported timeframe {timeframe!r}; supported={sorted(OKX_BAR_MAP)}")
     limit = str(params.get("limit", 100))
-    if client is None:
+    if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="okx",
             endpoint_family="market_data",
             requested_symbols=1,
-            requested_rows=int(limit),
+            requested_rows=int(limit) * 2,
             requested_requests=2,
         )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
@@ -286,11 +286,11 @@ def write_receipt(context: FeedContext, *, fetch_result: StepResult, clean_resul
     return StepResult("succeeded", [str(context.receipt_path)], {"runs_recorded": len(existing["runs"])})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     empty = StepResult("skipped")
     try:
-        fetch_result, fetched = fetch(context, client=client)
+        fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result = clean(context, fetched)
         save_result = save(context)
         write_receipt(context, fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

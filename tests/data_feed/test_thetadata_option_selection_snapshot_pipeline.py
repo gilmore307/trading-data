@@ -106,7 +106,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="09_feed_thetadata_option_selection_snapshot_run_test", client=FakeThetaDataClient())
+            result = run(task_key, run_id="09_feed_thetadata_option_selection_snapshot_run_test", client=FakeThetaDataClient(), client_is_fixture=True)
 
             self.assertEqual(result.status, "succeeded")
             saved_path = output_root / "runs" / "09_feed_thetadata_option_selection_snapshot_run_test" / "saved" / "option_chain_snapshot.csv"
@@ -153,7 +153,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 "params": {"underlying": "AAPL"},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run_missing_time", client=FakeThetaDataClient())
+            result = run(task_key, run_id="run_missing_time", client=FakeThetaDataClient(), client_is_fixture=True)
             self.assertEqual(result.status, "failed")
             self.assertIn("snapshot_time is required", result.details["error"]["message"])
 

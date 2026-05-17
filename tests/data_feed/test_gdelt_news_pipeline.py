@@ -50,7 +50,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
                 "output_root": str(Path(tmp) / "05_feed_gdelt_news_task_test"),
             }
             client = FakeBigQueryClient(rows)
-            result = run(task_key, run_id="05_feed_gdelt_news_run_test", client=client)
+            result = run(task_key, run_id="05_feed_gdelt_news_run_test", client=client, client_is_fixture=True)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["gdelt_article"], 1)
             sql, max_results, maximum_bytes_billed, dry_run = client.requests[0]
@@ -76,7 +76,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "05_feed_gdelt_news_task_default", "feed": "05_feed_gdelt_news", "params": {"max_rows": 1, "start_date": "2026-04-27", "end_date": "2026-04-28"}, "output_root": str(Path(tmp) / "task")}
             client = FakeBigQueryClient(rows)
-            result = run(task_key, run_id="run", client=client)
+            result = run(task_key, run_id="run", client=client, client_is_fixture=True)
             self.assertEqual(result.status, "succeeded")
             sql = client.requests[0][0].lower()
             self.assertIn("government", sql)
@@ -91,7 +91,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
         ]
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "05_feed_gdelt_news_task_window", "feed": "05_feed_gdelt_news", "params": {"query_terms": ["inflation"], "start_date": "2026-04-27", "end_date": "2026-04-28"}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeBigQueryClient(rows))
+            result = run(task_key, run_id="run", client=FakeBigQueryClient(rows), client_is_fixture=True)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["gdelt_article"], 1)
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
@@ -104,7 +104,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
     def test_bad_topic_category_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "05_feed_gdelt_news_task_bad", "feed": "05_feed_gdelt_news", "params": {"topic_categories": ["sports"]}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeBigQueryClient([]))
+            result = run(task_key, run_id="run", client=FakeBigQueryClient([]), client_is_fixture=True)
             self.assertEqual(result.status, "failed")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["error"]["type"], "GdeltNewsError")

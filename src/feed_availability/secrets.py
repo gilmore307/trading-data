@@ -8,8 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
-SECRET_ROOT = Path("/root/secrets")
+from data_runtime.config import secret_root
 
 ALIAS_ENV = {
     "alpaca": "ALPACA_SECRET_ALIAS",
@@ -40,7 +39,7 @@ def configured_alias(default_alias: str) -> str:
 
 def load_secret_alias(default_alias: str) -> SecretAlias:
     alias = configured_alias(default_alias)
-    path = SECRET_ROOT / f"{alias}.json"
+    path = secret_root() / f"{alias}.json"
     if not path.exists():
         return SecretAlias(alias, path, False, (), {})
     try:

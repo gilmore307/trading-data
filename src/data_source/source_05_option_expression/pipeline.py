@@ -107,7 +107,7 @@ def _snapshot_type(params: Mapping[str, Any]) -> str:
     return value
 
 
-def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[StepResult, SourcePayload]:
+def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     snapshot_type = _snapshot_type(params)
     feed_task = {
@@ -118,7 +118,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
         "manager_controls": context.task_key.get("manager_controls"),
     }
     feed_context = build_snapshot_context(feed_task, str(context.metadata["run_id"]))
-    fetch_result, fetched = fetch_snapshot(feed_context, client=client)
+    fetch_result, fetched = fetch_snapshot(feed_context, client=client, client_is_fixture=client_is_fixture)
     clean_result, snapshot = clean_snapshot(feed_context, fetched)
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
@@ -236,11 +236,11 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None):
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None, client_is_fixture: bool = False):
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, feed_payload = fetch(context, client=client)
+        fetch_result, feed_payload = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result, cleaned_payload = clean(context, feed_payload)
         save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

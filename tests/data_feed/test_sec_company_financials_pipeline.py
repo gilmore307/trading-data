@@ -43,7 +43,7 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
                 "output_root": str(Path(tmp) / "08_feed_sec_company_financials_task_test"),
             }
             client = FakeSecClient(payload)
-            result = run(task_key, run_id="08_feed_sec_company_financials_run_test", client=client, sec_user_agent="test@example.com")
+            result = run(task_key, run_id="08_feed_sec_company_financials_run_test", client=client, client_is_fixture=True, sec_user_agent="test@example.com")
             self.assertEqual(result.status, "succeeded")
             self.assertIn("CIK0000320193/us-gaap/Assets.json", client.requests[0][0])
             self.assertEqual(client.requests[0][2]["User-Agent"], "test@example.com")
@@ -69,7 +69,7 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "08_feed_sec_company_financials_task_fact", "feed": "08_feed_sec_company_financials", "params": {"data_kind": "sec_company_fact", "cik": "0000320193", "taxonomy": "us-gaap", "tag": "Assets", "unit": "USD"}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeSecClient(payload), sec_user_agent="test")
+            result = run(task_key, run_id="run", client=FakeSecClient(payload), client_is_fixture=True, sec_user_agent="test")
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_company_fact"], 1)
 
@@ -80,7 +80,7 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "08_feed_sec_company_financials_task_sub", "feed": "08_feed_sec_company_financials", "params": {"data_kind": "sec_submission", "cik": "320193"}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeSecClient(payload), sec_user_agent="test")
+            result = run(task_key, run_id="run", client=FakeSecClient(payload), client_is_fixture=True, sec_user_agent="test")
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_submission"], 1)
 
@@ -99,7 +99,7 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
                 "output_root": str(Path(tmp) / "task"),
             }
             client = FakeSecClient(payload)
-            result = run(task_key, run_id="run", client=client, sec_user_agent="test")
+            result = run(task_key, run_id="run", client=client, client_is_fixture=True, sec_user_agent="test")
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_filing_document"], 1)
             self.assertIn("/Archives/edgar/data/320193/000032019324000001/aapl-20240101.htm", client.requests[0][0])
@@ -116,7 +116,7 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
     def test_bad_kind_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "08_feed_sec_company_financials_task_bad", "feed": "08_feed_sec_company_financials", "params": {"data_kind": "bad", "cik": "320193"}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeSecClient({}), sec_user_agent="test")
+            result = run(task_key, run_id="run", client=FakeSecClient({}), client_is_fixture=True, sec_user_agent="test")
             self.assertEqual(result.status, "failed")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["error"]["type"], "SecCompanyFinancialsError")

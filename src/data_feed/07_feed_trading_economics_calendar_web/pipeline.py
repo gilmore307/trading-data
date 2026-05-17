@@ -12,23 +12,21 @@ import csv
 import html
 import json
 import re
-import urllib.error
 import urllib.parse
-import urllib.request
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any, Mapping
 
-from feed_availability.sanitize import sanitize_value
+from feed_availability.http import HttpClient
+from feed_availability.sanitize import sanitize_url, sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
-from data_runtime.config import resolve_output_root
+from data_runtime.config import resolve_output_root, trading_economics_cookie_jar
 from data_runtime.io import write_receipt_bundle
 
 FEED = "07_feed_trading_economics_calendar_web"
 SOURCE_URL = "https://tradingeconomics.com/united-states/calendar"
-DEFAULT_COOKIE_JAR = Path("/root/secrets/tradingeconomics-cookies.txt")
 ET = ZoneInfo("America/New_York")
 FIELDS = [
     "event_time",
@@ -110,7 +108,8 @@ def _window(params: Mapping[str, Any]) -> tuple[date, date]:
     return start, end
 
 
-def _cookie_header(params: Mapping[str, Any], cookie_jar: Path = DEFAULT_COOKIE_JAR) -> str:
+def _cookie_header(params: Mapping[str, Any], cookie_jar: Path | None = None) -> str:
+    cookie_jar = Path(cookie_jar) if cookie_jar is not None else trading_economics_cookie_jar()
     cookie_by_name: dict[str, str] = {}
     if cookie_jar.exists():
         for line in cookie_jar.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -144,11 +143,14 @@ def fetch(context: FeedContext) -> tuple[StepResult, FetchedPage]:
     elif params.get("html"):
         fetched = FetchedPage(str(params["html"]), source_url, _now_utc())
     elif params.get("allow_live_fetch"):
+        start, end = _window(params)
         require_provider_execution_allowed(
             context.task_key,
             provider="trading_economics",
             endpoint_family="calendar_web",
             requested_requests=1,
+            requested_start=start.isoformat(),
+            requested_end=end.isoformat(),
         )
         headers = {
             "User-Agent": "Mozilla/5.0",
@@ -157,18 +159,18 @@ def fetch(context: FeedContext) -> tuple[StepResult, FetchedPage]:
         cookie_header = _cookie_header(params)
         if cookie_header:
             headers["Cookie"] = cookie_header
-        request = urllib.request.Request(source_url, headers=headers)
-        try:
-            with urllib.request.urlopen(request, timeout=int(params.get("timeout_seconds", 30))) as response:
-                fetched = FetchedPage(response.read().decode("utf-8", errors="replace"), source_url, _now_utc())
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError) as exc:
-            raise TradingEconomicsCalendarError(f"visible page fetch failed: {exc}") from exc
+        result = HttpClient(timeout_seconds=int(params.get("timeout_seconds", 30))).get(source_url, headers=headers)
+        if result.status is None:
+            raise TradingEconomicsCalendarError(f"visible page fetch failed before HTTP response: {result.error_type}: {result.error_message}")
+        if result.status < 200 or result.status >= 300:
+            raise TradingEconomicsCalendarError(f"visible page fetch returned HTTP {result.status}: {result.error_message or result.text()[:240]}")
+        fetched = FetchedPage(result.text(), result.url, _now_utc())
     else:
         raise TradingEconomicsCalendarError("provide params.html_path/html, or set allow_live_fetch=true for a bounded visible-page fetch")
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
         "feed": "07_feed_trading_economics_calendar_web",
-        "source_url": source_url,
+        "source_url": sanitize_url(fetched.source_url),
         "country": str(params.get("country") or "United States"),
         "importance": str(params.get("importance") or "3"),
         "fetched_at_utc": fetched.fetched_at_utc,
@@ -276,7 +278,7 @@ def _parse_calendar_data_rows(html_text: str, *, source_url: str, default_countr
             "revised": _first_text(r"<span\b[^>]*id=['\"]revised['\"][^>]*>(.*?)</span>", row_html),
             "importance": default_importance,
             "symbol": "",
-            "source_url": source_url,
+            "source_url": sanitize_url(source_url),
         })
     return parsed
 
@@ -315,7 +317,7 @@ def parse_calendar_rows(html_text: str, *, source_url: str, default_country: str
             "revised": at("revised"),
             "importance": at("importance") or default_importance,
             "symbol": at("symbol"),
-            "source_url": source_url,
+            "source_url": sanitize_url(source_url),
         })
     return parsed
 

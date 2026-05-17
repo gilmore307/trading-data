@@ -263,16 +263,19 @@ def _default_client() -> QueryClient:
     return BigQueryClient()
 
 
-def fetch(context: FeedContext, *, client: QueryClient | None = None) -> tuple[StepResult, FetchedGdeltRows]:
+def fetch(context: FeedContext, *, client: QueryClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedGdeltRows]:
     params = dict(context.task_key.get("params") or {})
     sql, max_rows = build_sql(params)
-    if client is None:
+    start_dt, end_dt = _window_bounds(params)
+    if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="gdelt_bigquery",
             endpoint_family="news_query",
             requested_rows=max_rows,
             requested_requests=1,
+            requested_start=start_dt.isoformat(),
+            requested_end=end_dt.isoformat(),
         )
     client = client or _default_client()
     maximum_bytes_billed = params.get("maximum_bytes_billed")
@@ -412,11 +415,11 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": run_id, "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: QueryClient | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: QueryClient | None = None, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, fetched = fetch(context, client=client)
+        fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

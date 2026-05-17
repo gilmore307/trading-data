@@ -9,9 +9,10 @@ import re
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from data_runtime.config import database_url_file
+
 from .generator import generate_rows
 
-DEFAULT_DB_URL_FILE = Path("/root/secrets/openclaw/database-url")
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 COLUMNS = (
     "run_id",
@@ -32,9 +33,10 @@ def _database_url(explicit: str | None) -> str:
         return explicit
     if os.environ.get("OPENCLAW_DATABASE_URL"):
         return os.environ["OPENCLAW_DATABASE_URL"]
-    if DEFAULT_DB_URL_FILE.exists():
-        return DEFAULT_DB_URL_FILE.read_text(encoding="utf-8").strip()
-    raise SystemExit(f"database URL not supplied and {DEFAULT_DB_URL_FILE} does not exist")
+    path = database_url_file()
+    if path.exists():
+        return path.read_text(encoding="utf-8").strip()
+    raise SystemExit(f"database URL not supplied and {path} does not exist")
 
 
 def _quote(identifier: str) -> str:
@@ -54,7 +56,7 @@ def fetch_source_rows(cursor: Any, *, source_schema: str, source_table: str, sou
         where.append("available_time >= %s")
         params.append(source_start)
     if source_end:
-        where.append("available_time <= %s")
+        where.append("available_time < %s")
         params.append(source_end)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     cursor.execute(

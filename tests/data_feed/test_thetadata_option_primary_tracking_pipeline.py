@@ -90,7 +90,7 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="10_feed_thetadata_option_primary_tracking_run_test", client=FakeThetaDataClient())
+            result = run(task_key, run_id="10_feed_thetadata_option_primary_tracking_run_test", client=FakeThetaDataClient(), client_is_fixture=True)
 
             self.assertEqual(result.status, "succeeded")
             saved_path = output_root / "runs" / "10_feed_thetadata_option_primary_tracking_run_test" / "saved" / "option_bar.csv"
@@ -145,7 +145,7 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run_missing_timeframe", client=FakeThetaDataClient())
+            result = run(task_key, run_id="run_missing_timeframe", client=FakeThetaDataClient(), client_is_fixture=True)
             self.assertEqual(result.status, "failed")
             self.assertIn("timeframe is required", result.details["error"]["message"])
 

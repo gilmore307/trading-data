@@ -171,7 +171,7 @@ def _fetch_contract_rows(context: SourceContext, contract: Mapping[str, Any], *,
     for passthrough in ("thetadata_base_url", "timeout_seconds", "registry_csv"):
         if passthrough in contract:
             feed_task["params"][passthrough] = contract[passthrough]
-    result = run_option_tracking(feed_task, run_id=str(context.metadata["run_id"]), client=client)
+    result = run_option_tracking(feed_task, run_id=str(context.metadata["run_id"]), client=client, client_is_fixture=client_is_fixture)
     if result.status != "succeeded":
         raise SelectedContractTrackingInputsError(f"option tracking failed for {_option_symbol(contract)}: {result.details.get('error')}")
     output_refs = [ref for ref in result.references if ref.endswith("option_bar.csv")]
@@ -179,7 +179,7 @@ def _fetch_contract_rows(context: SourceContext, contract: Mapping[str, Any], *,
     return rows, result.references
 
 
-def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[StepResult, SourcePayload]:
+def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     contracts = [dict(item) for item in _as_list(_required(params, "selected_contracts")) if isinstance(item, Mapping)]
     if not contracts:
@@ -187,7 +187,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None) -> tuple[
     rows: list[dict[str, Any]] = []
     refs: list[str] = []
     for contract in contracts:
-        contract_rows, contract_refs = _fetch_contract_rows(context, contract, client=client)
+        contract_rows, contract_refs = _fetch_contract_rows(context, contract, client=client, client_is_fixture=client_is_fixture)
         option_symbol = _option_symbol(contract)
         for row in contract_rows:
             row.setdefault("underlying", str(contract.get("underlying") or "").upper())
@@ -280,11 +280,11 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, feed_payload = fetch(context, client=client)
+        fetch_result, feed_payload = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result, cleaned_payload = clean(context, feed_payload)
         save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

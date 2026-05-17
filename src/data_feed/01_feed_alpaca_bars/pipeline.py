@@ -50,13 +50,13 @@ def _fetch_paginated(client,url,row_key,params,headers,max_pages):
         if not token: break
     else: evidence.append({'warning':f'max_pages={max_pages} reached before pagination completed'})
     return rows,evidence
-def fetch(context,*,client=None):
+def fetch(context,*,client=None,client_is_fixture=False):
     params=dict(context.task_key.get('params') or {}); symbol=str(_required(params,'symbol')).upper(); timeframe=str(params.get('timeframe','1Day'))
     req={'timeframe':timeframe,'start':str(_required(params,'start')),'end':str(_required(params,'end')),'limit':str(params.get('limit',1000)),'adjustment':str(params.get('adjustment','raw'))}
     if params.get('feed'): req['feed']=str(params['feed'])
     max_pages=int(params.get('max_pages',10))
-    if client is None:
-        require_provider_execution_allowed(context.task_key, provider='alpaca', endpoint_family='bars', requested_symbols=1, requested_rows=int(params.get('limit',1000)), requested_requests=max_pages)
+    if not client_is_fixture:
+        require_provider_execution_allowed(context.task_key, provider='alpaca', endpoint_family='bars', requested_symbols=1, requested_rows=int(params.get('limit',1000))*max_pages, requested_requests=max_pages, requested_start=req.get('start'), requested_end=req.get('end'))
     client=client or HttpClient(timeout_seconds=int(params.get('timeout_seconds',20)))
     secret=load_secret_alias('alpaca'); key=secret.values.get('api_key'); sec=secret.values.get('secret_key')
     if not key or not sec: raise AlpacaBarsError('Alpaca requires api_key and secret_key')
@@ -88,8 +88,8 @@ def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_resu
     entry={'run_id':context.metadata['run_id'],'status':status,'started_at':context.metadata.get('started_at'),'completed_at':_now_utc(),'output_dir':str(context.run_dir),'outputs':save_result.references if save_result else [],'row_counts':save_result.row_counts if save_result else clean_result.row_counts if clean_result else {},'steps':{'fetch':asdict(fetch_result) if fetch_result else None,'clean':asdict(clean_result) if clean_result else None,'save':asdict(save_result) if save_result else None},'error':None if error is None else {'type':type(error).__name__,'message':str(error)}}
     existing['runs']=[r for r in existing.get('runs',[]) if r.get('run_id')!=context.metadata['run_id']]+[entry]; existing.update({'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars'})
     write_receipt_bundle(context.receipt_path, context.run_dir, existing); return StepResult(status,[str(context.receipt_path),*entry['outputs']],entry['row_counts'],details={'run_id':context.metadata['run_id'],'error':entry['error']})
-def run(task_key,*,run_id,client=None):
+def run(task_key,*,run_id,client=None,client_is_fixture=False):
     c=build_context(task_key,run_id); c.cleaned_dir.mkdir(parents=True,exist_ok=True); c.saved_dir.mkdir(parents=True,exist_ok=True); fr=cr=sr=None
     try:
-        fr,f=fetch(c,client=client); cr=clean(c,f); sr=save(c,cr); return write_receipt(c,status='succeeded',fetch_result=fr,clean_result=cr,save_result=sr)
+        fr,f=fetch(c,client=client,client_is_fixture=client_is_fixture); cr=clean(c,f); sr=save(c,cr); return write_receipt(c,status='succeeded',fetch_result=fr,clean_result=cr,save_result=sr)
     except Exception as exc: return write_receipt(c,status='failed',fetch_result=fr,clean_result=cr,save_result=sr,error=exc)

@@ -340,19 +340,21 @@ def _fetch_endpoint(
     }
 
 
-def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[StepResult, FetchedSnapshot]:
+def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedSnapshot]:
     params = dict(context.task_key.get("params") or {})
     underlying = str(_required(params, "underlying")).upper()
     snapshot_time = _parse_snapshot_time(_required(params, "snapshot_time"))
     base_url = str(params.get("thetadata_base_url") or "http://127.0.0.1:25503").rstrip("/")
     timeout = int(params.get("timeout_seconds", 30))
-    if client is None:
+    if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="thetadata",
             endpoint_family="option_selection_snapshot",
             requested_symbols=1,
             requested_requests=4,
+            requested_start=snapshot_time.isoformat(),
+            requested_end=snapshot_time.isoformat(),
         )
     client = client or HttpClient(timeout_seconds=timeout)
 
@@ -671,11 +673,11 @@ def write_receipt(
     )
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, fetched = fetch(context, client=client)
+        fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result, snapshot = clean(context, fetched)
         save_result = save(context, clean_result, snapshot)
         return write_receipt(

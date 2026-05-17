@@ -4,7 +4,7 @@ This document records the production-hardening contracts that can be defined bef
 
 ## Boundary
 
-`trading-data` owns provider/source acquisition and normalized source/feature outputs. `trading-manager` owns requests, scheduling, approvals, and control-plane policy. `trading-storage` owns durable manifests, artifact references, ready signals, retention, backup, and restore. Runtime path defaults live in `src/data_runtime/config.py` and can be overridden with environment variables such as `TRADING_DATA_STORAGE_ROOT`, `TRADING_MANAGER_REGISTRY_CSV`, and `TRADING_STORAGE_REPO_ROOT` instead of hard-coded host paths.
+`trading-data` owns provider/source acquisition and normalized source/feature outputs. `trading-manager` owns requests, scheduling, approvals, and control-plane policy. `trading-storage` owns durable manifests, artifact references, ready signals, retention, backup, and restore. Runtime path defaults live in `src/data_runtime/config.py` and can be overridden with environment variables such as `TRADING_DATA_STORAGE_ROOT`, `TRADING_MANAGER_REGISTRY_CSV`, `TRADING_STORAGE_REPO_ROOT`, `TRADING_SECRET_ROOT`, `TRADING_DATABASE_URL_FILE`, and `TRADING_ECONOMICS_COOKIE_JAR` instead of hard-coded host paths.
 
 Local ignored `storage/` outputs remain development evidence. Production handoff must use the storage-owned V1 contracts:
 
@@ -31,7 +31,7 @@ Required manager-control fields for autonomous historical acquisition:
 - `rate_limit_policy_ref`
 - `secret_alias_refs`
 
-Enforcement helper: `src/data_runtime/provider_policy.py` provides `require_provider_execution_allowed(...)`. Live provider clients must call it before loading provider secrets, constructing real clients, or issuing network/API requests. Fixture/fake-client and local-file/text modes remain exempt because they do not perform live provider calls.
+Enforcement helper: `src/data_runtime/provider_policy.py` provides `require_provider_execution_allowed(...)`. Live provider clients must call it before loading provider secrets, constructing real clients, or issuing network/API requests. Injected clients are treated as live unless the caller explicitly passes the fixture-only flag (`client_is_fixture=True`) in tests/local fixture paths. Local-file/text modes remain exempt because they do not perform live provider calls.
 
 ## Receipts and Atomic Writes
 

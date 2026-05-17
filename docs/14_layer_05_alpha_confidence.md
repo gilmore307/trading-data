@@ -7,7 +7,7 @@ Event data is no longer a hard AlphaConfidence prerequisite. Reviewed failure-ri
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
-`trading-data` does not own a dedicated Layer 4 source or feature package. This is intentional.
+`trading-data` does not own a dedicated Layer 5 source or feature package. This is intentional.
 
 Layer 5 is `AlphaConfidenceModel` in `trading-model`. It consumes accepted upstream context/model outputs and evaluated outcome evidence; it does not require a new provider acquisition route in `trading-data` by default.
 
@@ -50,4 +50,4 @@ accepted Layer 1-3 outputs and references
 
 ## Acceptance notes
 
-A Layer 4-related `trading-data` change is acceptable only if it introduces a real external/source observation or deterministic point-in-time feature needed by an accepted contract. Otherwise the work belongs in `trading-model`, `trading-manager`, or `trading-storage`.
+A Layer 5-related `trading-data` change is acceptable only if it introduces a real external/source observation or deterministic point-in-time feature needed by an accepted contract. Otherwise the work belongs in `trading-model`, `trading-manager`, or `trading-storage`.

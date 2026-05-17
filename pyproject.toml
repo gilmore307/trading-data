@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Feed, source, and feature data-production pipelines for trading-data."
 requires-python = ">=3.11"
 dependencies = [
+    "jsonschema>=4.22",
     "psycopg[binary]>=3.2",
 ]
 

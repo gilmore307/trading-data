@@ -8,10 +8,9 @@ import os
 import re
 from pathlib import Path
 
-from data_runtime.config import shared_path
+from data_runtime.config import database_url_file, shared_path
 from typing import Any, Mapping, Sequence
 
-DEFAULT_DB_URL_FILE = Path("/root/secrets/openclaw/database-url")
 DEFAULT_UNIVERSE_CSV = shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")
 DEFAULT_COMBINATIONS_CSV = shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv")
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -45,9 +44,10 @@ def _database_url(explicit: str | None) -> str:
     value = os.environ.get("OPENCLAW_DATABASE_URL", "").strip()
     if value:
         return value
-    if DEFAULT_DB_URL_FILE.exists():
-        return DEFAULT_DB_URL_FILE.read_text(encoding="utf-8").strip()
-    raise SystemExit(f"database URL not supplied and {DEFAULT_DB_URL_FILE} does not exist")
+    path = database_url_file()
+    if path.exists():
+        return path.read_text(encoding="utf-8").strip()
+    raise SystemExit(f"database URL not supplied and {path} does not exist")
 
 
 def _quote_identifier(identifier: str) -> str:
@@ -85,7 +85,7 @@ def fetch_source_bars(
         where.append("timestamp >= %s")
         params.append(source_start)
     if source_end:
-        where.append("timestamp <= %s")
+        where.append("timestamp < %s")
         params.append(source_end)
     where_sql = " WHERE " + " AND ".join(where)
     cursor.execute(

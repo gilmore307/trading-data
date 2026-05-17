@@ -3,31 +3,36 @@
   "$id": "https://trading.local/trading-data/completion_receipt.schema.json",
   "title": "completion_receipt",
   "type": "object",
-  "required": ["task_id", "runs"],
+  "required": ["contract_type", "task_id", "runs"],
   "properties": {
     "contract_type": {"const": "completion_receipt"},
     "task_id": {"type": "string", "minLength": 1},
-    "feed": {"type": "string"},
-    "source": {"type": "string"},
+    "feed": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1},
     "runs": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["run_id", "status", "started_at", "completed_at", "output_dir", "outputs", "row_counts", "steps"],
+        "required": ["run_id", "status", "started_at", "completed_at", "output_dir", "outputs", "row_counts", "steps", "error"],
         "properties": {
           "run_id": {"type": "string", "minLength": 1},
           "status": {"enum": ["succeeded", "failed", "partial_ready", "skipped"]},
           "started_at": {"type": ["string", "null"]},
-          "completed_at": {"type": "string"},
-          "output_dir": {"type": "string"},
+          "completed_at": {"type": "string", "minLength": 1},
+          "output_dir": {"type": "string", "minLength": 1},
           "outputs": {"type": "array", "items": {"type": "string"}},
-          "row_counts": {"type": "object"},
+          "row_counts": {"type": "object", "additionalProperties": {"type": "number"}},
           "steps": {"type": "object"},
           "error": {"type": ["object", "string", "null"]}
         },
-        "additionalProperties": true
+        "additionalProperties": false
       }
     }
   },
-  "additionalProperties": true
+  "oneOf": [
+    {"required": ["feed"], "not": {"required": ["source"]}},
+    {"required": ["source"], "not": {"required": ["feed"]}}
+  ],
+  "additionalProperties": false
 }

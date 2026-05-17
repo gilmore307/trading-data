@@ -31,6 +31,18 @@ def storage_root() -> Path:
     return Path(os.environ.get("TRADING_DATA_STORAGE_ROOT") or "storage")
 
 
+def secret_root() -> Path:
+    return Path(os.environ.get("TRADING_SECRET_ROOT") or "/root/secrets")
+
+
+def database_url_file() -> Path:
+    return Path(os.environ.get("TRADING_DATABASE_URL_FILE") or secret_root() / "openclaw" / "database-url")
+
+
+def trading_economics_cookie_jar() -> Path:
+    return Path(os.environ.get("TRADING_ECONOMICS_COOKIE_JAR") or secret_root() / "tradingeconomics-cookies.txt")
+
+
 def manager_registry_csv() -> Path:
     return Path(
         os.environ.get("TRADING_MANAGER_REGISTRY_CSV")
@@ -55,11 +67,14 @@ def resolve_output_root(task_key: Mapping[str, Any], *, default_task_id: str) ->
 
 
 __all__ = [
+    "database_url_file",
     "manager_registry_csv",
     "projects_root",
     "repo_root",
     "resolve_output_root",
+    "secret_root",
     "shared_path",
     "shared_storage_repo_root",
     "storage_root",
+    "trading_economics_cookie_jar",
 ]

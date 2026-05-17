@@ -103,7 +103,7 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
-def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[StepResult, FetchedPayload]:
+def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedPayload]:
     params = dict(context.task_key.get("params") or {})
     symbol = str(_required(params, "symbol")).upper()
     start = str(_required(params, "start"))
@@ -111,14 +111,16 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
     limit = str(params.get("limit", 1000))
     max_pages = int(params.get("max_pages", 10))
     feed = params.get("feed")
-    if client is None:
+    if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="alpaca",
             endpoint_family="trades_quotes",
             requested_symbols=1,
-            requested_rows=int(limit),
+            requested_rows=int(limit) * max_pages * 2,
             requested_requests=max_pages * 2,
+            requested_start=start,
+            requested_end=end,
         )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     secret = load_secret_alias("alpaca")
@@ -319,13 +321,13 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *entry["outputs"]], entry["row_counts"], details={"run_id": context.metadata["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, fetched = fetch(context, client=client)
+        fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

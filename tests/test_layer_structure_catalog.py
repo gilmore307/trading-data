@@ -25,6 +25,18 @@ class LayerStructureCatalogTests(unittest.TestCase):
                 self.assertIn(f"Layer {contract.layer:02d}", text)
                 self.assertIn(contract.model_name, text)
 
+    def test_no_source_layer_docs_do_not_keep_stale_layer_numbers(self) -> None:
+        stale_phrases = {
+            4: ("dedicated Layer 5 source", "Layer 5-related"),
+            5: ("dedicated Layer 4 source", "Layer 4-related"),
+            6: ("dedicated Layer 5 source", "Layer 5 may consume", "Layer 4-related"),
+        }
+        for contract in LAYER_CONTRACTS:
+            for stale_phrase in stale_phrases.get(contract.layer, ()):  # currently guards reviewed Layer 4-6 docs.
+                with self.subTest(layer=contract.layer, stale_phrase=stale_phrase):
+                    text = (REPO_ROOT / contract.doc_path).read_text(encoding="utf-8")
+                    self.assertNotIn(stale_phrase, text)
+
     def test_owned_packages_import_and_have_readmes(self) -> None:
         for contract in LAYER_CONTRACTS:
             for package in contract.source_packages + contract.feature_packages + contract.feed_packages:

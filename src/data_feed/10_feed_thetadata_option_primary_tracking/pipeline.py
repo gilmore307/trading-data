@@ -342,7 +342,7 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     )
 
 
-def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[StepResult, FetchedOhlc]:
+def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedOhlc]:
     params = dict(context.task_key.get("params") or {})
     underlying = str(_required(params, "underlying")).upper()
     expiration = str(_required(params, "expiration"))
@@ -360,13 +360,15 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None) -> tuple[St
 
     base_url = str(params.get("thetadata_base_url") or "http://127.0.0.1:25503").rstrip("/")
     timeout = int(params.get("timeout_seconds", 30))
-    if client is None:
+    if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="thetadata",
             endpoint_family="option_primary_tracking",
             requested_symbols=1,
             requested_requests=1,
+            requested_start=start_date.isoformat(),
+            requested_end=end_date.isoformat(),
         )
     client = client or HttpClient(timeout_seconds=timeout)
 
@@ -672,11 +674,11 @@ def write_receipt(
     )
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, fetched = fetch(context, client=client)
+        fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
         return write_receipt(

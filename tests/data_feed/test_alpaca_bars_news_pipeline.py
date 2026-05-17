@@ -23,7 +23,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 tk={'task_id':'01_feed_alpaca_bars_task_test','feed':'01_feed_alpaca_bars','params':{'symbol':'AAPL','timeframe':'1Day','start':'2024-01-02T00:00:00Z','end':'2024-01-03T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
-                r=p.run(tk,run_id='01_feed_alpaca_bars_run_test',client=FakeBarsClient())
+                r=p.run(tk,run_id='01_feed_alpaca_bars_run_test',client=FakeBarsClient(), client_is_fixture=True)
                 self.assertEqual(r.status,'succeeded')
                 with (Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test/saved/equity_bar.csv').open(newline='') as handle:
                     row=next(csv.DictReader(handle))
@@ -38,13 +38,21 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
             r=p.run(tk,run_id='01_feed_alpaca_bars_policy_run')
             self.assertEqual(r.status,'failed')
             self.assertIn('live provider calls are not allowed', r.details['error']['message'])
+
+    def test_injected_client_still_requires_policy_unless_marked_fixture(self):
+        p = import_module("data_feed.01_feed_alpaca_bars.pipeline")
+        with tempfile.TemporaryDirectory() as tmp:
+            tk={'task_id':'01_feed_alpaca_bars_policy_test','feed':'01_feed_alpaca_bars','params':{'symbol':'AAPL','timeframe':'1Day','start':'2024-01-02T00:00:00Z','end':'2024-01-03T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
+            r=p.run(tk,run_id='01_feed_alpaca_bars_injected_policy_run',client=FakeBarsClient())
+            self.assertEqual(r.status,'failed')
+            self.assertIn('live provider calls are not allowed', r.details['error']['message'])
     def test_bars_pipeline_treats_null_bars_as_empty_success(self):
         p = import_module("data_feed.01_feed_alpaca_bars.pipeline")
         old=p.load_secret_alias; p.load_secret_alias=lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 tk={'task_id':'01_feed_alpaca_bars_empty_test','feed':'01_feed_alpaca_bars','params':{'symbol':'BITW','timeframe':'1Day','start':'2016-01-01T00:00:00Z','end':'2016-02-01T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
-                r=p.run(tk,run_id='01_feed_alpaca_bars_empty_run_test',client=FakeEmptyBarsClient())
+                r=p.run(tk,run_id='01_feed_alpaca_bars_empty_run_test',client=FakeEmptyBarsClient(), client_is_fixture=True)
                 self.assertEqual(r.status,'succeeded')
                 csv_path=Path(tk['output_root'])/'runs/01_feed_alpaca_bars_empty_run_test/saved/equity_bar.csv'
                 with csv_path.open(newline='') as handle:
@@ -67,7 +75,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 tk={'task_id':'03_feed_alpaca_news_task_test','feed':'03_feed_alpaca_news','params':{'symbols':'AAPL','start':'2024-01-09T00:00:00Z','end':'2024-01-10T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
-                r=p.run(tk,run_id='03_feed_alpaca_news_run_test',client=FakeNewsClient())
+                r=p.run(tk,run_id='03_feed_alpaca_news_run_test',client=FakeNewsClient(), client_is_fixture=True)
                 self.assertEqual(r.status,'succeeded')
                 with (Path(tk['output_root'])/'runs/03_feed_alpaca_news_run_test/saved/equity_news.csv').open(newline='') as handle:
                     reader=csv.DictReader(handle); row=next(reader)

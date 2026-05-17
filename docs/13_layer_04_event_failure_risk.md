@@ -1,7 +1,7 @@
 # Layer 04 — Event Failure Risk Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. `trading-data` owns no dedicated Layer 5 source/feature package by default; `EventFailureRiskModel` belongs to `trading-model` and consumes reviewed event/strategy-failure gates plus point-in-time evidence references.
+Status: active architecture revision. `trading-data` owns no dedicated Layer 4 source/feature package by default; `EventFailureRiskModel` belongs to `trading-model` and consumes reviewed event/strategy-failure gates plus point-in-time evidence references.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 Layer 4 is `EventFailureRiskModel`. It conditions alpha confidence using agent-reviewed event/strategy-failure relationships. It is not a raw-news ingestion layer and must not create a symmetry-only `trading-data` source or feature surface.

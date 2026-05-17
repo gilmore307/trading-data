@@ -100,12 +100,12 @@ def _json_response(result: HttpResult) -> Any:
     return result.json()
 
 
-def fetch(context: FeedContext, *, client: HttpClient | None = None, sec_user_agent: str = DEFAULT_SEC_USER_AGENT) -> tuple[StepResult, FetchedSecPayload]:
+def fetch(context: FeedContext, *, client: HttpClient | None = None, sec_user_agent: str = DEFAULT_SEC_USER_AGENT, client_is_fixture: bool = False) -> tuple[StepResult, FetchedSecPayload]:
     params = dict(context.task_key.get("params") or {})
     data_kind = str(params.get("data_kind") or "sec_company_fact")
     if data_kind not in SUPPORTED_DATA_KINDS:
         raise SecCompanyFinancialsError(f"unsupported SEC data_kind {data_kind!r}; supported={sorted(SUPPORTED_DATA_KINDS)}")
-    if client is None:
+    if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="sec_edgar",
@@ -316,11 +316,11 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": context.metadata["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sec_user_agent: str = DEFAULT_SEC_USER_AGENT) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sec_user_agent: str = DEFAULT_SEC_USER_AGENT, client_is_fixture: bool = False) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, fetched = fetch(context, client=client, sec_user_agent=sec_user_agent)
+        fetch_result, fetched = fetch(context, client=client, sec_user_agent=sec_user_agent, client_is_fixture=client_is_fixture)
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

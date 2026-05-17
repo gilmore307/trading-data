@@ -67,7 +67,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                     "output_root": str(Path(tmp) / "task"),
                 }
                 writer = FakeSqlWriter()
-                result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=writer)
+                result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=writer, client_is_fixture=True)
                 self.assertEqual(result.status, "succeeded")
                 self.assertEqual(result.row_counts["source_01_market_regime"], 2)
                 self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "source_01_market_regime.csv").exists())
@@ -95,7 +95,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                 "output_root": str(Path(tmp) / "task"),
             }
             writer = FakeSqlWriter()
-            result = module.run(task_key, run_id="run", client=FakeThetaDataClient(), sql_writer=writer)
+            result = module.run(task_key, run_id="run", client=FakeThetaDataClient(), sql_writer=writer, client_is_fixture=True)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["source_05_option_expression"], 1)
             self.assertEqual(result.row_counts["option_chain_snapshot_contracts"], 1)

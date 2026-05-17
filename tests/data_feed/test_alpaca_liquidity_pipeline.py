@@ -77,7 +77,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             old = pipeline.load_secret_alias
             pipeline.load_secret_alias = lambda alias: Secret()
             try:
-                result = run(task_key, run_id='02_feed_alpaca_liquidity_run_test', client=FakeAlpacaClient())
+                result = run(task_key, run_id='02_feed_alpaca_liquidity_run_test', client=FakeAlpacaClient(), client_is_fixture=True)
             finally:
                 pipeline.load_secret_alias = old
             self.assertEqual(result.status, 'succeeded')

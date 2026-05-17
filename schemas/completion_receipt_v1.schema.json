@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading.local/trading-data/completion_receipt_v1.schema.json",
+  "title": "completion_receipt_v1",
+  "type": "object",
+  "required": ["task_id", "runs"],
+  "properties": {
+    "contract_type": {"const": "completion_receipt_v1"},
+    "task_id": {"type": "string", "minLength": 1},
+    "feed": {"type": "string"},
+    "source": {"type": "string"},
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["run_id", "status", "started_at", "completed_at", "output_dir", "outputs", "row_counts", "steps"],
+        "properties": {
+          "run_id": {"type": "string", "minLength": 1},
+          "status": {"enum": ["succeeded", "failed", "partial_ready", "skipped"]},
+          "started_at": {"type": ["string", "null"]},
+          "completed_at": {"type": "string"},
+          "output_dir": {"type": "string"},
+          "outputs": {"type": "array", "items": {"type": "string"}},
+          "row_counts": {"type": "object"},
+          "steps": {"type": "object"},
+          "error": {"type": ["object", "string", "null"]}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

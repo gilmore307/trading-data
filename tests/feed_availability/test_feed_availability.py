@@ -6,10 +6,11 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from urllib.error import HTTPError
 from unittest.mock import patch
 
 from feed_availability.__main__ import main
-from feed_availability.http import HttpResult
+from feed_availability.http import HttpClient, HttpResult, RetryPolicy
 from feed_availability.probes import probe_bls
 from feed_availability.report import ProbeResult, report_payload, write_report
 from feed_availability.sanitize import sanitize_url, sanitize_value
@@ -39,7 +40,38 @@ class FakeClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(body).encode())
 
 
+class FakeResponse:
+    status = 200
+    headers = {"Content-Type": "application/json"}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return None
+
+    def read(self, _max_bytes):
+        return b'{"ok": true}'
+
+
 class SourceAvailabilityTests(unittest.TestCase):
+    def test_http_client_records_retry_and_rate_limit_evidence(self):
+        rate_limit_error = HTTPError(
+            "https://example.test/api",
+            429,
+            "Too Many Requests",
+            {"Retry-After": "3"},
+            io.BytesIO(b"rate limited"),
+        )
+        with patch("urllib.request.urlopen", side_effect=[rate_limit_error, FakeResponse()]):
+            client = HttpClient(retry_policy=RetryPolicy(max_attempts=2), sleep=lambda _seconds: None)
+            result = client.get("https://example.test/api")
+        self.assertEqual(result.status, 200)
+        self.assertEqual(result.attempt_count, 2)
+        self.assertEqual(result.attempts[0]["status"], 429)
+        self.assertEqual(result.attempts[0]["retry_after_seconds"], 3.0)
+        self.assertEqual(result.retry_policy["max_attempts"], 2)
+
     def test_sanitize_redacts_secret_like_keys(self):
         payload = {
             "api_key": "abc",

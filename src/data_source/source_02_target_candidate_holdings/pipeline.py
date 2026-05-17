@@ -12,7 +12,7 @@ import json
 import re
 from importlib import import_module
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -24,6 +24,7 @@ RAW_HOLDING_FIELDS = _holding_feed.FIELDS
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import projects_root, resolve_output_root, shared_path
 from data_runtime.io import write_receipt_bundle
+from data_runtime.exchange_calendar import next_regular_us_equity_open_after
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 SOURCE = "source_02_target_candidate_holdings"
@@ -237,21 +238,14 @@ def _is_us_equity_holding(row: Mapping[str, str]) -> bool:
     return True
 
 
-def _next_regular_session_open_after(as_of_date: str) -> str:
-    try:
-        day = datetime.strptime(as_of_date[:10], "%Y-%m-%d").date() + timedelta(days=1)
-    except ValueError:
-        return ""
-    while day.weekday() >= 5:
-        day += timedelta(days=1)
-    return f"{day.isoformat()}T09:30:00-04:00"
-
-
 def _available_time(params: Mapping[str, Any], row: Mapping[str, str], as_of_date: str) -> str:
     explicit = str(params.get("available_time") or row.get("available_time") or "").strip()
     if explicit:
         return explicit
-    return _next_regular_session_open_after(as_of_date) if as_of_date else ""
+    try:
+        return next_regular_us_equity_open_after(as_of_date) if as_of_date else ""
+    except ValueError:
+        return ""
 
 
 def _num(value: Any) -> float | None:

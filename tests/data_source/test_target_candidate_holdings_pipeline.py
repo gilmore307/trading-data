@@ -33,6 +33,11 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         self.assertEqual(result.details["skipped"]["outside_window"], 1)
         self.assertEqual(cleaned.rows[0]["holding_symbol"], "NVDA")
 
+    def test_available_time_defaults_to_next_regular_us_equity_open(self):
+        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+        row = {"available_time": "", "as_of_date": "2026-04-24"}
+        self.assertEqual(module._available_time({}, row, "2026-04-24"), "2026-04-27T09:30:00-04:00")
+
     def test_candidate_builder_holdings_source_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
             universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"

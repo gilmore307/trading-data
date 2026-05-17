@@ -1,0 +1,7 @@
+{
+  "contract_type": "task_key_v1",
+  "task_id": "unit_task",
+  "feed": "01_feed_alpaca_bars",
+  "params": {"symbol": "SPY"},
+  "output_root": "storage/unit_task"
+}

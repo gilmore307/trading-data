@@ -1,0 +1,18 @@
+{
+  "contract_type": "completion_receipt_v1",
+  "task_id": "unit_task",
+  "feed": "01_feed_alpaca_bars",
+  "runs": [
+    {
+      "run_id": "unit_run",
+      "status": "succeeded",
+      "started_at": "2026-01-02T14:30:00Z",
+      "completed_at": "2026-01-02T14:31:00Z",
+      "output_dir": "storage/unit_task/runs/unit_run",
+      "outputs": [],
+      "row_counts": {},
+      "steps": {},
+      "error": null
+    }
+  ]
+}

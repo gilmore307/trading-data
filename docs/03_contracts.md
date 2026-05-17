@@ -26,11 +26,22 @@ Date: 2026-05-08
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 
+## Machine-readable envelopes
+
+Generic contract-envelope schemas live in `schemas/`:
+
+- `task_key_v1.schema.json`
+- `completion_receipt_v1.schema.json`
+- `source_row_v1.schema.json`
+- `feature_row_v1.schema.json`
+
+These schemas define shared envelope fields only. Feed/source-specific payload fields remain owned by the corresponding module docs and tests until a reviewed registry-backed schema is accepted.
+
 ## Freshness and model-standard acceptance
 
 Two previously active hardening items are now resolved as conservative acceptance rules:
 
-1. ETF holdings / target-candidate preparation must preserve point-in-time visibility. If no explicit `available_time` is supplied, `source_02_target_candidate_holdings` now defaults holdings rows to the next regular US session open after `as_of_date` (`09:30 America/New_York`, skipping weekends). Same-day availability requires explicit source evidence or reviewed task input.
+1. ETF holdings / target-candidate preparation must preserve point-in-time visibility. If no explicit `available_time` is supplied, `source_02_target_candidate_holdings` now defaults holdings rows to the next regular US equity session open after `as_of_date` (`09:30 America/New_York`, skipping weekends and reviewed US market holidays). Same-day availability requires explicit source evidence or reviewed task input.
 2. `equity_abnormal_activity_event` now uses the explicit default `model_standard = equity_abnormal_activity_conservative` with `calibration_status = conservative_fixture_default_not_production_calibrated`. The default may produce conservative event evidence, but production training labels or promoted gates still require a reviewed historical calibration report.
 
 ## Historical-training readiness classification

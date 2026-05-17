@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trading.local/trading-data/feature_row_v1.schema.json",
+  "title": "feature_row_v1",
+  "type": "object",
+  "required": ["feature_id", "timestamp"],
+  "properties": {
+    "contract_type": {"const": "feature_row_v1"},
+    "feature_id": {"type": "string", "pattern": "^feature_[0-9]{2}_[a-z0-9_]+$"},
+    "model_layer": {"type": "string", "pattern": "^layer_[0-9]{2}_[a-z0-9_]+$"},
+    "timestamp": {"type": "string"},
+    "payload": {"type": "object"}
+  },
+  "additionalProperties": true
+}

@@ -40,6 +40,7 @@ Data feed/source receipts use `src/data_runtime/io.py` for same-directory atomic
 Rules:
 
 - Bounded source/feed windows use `[start, end)` semantics unless a provider-specific endpoint contract explicitly says the provider request parameter itself is inclusive.
+- ETF holdings default `available_time` is the next regular US equity session open from `src/data_runtime/exchange_calendar.py`; explicit reviewed provider timestamps may override it.
 - Secret values must never be logged, persisted, committed, or embedded in manifests.
 - Provider errors, HTTP statuses, rate-limit responses, and retry counts belong in sanitized manifest evidence.
 - `Retry-After` or provider-specific backoff headers must be respected.
@@ -47,6 +48,8 @@ Rules:
 - Broker execution, account/order mutation, storage lifecycle mutation, and production model activation remain separate hard-gated surfaces.
 
 ## Retry / Rate-Limit Policy
+
+Implemented helper: `src/feed_availability/http.py` exposes `RetryPolicy` and records `attempt_count`, `attempts`, `retry_after_seconds`, `rate_limited`, and `retry_policy` evidence on `HttpResult`.
 
 Minimum retry policy:
 

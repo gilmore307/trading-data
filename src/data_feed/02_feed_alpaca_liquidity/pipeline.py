@@ -15,6 +15,7 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.io import write_receipt_bundle
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
@@ -302,7 +303,7 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     return StepResult("succeeded", references, dict(clean_result.row_counts), details={"format": "csv", "raw_persistence": "not_persisted_by_default"})
 
 
-def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
+def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
     context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
     existing = {"task_id": context.task_key.get("task_id"), "feed": "02_feed_alpaca_liquidity", "runs": []}
     if context.receipt_path.exists():
@@ -313,7 +314,7 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     entry = {"run_id": context.metadata["run_id"], "status": status, "started_at": context.metadata.get("started_at"), "completed_at": _now_utc(), "output_dir": str(context.run_dir), "outputs": save_result.references if save_result else [], "row_counts": save_result.row_counts if save_result else clean_result.row_counts if clean_result else {}, "steps": {"fetch": asdict(fetch_result) if fetch_result else None, "clean": asdict(clean_result) if clean_result else None, "save": asdict(save_result) if save_result else None}, "error": None if error is None else {"type": type(error).__name__, "message": str(error)}}
     existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != context.metadata["run_id"]] + [entry]
     existing.update({"task_id": context.task_key.get("task_id"), "feed": "02_feed_alpaca_liquidity"})
-    context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_receipt_bundle(context.receipt_path, context.run_dir, existing)
     return StepResult(status, [str(context.receipt_path), *entry["outputs"]], entry["row_counts"], details={"run_id": context.metadata["run_id"], "error": entry["error"]})
 
 
@@ -327,5 +328,5 @@ def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = No
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
-    except BaseException as exc:
+    except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

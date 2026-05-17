@@ -21,6 +21,7 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.io import write_receipt_bundle
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
@@ -615,7 +616,7 @@ def write_receipt(
     fetch_result: StepResult | None = None,
     clean_result: StepResult | None = None,
     save_result: StepResult | None = None,
-    error: BaseException | None = None,
+    error: Exception | None = None,
 ) -> StepResult:
     context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
     existing: dict[str, Any] = {"task_id": context.task_key.get("task_id"), "feed": FEED, "runs": []}
@@ -660,7 +661,7 @@ def write_receipt(
         run for run in existing.get("runs", []) if run.get("run_id") != context.metadata["run_id"]
     ] + [entry]
     existing.update({"task_id": context.task_key.get("task_id"), "feed": FEED})
-    context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_receipt_bundle(context.receipt_path, context.run_dir, existing)
     return StepResult(
         status,
         [str(context.receipt_path), *outputs],
@@ -684,7 +685,7 @@ def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = No
             clean_result=clean_result,
             save_result=save_result,
         )
-    except BaseException as exc:
+    except Exception as exc:
         return write_receipt(
             context,
             status="failed",

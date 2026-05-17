@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.io import write_receipt_bundle
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
@@ -280,7 +281,7 @@ def write_receipt(context: FeedContext, *, fetch_result: StepResult, clean_resul
     existing.update({"task_id": context.task_key.get("task_id"), "feed": "04_feed_okx_crypto_market_data"})
     existing.setdefault("runs", []).append(run_entry)
     context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_receipt_bundle(context.receipt_path, context.run_dir, existing)
     return StepResult("succeeded", [str(context.receipt_path)], {"runs_recorded": len(existing["runs"])})
 
 

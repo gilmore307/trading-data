@@ -17,6 +17,7 @@ from typing import Any, Iterable, Mapping
 from zoneinfo import ZoneInfo
 
 from feed_availability.sanitize import sanitize_value
+from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 SOURCE = "source_03_target_state"
@@ -361,7 +362,7 @@ def save(context: SourceContext, clean_result: StepResult, payload: CleanedPaylo
     return StepResult("succeeded", [reference], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": SQL_FIELDS, "storage": metadata})
 
 
-def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
+def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
     context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
     existing: dict[str, Any] = {"task_id": context.task_key.get("task_id"), "source": SOURCE, "runs": []}
     if context.receipt_path.exists():
@@ -374,7 +375,7 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     entry = {"run_id": str(context.metadata["run_id"]), "status": status, "started_at": context.metadata.get("started_at"), "completed_at": _now_utc(), "output_dir": str(context.run_dir), "outputs": outputs, "row_counts": row_counts, "steps": {"fetch": asdict(fetch_result) if fetch_result else None, "clean": asdict(clean_result) if clean_result else None, "save": asdict(save_result) if save_result else None}, "error": None if error is None else {"type": type(error).__name__, "message": str(error)}}
     existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != entry["run_id"]] + [entry]
     existing.update({"task_id": context.task_key.get("task_id"), "source": SOURCE})
-    context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_receipt_bundle(context.receipt_path, context.run_dir, existing)
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
@@ -386,5 +387,5 @@ def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | N
         clean_result, cleaned_payload = clean(context, source_payload)
         save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
-    except BaseException as exc:
+    except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

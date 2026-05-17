@@ -52,6 +52,8 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                     self.assertEqual(reader.fieldnames,p.EQUITY_BAR_FIELDS)
                     self.assertEqual(list(reader),[])
                 receipt=json.loads((Path(tk['output_root'])/'completion_receipt.json').read_text())
+                run_receipt=json.loads((Path(tk['output_root'])/'runs/01_feed_alpaca_bars_empty_run_test/completion_receipt.json').read_text())
+                self.assertEqual(run_receipt, receipt)
                 run=receipt['runs'][0]
                 self.assertEqual(run['row_counts'],{'equity_bar':0})
                 self.assertTrue(run['steps']['fetch']['references'])

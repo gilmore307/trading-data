@@ -23,6 +23,7 @@ from typing import Any, Mapping
 
 from feed_availability.sanitize import sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.io import write_receipt_bundle
 
 FEED = "07_feed_trading_economics_calendar_web"
 SOURCE_URL = "https://tradingeconomics.com/united-states/calendar"
@@ -360,7 +361,7 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
 
 
-def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: BaseException | None = None) -> StepResult:
+def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
     context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
     existing: dict[str, Any] = {"task_id": context.task_key.get("task_id"), "feed": FEED, "runs": []}
     if context.receipt_path.exists():
@@ -373,7 +374,7 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     entry = {"run_id": str(context.metadata["run_id"]), "status": status, "started_at": context.metadata.get("started_at"), "completed_at": _now_utc(), "output_dir": str(context.run_dir), "outputs": outputs, "row_counts": row_counts, "steps": {"fetch": asdict(fetch_result) if fetch_result else None, "clean": asdict(clean_result) if clean_result else None, "save": asdict(save_result) if save_result else None}, "error": None if error is None else {"type": type(error).__name__, "message": str(error)}}
     existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != entry["run_id"]] + [entry]
     existing.update({"task_id": context.task_key.get("task_id"), "feed": FEED})
-    context.receipt_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_receipt_bundle(context.receipt_path, context.run_dir, existing)
     warnings = []
     for step in (fetch_result, clean_result, save_result):
         if step:
@@ -389,5 +390,5 @@ def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
-    except BaseException as exc:
+    except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

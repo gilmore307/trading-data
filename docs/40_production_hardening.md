@@ -33,6 +33,10 @@ Required manager-control fields for autonomous historical acquisition:
 
 Enforcement helper: `src/data_runtime/provider_policy.py` provides `require_provider_execution_allowed(...)`. Live provider clients must call it before loading provider secrets, constructing real clients, or issuing network/API requests. Fixture/fake-client and local-file/text modes remain exempt because they do not perform live provider calls.
 
+## Receipts and Atomic Writes
+
+Data feed/source receipts use `src/data_runtime/io.py` for same-directory atomic writes. Each run writes both the compatibility latest receipt at `<output_root>/completion_receipt.json` and the run-scoped copy at `<output_root>/runs/<run_id>/completion_receipt.json`. Downstream collection should prefer the run-scoped receipt when it needs immutable evidence for a specific run.
+
 Rules:
 
 - Secret values must never be logged, persisted, committed, or embedded in manifests.

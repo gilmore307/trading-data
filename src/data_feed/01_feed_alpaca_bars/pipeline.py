@@ -10,6 +10,7 @@ from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_runtime.io import write_receipt_bundle
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
 EQUITY_BAR_FIELDS=['symbol','timeframe','timestamp','bar_open','bar_high','bar_low','bar_close','bar_volume','bar_vwap','bar_trade_count']
 @dataclass(frozen=True)
@@ -85,9 +86,9 @@ def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_resu
         except json.JSONDecodeError: pass
     entry={'run_id':context.metadata['run_id'],'status':status,'started_at':context.metadata.get('started_at'),'completed_at':_now_utc(),'output_dir':str(context.run_dir),'outputs':save_result.references if save_result else [],'row_counts':save_result.row_counts if save_result else clean_result.row_counts if clean_result else {},'steps':{'fetch':asdict(fetch_result) if fetch_result else None,'clean':asdict(clean_result) if clean_result else None,'save':asdict(save_result) if save_result else None},'error':None if error is None else {'type':type(error).__name__,'message':str(error)}}
     existing['runs']=[r for r in existing.get('runs',[]) if r.get('run_id')!=context.metadata['run_id']]+[entry]; existing.update({'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars'})
-    context.receipt_path.write_text(json.dumps(existing,indent=2,sort_keys=True)+'\n'); return StepResult(status,[str(context.receipt_path),*entry['outputs']],entry['row_counts'],details={'run_id':context.metadata['run_id'],'error':entry['error']})
+    write_receipt_bundle(context.receipt_path, context.run_dir, existing); return StepResult(status,[str(context.receipt_path),*entry['outputs']],entry['row_counts'],details={'run_id':context.metadata['run_id'],'error':entry['error']})
 def run(task_key,*,run_id,client=None):
     c=build_context(task_key,run_id); c.cleaned_dir.mkdir(parents=True,exist_ok=True); c.saved_dir.mkdir(parents=True,exist_ok=True); fr=cr=sr=None
     try:
         fr,f=fetch(c,client=client); cr=clean(c,f); sr=save(c,cr); return write_receipt(c,status='succeeded',fetch_result=fr,clean_result=cr,save_result=sr)
-    except BaseException as exc: return write_receipt(c,status='failed',fetch_result=fr,clean_result=cr,save_result=sr,error=exc)
+    except Exception as exc: return write_receipt(c,status='failed',fetch_result=fr,clean_result=cr,save_result=sr,error=exc)

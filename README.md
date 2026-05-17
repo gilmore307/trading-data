@@ -37,7 +37,7 @@ Accepted SQL outputs are the preferred model-input boundary. Local ignored `stor
 - `docs/22_feed_availability.md` — provider/data-kind availability inventory.
 - `docs/10_layer_01_market_regime.md` through `docs/18_layer_09_event_risk_governor.md` — layer-specific data boundaries.
 - `docs/30_model_inputs.md` — mapping from data outputs to model layers.
-- `docs/03_contracts.md` — accepted local data-stack closeout.
+- `docs/03_contracts.md` — accepted local data-stack acceptance.
 - `docs/40_production_hardening.md` — non-production hardening contracts.
 
 ## Platform Boundaries

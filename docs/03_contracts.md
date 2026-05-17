@@ -1,13 +1,13 @@
 # Contracts
 
-Status: accepted repository closeout for current data-source/model-input design phase
+Status: accepted repository acceptance for current data-source/model-input design phase
 Date: 2026-05-08
 
-## Closeout scope
+## Acceptance scope
 
 `trading-data` has a complete accepted local feed/source/feature implementation surface for the current nine-layer model-input route.
 
-| Surface | Current owner path | Closeout state |
+| Surface | Current owner path | Acceptance state |
 |---|---|---|
 | Feed availability inventory | `src/feed_availability/`, `src/feed_interfaces/` | accepted probe/catalog support; live smoke remains opt-in |
 | Alpaca bars/liquidity/news | `src/data_feed/01_*`, `02_*`, `03_*` | accepted feeds with fixture-safe tests and no default raw persistence |
@@ -26,9 +26,9 @@ Date: 2026-05-08
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 
-## Freshness and model-standard closeout
+## Freshness and model-standard acceptance
 
-Two previously active hardening items are now resolved as conservative closeout rules:
+Two previously active hardening items are now resolved as conservative acceptance rules:
 
 1. ETF holdings / target-candidate preparation must preserve point-in-time visibility. If no explicit `available_time` is supplied, `source_02_target_candidate_holdings` now defaults holdings rows to the next regular US session open after `as_of_date` (`09:30 America/New_York`, skipping weekends). Same-day availability requires explicit source evidence or reviewed task input.
 2. `equity_abnormal_activity_event` now uses the explicit default `model_standard = equity_abnormal_activity_conservative` with `calibration_status = conservative_fixture_default_not_production_calibrated`. The default may produce conservative event evidence, but production training labels or promoted gates still require a reviewed historical calibration report.
@@ -45,7 +45,7 @@ The following are deliberately not current historical-training work items:
 - optional ThetaData service/autostart setup before unattended option runs are accepted;
 - production calibration reports for data-derived event standards before labels depend on them.
 
-## Boundary closeout
+## Boundary acceptance
 
 `trading-data` owns source acquisition, deterministic source-backed feature construction, point-in-time data visibility, and local development receipts. It does not own model promotion decisions, model labels/evaluation, broker execution, production scheduling/lifecycle retries, or final storage retention policy.
 

@@ -11,7 +11,7 @@ holdings_pipeline = importlib.import_module("data_source.source_02_target_candid
 equity_activity_pipeline = importlib.import_module("data_source.source_09_event_risk_governor.equity_abnormal_activity.pipeline")
 
 
-class DataCloseoutReadinessTests(unittest.TestCase):
+class DataStackAcceptanceTests(unittest.TestCase):
     def test_target_candidate_holdings_default_available_time_is_next_session_open(self) -> None:
         self.assertEqual(
             holdings_pipeline._available_time({}, {}, "2026-05-07"),

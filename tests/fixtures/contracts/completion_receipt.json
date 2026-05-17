@@ -1,5 +1,5 @@
 {
-  "contract_type": "completion_receipt_v1",
+  "contract_type": "completion_receipt",
   "task_id": "unit_task",
   "feed": "01_feed_alpaca_bars",
   "runs": [

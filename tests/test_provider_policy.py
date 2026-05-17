@@ -30,7 +30,7 @@ class ProviderPolicyTests(unittest.TestCase):
             requested_rows=50,
             requested_symbols=3,
         )
-        self.assertEqual(policy.summary_row()["contract_type"], "provider_execution_policy_v1")
+        self.assertEqual(policy.summary_row()["contract_type"], "provider_execution_policy")
         self.assertEqual(policy.max_rows, 100)
 
     def test_limit_excess_fails_closed(self):

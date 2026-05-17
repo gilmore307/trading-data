@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://trading.local/trading-data/completion_receipt_v1.schema.json",
-  "title": "completion_receipt_v1",
+  "$id": "https://trading.local/trading-data/completion_receipt.schema.json",
+  "title": "completion_receipt",
   "type": "object",
   "required": ["task_id", "runs"],
   "properties": {
-    "contract_type": {"const": "completion_receipt_v1"},
+    "contract_type": {"const": "completion_receipt"},
     "task_id": {"type": "string", "minLength": 1},
     "feed": {"type": "string"},
     "source": {"type": "string"},

@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://trading.local/trading-data/task_key_v1.schema.json",
-  "title": "task_key_v1",
+  "$id": "https://trading.local/trading-data/task_key.schema.json",
+  "title": "task_key",
   "type": "object",
   "required": ["task_id", "params", "output_root"],
   "properties": {
-    "contract_type": {"const": "task_key_v1"},
+    "contract_type": {"const": "task_key"},
     "task_id": {"type": "string", "minLength": 1},
     "feed": {"type": "string", "minLength": 1},
     "source": {"type": "string", "minLength": 1},

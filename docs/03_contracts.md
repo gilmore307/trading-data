@@ -30,10 +30,10 @@ This closes the current data-design/model-input phase. It does not approve unatt
 
 Generic contract-envelope schemas live in `schemas/`:
 
-- `task_key_v1.schema.json`
-- `completion_receipt_v1.schema.json`
-- `source_row_v1.schema.json`
-- `feature_row_v1.schema.json`
+- `task_key.schema.json`
+- `completion_receipt.schema.json`
+- `source_row.schema.json`
+- `feature_row.schema.json`
 
 These schemas define shared envelope fields only. Feed/source-specific payload fields remain owned by the corresponding module docs and tests until a reviewed registry-backed schema is accepted.
 

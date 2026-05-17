@@ -113,7 +113,7 @@ def require_provider_execution_allowed(
     _check_limit(name="rows", requested=requested_rows, allowed=max_rows)
     _check_limit(name="symbols", requested=requested_symbols, allowed=max_symbols)
     return ProviderPolicy(
-        contract_type="provider_execution_policy_v1",
+        contract_type="provider_execution_policy",
         provider=provider,
         endpoint_family=endpoint_family,
         max_requests=max_requests,

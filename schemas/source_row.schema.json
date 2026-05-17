@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://trading.local/trading-data/source_row_v1.schema.json",
-  "title": "source_row_v1",
+  "$id": "https://trading.local/trading-data/source_row.schema.json",
+  "title": "source_row",
   "type": "object",
   "required": ["source_id", "timestamp"],
   "properties": {
-    "contract_type": {"const": "source_row_v1"},
+    "contract_type": {"const": "source_row"},
     "source_id": {"type": "string", "pattern": "^source_[0-9]{2}_[a-z0-9_]+$"},
     "model_layer": {"type": "string", "pattern": "^layer_[0-9]{2}_[a-z0-9_]+$"},
     "timestamp": {"type": "string"},

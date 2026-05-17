@@ -20,11 +20,11 @@ class ContractSchemaTests(unittest.TestCase):
                 self.assertIn(required, fixture)
 
     def test_task_key_requires_feed_or_source_route(self):
-        fixture = json.loads((FIXTURE_DIR / "task_key_v1.json").read_text(encoding="utf-8"))
+        fixture = json.loads((FIXTURE_DIR / "task_key.json").read_text(encoding="utf-8"))
         self.assertTrue(bool(fixture.get("feed")) ^ bool(fixture.get("source")))
 
     def test_receipt_fixture_contains_run_scoped_evidence_fields(self):
-        fixture = json.loads((FIXTURE_DIR / "completion_receipt_v1.json").read_text(encoding="utf-8"))
+        fixture = json.loads((FIXTURE_DIR / "completion_receipt.json").read_text(encoding="utf-8"))
         run = fixture["runs"][0]
         self.assertIn("run_id", run)
         self.assertIn("output_dir", run)

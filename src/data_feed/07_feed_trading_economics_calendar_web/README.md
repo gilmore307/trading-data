@@ -8,6 +8,7 @@ Boundary:
 - Do not call Trading Economics API endpoints or Download/export features.
 - Do not bypass WAF/captcha/permissions.
 - Live fetches use the local authenticated cookie jar plus a request-specific custom date-range cookie, then parse the returned calendar page rows.
+- Operational acquisition order is HTTP/cookie first for efficiency; if it fails, retry once after 60 seconds; if the retry also fails, use the reviewed real browser UI route (`Custom` From/Until, `Submit`, captured rendered page parsed through `html_path`) as a narrow fallback.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 - Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported in receipt warnings/details.
 

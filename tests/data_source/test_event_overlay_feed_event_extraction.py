@@ -87,6 +87,28 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             self.assertIn("event_phase=scheduled_shell", row["summary"])
             self.assertIn("result_fields=not_available_from_calendar_shell", row["summary"])
 
+    def test_trading_economics_future_calendar_uses_fetch_time_availability(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            tmp = Path(raw_tmp)
+            run_dir = tmp / "runs" / "recent"
+            saved_dir = run_dir / "saved"
+            saved_dir.mkdir(parents=True)
+            (run_dir / "request_manifest.json").write_text('{"fetched_at_utc": "2026-05-18T05:00:00Z"}\n', encoding="utf-8")
+            te = saved_dir / "trading_economics_calendar_event.csv"
+            with te.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["event_time", "country", "event", "source_event_type", "reference", "actual", "previous", "consensus", "te_forecast", "revised", "importance", "symbol", "source_url"])
+                writer.writeheader()
+                writer.writerow({"event_time": "2026-05-28T08:30:00-04:00", "country": "United States", "event": "GDP Growth Rate QoQ", "consensus": "2.0%", "importance": "3", "source_url": "https://tradingeconomics.com/united-states/calendar"})
+
+            rows = extract_events_from_artifact_paths([te])
+            self.assertEqual(len(rows), 1)
+            row = rows[0]
+            self.assertEqual(row["available_time"], "2026-05-18T05:00:00Z")
+            self.assertEqual(row["source_priority"], "approved_calendar")
+            self.assertIn("event_phase=scheduled_release", row["summary"])
+            self.assertIn("actual_status=pending", row["summary"])
+            self.assertEqual(row["coverage_reason"], "scheduled_macro_release_from_trading_economics_recent_calendar")
+
     def test_source_pipeline_accepts_event_artifact_paths(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             tmp = Path(raw_tmp)

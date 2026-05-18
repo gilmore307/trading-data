@@ -195,7 +195,8 @@ def _event_id_disambiguated(row: Mapping[str, Any]) -> str:
     reference = str(row.get("reference") or row.get("event_link_url") or row.get("source_reference") or "").strip()
     symbol = str(row.get("symbol") or "").strip().upper()
     title = str(row.get("title") or row.get("headline") or row.get("event") or "").strip().lower()
-    base = "|".join([category, event_time, symbol, reference, source_name, title])
+    summary = str(row.get("summary") or "").strip().lower()
+    base = "|".join([category, event_time, symbol, reference, source_name, title, summary])
     return "evt_" + hashlib.sha256(base.encode("utf-8")).hexdigest()[:16]
 
 

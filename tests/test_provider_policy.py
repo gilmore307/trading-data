@@ -33,6 +33,28 @@ class ProviderPolicyTests(unittest.TestCase):
         self.assertEqual(policy.summary_row()["contract_type"], "provider_execution_policy")
         self.assertEqual(policy.max_rows, 100)
 
+    def test_realtime_provider_maintenance_can_authorize_non_historical_calls(self):
+        policy = require_provider_execution_allowed(
+            {
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": False,
+                    "realtime_provider_maintenance": True,
+                    "allowed_providers": ["trading_economics"],
+                    "allowed_endpoint_families": ["calendar_web"],
+                    "max_requests": 1,
+                    "max_time_window": "45d",
+                }
+            },
+            provider="trading_economics",
+            endpoint_family="calendar_web",
+            requested_requests=1,
+            requested_start="2026-05-18T00:00:00Z",
+            requested_end="2026-07-02T00:00:00Z",
+        )
+        self.assertEqual(policy.provider, "trading_economics")
+        self.assertEqual(policy.endpoint_family, "calendar_web")
+
     def test_limit_excess_fails_closed(self):
         task_key = {
             "manager_controls": {

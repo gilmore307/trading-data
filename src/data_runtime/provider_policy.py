@@ -154,8 +154,8 @@ def require_provider_execution_allowed(
     controls = _controls(task_key)
     if controls.get("allow_live_provider_calls") is not True:
         raise ProviderPolicyError("live provider calls are not allowed")
-    if controls.get("autonomous_historical_provider_acquisition") is not True:
-        raise ProviderPolicyError("autonomous historical acquisition is not allowed")
+    if controls.get("autonomous_historical_provider_acquisition") is not True and controls.get("realtime_provider_maintenance") is not True:
+        raise ProviderPolicyError("provider execution requires autonomous historical acquisition or realtime provider maintenance approval")
     if not _allowed(provider, controls.get("allowed_providers"), field_name="allowed_providers"):
         raise ProviderPolicyError(f"provider not allowed: {provider}")
     if not _allowed(endpoint_family, controls.get("allowed_endpoint_families"), field_name="allowed_endpoint_families"):

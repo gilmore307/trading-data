@@ -1,9 +1,10 @@
 """Trading Economics visible calendar-page interface feed.
 
-This feed intentionally handles only normal logged-in web-page-visible calendar
-rows. It must not call Trading Economics API or download/export endpoints. Live
-fetches use authenticated website cookies plus a request-specific custom date
-range cookie, then parse the returned page table.
+This feed intentionally handles only normal website-visible calendar rows. It
+must not call Trading Economics API or download/export endpoints. Historical
+live fetches use authenticated website cookies plus a request-specific custom
+date range cookie; realtime/recent fetches may use the logged-out recent page
+without authentication cookies.
 """
 
 from __future__ import annotations
@@ -109,26 +110,46 @@ def _window(params: Mapping[str, Any]) -> tuple[date, date]:
     return start, end
 
 
+def _range_mode(params: Mapping[str, Any]) -> str:
+    mode = str(params.get("date_range_mode") or params.get("range_mode") or "custom").strip().lower()
+    if mode not in {"custom", "recent"}:
+        raise TradingEconomicsCalendarError("params.date_range_mode must be 'custom' or 'recent'")
+    return mode
+
+
+def _use_authenticated_cookies(params: Mapping[str, Any]) -> bool:
+    value = params.get("use_authenticated_cookies")
+    if value is None:
+        value = params.get("authenticated_cookies")
+    if value is None:
+        return _range_mode(params) == "custom"
+    return bool(value)
+
+
 def _cookie_header(params: Mapping[str, Any], cookie_jar: Path | None = None) -> str:
-    cookie_jar = Path(cookie_jar) if cookie_jar is not None else trading_economics_cookie_jar()
     cookie_by_name: dict[str, str] = {}
-    if cookie_jar.exists():
+    use_authenticated = _use_authenticated_cookies(params)
+    cookie_jar = Path(cookie_jar) if cookie_jar is not None else trading_economics_cookie_jar()
+    if use_authenticated and cookie_jar.exists():
         for line in cookie_jar.read_text(encoding="utf-8", errors="replace").splitlines():
             if not line or line.startswith("#"):
                 continue
             parts = line.split("\t")
             if len(parts) >= 7:
                 cookie_by_name[parts[5]] = parts[6]
-    start, end = _window(params)
-    cookie_by_name["cal-custom-range"] = f"{start.isoformat()} 00:00|{end.isoformat()} 00:00"
-    cookie_by_name["calendar-range"] = "0"
-    cookie_by_name["calendar-importance"] = str(params.get("importance") or "3")
-    offset_minutes = int(datetime.combine(start, datetime.min.time(), ET).utcoffset().total_seconds() // 60)
-    cookie_by_name["cal-timezone-offset"] = str(offset_minutes)
+    if _range_mode(params) == "custom":
+        start, end = _window(params)
+        cookie_by_name["cal-custom-range"] = f"{start.isoformat()} 00:00|{end.isoformat()} 00:00"
+        cookie_by_name["calendar-range"] = "0"
+        cookie_by_name["calendar-importance"] = str(params.get("importance") or "3")
+        offset_minutes = int(datetime.combine(start, datetime.min.time(), ET).utcoffset().total_seconds() // 60)
+        cookie_by_name["cal-timezone-offset"] = str(offset_minutes)
     return "; ".join(f"{name}={value}" for name, value in cookie_by_name.items())
 
 
 def _build_url(params: Mapping[str, Any]) -> str:
+    if _range_mode(params) == "recent":
+        return SOURCE_URL
     start, end = _window(params)
     query = urllib.parse.urlencode({"importance": str(params.get("importance") or "3"), "start": start.isoformat(), "end": end.isoformat()})
     return SOURCE_URL + "?" + query
@@ -177,6 +198,8 @@ def fetch(context: FeedContext) -> tuple[StepResult, FetchedPage]:
         "fetched_at_utc": fetched.fetched_at_utc,
         "persistence": "final CSV only; raw page not persisted by default",
         "boundary": "visible web page only; no API or download/export endpoint",
+        "date_range_mode": _range_mode(params),
+        "use_authenticated_cookies": _use_authenticated_cookies(params),
     }
     path = context.run_dir / "request_manifest.json"
     atomic_write_json(path, sanitize_value(manifest))

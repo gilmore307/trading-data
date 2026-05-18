@@ -10,7 +10,7 @@ from __future__ import annotations
 import csv
 import ast
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
@@ -39,6 +39,33 @@ def _as_list(value: Any) -> list[str]:
     if "," in text:
         return [item.strip().strip("'\"[]") for item in text.split(",") if item.strip().strip("'\"[]")]
     return [text.strip("'\"[]")]
+
+
+def _artifact_fetched_at(path: Path) -> str:
+    for parent in [path.parent, *path.parents]:
+        manifest = parent / "request_manifest.json"
+        if manifest.exists():
+            try:
+                payload = json.loads(manifest.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            fetched = str(payload.get("fetched_at_utc") or "").strip()
+            if fetched:
+                return fetched
+    return ""
+
+
+def _parse_dt(value: str) -> datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed
 
 
 def _read_rows(path: Path) -> list[dict[str, str]]:
@@ -200,12 +227,23 @@ def _gdelt_news_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[di
 
 def _trading_economics_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
+    fetched_at = _artifact_fetched_at(path)
+    fetched_dt = _parse_dt(fetched_at)
     for row in rows:
         event_time = _first(row, "event_time")
         title = _first(row, "event")
         if not event_time or not title:
             continue
+        event_dt = _parse_dt(event_time)
+        actual = _first(row, "actual")
+        revised = _first(row, "revised")
+        is_scheduled_future = bool(fetched_dt and event_dt and event_dt > fetched_dt and not actual)
+        available_time = fetched_at if is_scheduled_future and fetched_at else event_time
         values = []
+        event_phase = "scheduled_release" if is_scheduled_future else "release_result" if actual or revised else "calendar_observation"
+        values.append(f"event_phase={event_phase}")
+        if is_scheduled_future:
+            values.append("actual_status=pending")
         for key in ("actual", "previous", "consensus", "te_forecast", "revised", "reference", "importance"):
             value = _first(row, key)
             if value:
@@ -214,7 +252,7 @@ def _trading_economics_events(path: Path, rows: Sequence[Mapping[str, str]]) -> 
             _base_event(
                 artifact_path=path,
                 event_time=event_time,
-                available_time=event_time,
+                available_time=available_time,
                 information_role_type="prior_signal",
                 event_category_type="macro_data",
                 scope_type="macro",
@@ -223,8 +261,8 @@ def _trading_economics_events(path: Path, rows: Sequence[Mapping[str, str]]) -> 
                 source_name="07_feed_trading_economics_calendar_web",
                 reference_type="web_url" if _first(row, "source_url") else "source_reference",
                 reference=_reference(path, row, "source_url", "event"),
-                source_priority="official_data_release",
-                coverage_reason="canonical_macro_data_from_trading_economics_calendar_feed",
+                source_priority="approved_calendar" if is_scheduled_future else "official_data_release",
+                coverage_reason="scheduled_macro_release_from_trading_economics_recent_calendar" if is_scheduled_future else "canonical_macro_data_from_trading_economics_calendar_feed",
             )
         )
     return events

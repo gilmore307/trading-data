@@ -6,7 +6,8 @@ from pathlib import Path
 
 from importlib import import_module
 
-run = import_module("data_feed.07_feed_trading_economics_calendar_web.pipeline").run
+te_pipeline = import_module("data_feed.07_feed_trading_economics_calendar_web.pipeline")
+run = te_pipeline.run
 
 
 class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
@@ -72,6 +73,16 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(row["previous"], "252K")
             self.assertEqual(row["consensus"], "200K")
             self.assertEqual(row["te_forecast"], "205K")
+
+    def test_recent_mode_uses_plain_calendar_url_without_auth_cookie(self):
+        params = {"date_range_mode": "recent", "use_authenticated_cookies": False, "start_date": "2026-05-18", "end_date": "2026-06-12"}
+        self.assertEqual(te_pipeline._build_url(params), "https://tradingeconomics.com/united-states/calendar")
+        self.assertEqual(te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")), "")
+
+    def test_custom_mode_uses_date_url_and_range_cookie(self):
+        params = {"date_range_mode": "custom", "use_authenticated_cookies": False, "start_date": "2018-10-01", "end_date": "2018-11-01", "importance": "3"}
+        self.assertIn("start=2018-10-01", te_pipeline._build_url(params))
+        self.assertIn("cal-custom-range=2018-10-01 00:00|2018-11-01 00:00", te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")))
 
     def test_requires_explicit_html_or_live_fetch(self):
         with tempfile.TemporaryDirectory() as tmp:

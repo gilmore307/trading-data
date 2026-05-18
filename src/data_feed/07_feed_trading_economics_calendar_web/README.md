@@ -7,8 +7,9 @@ Boundary:
 - Use logged-in visible website calendar data only.
 - Do not call Trading Economics API endpoints or Download/export features.
 - Do not bypass WAF/captcha/permissions.
-- Live fetches use the local authenticated cookie jar plus a request-specific custom date-range cookie, then parse the returned calendar page rows.
-- Operational acquisition order is HTTP/cookie first for efficiency; if it fails, retry once after 60 seconds; if the retry also fails, use the reviewed real browser UI route (`Custom` From/Until, `Submit`, captured rendered page parsed through `html_path`) as a narrow fallback.
+- Historical live fetches use the local authenticated cookie jar plus a request-specific custom date-range cookie, then parse the returned calendar page rows.
+- Realtime recent fetches may use `date_range_mode=recent` and `use_authenticated_cookies=false`; this reads the logged-out recent visible calendar page and filters rows to the task window.
+- Operational historical acquisition order is HTTP/cookie first for efficiency; if it fails, retry once after 60 seconds; if the retry also fails, use the reviewed real browser UI route (`Custom` From/Until, `Submit`, captured rendered page parsed through `html_path`) as a narrow fallback.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 - Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported in receipt warnings/details.
 
@@ -25,7 +26,9 @@ Params:
 - `importance` — defaults to `3` for high-impact rows.
 - `html_path` — optional captured/sanitized HTML for parser tests or manual page captures.
 - `html` — optional inline sanitized HTML.
-- `allow_live_fetch` — optional; when true, fetches the visible page with normal authenticated HTTP cookies if available and overlays the requested custom date-range cookie.
+- `allow_live_fetch` — optional; when true, fetches the visible page.
+- `date_range_mode` — optional; `custom` by default for historical windows, or `recent` for the logged-out recent calendar page.
+- `use_authenticated_cookies` — optional; defaults to true for `custom` and false for `recent`.
 - `persist_failure_diagnostics` — optional; when true and parsing finds zero in-window rows, writes sanitized structural diagnostics under the run directory. It does not persist request headers, cookies, or raw page HTML.
 
 Outputs:

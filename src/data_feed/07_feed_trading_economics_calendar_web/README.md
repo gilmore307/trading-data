@@ -25,6 +25,7 @@ Params:
 - `html_path` — optional captured/sanitized HTML for parser tests or manual page captures.
 - `html` — optional inline sanitized HTML.
 - `allow_live_fetch` — optional; when true, fetches the visible page with normal authenticated HTTP cookies if available and overlays the requested custom date-range cookie.
+- `persist_failure_diagnostics` — optional; when true and parsing finds zero in-window rows, writes sanitized structural diagnostics under the run directory. It does not persist request headers, cookies, or raw page HTML.
 
 Outputs:
 
@@ -32,3 +33,4 @@ Outputs:
 - `cleaned/trading_economics_calendar_event.jsonl`
 - `saved/trading_economics_calendar_event.csv`
 - `completion_receipt.json`
+- `diagnostics/te_calendar_failure_diagnostic.json` — optional failure-only sanitized structure/excerpt report when `persist_failure_diagnostics=true`

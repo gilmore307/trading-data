@@ -85,6 +85,42 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.details["error"]["type"], "TradingEconomicsCalendarError")
 
+    def test_failure_diagnostics_capture_structure_without_raw_request_state(self):
+        html = """
+        <html><body>
+          <table id="calendar">
+            <thead><tr><th colspan='3'>Friday January 08 2016</th><th>Actual</th><th>Previous</th><th>Consensus</th><th>Forecast</th></tr></thead>
+            <tr data-url="/united-states/non-farm-payrolls" data-country="united states" data-category="non farm payrolls" data-event="non farm payrolls">
+              <td class=' 2016-01-08'><span class="event-38 calendar-date-3">08:30 AM</span></td>
+              <td><a class='calendar-event'>Non Farm Payrolls</a></td>
+              <td><span id='actual'>292K</span></td><td><span id='previous'>252K</span></td><td><span id='consensus'>200K</span></td><td><span id='forecast'>205K</span></td>
+            </tr>
+          </table>
+        </body></html>
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "te_calendar_failure_diagnostic_test",
+                "feed": "07_feed_trading_economics_calendar_web",
+                "params": {
+                    "html": html,
+                    "start_date": "2016-02-01",
+                    "end_date": "2016-03-01",
+                    "importance": "3",
+                    "persist_failure_diagnostics": True,
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = run(task_key, run_id="run")
+            self.assertEqual(result.status, "failed")
+            diagnostic_path = Path(task_key["output_root"]) / "runs" / "run" / "diagnostics" / "te_calendar_failure_diagnostic.json"
+            diagnostic = json.loads(diagnostic_path.read_text())
+            self.assertEqual(diagnostic["contract_type"], "trading_economics_calendar_web_failure_diagnostic_v1")
+            self.assertEqual(diagnostic["parsed_rows_count"], 1)
+            self.assertEqual(diagnostic["in_window_rows_count"], 0)
+            self.assertEqual(diagnostic["structural_counts"]["data_url_rows"], 1)
+            self.assertNotIn("Cookie", json.dumps(diagnostic))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -335,6 +335,66 @@ def _row_in_window(row: Mapping[str, str], *, start: date, end: date) -> bool:
     return start <= parsed < end
 
 
+def _diagnostic_excerpt(html_text: str, *, max_chars: int = 4000) -> str:
+    text = re.sub(r"<script\b[^>]*>.*?</script>", " ", html_text, flags=re.I | re.S)
+    text = re.sub(r"<style\b[^>]*>.*?</style>", " ", text, flags=re.I | re.S)
+    text = _clean_cell(text)
+    text = re.sub(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", "[redacted-email]", text, flags=re.I)
+    text = re.sub(r"(?i)(token|secret|password|authorization|cookie)=([^\s&;]+)", r"\1=[redacted]", text)
+    return text[:max_chars] + ("...[truncated]" if len(text) > max_chars else "")
+
+
+def _write_failure_diagnostics(
+    context: FeedContext,
+    fetched: FetchedPage,
+    *,
+    parsed_rows: list[dict[str, str]],
+    start: date,
+    end: date,
+    out_of_window_count: int,
+) -> None:
+    params = dict(context.task_key.get("params") or {})
+    if not params.get("persist_failure_diagnostics"):
+        return
+    html_text = fetched.html_text
+    diagnostics_dir = context.run_dir / "diagnostics"
+    date_markers = [_clean_cell(match.group(1)) for match in re.finditer(r"<th\b[^>]*colspan=['\"]3['\"][^>]*>(.*?)</th>", html_text, flags=re.I | re.S)]
+    payload = {
+        "contract_type": "trading_economics_calendar_web_failure_diagnostic_v1",
+        "feed": FEED,
+        "reason": "zero_parseable_in_window_calendar_rows",
+        "source_url": sanitize_url(fetched.source_url),
+        "window": {"start_date": start.isoformat(), "end_date_exclusive": end.isoformat()},
+        "html_length": len(html_text),
+        "parsed_rows_count": len(parsed_rows),
+        "in_window_rows_count": 0,
+        "out_of_window_rows_skipped": out_of_window_count,
+        "structural_counts": {
+            "table_tags": len(re.findall(r"<table\b", html_text, flags=re.I)),
+            "tr_tags": len(re.findall(r"<tr\b", html_text, flags=re.I)),
+            "data_url_rows": len(re.findall(r"<tr\b[^>]*\bdata-url=", html_text, flags=re.I | re.S)),
+            "calendar_event_class": len(re.findall(r"calendar-event", html_text, flags=re.I)),
+            "actual_cells": len(re.findall(r"id=['\"]actual['\"]", html_text, flags=re.I)),
+            "previous_cells": len(re.findall(r"id=['\"]previous['\"]", html_text, flags=re.I)),
+            "consensus_cells": len(re.findall(r"id=['\"]consensus['\"]", html_text, flags=re.I)),
+            "forecast_cells": len(re.findall(r"id=['\"]forecast['\"]", html_text, flags=re.I)),
+            "date_markers": len(date_markers),
+            "requested_start_year_mentions": html_text.count(start.strftime("%Y")),
+        },
+        "page_markers": {
+            "mentions_login": bool(re.search(r"login|sign in", html_text, flags=re.I)),
+            "mentions_captcha": bool(re.search(r"captcha|cloudflare|verify you are human", html_text, flags=re.I)),
+            "mentions_calendar": bool(re.search(r"calendar", html_text, flags=re.I)),
+            "mentions_united_states": bool(re.search(r"united states", html_text, flags=re.I)),
+        },
+        "date_marker_samples": sanitize_value(date_markers[:8]),
+        "parsed_row_samples": sanitize_value(parsed_rows[:5]),
+        "html_text_excerpt": _diagnostic_excerpt(html_text),
+        "persistence": "sanitized diagnostic excerpt and structural counters only; cookies/request headers/raw page are not persisted",
+    }
+    atomic_write_json(diagnostics_dir / "te_calendar_failure_diagnostic.json", payload)
+
+
 def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
     params = dict(context.task_key.get("params") or {})
     start, end = _window(params)
@@ -342,6 +402,7 @@ def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
     rows = [row for row in parsed_rows if _row_in_window(row, start=start, end=end)]
     out_of_window_count = len(parsed_rows) - len(rows)
     if not rows:
+        _write_failure_diagnostics(context, fetched, parsed_rows=parsed_rows, start=start, end=end, out_of_window_count=out_of_window_count)
         raise TradingEconomicsCalendarError("Trading Economics page produced zero parseable in-window calendar rows")
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     path = context.cleaned_dir / "trading_economics_calendar_event.jsonl"

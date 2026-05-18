@@ -13,17 +13,21 @@ import csv
 import json
 from calendar import monthrange
 from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from data_runtime.config import repo_root, storage_root
 from typing import Any, Iterable, Mapping, Sequence
+from zoneinfo import ZoneInfo
 
 from data_source.source_01_market_regime.pipeline import FIELDS, OUTPUT_TABLE
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 from .sql import DEFAULT_COMBINATIONS_CSV, DEFAULT_UNIVERSE_CSV, _database_url, generate_sql
 
+ET = ZoneInfo("America/New_York")
 DEFAULT_STORAGE_ROOT = storage_root()
+DEFAULT_FEATURE_LOOKBACK_DAYS = 430
 
 
 @dataclass(frozen=True)
@@ -48,7 +52,17 @@ def _month_bounds(month: str) -> tuple[str, str]:
     year = int(year_text)
     month_number = int(month_text)
     last_day = monthrange(year, month_number)[1]
-    return f"{year:04d}-{month_number:02d}-01T00:00:00-05:00", f"{year:04d}-{month_number:02d}-{last_day:02d}T23:59:59-05:00"
+    target_start = datetime(year, month_number, 1, 0, 0, 0, tzinfo=ET)
+    target_end = datetime(year, month_number, last_day, 23, 59, 59, tzinfo=ET)
+    return target_start.isoformat(), target_end.isoformat()
+
+
+def _feature_source_bounds(month: str, *, lookback_days: int = DEFAULT_FEATURE_LOOKBACK_DAYS) -> tuple[str, str, str]:
+    if lookback_days < 0:
+        raise ValueError("lookback_days must be non-negative")
+    target_start, target_end = _month_bounds(month)
+    source_start = (datetime.fromisoformat(target_start) - timedelta(days=lookback_days)).isoformat()
+    return source_start, target_start, target_end
 
 
 def _latest_successful_output(receipt: Mapping[str, Any]) -> str | None:
@@ -131,13 +145,14 @@ def run_from_feed_artifacts(
     symbols: Sequence[str] = (),
     materialize_only: bool = False,
     dry_run: bool = False,
+    feature_lookback_days: int = DEFAULT_FEATURE_LOOKBACK_DAYS,
 ) -> FeedArtifactMaterializationSummary:
     artifacts = discover_feed_artifacts(storage_root=storage_root, month=month, symbols=symbols)
     rows = read_equity_bar_rows(artifacts)
     source_rows_written = 0 if dry_run else materialize_source_rows(rows)
     feature_rows_written = 0
     if not materialize_only and not dry_run:
-        source_start, source_end = _month_bounds(month)
+        source_start, snapshot_start, snapshot_end = _feature_source_bounds(month, lookback_days=feature_lookback_days)
         feature_rows_written = generate_sql(
             database_url=_database_url(database_url),
             universe_csv=universe_csv,
@@ -147,8 +162,10 @@ def run_from_feed_artifacts(
             target_schema="trading_data",
             target_table="feature_01_market_regime",
             source_start=source_start,
-            source_end=source_end,
+            source_end=snapshot_end,
             snapshot_times=None,
+            snapshot_start=snapshot_start,
+            snapshot_end=snapshot_end,
         )
     return FeedArtifactMaterializationSummary(
         contract_type="feature_01_market_regime_from_feed_artifacts",
@@ -171,6 +188,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--symbol", action="append", default=[], help="Optional symbol filter; repeat for multiple symbols.")
     parser.add_argument("--materialize-only", action="store_true", help="Only upsert source rows; do not generate feature rows.")
     parser.add_argument("--dry-run", action="store_true", help="Read artifacts and count rows without SQL writes.")
+    parser.add_argument("--feature-lookback-days", type=int, default=DEFAULT_FEATURE_LOOKBACK_DAYS, help="Historical source-bar lookback used only for rolling feature context; emitted feature rows remain bounded to --month.")
     args = parser.parse_args(argv)
     summary = run_from_feed_artifacts(
         month=args.month,
@@ -181,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
         symbols=args.symbol,
         materialize_only=args.materialize_only,
         dry_run=args.dry_run,
+        feature_lookback_days=args.feature_lookback_days,
     )
     print(json.dumps(summary.summary_row(), indent=2, sort_keys=True))
     return 0

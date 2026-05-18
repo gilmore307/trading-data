@@ -6,10 +6,14 @@ import importlib
 import json
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 
 from data_runtime.config import database_url_file, shared_path
 from typing import Any, Mapping, Sequence
+from zoneinfo import ZoneInfo
+
+ET = ZoneInfo("America/New_York")
 
 DEFAULT_UNIVERSE_CSV = shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")
 DEFAULT_COMBINATIONS_CSV = shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv")
@@ -135,6 +139,47 @@ def write_feature_rows_sql(
         cursor.execute(insert_sql, [row.get("snapshot_time"), json.dumps(payload, sort_keys=True, default=str)])
 
 
+def _parse_time_bound(value: str | datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=ET)
+    return parsed.astimezone(ET)
+
+
+def filter_snapshot_times(
+    snapshot_times: Sequence[str | datetime],
+    *,
+    snapshot_start: str | datetime | None = None,
+    snapshot_end: str | datetime | None = None,
+) -> list[str | datetime]:
+    """Return snapshot times inside the requested write window.
+
+    Source reads may include a historical lookback so rolling daily features have
+    enough point-in-time context. The feature writer must still emit only the
+    requested target window; otherwise a monthly repair run can rewrite historical
+    snapshots outside its review boundary.
+    """
+
+    start = _parse_time_bound(snapshot_start)
+    end = _parse_time_bound(snapshot_end)
+    output: list[str | datetime] = []
+    for snapshot_time in snapshot_times:
+        parsed = _parse_time_bound(snapshot_time)
+        if parsed is None:
+            continue
+        if start is not None and parsed < start:
+            continue
+        if end is not None and parsed >= end:
+            continue
+        output.append(snapshot_time)
+    return output
+
+
 def generate_sql(
     *,
     database_url: str,
@@ -147,6 +192,8 @@ def generate_sql(
     source_start: str | None,
     source_end: str | None,
     snapshot_times: Sequence[str] | None,
+    snapshot_start: str | None = None,
+    snapshot_end: str | None = None,
 ) -> int:
     generator = _load_generator()
     psycopg, dict_row = _load_psycopg()
@@ -164,7 +211,14 @@ def generate_sql(
                 universe_rows=generator.read_csv_rows(universe_csv),
                 combination_rows=generator.read_csv_rows(combinations_csv),
             )
-            rows = generator.generate_rows(inputs, snapshot_times=snapshot_times)
+            bounded_snapshot_times = snapshot_times
+            if bounded_snapshot_times is None and (snapshot_start or snapshot_end):
+                bounded_snapshot_times = filter_snapshot_times(
+                    generator.infer_snapshot_times(inputs),
+                    snapshot_start=snapshot_start,
+                    snapshot_end=snapshot_end,
+                )
+            rows = generator.generate_rows(inputs, snapshot_times=bounded_snapshot_times)
             write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
             return len(rows)
 
@@ -181,6 +235,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--universe-csv", type=Path, default=DEFAULT_UNIVERSE_CSV)
     parser.add_argument("--combinations-csv", type=Path, default=DEFAULT_COMBINATIONS_CSV)
     parser.add_argument("--snapshot-time", action="append", help="Optional ISO snapshot time. Repeat for multiple snapshots. Defaults to SPY 30-minute source-bar timestamps.")
+    parser.add_argument("--snapshot-start", help="Optional lower timestamp bound for inferred snapshot rows. Use with a wider source-start lookback.")
+    parser.add_argument("--snapshot-end", help="Optional upper timestamp bound for inferred snapshot rows. The bound is half-open.")
     args = parser.parse_args(argv)
 
     row_count = generate_sql(
@@ -194,6 +250,8 @@ def main(argv: list[str] | None = None) -> int:
         source_start=args.source_start,
         source_end=args.source_end,
         snapshot_times=args.snapshot_time,
+        snapshot_start=args.snapshot_start,
+        snapshot_end=args.snapshot_end,
     )
     print(f"generated {row_count} rows into {args.target_schema}.{args.target_table}")
     return 0

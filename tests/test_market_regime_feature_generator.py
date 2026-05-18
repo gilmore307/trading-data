@@ -178,6 +178,31 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertIn(snapshot - timedelta(minutes=30), inferred)
         self.assertNotIn(snapshot.replace(hour=9, minute=30), inferred)
 
+    def test_sql_snapshot_bounds_filter_lookback_context(self) -> None:
+        snapshots = [
+            "2026-03-31T16:00:00-04:00",
+            "2026-04-01T10:00:00-04:00",
+            "2026-04-30T16:00:00-04:00",
+            "2026-05-01T10:00:00-04:00",
+        ]
+
+        self.assertEqual(
+            sql_runner.filter_snapshot_times(
+                snapshots,
+                snapshot_start="2026-04-01T00:00:00-04:00",
+                snapshot_end="2026-05-01T00:00:00-04:00",
+            ),
+            snapshots[1:3],
+        )
+
+    def test_feed_artifact_feature_bounds_include_lookback_but_preserve_month_window(self) -> None:
+        source_start, snapshot_start, snapshot_end = from_feed_artifacts._feature_source_bounds("2026-04", lookback_days=10)
+
+        self.assertEqual(source_start, "2026-03-22T00:00:00-04:00")
+        self.assertEqual(snapshot_start, "2026-04-01T00:00:00-04:00")
+        self.assertEqual(snapshot_end, "2026-04-30T23:59:59-04:00")
+        with self.assertRaises(ValueError):
+            from_feed_artifacts._feature_source_bounds("2026-04", lookback_days=-1)
 
     def test_feed_artifact_materializer_discovers_successful_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:

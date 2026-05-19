@@ -88,7 +88,32 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             self.assertEqual(row["holding_symbol"], "NVDA")
             self.assertEqual(row["asset_class"], "Equity")
 
-    def test_default_official_urls_cover_spdr_global_x_and_ark(self):
+    def test_parse_first_trust_html_holdings_table(self):
+        html = """
+        <table>
+          <tr><td>Security Name</td><td>Identifier</td><td>CUSIP</td><td>Classification</td><td>Shares / Quantity</td><td>Market Value</td><td>Weighting</td></tr>
+          <tr><td>Palo Alto Networks, Inc.</td><td>PANW</td><td>697435105</td><td>Software and Computer Services</td><td>5,045,731</td><td>$1,225,254,858.73</td><td>10.21%</td></tr>
+        </table>
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "06_feed_etf_holdings_first_trust_html_test",
+                "feed": "06_feed_etf_holdings",
+                "params": {"etf_symbol": "CIBR", "issuer_name": "First Trust", "as_of_date": "2026-05-18", "html": html},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = run(task_key, run_id="run")
+            self.assertEqual(result.status, "succeeded")
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
+            with saved.open(newline="") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["holding_symbol"], "PANW")
+            self.assertEqual(row["holding_name"], "Palo Alto Networks, Inc.")
+            self.assertEqual(row["sector_type"], "Software and Computer Services")
+            self.assertEqual(row["shares"], "5045731")
+            self.assertEqual(row["weight"], "10.21")
+
+    def test_default_official_urls_cover_spdr_global_x_ark_and_first_trust(self):
         module = import_module("data_feed.06_feed_etf_holdings.pipeline")
 
         self.assertEqual(
@@ -100,6 +125,10 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             "https://assets.globalxetfs.com/funds/holdings/aiq_full-holdings_20260518.csv",
         )
         self.assertIn("ARK_FINTECH_INNOVATION_ETF_ARKF_HOLDINGS.csv", module._default_source_url("ARKF", "ark_invest", {}))
+        self.assertEqual(
+            module._default_source_url("CIBR", "first_trust", {}),
+            "https://www.ftportfolios.com/Retail/Etf/EtfHoldings.aspx?Ticker=CIBR",
+        )
 
 
 def _minimal_xlsx(rows: list[list[str]]) -> bytes:

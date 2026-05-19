@@ -14,11 +14,12 @@ Required task key fields:
 - `task_id`: stable task identifier
 - `params.start`: inclusive holdings/as-of window start date or timestamp
 - `params.end`: inclusive holdings/as-of window end date or timestamp
-- `params.holding_feed_payloads`: object keyed by ETF symbol. Each value is an `06_feed_etf_holdings` feed payload parameter object such as `csv_path`, `csv_text`, `html_path`, `html`, `json_path`, or `json_text`.
 
 Optional task key fields:
 
+- `params.holding_feed_payloads`: object keyed by ETF symbol. Each value is an `06_feed_etf_holdings` feed payload parameter object such as `csv_path`, `csv_text`, `html_path`, `html`, `json_path`, `json_text`, or an explicit `source_url`. If no payload is supplied for a selected ETF, the holdings feed tries the accepted fixed official issuer URL adapter.
 - `params.symbols`: comma string or list selecting a reviewed ETF subset from the universe
+- `params.continue_on_error`: when true, one ETF issuer failure is recorded in the run manifest and does not prevent other issuer rows from being written.
 - `params.available_time`: explicit model-availability timestamp for all output rows. If omitted, the source derives a conservative session-open timestamp from `as_of_date`.
 - `params.market_regime_etf_universe_path`: reviewed universe override. Normal runs use `TRADING_STORAGE_REPO_ROOT/main/shared/layer_01_02_market_context_etf_universe.csv`, defaulting to the sibling `trading-storage` repository.
 - `output_root`: local receipt/request-manifest root

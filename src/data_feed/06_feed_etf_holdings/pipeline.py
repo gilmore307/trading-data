@@ -168,6 +168,8 @@ def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any])
             "ARKX": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_SPACE_EXPLORATION_&_INNOVATION_ETF_ARKX_HOLDINGS.csv",
         }
         return ark_urls.get(etf_symbol.upper(), "")
+    if issuer == "first_trust":
+        return f"https://www.ftportfolios.com/Retail/Etf/EtfHoldings.aspx?Ticker={etf_symbol.upper()}"
     return ""
 
 
@@ -193,6 +195,7 @@ def _canonical_key(key: str) -> str:
         "ticker": "holding_symbol",
         "symbol": "holding_symbol",
         "holding_symbol": "holding_symbol",
+        "identifier": "holding_symbol",
         "name": "holding_name",
         "holding": "holding_name",
         "holdings": "holding_name",
@@ -204,14 +207,17 @@ def _canonical_key(key: str) -> str:
         "weight_percent": "weight",
         "%_of_net_assets": "weight",
         "%_of_fund": "weight",
+        "weighting": "weight",
         "shares": "shares",
         "shares_held": "shares",
+        "shares_quantity": "shares",
         "market_value": "market_value",
         "market_value_": "market_value",
         "market_value_$": "market_value",
         "cusip": "cusip",
         "sedol": "sedol",
         "asset_class": "asset_class",
+        "classification": "sector_type",
         "sector": "sector_type",
         "sector_type": "sector_type",
         "date": "as_of_date",
@@ -310,7 +316,8 @@ def _parse_html(text: str) -> list[dict[str, Any]]:
     rows = []
     for row_html in re.findall(r"<tr\b[^>]*>(.*?)</tr>", text, flags=re.I | re.S):
         rows.append([_clean_cell(cell) for cell in re.findall(r"<t[dh]\b[^>]*>(.*?)</t[dh]>", row_html, flags=re.I | re.S)])
-    header_i = next((i for i, row in enumerate(rows) if any(cell.lower() in {"ticker", "symbol"} for cell in row) and any("weight" in cell.lower() or "%" in cell for cell in row)), -1)
+    symbol_headers = {"ticker", "symbol", "identifier"}
+    header_i = next((i for i, row in enumerate(rows) if any(cell.lower() in symbol_headers for cell in row) and any("weight" in cell.lower() or "%" in cell for cell in row)), -1)
     if header_i < 0:
         return []
     headers = rows[header_i]

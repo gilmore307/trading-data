@@ -54,10 +54,12 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         model_name="SectorContextModel",
         doc_path="docs/11_layer_02_sector_context.md",
         owns_dedicated_data_surface=True,
+        source_packages=("data_source.source_02_target_candidate_holdings",),
         feature_packages=("data_feature.feature_02_sector_context",),
-        cli_commands=("trading-data-feature-02-sector-context",),
+        cli_commands=("trading-data-feature-02-sector-context", "trading-data-source-02-target-candidate-holdings"),
         test_paths=(
             "tests/test_sector_context_feature_generator.py",
+            "tests/data_source/test_target_candidate_holdings_pipeline.py",
         ),
     ),
     LayerDataContract(
@@ -66,15 +68,13 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         model_name="TargetStateVectorModel",
         doc_path="docs/12_layer_03_target_state_vector.md",
         owns_dedicated_data_surface=True,
-        source_packages=("data_source.source_02_target_candidate_holdings", "data_source.source_03_target_state"),
+        source_packages=("data_source.source_03_target_state",),
         feature_packages=("data_feature.feature_03_target_state_vector",),
         cli_commands=(
-            "trading-data-source-02-target-candidate-holdings",
             "trading-data-source-03-target-state",
             "trading-data-feature-03-target-state-vector",
         ),
         test_paths=(
-            "tests/data_source/test_target_candidate_holdings_pipeline.py",
             "tests/test_source_03_target_state.py",
             "tests/test_target_state_vector_feature_generator.py",
             "tests/test_target_state_vector_sql.py",

@@ -82,11 +82,11 @@ ThetaData runtime lives outside Git under `/root/tools/thetadata-terminal/` and 
 
 Layer 1 market-regime data is broad-market/ETF bar evidence and must not use sector leadership, selected securities, strategy labels, option outcomes, portfolio PnL, or future-return labels.
 
-Layer 2 sector-context features derive deterministic sector/industry behavior evidence from accepted Layer 1 source outputs and reviewed relative-strength combinations. ETF holdings are not Layer 2 core behavior input.
+Layer 2 sector-context features derive deterministic sector/industry behavior evidence from accepted Layer 1 source outputs and reviewed relative-strength combinations. ETF holdings are not Layer 2 core behavior input, but the Layer 2 feature stage materializes the candidate-holdings handoff after sector/basket context exists.
 
 ## D015 — Target candidate and Layer 3 boundaries
 
-`source_02_target_candidate_holdings` supports anonymous target candidate preparation after Layer 2 sector/basket prioritization. It preserves point-in-time visibility: explicit `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
+`source_02_target_candidate_holdings` supports anonymous target candidate preparation after Layer 2 sector/basket prioritization and is owned by the Layer 2 feature stage runtime path. It preserves point-in-time visibility: explicit `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
 
 `source_03_target_state` provides target-local observed bars/liquidity. `feature_03_target_state_vector` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 

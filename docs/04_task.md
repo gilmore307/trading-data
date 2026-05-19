@@ -21,7 +21,7 @@ These items are intentionally outside the current promote-first historical-train
 - broader production packaging/service management beyond local source slices;
 - unattended ThetaData service/autostart setup;
 - optionability-summary promotion before a model/control-plane consumer requires it;
-- broader ETF issuer adapters before historical point-in-time source archives are reviewed;
+- broader historical ETF issuer archives before point-in-time availability is reviewed;
 - production data-derived event label/gate calibration before reviewed historical reports exist.
 
 ## Recently Accepted
@@ -35,7 +35,7 @@ These items are intentionally outside the current promote-first historical-train
 - `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative` with `conservative_fixture_default_not_production_calibrated` until reviewed calibration exists.
 - `price_action` is accepted as a Layer 9 event-risk category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
 - `source_03_target_state` and `feature_03_target_state_vector` implement deterministic target-local observed-input and feature-block surfaces.
-- Layer 2 / candidate / Layer 3 boundaries are aligned: ETF holdings and `stock_etf_exposure` support anonymous target candidate preparation, not Layer 2 core behavior.
+- Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 materializes `source_02_target_candidate_holdings` after sector/basket context, while Layer 3 consumes those candidate inputs without owning holdings acquisition.
 - Event overlay sources are accepted through `source_09_event_risk_governor`, including equity abnormal activity evidence.
 - Option-expression inputs are accepted through `source_05_option_expression` and selected-contract tracking through `source_06_position_execution`.
 - Final saved source outputs are CSV or explicitly reviewed compact artifacts; JSONL may exist only as transient run-local evidence.

@@ -15,10 +15,12 @@ import re
 import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+from http.cookiejar import CookieJar
 from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any, Iterable, Mapping
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
 from xml.etree import ElementTree
 
 from feed_availability.sanitize import sanitize_value
@@ -114,10 +116,14 @@ def _etf_symbol_param(params: Mapping[str, Any]) -> str:
     return value
 
 
+def _issuer_key(value: str) -> str:
+    return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", value.lower())).strip("_")
+
+
 def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
     params = dict(context.task_key.get("params") or {})
     etf_symbol = _etf_symbol_param(params)
-    issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
+    issuer = _issuer_key(str(params.get("issuer") or _required(params, "issuer_name")))
     source_url = str(params.get("source_url") or "")
     payload: FeedPayload | None = None
     for kind in ("csv", "html", "json", "xlsx"):
@@ -156,7 +162,30 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
 
 def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any]) -> str:
     as_of = str(params.get("as_of_date") or _now_utc()[:10])[:10].replace("-", "")
-    if issuer in {"state_street", "spdr", "sector_spdr", "state_street_/_spdr"}:
+    if issuer in {"ishares", "blackrock", "blackrock_ishares", "blackrock_/_ishares"}:
+        product_ids = {
+            "IGV": "239771",
+            "IYT": "239501",
+        }
+        product_id = str(params.get("blackrock_product_id") or product_ids.get(etf_symbol.upper()) or "").strip()
+        if not product_id:
+            return ""
+        query = urlencode(
+            {
+                "appSubType": "ISHARES",
+                "appType": "PRODUCT_PAGE",
+                "component": "holdings.all",
+                "locale": "en_US",
+                "portfolioId": product_id,
+                "targetSite": "us-ishares",
+                "userType": "individual",
+                "excludeContent": "true",
+                "asOfDate": str(params.get("blackrock_as_of_date") or ""),
+                "includeConfig": "true",
+            }
+        )
+        return "https://www.blackrock.com/varnish-api/blk-one01-product-data/product-data/api/v2/get-product-data?" + query
+    if issuer in {"state_street", "spdr", "sector_spdr", "state_street_spdr", "state_street_/_spdr"}:
         return f"https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-{etf_symbol.lower()}.xlsx"
     if issuer == "global_x":
         return f"https://assets.globalxetfs.com/funds/holdings/{etf_symbol.lower()}_full-holdings_{as_of}.csv"
@@ -170,12 +199,24 @@ def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any])
         return ark_urls.get(etf_symbol.upper(), "")
     if issuer == "first_trust":
         return f"https://www.ftportfolios.com/Retail/Etf/EtfHoldings.aspx?Ticker={etf_symbol.upper()}"
+    if issuer == "vaneck":
+        vaneck_urls = {
+            "SMH": "https://www.vaneck.com/us/en/etf/equity/smh/holdings/download/xlsx/",
+        }
+        return vaneck_urls.get(etf_symbol.upper(), "")
     return ""
 
 
 def _fetch_source_url(source_url: str) -> FeedPayload:
-    request = Request(source_url, headers={"User-Agent": "OpenClaw ETF holdings research/1.0"})
-    with urlopen(request, timeout=30) as response:
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; OpenClaw ETF holdings research/1.0)", "Accept": "application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/html,*/*"}
+    opener = None
+    if "vaneck.com" in source_url.lower():
+        opener = build_opener(HTTPCookieProcessor(CookieJar()))
+        warmup = Request("https://www.vaneck.com/us/en/investments/semiconductor-etf-smh/holdings/", headers=headers)
+        opener.open(warmup, timeout=30).read(1024)
+    request = Request(source_url, headers=headers)
+    open_fn = opener.open if opener is not None else urlopen
+    with open_fn(request, timeout=30) as response:
         content_type = str(response.headers.get("content-type") or "").lower()
         data = response.read()
     lower_url = source_url.lower()
@@ -201,24 +242,35 @@ def _canonical_key(key: str) -> str:
         "holdings": "holding_name",
         "company": "holding_name",
         "security_name": "holding_name",
+        "issue_name": "holding_name",
+        "issuename": "holding_name",
         "weight": "weight",
+        "holding_percent": "weight",
+        "holdingpercent": "weight",
         "net_assets": "weight",
         "weight_%": "weight",
         "weight_percent": "weight",
         "%_of_net_assets": "weight",
+        "of_net_assets": "weight",
         "%_of_fund": "weight",
         "weighting": "weight",
         "shares": "shares",
         "shares_held": "shares",
         "shares_quantity": "shares",
+        "units_held": "shares",
+        "unitsheld": "shares",
         "market_value": "market_value",
+        "market_value_us": "market_value",
         "market_value_": "market_value",
         "market_value_$": "market_value",
         "cusip": "cusip",
         "sedol": "sedol",
         "asset_class": "asset_class",
+        "assetclass": "asset_class",
         "classification": "sector_type",
         "sector": "sector_type",
+        "sector_name": "sector_type",
+        "sectorname": "sector_type",
         "sector_type": "sector_type",
         "date": "as_of_date",
         "as_of_date": "as_of_date",
@@ -236,7 +288,7 @@ def _normalize_row(raw: Mapping[str, Any], *, etf_symbol: str, issuer: str, sour
     return {
         "etf_symbol": etf_symbol,
         "issuer_name": issuer,
-        "as_of_date": mapped.get("as_of_date") or default_as_of,
+        "as_of_date": _date_iso(mapped.get("as_of_date") or default_as_of),
         "holding_symbol": mapped.get("holding_symbol", ""),
         "holding_name": mapped.get("holding_name", ""),
         "weight": _clean_num(mapped.get("weight")),
@@ -273,7 +325,9 @@ def _parse_xlsx(payload: bytes) -> list[dict[str, Any]]:
                 break
         if not target:
             return []
-        sheet_path = "xl/" + target.lstrip("/") if not target.startswith("xl/") else target
+        sheet_path = target.lstrip("/")
+        if not sheet_path.startswith("xl/"):
+            sheet_path = "xl/" + sheet_path
         rows = []
         sheet_xml = ElementTree.fromstring(archive.read(sheet_path))
         for row in sheet_xml.findall(".//main:sheetData/main:row", ns):
@@ -287,11 +341,26 @@ def _parse_xlsx(payload: bytes) -> list[dict[str, Any]]:
                 values.append(str(raw or "").strip())
             if any(values):
                 rows.append(values)
-    header_i = next((i for i, row in enumerate(rows) if any(cell.lower() in {"ticker", "symbol"} for cell in row) and any("weight" in cell.lower() or "%" in cell for cell in row)), -1)
-    if header_i < 0:
-        return []
-    headers = rows[header_i]
-    return [{header: row[idx] if idx < len(row) else "" for idx, header in enumerate(headers)} for row in rows[header_i + 1:] if len(row) >= 2]
+        default_as_of = ""
+        for row in rows:
+            joined = " ".join(row)
+            match = re.search(r"\b(\d{1,2}/\d{1,2}/\d{4})\b", joined)
+            if match:
+                default_as_of = match.group(1)
+                break
+        header_i = next((i for i, row in enumerate(rows) if any(cell.lower() in {"ticker", "symbol"} for cell in row) and any("weight" in cell.lower() or "%" in cell for cell in row)), -1)
+        if header_i < 0:
+            return []
+        headers = rows[header_i]
+        parsed = []
+        for row in rows[header_i + 1:]:
+            if len(row) < 2:
+                continue
+            parsed_row = {header: row[idx] if idx < len(row) else "" for idx, header in enumerate(headers)}
+            if default_as_of and not any(_canonical_key(header) == "as_of_date" for header in parsed_row):
+                parsed_row["as_of_date"] = default_as_of
+            parsed.append(parsed_row)
+        return parsed
 
 
 def _xlsx_shared_strings(archive: zipfile.ZipFile) -> list[str]:
@@ -312,6 +381,20 @@ def _clean_cell(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _date_iso(value: str) -> str:
+    text = value.strip()
+    if not text:
+        return ""
+    if re.fullmatch(r"\d{8}", text):
+        return f"{text[:4]}-{text[4:6]}-{text[6:8]}"
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%b %d, %Y", "%B %d, %Y"):
+        try:
+            return datetime.strptime(text[:20], fmt).date().isoformat()
+        except ValueError:
+            continue
+    return text[:10]
+
+
 def _parse_html(text: str) -> list[dict[str, Any]]:
     rows = []
     for row_html in re.findall(r"<tr\b[^>]*>(.*?)</tr>", text, flags=re.I | re.S):
@@ -330,6 +413,7 @@ def _parse_html(text: str) -> list[dict[str, Any]]:
 
 
 def _iter_json_rows(value: Any) -> Iterable[Mapping[str, Any]]:
+    yield from _iter_blackrock_holdings_rows(value)
     if isinstance(value, list):
         for item in value:
             if isinstance(item, Mapping):
@@ -340,10 +424,57 @@ def _iter_json_rows(value: Any) -> Iterable[Mapping[str, Any]]:
                 yield from _iter_json_rows(value[key])
 
 
+def _iter_blackrock_holdings_rows(value: Any) -> Iterable[Mapping[str, Any]]:
+    if not isinstance(value, Mapping):
+        return
+    try:
+        data_points = value["componentsByNameMap"]["holdings"]["containersByNameMap"]["all"]["dataPointsByNameMap"]
+    except (KeyError, TypeError):
+        return
+    if not isinstance(data_points, Mapping):
+        return
+    tickers = _data_point_values(data_points.get("ticker"))
+    if not tickers:
+        return
+    as_of = _date_iso(str(_data_point_scalar(data_points.get("asOfDate")) or ""))
+    field_map = {
+        "holding_symbol": tickers,
+        "holding_name": _data_point_values(data_points.get("issueName")),
+        "weight": _data_point_values(data_points.get("holdingPercent")),
+        "shares": _data_point_values(data_points.get("unitsHeld")),
+        "market_value": _data_point_values(data_points.get("marketValue")),
+        "cusip": _data_point_values(data_points.get("cusip")),
+        "sedol": _data_point_values(data_points.get("sedol")),
+        "asset_class": _data_point_values(data_points.get("assetClass")),
+        "sector_type": _data_point_values(data_points.get("sectorName")),
+    }
+    for idx, symbol in enumerate(tickers):
+        row = {"as_of_date": as_of}
+        for key, values in field_map.items():
+            row[key] = values[idx] if idx < len(values) and values[idx] is not None else ""
+        if str(symbol or "").strip():
+            yield row
+
+
+def _data_point_values(value: Any) -> list[Any]:
+    if not isinstance(value, Mapping):
+        return []
+    values = value.get("value")
+    if not isinstance(values, list):
+        values = value.get("formattedValue")
+    return list(values) if isinstance(values, list) else []
+
+
+def _data_point_scalar(value: Any) -> Any:
+    if not isinstance(value, Mapping):
+        return ""
+    return value.get("value") or value.get("formattedValue") or ""
+
+
 def clean(context: FeedContext, payload: FeedPayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
     etf_symbol = _etf_symbol_param(params)
-    issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
+    issuer = _issuer_key(str(params.get("issuer") or _required(params, "issuer_name")))
     as_of_date = str(params.get("as_of_date") or "")
     if payload.kind == "csv":
         raw_rows = _parse_csv(str(payload.text))

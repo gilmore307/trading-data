@@ -8,7 +8,7 @@ Normalize issuer-published ETF holdings evidence into `etf_holding_snapshot` row
 
 ## Confirmed issuer patterns
 
-- iShares: official CSV `.ajax?fileType=csv&fileName=<TICKER>_holdings&dataType=fund` when a reviewed product id is supplied.
+- BlackRock/iShares: official product-data JSON holdings API using reviewed product ids for `IGV` and `IYT`.
 - State Street/SPDR and Select Sector SPDR: official holdings XLSX under `ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-<ticker>.xlsx`.
 - Global X: official dated CSV under `assets.globalxetfs.com/funds/holdings/<ticker>_full-holdings_YYYYMMDD.csv`.
 - ARK Invest: official CSV under `assets.ark-funds.com/fund-documents/funds-etf-csv/..._HOLDINGS.csv`.
@@ -16,13 +16,13 @@ Normalize issuer-published ETF holdings evidence into `etf_holding_snapshot` row
 - Invesco: official holdings JSON endpoint.
 - U.S. Global Investors: official fund-page holdings table.
 - Vanguard: official JS-rendered profile holdings table.
-- VanEck: official page exposes holdings XLSX download and may require ordinary browser/session headers.
+- VanEck: official holdings XLSX download with ordinary cookie-session warmup.
 
 ## Params
 
 - `etf_symbol` — required.
 - `issuer_name` — required until a reviewed ETF-to-issuer mapping table is active. `issuer` is accepted at the ingestion boundary as a compatibility alias.
-- `source_url` — optional official URL. If omitted, accepted issuer adapters derive fixed official URLs for State Street/SPDR, Global X, ARK Invest, and First Trust from `etf_symbol` plus `issuer_name`.
+- `source_url` — optional official URL. If omitted, accepted issuer adapters derive fixed official URLs for BlackRock/iShares, State Street/SPDR, Global X, ARK Invest, First Trust, and VanEck from `etf_symbol` plus `issuer_name`.
 - `csv_path` / `csv_text` — optional issuer CSV evidence.
 - `html_path` / `html` — optional issuer HTML evidence.
 - `json_path` / `json_text` — optional issuer JSON evidence.

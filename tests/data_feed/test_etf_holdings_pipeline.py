@@ -113,6 +113,75 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             self.assertEqual(row["shares"], "5045731")
             self.assertEqual(row["weight"], "10.21")
 
+    def test_parse_blackrock_ishares_json_holdings_vectors(self):
+        payload = {
+            "componentsByNameMap": {
+                "holdings": {
+                    "containersByNameMap": {
+                        "all": {
+                            "dataPointsByNameMap": {
+                                "asOfDate": {"value": 20260515, "formattedValue": "May 15, 2026"},
+                                "ticker": {"value": ["UNP", "UBER"]},
+                                "issueName": {"value": ["UNION PACIFIC CORP", "UBER TECHNOLOGIES INC"]},
+                                "holdingPercent": {"value": [16.81251, 16.18381]},
+                                "unitsHeld": {"value": [1336490, 4635488]},
+                                "marketValue": {"value": [361600734.4, 348078793.92]},
+                                "cusip": {"value": ["907818108", "90353T100"]},
+                                "sedol": {"value": ["2914734", "BK6N347"]},
+                                "assetClass": {"value": ["Equity", "Equity"]},
+                                "sectorName": {"value": ["Industrials", "Industrials"]},
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "06_feed_etf_holdings_blackrock_json_test",
+                "feed": "06_feed_etf_holdings",
+                "params": {"etf_symbol": "IYT", "issuer_name": "BlackRock / iShares", "json_text": json.dumps(payload)},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = run(task_key, run_id="run")
+            self.assertEqual(result.status, "succeeded")
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
+            with saved.open(newline="") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["issuer_name"], "blackrock_ishares")
+            self.assertEqual(row["as_of_date"], "2026-05-15")
+            self.assertEqual(row["holding_symbol"], "UNP")
+            self.assertEqual(row["weight"], "16.81251")
+            self.assertEqual(row["shares"], "1336490")
+            self.assertEqual(row["sector_type"], "Industrials")
+
+    def test_parse_vaneck_xlsx_as_of_and_holdings_columns(self):
+        workbook = _minimal_xlsx([
+            ["Daily Holdings (%)  05/15/2026", "", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", "", ""],
+            ["Number", "Ticker", "Holding Name", "Identifier (FIGI)", "Shares", "Asset Class", "Market Value (US$)", "Notional Value", "% of Net Assets"],
+            ["1", "NVDA", "Nvidia Corp", "BBG000BBJQV0", "49,231,461", "Stock", "$11,092,832,792.52", "--", "17.50%"],
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            xlsx_path = Path(tmp) / "holdings.xlsx"
+            xlsx_path.write_bytes(workbook)
+            task_key = {
+                "task_id": "06_feed_etf_holdings_vaneck_xlsx_test",
+                "feed": "06_feed_etf_holdings",
+                "params": {"etf_symbol": "SMH", "issuer_name": "VanEck", "xlsx_path": str(xlsx_path)},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = run(task_key, run_id="run")
+            self.assertEqual(result.status, "succeeded")
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
+            with saved.open(newline="") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["as_of_date"], "2026-05-15")
+            self.assertEqual(row["holding_symbol"], "NVDA")
+            self.assertEqual(row["holding_name"], "Nvidia Corp")
+            self.assertEqual(row["weight"], "17.50")
+            self.assertEqual(row["market_value"], "11092832792.52")
+
     def test_default_official_urls_cover_spdr_global_x_ark_and_first_trust(self):
         module = import_module("data_feed.06_feed_etf_holdings.pipeline")
 
@@ -128,6 +197,12 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
         self.assertEqual(
             module._default_source_url("CIBR", "first_trust", {}),
             "https://www.ftportfolios.com/Retail/Etf/EtfHoldings.aspx?Ticker=CIBR",
+        )
+        self.assertIn("portfolioId=239771", module._default_source_url("IGV", "blackrock_ishares", {}))
+        self.assertIn("portfolioId=239501", module._default_source_url("IYT", "blackrock_ishares", {}))
+        self.assertEqual(
+            module._default_source_url("SMH", "vaneck", {}),
+            "https://www.vaneck.com/us/en/etf/equity/smh/holdings/download/xlsx/",
         )
 
 

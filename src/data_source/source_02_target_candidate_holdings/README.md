@@ -2,9 +2,9 @@
 
 Manager-facing ETF holdings source for downstream target-candidate preparation.
 
-This source reads the reviewed ETF universe, keeps only `model_layer = layer_02_sector_context` rows, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table used after Layer 2 has selected/prioritized sector/industry baskets. Stable defaults live in pipeline code; there is no source-local `config.json`.
+This source reads the reviewed ETF universe, keeps only `model_layer = layer_02_sector_context` rows, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table in the Layer 2 feature stage after sector/basket context exists. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
-Boundary note: ETF holdings are not a core Layer 2 `SectorContextModel` behavior input. They belong to the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before target-state feature construction anonymizes model-facing vectors.
+Boundary note: ETF holdings are not a core Layer 2 `SectorContextModel` behavior input. They are Layer 2-stage candidate handoff evidence for the anonymous target candidate builder / Layer 3 input-preparation boundary, where selected Layer 2 baskets are transmitted into stock candidates before target-state feature construction anonymizes model-facing vectors.
 
 ## Input parameters
 

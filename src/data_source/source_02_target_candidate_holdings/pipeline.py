@@ -126,17 +126,22 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     feed_payloads = params.get("holding_feed_payloads") or {}
     if not isinstance(feed_payloads, Mapping):
         raise TargetCandidateHoldingsInputsError("params.holding_feed_payloads must map ETF symbol to feed payload params")
+    continue_on_error = str(params.get("continue_on_error") or "").lower() in {"1", "true", "yes"}
 
     raw_rows: list[dict[str, str]] = []
     evidence: list[dict[str, Any]] = []
+    errors: list[dict[str, str]] = []
     for row in universe_rows:
         symbol = row["symbol"].upper()
         if symbol not in selected:
             continue
         payload_params = dict(feed_payloads.get(symbol) or {})
-        if not payload_params:
-            raise TargetCandidateHoldingsInputsError(f"missing params.holding_feed_payloads.{symbol}")
-        raw_rows.extend(_fetch_one_holding_feed(context, row, payload_params, start=start, end=end, evidence=evidence))
+        try:
+            raw_rows.extend(_fetch_one_holding_feed(context, row, payload_params, start=start, end=end, evidence=evidence))
+        except Exception as exc:
+            if not continue_on_error:
+                raise
+            errors.append({"etf_symbol": symbol, "error_type": type(exc).__name__, "message": str(exc)})
 
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
@@ -149,12 +154,14 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
         "universe_type_filter": HOLDINGS_UNIVERSE_TYPE,
         "symbols": sorted(selected),
         "holding_feeds": evidence,
+        "holding_feed_errors": errors,
         "raw_persistence": "run-local feed evidence only; final output is SQL",
         "fetched_at_utc": _now_utc(),
     }
     path = context.run_dir / "request_manifest.json"
     path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(path)], {"raw_etf_holding_rows": len(raw_rows)}, details=manifest), SourcePayload(universe_rows, raw_rows)
+    warnings = [f"{item['etf_symbol']}: {item['message']}" for item in errors]
+    return StepResult("succeeded", [str(path)], {"raw_etf_holding_rows": len(raw_rows)}, warnings=warnings, details=manifest), SourcePayload(universe_rows, raw_rows)
 
 
 def _selected_symbols(universe_rows: list[dict[str, str]], value: Any) -> set[str]:
@@ -192,7 +199,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
     for raw in payload.raw_rows:
         symbol = str(raw.get("etf_symbol") or "").upper()
         holding_symbol = str(raw.get("holding_symbol") or "").strip().upper()
-        as_of_date = str(raw.get("as_of_date") or "")[:10]
+        as_of_date = _date_iso(str(raw.get("as_of_date") or ""))
         if not holding_symbol:
             skipped["missing_symbol"] += 1
             continue
@@ -246,6 +253,18 @@ def _available_time(params: Mapping[str, Any], row: Mapping[str, str], as_of_dat
         return next_regular_us_equity_open_after(as_of_date) if as_of_date else ""
     except ValueError:
         return ""
+
+
+def _date_iso(value: str) -> str:
+    text = value.strip()
+    if not text:
+        return ""
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y"):
+        try:
+            return datetime.strptime(text[:10], fmt).date().isoformat()
+        except ValueError:
+            continue
+    return text[:10]
 
 
 def _num(value: Any) -> float | None:

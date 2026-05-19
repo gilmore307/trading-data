@@ -133,7 +133,7 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
             payload = FeedPayload(kind, str(params[kind]), source_url)
             break
     if payload is None:
-        source_url = source_url or _default_source_url(etf_symbol, issuer)
+        source_url = source_url or _default_source_url(etf_symbol, issuer, params)
         if source_url:
             payload = _fetch_source_url(source_url)
     if payload is None:
@@ -154,9 +154,20 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
     return StepResult("succeeded", [str(path)], {"feed_payloads": 1}, details=manifest), payload
 
 
-def _default_source_url(etf_symbol: str, issuer: str) -> str:
+def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any]) -> str:
+    as_of = str(params.get("as_of_date") or _now_utc()[:10])[:10].replace("-", "")
     if issuer in {"state_street", "spdr", "sector_spdr", "state_street_/_spdr"}:
         return f"https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-{etf_symbol.lower()}.xlsx"
+    if issuer == "global_x":
+        return f"https://assets.globalxetfs.com/funds/holdings/{etf_symbol.lower()}_full-holdings_{as_of}.csv"
+    if issuer == "ark_invest":
+        ark_urls = {
+            "ARKF": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_FINTECH_INNOVATION_ETF_ARKF_HOLDINGS.csv",
+            "ARKG": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_GENOMIC_REVOLUTION_ETF_ARKG_HOLDINGS.csv",
+            "ARKW": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_NEXT_GENERATION_INTERNET_ETF_ARKW_HOLDINGS.csv",
+            "ARKX": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_SPACE_EXPLORATION_&_INNOVATION_ETF_ARKX_HOLDINGS.csv",
+        }
+        return ark_urls.get(etf_symbol.upper(), "")
     return ""
 
 
@@ -188,6 +199,7 @@ def _canonical_key(key: str) -> str:
         "company": "holding_name",
         "security_name": "holding_name",
         "weight": "weight",
+        "net_assets": "weight",
         "weight_%": "weight",
         "weight_percent": "weight",
         "%_of_net_assets": "weight",
@@ -195,6 +207,7 @@ def _canonical_key(key: str) -> str:
         "shares": "shares",
         "shares_held": "shares",
         "market_value": "market_value",
+        "market_value_": "market_value",
         "market_value_$": "market_value",
         "cusip": "cusip",
         "sedol": "sedol",

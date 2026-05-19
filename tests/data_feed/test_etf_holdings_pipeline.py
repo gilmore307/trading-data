@@ -88,6 +88,19 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             self.assertEqual(row["holding_symbol"], "NVDA")
             self.assertEqual(row["asset_class"], "Equity")
 
+    def test_default_official_urls_cover_spdr_global_x_and_ark(self):
+        module = import_module("data_feed.06_feed_etf_holdings.pipeline")
+
+        self.assertEqual(
+            module._default_source_url("XLK", "state_street_/_spdr", {"as_of_date": "2026-05-18"}),
+            "https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlk.xlsx",
+        )
+        self.assertEqual(
+            module._default_source_url("AIQ", "global_x", {"as_of_date": "2026-05-18"}),
+            "https://assets.globalxetfs.com/funds/holdings/aiq_full-holdings_20260518.csv",
+        )
+        self.assertIn("ARK_FINTECH_INNOVATION_ETF_ARKF_HOLDINGS.csv", module._default_source_url("ARKF", "ark_invest", {}))
+
 
 def _minimal_xlsx(rows: list[list[str]]) -> bytes:
     strings: list[str] = []

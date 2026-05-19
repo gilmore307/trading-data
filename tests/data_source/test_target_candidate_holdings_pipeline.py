@@ -33,6 +33,20 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         self.assertEqual(result.details["skipped"]["outside_window"], 1)
         self.assertEqual(cleaned.rows[0]["holding_symbol"], "NVDA")
 
+    def test_holdings_window_normalizes_us_date_format(self):
+        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+        task_key = {"task_id": "source_02_us_date", "source": "source_02_target_candidate_holdings", "params": {"start": "2026-05-18", "end": "2026-05-19"}, "output_root": "/tmp/source_02_us_date"}
+        context = module.build_context(task_key, "run")
+        payload = module.SourcePayload(
+            universe_rows=[{"symbol": "ARKG", "issuer_name": "ARK Invest", "universe_type": "sector_observation_etf", "exposure_type": "thematic_growth"}],
+            raw_rows=[{"etf_symbol": "ARKG", "holding_symbol": "TDOC", "holding_name": "Teladoc Health", "asset_class": "Equity", "as_of_date": "05/18/2026"}],
+        )
+
+        result, cleaned = module.clean(context, payload)
+
+        self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 1)
+        self.assertEqual(cleaned.rows[0]["as_of_date"], "2026-05-18")
+
     def test_available_time_defaults_to_next_regular_us_equity_open(self):
         module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
         row = {"available_time": "", "as_of_date": "2026-04-24"}
@@ -97,6 +111,57 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             self.assertNotIn("source_url", rows[0])
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
+
+    def test_missing_payload_can_use_feed_default_source_url(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
+            universe.write_text(
+                "symbol,universe_type,model_layer,exposure_type,bar_grain,fund_name,issuer_name\n"
+                "XLK,sector_observation_etf,layer_02_sector_context,sp500_sector,1d,Technology Select Sector SPDR Fund,State Street / SPDR\n",
+                encoding="utf-8",
+            )
+            task_key = {
+                "task_id": "source_02_target_candidate_default_feed_test",
+                "source": "source_02_target_candidate_holdings",
+                "params": {
+                    "start": "2026-04-24",
+                    "end": "2026-04-25",
+                    "market_regime_etf_universe_path": str(universe),
+                    "symbols": ["XLK"],
+                    "holding_feed_payloads": {},
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+            captured = {}
+
+            def fake_fetch(context):
+                captured["params"] = context.task_key["params"]
+                return module.StepResult("succeeded", [], {"feed_payloads": 1}), object()
+
+            def fake_clean(context, payload):
+                context.cleaned_dir.mkdir(parents=True, exist_ok=True)
+                (context.cleaned_dir / "etf_holding_snapshot.jsonl").write_text(
+                    json.dumps({"etf_symbol": "XLK", "holding_symbol": "MSFT", "holding_name": "Microsoft Corp", "asset_class": "Equity", "as_of_date": "2026-04-24"}) + "\n",
+                    encoding="utf-8",
+                )
+                return module.StepResult("succeeded", [], {"etf_holding_snapshot": 1})
+
+            original_fetch = module.fetch_holding_feed
+            original_clean = module.clean_holding_feed
+            module.fetch_holding_feed = fake_fetch
+            module.clean_holding_feed = fake_clean
+            try:
+                writer = FakeSqlWriter()
+                result = module.run(task_key, run_id="run", sql_writer=writer)
+            finally:
+                module.fetch_holding_feed = original_fetch
+                module.clean_holding_feed = original_clean
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(captured["params"]["etf_symbol"], "XLK")
+            self.assertEqual(captured["params"]["issuer_name"], "State Street / SPDR")
+            self.assertEqual(writer.calls[0]["rows"][0]["holding_symbol"], "MSFT")
 
 
 if __name__ == "__main__":

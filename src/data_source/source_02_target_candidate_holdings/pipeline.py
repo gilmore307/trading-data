@@ -72,6 +72,7 @@ class StepResult:
 class SourcePayload:
     universe_rows: list[dict[str, str]]
     raw_rows: list[dict[str, str]]
+    selected_symbols: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -126,7 +127,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     feed_payloads = params.get("holding_feed_payloads") or {}
     if not isinstance(feed_payloads, Mapping):
         raise TargetCandidateHoldingsInputsError("params.holding_feed_payloads must map ETF symbol to feed payload params")
-    continue_on_error = str(params.get("continue_on_error") or "").lower() in {"1", "true", "yes"}
+    continue_on_error = str(params.get("continue_on_error", "true")).lower() not in {"0", "false", "no", "strict"}
 
     raw_rows: list[dict[str, str]] = []
     evidence: list[dict[str, Any]] = []
@@ -161,7 +162,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     path = context.run_dir / "request_manifest.json"
     path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     warnings = [f"{item['etf_symbol']}: {item['message']}" for item in errors]
-    return StepResult("succeeded", [str(path)], {"raw_etf_holding_rows": len(raw_rows)}, warnings=warnings, details=manifest), SourcePayload(universe_rows, raw_rows)
+    return StepResult("succeeded", [str(path)], {"raw_etf_holding_rows": len(raw_rows)}, warnings=warnings, details=manifest), SourcePayload(universe_rows, raw_rows, tuple(sorted(selected)))
 
 
 def _selected_symbols(universe_rows: list[dict[str, str]], value: Any) -> set[str]:
@@ -194,23 +195,38 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
     start = _required(params, "start")
     end = _required(params, "end")
     universe_by_symbol = {row["symbol"].upper(): row for row in payload.universe_rows}
+    selected_symbols = set(payload.selected_symbols or universe_by_symbol)
     rows: list[dict[str, Any]] = []
     skipped = {"non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0}
+    symbol_coverage: dict[str, dict[str, int]] = {
+        symbol: {"raw_rows": 0, "output_rows": 0, "non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0}
+        for symbol in selected_symbols
+    }
     for raw in payload.raw_rows:
         symbol = str(raw.get("etf_symbol") or "").upper()
+        if symbol and symbol not in symbol_coverage:
+            symbol_coverage[symbol] = {"raw_rows": 0, "output_rows": 0, "non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0}
+        if symbol:
+            symbol_coverage[symbol]["raw_rows"] += 1
         holding_symbol = str(raw.get("holding_symbol") or "").strip().upper()
         as_of_date = _date_iso(str(raw.get("as_of_date") or ""))
         if not holding_symbol:
             skipped["missing_symbol"] += 1
+            if symbol:
+                symbol_coverage[symbol]["missing_symbol"] += 1
             continue
         if as_of_date and (as_of_date < start[:10] or as_of_date >= end[:10]):
             skipped["outside_window"] += 1
+            if symbol:
+                symbol_coverage[symbol]["outside_window"] += 1
             continue
         if not _is_us_equity_holding(raw):
             skipped["non_us_or_non_equity"] += 1
+            if symbol:
+                symbol_coverage[symbol]["non_us_or_non_equity"] += 1
             continue
         universe = universe_by_symbol.get(symbol, {})
-        rows.append({
+        output_row = {
             "etf_symbol": symbol,
             "issuer_name": str(universe.get("issuer_name") or raw.get("issuer_name") or ""),
             "universe_type": str(universe.get("universe_type") or ""),
@@ -223,9 +239,28 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
             "shares": _num(raw.get("shares")),
             "market_value": _num(raw.get("market_value")),
             "sector_type": str(raw.get("sector_type") or ""),
-        })
+        }
+        rows.append(output_row)
+        symbol_coverage[symbol]["output_rows"] += 1
     rows.sort(key=lambda row: (row["etf_symbol"], row["as_of_date"], row["holding_symbol"]))
-    result = StepResult("succeeded", [], {OUTPUT_TABLE: len(rows)}, details={"columns": SQL_FIELDS, "table": OUTPUT_TABLE, "natural_key": KEY_COLUMNS, "skipped": skipped, "filter": "US-listed common equity holdings only"})
+    missing_symbols = sorted(symbol for symbol, counts in symbol_coverage.items() if counts["output_rows"] == 0)
+    warnings = [f"no_valid_holdings_rows_for_symbols={','.join(missing_symbols)}"] if missing_symbols else []
+    result = StepResult(
+        "succeeded",
+        [],
+        {OUTPUT_TABLE: len(rows)},
+        warnings=warnings,
+        details={
+            "columns": SQL_FIELDS,
+            "table": OUTPUT_TABLE,
+            "natural_key": KEY_COLUMNS,
+            "skipped": skipped,
+            "symbol_coverage": symbol_coverage,
+            "missing_symbols": missing_symbols,
+            "missing_symbol_policy": "accepted_partial_coverage_no_fabricated_holdings",
+            "filter": "US-listed common equity holdings only",
+        },
+    )
     return result, CleanedPayload(rows)
 
 

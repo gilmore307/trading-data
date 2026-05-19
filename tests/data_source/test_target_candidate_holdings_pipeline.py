@@ -23,6 +23,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         universe = [{"symbol": "SMH", "issuer_name": "VanEck", "universe_type": "sector_observation_etf", "exposure_type": "industry_chain"}]
         payload = module.SourcePayload(
             universe_rows=universe,
+            selected_symbols=("SMH",),
             raw_rows=[
                 {"etf_symbol": "SMH", "holding_symbol": "NVDA", "holding_name": "NVIDIA Corp", "asset_class": "Equity", "as_of_date": "2026-04-24"},
                 {"etf_symbol": "SMH", "holding_symbol": "AMD", "holding_name": "Advanced Micro Devices", "asset_class": "Equity", "as_of_date": "2026-04-25"},
@@ -39,6 +40,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         context = module.build_context(task_key, "run")
         payload = module.SourcePayload(
             universe_rows=[{"symbol": "ARKG", "issuer_name": "ARK Invest", "universe_type": "sector_observation_etf", "exposure_type": "thematic_growth"}],
+            selected_symbols=("ARKG",),
             raw_rows=[{"etf_symbol": "ARKG", "holding_symbol": "TDOC", "holding_name": "Teladoc Health", "asset_class": "Equity", "as_of_date": "05/18/2026"}],
         )
 
@@ -162,6 +164,29 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             self.assertEqual(captured["params"]["etf_symbol"], "XLK")
             self.assertEqual(captured["params"]["issuer_name"], "State Street / SPDR")
             self.assertEqual(writer.calls[0]["rows"][0]["holding_symbol"], "MSFT")
+
+    def test_missing_window_holdings_are_reported_as_partial_coverage_not_failure(self):
+        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+        task_key = {"task_id": "source_02_missing_window", "source": "source_02_target_candidate_holdings", "params": {"start": "2026-05-18", "end": "2026-05-19"}, "output_root": "/tmp/source_02_missing_window"}
+        context = module.build_context(task_key, "run")
+        payload = module.SourcePayload(
+            universe_rows=[
+                {"symbol": "ARKF", "issuer_name": "ARK Invest", "universe_type": "sector_observation_etf", "exposure_type": "thematic_growth"},
+            ],
+            selected_symbols=("ARKF",),
+            raw_rows=[
+                {"etf_symbol": "ARKF", "holding_symbol": "SHOP", "holding_name": "Shopify Inc", "asset_class": "Equity", "as_of_date": "2026-01-02"},
+            ],
+        )
+
+        result, cleaned = module.clean(context, payload)
+
+        self.assertEqual(result.status, "succeeded")
+        self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 0)
+        self.assertEqual(cleaned.rows, [])
+        self.assertEqual(result.details["missing_symbols"], ["ARKF"])
+        self.assertIn("accepted_partial_coverage", result.details["missing_symbol_policy"])
+        self.assertEqual(result.details["symbol_coverage"]["ARKF"]["outside_window"], 1)
 
 
 if __name__ == "__main__":

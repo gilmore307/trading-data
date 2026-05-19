@@ -52,6 +52,8 @@ Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relati
 
 `source_02_target_candidate_holdings` accepts `params.start` and `params.end`, reads the reviewed `layer_01_02_market_context_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes SQL table `source_02_target_candidate_holdings`. Its runtime owner is the Layer 2 feature stage so candidate inputs are ready before Layer 3 target-state construction.
 
+ETF holdings coverage is allowed to be partial. When an official issuer route is known but has no rows inside the point-in-time window, or a bounded issuer fetch fails under `continue_on_error`, the source records per-symbol coverage diagnostics and `missing_symbols` instead of fabricating holdings rows or failing the entire Layer 2 handoff. Downstream models must tolerate a missing subset of ETF holdings evidence; missing coverage is evidence quality, not a synthetic constituent signal.
+
 Layer 3 has two target-state surfaces with different maturity.
 
 Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and should write SQL table `source_03_target_state`.

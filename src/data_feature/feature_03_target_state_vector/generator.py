@@ -64,6 +64,7 @@ class TargetStateInputs:
     bars_by_candidate: dict[str, list[Bar]]
     market_context_rows: tuple[ContextRow, ...] = ()
     sector_context_rows: tuple[ContextRow, ...] = ()
+    sector_context_symbol_by_candidate: dict[str, str] | None = None
 
 
 class TargetStateVectorError(ValueError):
@@ -94,7 +95,7 @@ def build_inputs(
     market_context_rows: Iterable[Mapping[str, Any]] = (),
     sector_context_rows: Iterable[Mapping[str, Any]] = (),
 ) -> TargetStateInputs:
-    candidates = _candidate_map(candidate_rows)
+    candidates, sector_context_symbol_by_candidate = _candidate_maps(candidate_rows)
     bars_by_candidate: dict[str, list[Bar]] = {}
     for row in bar_rows:
         symbol = str(row.get("symbol") or "").strip().upper()
@@ -128,6 +129,7 @@ def build_inputs(
         bars_by_candidate=bars_by_candidate,
         market_context_rows=tuple(_context_rows(market_context_rows, default_prefix="market_context")),
         sector_context_rows=tuple(_context_rows(sector_context_rows, default_prefix="sector_context")),
+        sector_context_symbol_by_candidate=sector_context_symbol_by_candidate,
     )
 
 
@@ -139,11 +141,15 @@ def generate_rows(
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for target_candidate_id in sorted(inputs.bars_by_candidate):
+        sector_context_rows = _sector_rows_for_candidate(
+            inputs.sector_context_rows,
+            (inputs.sector_context_symbol_by_candidate or {}).get(target_candidate_id),
+        )
         rows.extend(
             generate_candidate_rows(
                 inputs.bars_by_candidate[target_candidate_id],
                 inputs.market_context_rows,
-                inputs.sector_context_rows,
+                sector_context_rows,
                 run_id=run_id,
                 target_context_state_version=target_context_state_version,
             )
@@ -200,14 +206,30 @@ def payload_columns(rows: Iterable[Mapping[str, Any]]) -> list[str]:
     return sorted({key for row in rows for key in row if key not in METADATA_COLUMNS})
 
 
-def _candidate_map(rows: Iterable[Mapping[str, Any]]) -> dict[str, str]:
+def _candidate_maps(rows: Iterable[Mapping[str, Any]]) -> tuple[dict[str, str], dict[str, str]]:
     candidates: dict[str, str] = {}
+    sector_symbols: dict[str, str] = {}
     for row in rows:
         target_candidate_id = str(row.get("target_candidate_id") or "").strip()
         symbol = str(row.get("symbol") or row.get("routing_symbol_ref") or row.get("audit_symbol_ref") or "").strip().upper()
         if target_candidate_id and symbol:
             candidates[symbol] = target_candidate_id
-    return candidates
+            sector_symbol = str(row.get("sector_context_symbol") or row.get("sector_or_industry_symbol") or "").strip().upper()
+            if sector_symbol:
+                sector_symbols[target_candidate_id] = sector_symbol
+    return candidates, sector_symbols
+
+
+def _sector_rows_for_candidate(rows: Sequence[ContextRow], sector_context_symbol: str | None) -> tuple[ContextRow, ...]:
+    if not sector_context_symbol:
+        return tuple(row for row in rows if not str(row.payload.get("sector_or_industry_symbol") or "").strip())
+    symbol = sector_context_symbol.strip().upper()
+    matched = tuple(
+        row
+        for row in rows
+        if str(row.payload.get("sector_or_industry_symbol") or row.payload.get("symbol") or "").strip().upper() == symbol
+    )
+    return matched or tuple(row for row in rows if not str(row.payload.get("sector_or_industry_symbol") or "").strip())
 
 
 def _context_rows(rows: Iterable[Mapping[str, Any]], *, default_prefix: str) -> list[ContextRow]:

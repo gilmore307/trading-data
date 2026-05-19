@@ -12,11 +12,14 @@ import csv
 import html
 import json
 import re
+import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+from urllib.request import Request, urlopen
+from xml.etree import ElementTree
 
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
@@ -77,7 +80,7 @@ class StepResult:
 @dataclass(frozen=True)
 class FeedPayload:
     kind: str
-    text: str
+    text: str | bytes
     source_url: str
 
 
@@ -117,9 +120,11 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
     issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
     source_url = str(params.get("source_url") or "")
     payload: FeedPayload | None = None
-    for kind in ("csv", "html", "json"):
+    for kind in ("csv", "html", "json", "xlsx"):
         if params.get(kind + "_path"):
-            payload = FeedPayload(kind, Path(str(params[kind + "_path"])).read_text(encoding="utf-8"), source_url)
+            path = Path(str(params[kind + "_path"]))
+            text: str | bytes = path.read_bytes() if kind == "xlsx" else path.read_text(encoding="utf-8")
+            payload = FeedPayload(kind, text, source_url)
             break
         if params.get(kind + "_text"):
             payload = FeedPayload(kind, str(params[kind + "_text"]), source_url)
@@ -128,7 +133,11 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
             payload = FeedPayload(kind, str(params[kind]), source_url)
             break
     if payload is None:
-        raise EtfHoldingsError("provide one of params.csv_path/csv_text/html_path/html/json_path/json_text; live issuer fetch adapters are not enabled yet")
+        source_url = source_url or _default_source_url(etf_symbol, issuer)
+        if source_url:
+            payload = _fetch_source_url(source_url)
+    if payload is None:
+        raise EtfHoldingsError("provide one of params.csv_path/csv_text/html_path/html/json_path/json_text/xlsx_path or params.source_url")
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
         "feed": FEED,
@@ -143,6 +152,28 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
     path = context.run_dir / "request_manifest.json"
     path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(path)], {"feed_payloads": 1}, details=manifest), payload
+
+
+def _default_source_url(etf_symbol: str, issuer: str) -> str:
+    if issuer in {"state_street", "spdr", "sector_spdr", "state_street_/_spdr"}:
+        return f"https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-{etf_symbol.lower()}.xlsx"
+    return ""
+
+
+def _fetch_source_url(source_url: str) -> FeedPayload:
+    request = Request(source_url, headers={"User-Agent": "OpenClaw ETF holdings research/1.0"})
+    with urlopen(request, timeout=30) as response:
+        content_type = str(response.headers.get("content-type") or "").lower()
+        data = response.read()
+    lower_url = source_url.lower()
+    if lower_url.endswith(".xlsx") or "spreadsheetml" in content_type:
+        return FeedPayload("xlsx", data, source_url)
+    text = data.decode("utf-8-sig", errors="replace")
+    if lower_url.endswith(".json") or "json" in content_type:
+        return FeedPayload("json", text, source_url)
+    if lower_url.endswith(".csv") or "csv" in content_type or "," in text.splitlines()[0]:
+        return FeedPayload("csv", text, source_url)
+    return FeedPayload("html", text, source_url)
 
 
 def _canonical_key(key: str) -> str:
@@ -206,6 +237,56 @@ def _parse_csv(text: str) -> list[dict[str, Any]]:
     return list(csv.DictReader(StringIO("\n".join(lines[start:]))))
 
 
+def _parse_xlsx(payload: bytes) -> list[dict[str, Any]]:
+    with zipfile.ZipFile(BytesIO(payload)) as archive:
+        shared_strings = _xlsx_shared_strings(archive)
+        workbook = ElementTree.fromstring(archive.read("xl/workbook.xml"))
+        ns = {"main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main", "rel": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
+        sheet = workbook.find(".//main:sheet", ns)
+        if sheet is None:
+            return []
+        rel_id = sheet.attrib.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id")
+        rels = ElementTree.fromstring(archive.read("xl/_rels/workbook.xml.rels"))
+        target = None
+        for rel in rels:
+            if rel.attrib.get("Id") == rel_id:
+                target = rel.attrib.get("Target")
+                break
+        if not target:
+            return []
+        sheet_path = "xl/" + target.lstrip("/") if not target.startswith("xl/") else target
+        rows = []
+        sheet_xml = ElementTree.fromstring(archive.read(sheet_path))
+        for row in sheet_xml.findall(".//main:sheetData/main:row", ns):
+            values = []
+            for cell in row.findall("main:c", ns):
+                value = cell.find("main:v", ns)
+                inline = cell.find("main:is/main:t", ns)
+                raw = inline.text if inline is not None else value.text if value is not None else ""
+                if cell.attrib.get("t") == "s" and str(raw).isdigit():
+                    raw = shared_strings[int(raw)]
+                values.append(str(raw or "").strip())
+            if any(values):
+                rows.append(values)
+    header_i = next((i for i, row in enumerate(rows) if any(cell.lower() in {"ticker", "symbol"} for cell in row) and any("weight" in cell.lower() or "%" in cell for cell in row)), -1)
+    if header_i < 0:
+        return []
+    headers = rows[header_i]
+    return [{header: row[idx] if idx < len(row) else "" for idx, header in enumerate(headers)} for row in rows[header_i + 1:] if len(row) >= 2]
+
+
+def _xlsx_shared_strings(archive: zipfile.ZipFile) -> list[str]:
+    try:
+        root = ElementTree.fromstring(archive.read("xl/sharedStrings.xml"))
+    except KeyError:
+        return []
+    ns = {"main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    strings = []
+    for item in root.findall("main:si", ns):
+        strings.append("".join(text.text or "" for text in item.findall(".//main:t", ns)))
+    return strings
+
+
 def _clean_cell(text: str) -> str:
     text = re.sub(r"<[^>]+>", " ", text)
     text = html.unescape(text)
@@ -245,11 +326,15 @@ def clean(context: FeedContext, payload: FeedPayload) -> StepResult:
     issuer = str(params.get("issuer") or _required(params, "issuer_name")).lower().replace(" ", "_")
     as_of_date = str(params.get("as_of_date") or "")
     if payload.kind == "csv":
-        raw_rows = _parse_csv(payload.text)
+        raw_rows = _parse_csv(str(payload.text))
     elif payload.kind == "html":
-        raw_rows = _parse_html(payload.text)
+        raw_rows = _parse_html(str(payload.text))
     elif payload.kind == "json":
-        raw_rows = list(_iter_json_rows(json.loads(payload.text)))
+        raw_rows = list(_iter_json_rows(json.loads(str(payload.text))))
+    elif payload.kind == "xlsx":
+        if not isinstance(payload.text, (bytes, bytearray)):
+            raise EtfHoldingsError("xlsx payload must be bytes")
+        raw_rows = _parse_xlsx(bytes(payload.text))
     else:
         raise EtfHoldingsError(f"unsupported feed payload kind {payload.kind}")
     rows = [_normalize_row(row, etf_symbol=etf_symbol, issuer=issuer, source_url=payload.source_url, default_as_of=as_of_date) for row in raw_rows]

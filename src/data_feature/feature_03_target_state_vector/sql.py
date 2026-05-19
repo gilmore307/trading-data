@@ -156,6 +156,67 @@ def fetch_context_rows(
     return rows
 
 
+def fetch_candidate_rows(
+    cursor: Any,
+    *,
+    source_schema: str,
+    source_table: str,
+    sector_context_schema: str,
+    sector_context_table: str,
+    source_start: str | None = None,
+    source_end: str | None = None,
+) -> list[dict[str, Any]]:
+    where: list[str] = []
+    params: list[Any] = []
+    if source_start:
+        where.append('s."available_time" >= %s')
+        params.append(source_start)
+    if source_end:
+        where.append('s."available_time" < %s')
+        params.append(source_end)
+    where_sql = " WHERE " + " AND ".join(where) if where else ""
+    cursor.execute("SELECT to_regclass(%s) AS table_ref", ("trading_data.source_02_target_candidate_holdings",))
+    exists = cursor.fetchone()
+    if isinstance(exists, Mapping):
+        holdings_exists = exists.get("table_ref") is not None
+    else:
+        holdings_exists = bool(exists and exists[0] is not None)
+    holdings_join = ""
+    holdings_select = "NULL::text"
+    if holdings_exists:
+        holdings_join = """
+        LEFT JOIN LATERAL (
+          SELECT h."etf_symbol"
+          FROM "trading_data"."source_02_target_candidate_holdings" AS h
+          WHERE h."holding_symbol" = s."symbol"
+            AND h."available_time" <= s."available_time"
+          ORDER BY h."available_time" DESC, h."weight" DESC NULLS LAST, h."etf_symbol" ASC
+          LIMIT 1
+        ) AS h ON TRUE
+        """
+        holdings_select = 'h."etf_symbol"'
+    cursor.execute(
+        f"""
+        SELECT DISTINCT
+          s."target_candidate_id",
+          s."symbol",
+          COALESCE(direct_l2."sector_or_industry_symbol", {holdings_select}) AS "sector_context_symbol"
+        FROM {_qualified(source_schema, source_table)} AS s
+        LEFT JOIN LATERAL (
+          SELECT l2."sector_or_industry_symbol"
+          FROM {_qualified(sector_context_schema, sector_context_table)} AS l2
+          WHERE l2."sector_or_industry_symbol" = s."symbol"
+          LIMIT 1
+        ) AS direct_l2 ON TRUE
+        {holdings_join}
+        {where_sql}
+        ORDER BY s."target_candidate_id" ASC, s."symbol" ASC
+        """,
+        params,
+    )
+    return [dict(row) for row in cursor.fetchall()]
+
+
 def write_feature_rows_sql(
     cursor: Any,
     rows: Sequence[Mapping[str, Any]],
@@ -230,11 +291,15 @@ def generate_sql(
             source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
             market_rows = fetch_context_rows(cursor, schema=market_context_schema, table=market_context_table, ref_column="market_context_state_ref", source_start=source_start, source_end=source_end)
             sector_rows = fetch_context_rows(cursor, schema=sector_context_schema, table=sector_context_table, ref_column="sector_context_state_ref", source_start=source_start, source_end=source_end)
-            candidate_rows = [
-                {"target_candidate_id": row.get("target_candidate_id"), "symbol": row.get("symbol")}
-                for row in source_rows
-                if row.get("target_candidate_id") and row.get("symbol")
-            ]
+            candidate_rows = fetch_candidate_rows(
+                cursor,
+                source_schema=source_schema,
+                source_table=source_table,
+                sector_context_schema=sector_context_schema,
+                sector_context_table=sector_context_table,
+                source_start=source_start,
+                source_end=source_end,
+            )
             inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows)
             rows = generator.generate_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
             write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)

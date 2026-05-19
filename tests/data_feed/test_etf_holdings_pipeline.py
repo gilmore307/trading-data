@@ -2,6 +2,8 @@ import csv
 import json
 import tempfile
 import unittest
+import zipfile
+from io import BytesIO
 from pathlib import Path
 
 from importlib import import_module
@@ -63,6 +65,52 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             self.assertEqual(row["holding_name"], "NVIDIA Corp.")
             self.assertEqual(row["sedol"], "2379504")
             self.assertEqual(row["shares"], "129246346")
+
+    def test_parse_xlsx_holdings_table(self):
+        workbook = _minimal_xlsx([
+            ["Ticker", "Name", "Weight (%)", "Shares", "Market Value", "Asset Class"],
+            ["NVDA", "NVIDIA Corp", "18.5", "100", "1000", "Equity"],
+        ])
+        with tempfile.TemporaryDirectory() as tmp:
+            xlsx_path = Path(tmp) / "holdings.xlsx"
+            xlsx_path.write_bytes(workbook)
+            task_key = {
+                "task_id": "06_feed_etf_holdings_xlsx_test",
+                "feed": "06_feed_etf_holdings",
+                "params": {"etf_symbol": "XLK", "issuer_name": "State Street / SPDR", "as_of_date": "2026-04-24", "xlsx_path": str(xlsx_path)},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = run(task_key, run_id="run")
+            self.assertEqual(result.status, "succeeded")
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
+            with saved.open(newline="") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["holding_symbol"], "NVDA")
+            self.assertEqual(row["asset_class"], "Equity")
+
+
+def _minimal_xlsx(rows: list[list[str]]) -> bytes:
+    strings: list[str] = []
+    indexes: dict[str, int] = {}
+    cells = []
+    for row_index, row in enumerate(rows, start=1):
+        row_cells = []
+        for col_index, value in enumerate(row):
+            if value not in indexes:
+                indexes[value] = len(strings)
+                strings.append(value)
+            col = chr(ord("A") + col_index)
+            row_cells.append(f'<c r="{col}{row_index}" t="s"><v>{indexes[value]}</v></c>')
+        cells.append(f'<row r="{row_index}">{"".join(row_cells)}</row>')
+    shared = '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + "".join(f"<si><t>{value}</t></si>" for value in strings) + "</sst>"
+    sheet = '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + "".join(cells) + "</sheetData></worksheet>"
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("xl/workbook.xml", '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        archive.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>')
+        archive.writestr("xl/worksheets/sheet1.xml", sheet)
+        archive.writestr("xl/sharedStrings.xml", shared)
+    return buffer.getvalue()
 
 
 if __name__ == "__main__":

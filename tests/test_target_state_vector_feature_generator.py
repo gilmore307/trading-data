@@ -110,6 +110,32 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
                 candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "MSFT"}],
             )
 
+    def test_sector_context_rows_are_filtered_by_candidate_sector_symbol(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        inputs = generator.build_inputs(
+            bar_rows=[_bar("AAPL", start + timedelta(minutes=index), 100 + index) for index in range(12)],
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL", "sector_context_symbol": "XLK"}],
+            sector_context_rows=[
+                {
+                    "available_time": start.isoformat(),
+                    "sector_or_industry_symbol": "XLE",
+                    "sector_context_state_ref": "sec_energy",
+                    "sector_return_15min": -0.04,
+                },
+                {
+                    "available_time": start.isoformat(),
+                    "sector_or_industry_symbol": "XLK",
+                    "sector_context_state_ref": "sec_tech",
+                    "sector_return_15min": 0.05,
+                },
+            ],
+        )
+
+        rows = generator.generate_rows(inputs)
+
+        self.assertEqual(rows[-1]["sector_context_state_ref"], "sec_tech")
+        self.assertNotEqual(rows[-1]["sector_context_state_ref"], "sec_energy")
+
 
 if __name__ == "__main__":
     unittest.main()

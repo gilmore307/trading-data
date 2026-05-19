@@ -12,9 +12,17 @@ sql = importlib.import_module("data_feature.feature_03_target_state_vector.sql")
 class FakeCursor:
     def __init__(self) -> None:
         self.calls: list[tuple[str, list[object]]] = []
+        self._one = {"table_ref": None}
+        self._many = []
 
     def execute(self, statement: str, params=None) -> None:
         self.calls.append((statement, list(params or [])))
+
+    def fetchone(self):
+        return self._one
+
+    def fetchall(self):
+        return self._many
 
 
 class TargetStateVectorSqlTests(unittest.TestCase):
@@ -47,6 +55,39 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertEqual(len(insert_calls), 1)
         self.assertIn('%s::jsonb', insert_calls[0][0])
         self.assertIn('"target_candidate_id"', insert_calls[0][0])
+
+    def test_candidate_rows_bind_direct_sector_or_holdings_sector_symbol(self) -> None:
+        cursor = FakeCursor()
+
+        sql.fetch_candidate_rows(
+            cursor,
+            source_schema="trading_data",
+            source_table="source_03_target_state",
+            sector_context_schema="trading_model",
+            sector_context_table="model_02_sector_context",
+            source_start="2016-01-01",
+            source_end="2016-02-01",
+        )
+
+        statements = "\n".join(statement for statement, _ in cursor.calls)
+        self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", NULL::text)', statements)
+        self.assertIn('l2."sector_or_industry_symbol" = s."symbol"', statements)
+        self.assertIn('s."available_time" >= %s', statements)
+
+        cursor = FakeCursor()
+        cursor._one = {"table_ref": "trading_data.source_02_target_candidate_holdings"}
+        sql.fetch_candidate_rows(
+            cursor,
+            source_schema="trading_data",
+            source_table="source_03_target_state",
+            sector_context_schema="trading_model",
+            sector_context_table="model_02_sector_context",
+        )
+
+        statements = "\n".join(statement for statement, _ in cursor.calls)
+        self.assertIn('"source_02_target_candidate_holdings"', statements)
+        self.assertIn('h."holding_symbol" = s."symbol"', statements)
+        self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", h."etf_symbol")', statements)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. Layer 9 owns `EventRiskGovernor / EventIntelligenceOverlay` event intelligence / event-risk intervention. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features, not event interpretation, risk policy, execution, or broker mutation.
 
-Current physical source/feature names are `source_09_event_risk_governor` and `feature_09_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation_v1` and event-risk governor use.
+Current physical source/feature names are `source_09_event_risk_governor` and `feature_09_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
@@ -86,7 +86,7 @@ Startup abnormality scope is limited to compact point-in-time detector refs for:
 
 Bridge evidence must preserve a non-overlap audit trail. Price, liquidity, and option activity refs are eligible for model-side scoring only when the artifact can show that the activity leg is not already represented in upstream market/sector/target-state features, liquidity features, option-expression inputs, or Layer 8 trading-guidance payloads for the same decision context. If overlap is unknown, `trading-data` should keep the ref as provenance/review evidence and let `trading-model` mark the bridge `review_required_overlap_unknown` rather than treating it as incremental event evidence.
 
-Event-family scouting adds one data requirement: raw provider rows must preserve enough source metadata for `trading-model` to create reviewed `event_family_scouting_packet_v1` evidence. For news this means source name, provider id, headline/summary or source artifact ref, URL/ref, published/updated times, available time when known, symbol/entity tags, and dedup/canonical refs when available. `trading-data` should not collapse raw news into a final family label or event-risk conclusion; it may provide deterministic source fields and evidence refs.
+Event-family scouting adds one data requirement: raw provider rows must preserve enough source metadata for `trading-model` to create reviewed `event_family_scouting_packet` evidence. For news this means source name, provider id, headline/summary or source artifact ref, URL/ref, published/updated times, available time when known, symbol/entity tags, and dedup/canonical refs when available. `trading-data` should not collapse raw news into a final family label or event-risk conclusion; it may provide deterministic source fields and evidence refs.
 
 For `earnings_guidance_event_family`, `trading-data` source artifacts must distinguish scheduling shells from result artifacts. Nasdaq earnings-calendar style rows may support `scheduled_time` / `event_awareness_time` only; SEC EDGAR/company official artifacts or an accepted company-IR route must supply result/guidance facts. Alpaca/GDELT news remains discovery or narrative-residual evidence unless linked to a canonical result artifact.
 

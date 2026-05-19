@@ -383,7 +383,7 @@ def _write_failure_diagnostics(
     diagnostics_dir = context.run_dir / "diagnostics"
     date_markers = [_clean_cell(match.group(1)) for match in re.finditer(r"<th\b[^>]*colspan=['\"]3['\"][^>]*>(.*?)</th>", html_text, flags=re.I | re.S)]
     payload = {
-        "contract_type": "trading_economics_calendar_web_failure_diagnostic_v1",
+        "contract_type": "trading_economics_calendar_web_failure_diagnostic",
         "feed": FEED,
         "reason": "zero_parseable_in_window_calendar_rows",
         "source_url": sanitize_url(fetched.source_url),

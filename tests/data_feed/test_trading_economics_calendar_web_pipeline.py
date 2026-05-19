@@ -126,7 +126,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "failed")
             diagnostic_path = Path(task_key["output_root"]) / "runs" / "run" / "diagnostics" / "te_calendar_failure_diagnostic.json"
             diagnostic = json.loads(diagnostic_path.read_text())
-            self.assertEqual(diagnostic["contract_type"], "trading_economics_calendar_web_failure_diagnostic_v1")
+            self.assertEqual(diagnostic["contract_type"], "trading_economics_calendar_web_failure_diagnostic")
             self.assertEqual(diagnostic["parsed_rows_count"], 1)
             self.assertEqual(diagnostic["in_window_rows_count"], 0)
             self.assertEqual(diagnostic["structural_counts"]["data_url_rows"], 1)

@@ -139,7 +139,7 @@ The active nine-layer stack keeps point-in-time event evidence out of the pre-al
 
 Layer 8 trading guidance / option-expression data uses the current option-expression inputs (`source_05_option_expression`, `feature_08_option_expression`, and `source_06_position_execution`). Layer 9 event-risk data uses the current event surfaces (`source_09_event_risk_governor`, `feature_09_event_risk_governor`, and event-feed artifacts).
 
-Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation_v1` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
+Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 
 ## D024 — Event evidence preserves lifecycle clocks
 

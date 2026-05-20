@@ -84,7 +84,7 @@ This policy applies to Trading Economics and any future browser-scraped source a
 ## Implementation Rules
 
 - A feed starts as one `pipeline.py` with clear fetch/clean/save/receipt steps; split only when complexity demands it.
-- Feed code may write storage-owned development evidence under `trading-storage/storage/data/`, but source/model-facing accepted outputs should be SQL or explicitly reviewed artifacts.
+- Feed code may write storage-owned development evidence under `trading-storage/storage/source_data/`, but source/model-facing accepted outputs should be SQL or explicitly reviewed artifacts.
 - High-volume raw rows are transient by default. Persist aggregates or final cleaned outputs unless an approved debug/incident artifact says otherwise.
 - Default tests must not require live credentials or network calls.
 - Live calls require explicit guardrails: bounded symbols/contracts, bounded windows, request/row caps, timeouts, retry policy, secret aliases, and sanitized evidence.

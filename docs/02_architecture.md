@@ -63,4 +63,4 @@ Before a source composes feeds, document:
 
 ## Output Rule
 
-Generated datasets do not belong in Git. File artifacts and runtime evidence default to `trading-storage/storage/data/`. Durable production handoff uses reviewed SQL/artifact contracts, manifests, artifact references, and ready signals owned with `trading-manager` / `trading-storage`.
+Generated datasets do not belong in Git. File artifacts and runtime evidence default to `trading-storage/storage/source_data/`. Durable production handoff uses reviewed SQL/artifact contracts, manifests, artifact references, and ready signals owned with `trading-manager` / `trading-storage`.

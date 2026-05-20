@@ -1,4 +1,4 @@
-"""Deterministic option-candidate feature builder for Layer 8."""
+"""Deterministic option-candidate feature builder for Layer 9."""
 
 from __future__ import annotations
 
@@ -94,8 +94,8 @@ def _quality(row: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "feature_08_option_expression") -> list[dict[str, Any]]:
-    """Return deterministic option-candidate feature rows for Layer 8."""
+def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "feature_09_option_expression") -> list[dict[str, Any]]:
+    """Return deterministic option-candidate feature rows for Layer 9."""
 
     output: list[dict[str, Any]] = []
     for row in rows:

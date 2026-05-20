@@ -23,7 +23,7 @@ tests/       Fixture-safe tests for feeds, sources, features, storage, and probe
 - `data_feed` talks to one provider/API/web/file family and produces normalized feed-level evidence.
 - `data_source` accepts a manager-issued task/request, composes feed evidence, and writes reviewed model-input source outputs.
 - `data_feature` derives deterministic layer-ready feature blocks from accepted source outputs.
-- `data_layers` catalogs the Layer 1-9 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
+- `data_layers` catalogs the Layer 1-10 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
 - `storage` provides low-level persistence helpers; durable layout and retention remain `trading-storage` responsibilities.
 
 Accepted SQL outputs are the preferred model-input boundary. Local ignored `storage/` files are development evidence, not durable interfaces. `source_NN_*` numbers identify accepted source contracts; they do not necessarily equal model layer numbers.
@@ -35,7 +35,7 @@ Accepted SQL outputs are the preferred model-input boundary. Local ignored `stor
 - `docs/20_data_feed.md` — provider and feed rules.
 - `docs/21_api_templates.md` — task/source design order.
 - `docs/22_feed_availability.md` — provider/data-kind availability inventory.
-- `docs/10_layer_01_market_regime.md` through `docs/18_layer_09_event_risk_governor.md` — layer-specific data boundaries.
+- `docs/10_layer_01_market_regime.md` through `docs/19_layer_10_event_risk_governor.md` — layer-specific data boundaries.
 - `docs/30_model_inputs.md` — mapping from data outputs to model layers.
 - `docs/03_contracts.md` — accepted local data-stack acceptance.
 - `docs/40_production_hardening.md` — non-production hardening contracts.

@@ -21,7 +21,7 @@ from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 
-SOURCE = "source_09_event_risk_governor.equity_abnormal_activity"
+SOURCE = "source_10_event_risk_governor.equity_abnormal_activity"
 FIELDS = [
     "event_id",
     "symbol",

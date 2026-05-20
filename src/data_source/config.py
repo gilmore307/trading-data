@@ -22,7 +22,7 @@ def load_source_config(source: str, *, config_path: str | None = None) -> dict[s
     """Load a source-local config file.
 
     ``source`` is the data_source package name that owns a packaged config, e.g.
-    ``source_09_event_risk_governor/equity_abnormal_activity``.
+    ``source_10_event_risk_governor/equity_abnormal_activity``.
     ``config_path`` is an optional task-key override for tests or reviewed one-off
     runs. Normal production use should prefer the reviewed packaged config when
     the component has one.

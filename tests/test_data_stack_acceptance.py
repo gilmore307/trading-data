@@ -8,7 +8,7 @@ from pathlib import Path
 from data_source.config import load_source_config
 
 holdings_pipeline = importlib.import_module("data_source.source_02_target_candidate_holdings.pipeline")
-equity_activity_pipeline = importlib.import_module("data_source.source_09_event_risk_governor.equity_abnormal_activity.pipeline")
+equity_activity_pipeline = importlib.import_module("data_source.source_10_event_risk_governor.equity_abnormal_activity.pipeline")
 
 
 class DataStackAcceptanceTests(unittest.TestCase):
@@ -33,7 +33,7 @@ class DataStackAcceptanceTests(unittest.TestCase):
         )
 
     def test_equity_abnormal_activity_default_standard_is_conservative(self) -> None:
-        config = json.loads(Path("src/data_source/source_09_event_risk_governor/equity_abnormal_activity/config.json").read_text())
+        config = json.loads(Path("src/data_source/source_10_event_risk_governor/equity_abnormal_activity/config.json").read_text())
 
         self.assertEqual(config["model_standard"], "equity_abnormal_activity_conservative")
         self.assertEqual(config["calibration_status"], "conservative_fixture_default_not_production_calibrated")
@@ -41,7 +41,7 @@ class DataStackAcceptanceTests(unittest.TestCase):
         self.assertGreaterEqual(config["min_volume_zscore"], 3.0)
 
     def test_source_config_loader_supports_nested_packaged_config(self) -> None:
-        config = load_source_config("source_09_event_risk_governor/equity_abnormal_activity")
+        config = load_source_config("source_10_event_risk_governor/equity_abnormal_activity")
 
         self.assertEqual(config["model_standard"], "equity_abnormal_activity_conservative")
 

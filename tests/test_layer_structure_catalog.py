@@ -12,9 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class LayerStructureCatalogTests(unittest.TestCase):
-    def test_catalog_covers_layers_one_through_nine(self) -> None:
-        self.assertEqual([contract.layer for contract in LAYER_CONTRACTS], list(range(1, 10)))
-        self.assertEqual(len({contract.slug for contract in LAYER_CONTRACTS}), 9)
+    def test_catalog_covers_layers_one_through_ten(self) -> None:
+        self.assertEqual([contract.layer for contract in LAYER_CONTRACTS], list(range(1, 11)))
+        self.assertEqual(len({contract.slug for contract in LAYER_CONTRACTS}), 10)
 
     def test_each_layer_has_a_top_level_doc(self) -> None:
         for contract in LAYER_CONTRACTS:
@@ -30,6 +30,7 @@ class LayerStructureCatalogTests(unittest.TestCase):
             4: ("dedicated Layer 5 source", "Layer 5-related"),
             5: ("dedicated Layer 4 source", "Layer 4-related"),
             6: ("dedicated Layer 5 source", "Layer 5 may consume", "Layer 4-related"),
+            7: ("dedicated Layer 5 source", "Layer 5 may consume", "Layer 4-related"),
         }
         for contract in LAYER_CONTRACTS:
             for stale_phrase in stale_phrases.get(contract.layer, ()):  # currently guards reviewed Layer 4-6 docs.

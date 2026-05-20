@@ -63,12 +63,12 @@ class FeatureSqlWindowTests(unittest.TestCase):
             self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
 
     def test_event_risk_governor_source_end_is_half_open(self):
-        module = importlib.import_module("data_feature.feature_09_event_risk_governor.sql")
+        module = importlib.import_module("data_feature.feature_10_event_risk_governor.sql")
         cursor = FakeCursor()
         module.fetch_source_rows(
             cursor,
             source_schema="trading_data",
-            source_table="source_09_event_risk_governor",
+            source_table="source_10_event_risk_governor",
             source_end="2026-05-01T00:00:00Z",
         )
         sql, params = cursor.calls[0]

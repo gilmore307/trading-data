@@ -1,4 +1,4 @@
-"""SQL wrapper for feature_08_option_expression production."""
+"""SQL wrapper for feature_10_event_risk_governor production."""
 
 from __future__ import annotations
 
@@ -17,14 +17,14 @@ IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 COLUMNS = (
     "run_id",
     "source_run_ref",
-    "underlying",
-    "snapshot_time",
-    "snapshot_type",
-    "option_symbol",
+    "event_id",
+    "canonical_event_id",
+    "event_time",
+    "available_time",
     "feature_payload_json",
     "feature_quality_diagnostics",
 )
-KEY_COLUMNS = ("underlying", "snapshot_time", "snapshot_type", "option_symbol")
+KEY_COLUMNS = ("event_id",)
 JSONB_COLUMNS = {"feature_payload_json", "feature_quality_diagnostics"}
 
 
@@ -53,20 +53,20 @@ def fetch_source_rows(cursor: Any, *, source_schema: str, source_table: str, sou
     where: list[str] = []
     params: list[Any] = []
     if source_start:
-        where.append("snapshot_time >= %s")
+        where.append("available_time >= %s")
         params.append(source_start)
     if source_end:
-        where.append("snapshot_time <= %s")
+        where.append("available_time < %s")
         params.append(source_end)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     cursor.execute(
         f"""
-        SELECT underlying, snapshot_time, snapshot_type, option_symbol, expiration, option_right_type, strike,
-               bid, ask, mid, spread, spread_pct, bid_size, ask_size, implied_vol, delta, theta, vega, rho,
-               underlying_price, underlying_timestamp, days_to_expiration
+        SELECT event_id, canonical_event_id, dedup_status, source_priority, coverage_reason, covered_by_event_id,
+               event_time, available_time, information_role_type, event_category_type, scope_type, symbol, sector_type,
+               title, summary, source_name, reference_type, reference
         FROM {_qualified(source_schema, source_table)}
         {where_sql}
-        ORDER BY underlying ASC, snapshot_time ASC, snapshot_type ASC, option_symbol ASC
+        ORDER BY available_time ASC, event_id ASC
         """,
         params,
     )
@@ -83,13 +83,13 @@ def write_feature_rows_sql(cursor: Any, rows: Sequence[Mapping[str, Any]], *, ta
         CREATE TABLE IF NOT EXISTS {qualified} (
           "run_id" TEXT NOT NULL,
           "source_run_ref" TEXT NOT NULL,
-          "underlying" TEXT NOT NULL,
-          "snapshot_time" TIMESTAMPTZ NOT NULL,
-          "snapshot_type" TEXT NOT NULL,
-          "option_symbol" TEXT NOT NULL,
+          "event_id" TEXT NOT NULL,
+          "canonical_event_id" TEXT NOT NULL,
+          "event_time" TIMESTAMPTZ,
+          "available_time" TIMESTAMPTZ NOT NULL,
           "feature_payload_json" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
           "feature_quality_diagnostics" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
-          PRIMARY KEY ("underlying", "snapshot_time", "snapshot_type", "option_symbol")
+          PRIMARY KEY ("event_id")
         )
         """
     )
@@ -122,12 +122,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url")
     parser.add_argument("--source-schema", default="trading_data")
-    parser.add_argument("--source-table", default="source_05_option_expression")
+    parser.add_argument("--source-table", default="source_10_event_risk_governor")
     parser.add_argument("--target-schema", default="trading_data")
-    parser.add_argument("--target-table", default="feature_08_option_expression")
+    parser.add_argument("--target-table", default="feature_10_event_risk_governor")
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
-    parser.add_argument("--run-id", default="feature_08_option_expression_sql")
+    parser.add_argument("--run-id", default="feature_10_event_risk_governor_sql")
     args = parser.parse_args(argv)
     count = generate_sql(database_url=_database_url(args.database_url), source_schema=args.source_schema, source_table=args.source_table, target_schema=args.target_schema, target_table=args.target_table, source_start=args.source_start, source_end=args.source_end, run_id=args.run_id)
     print(f"generated {count} rows into {args.target_schema}.{args.target_table}")

@@ -5,7 +5,7 @@ Date: 2026-05-08
 
 ## Acceptance scope
 
-`trading-data` has a complete accepted local feed/source/feature implementation surface for the current nine-layer model-input route.
+`trading-data` has a complete accepted local feed/source/feature implementation surface for the current ten-layer model-input route.
 
 | Surface | Current owner path | Acceptance state |
 |---|---|---|
@@ -19,10 +19,11 @@ Date: 2026-05-08
 | Layer 3 data | `source_03_target_state`, `feature_03_target_state_vector` | accepted target-state observed-input and feature-block surfaces; consumes Layer 2-stage candidate holdings |
 | Layer 4 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; EventFailureRiskModel consumes reviewed model/governance evidence, not raw source acquisition |
 | Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
-| Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
-| Layer 7 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
-| Layer 8 data | `source_05_option_expression`, `feature_08_option_expression`, `source_06_position_execution` | accepted trading-guidance / option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries; source numbers are accepted source identifiers, not model-layer numbers |
-| Layer 9 data | `source_09_event_risk_governor`, `feature_09_event_risk_governor` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
+| Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; dynamic risk policy belongs to `trading-model` / control-plane / execution replay state |
+| Layer 7 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
+| Layer 8 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
+| Layer 9 data | `source_05_option_expression`, `feature_09_option_expression`, `source_06_position_execution` | accepted trading-guidance / option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries; source numbers are accepted source identifiers, not model-layer numbers |
+| Layer 10 data | `source_10_event_risk_governor`, `feature_10_event_risk_governor` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 

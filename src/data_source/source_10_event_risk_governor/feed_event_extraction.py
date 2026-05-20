@@ -1,8 +1,8 @@
 """Canonical event extraction from reviewed local feed artifacts.
 
 This module intentionally performs no provider calls. It converts already-saved
-feed artifacts into the compact ``source_09_event_risk_governor`` overview contract
-used by the Layer 9 event-risk governor. Raw article/filing/calendar detail remains behind references.
+feed artifacts into the compact ``source_10_event_risk_governor`` overview contract
+used by the Layer 10 event-risk governor. Raw article/filing/calendar detail remains behind references.
 """
 
 from __future__ import annotations
@@ -411,7 +411,7 @@ def _detect_artifact_kind(path: Path, rows: Sequence[Mapping[str, str]]) -> str:
 
 
 def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict[str, Any]]:
-    """Extract canonical Layer 9 event-risk rows from saved feed artifacts."""
+    """Extract canonical Layer 10 event-risk rows from saved feed artifacts."""
 
     events: list[dict[str, Any]] = []
     for raw_path in paths:

@@ -1,4 +1,4 @@
-"""Manager-facing Layer 9 event-risk evidence source."""
+"""Manager-facing Layer 10 event-risk evidence source."""
 from __future__ import annotations
 
 import json
@@ -16,9 +16,9 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 from .feed_event_extraction import extract_events_from_artifact_paths
 
-SOURCE = "source_09_event_risk_governor"
+SOURCE = "source_10_event_risk_governor"
 MODEL_ID = "event_risk_governor"
-OUTPUT_TABLE = "source_09_event_risk_governor"
+OUTPUT_TABLE = "source_10_event_risk_governor"
 ET = ZoneInfo("America/New_York")
 INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
 EVENT_CATEGORIES = {

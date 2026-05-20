@@ -158,8 +158,8 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _source_05_option_expression_ddl(qualified_table)
     if table == "source_06_position_execution":
         return _source_06_position_execution_ddl(qualified_table)
-    if table == "source_09_event_risk_governor":
-        return _source_09_event_risk_governor_ddl(qualified_table)
+    if table == "source_10_event_risk_governor":
+        return _source_10_event_risk_governor_ddl(qualified_table)
     return None
 
 
@@ -310,7 +310,7 @@ def _source_06_position_execution_ddl(qualified_table: str) -> str:
     """
 
 
-def _source_09_event_risk_governor_ddl(qualified_table: str) -> str:
+def _source_10_event_risk_governor_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         event_id TEXT NOT NULL,

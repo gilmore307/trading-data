@@ -1,36 +1,36 @@
-# Layer 09 — Event Risk Governor Data Boundary
+# Layer 10 — Event Risk Governor Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. Layer 9 owns `EventRiskGovernor / EventIntelligenceOverlay` event intelligence / event-risk intervention. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features, not event interpretation, risk policy, execution, or broker mutation.
+Status: active architecture revision. Layer 10 owns `EventRiskGovernor / EventIntelligenceOverlay` event intelligence / event-risk intervention. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features, not event interpretation, risk policy, execution, or broker mutation.
 
-Current physical source/feature names are `source_09_event_risk_governor` and `feature_09_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
+Current physical source/feature names are `source_10_event_risk_governor` and `feature_10_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
-`trading-data` owns the point-in-time event evidence index for Layer 9. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
+`trading-data` owns the point-in-time event evidence index for Layer 10. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
 
 ## Owned artifacts
 
 ```text
-trading_data.source_09_event_risk_governor
-trading_data.feature_09_event_risk_governor
+trading_data.source_10_event_risk_governor
+trading_data.feature_10_event_risk_governor
 ```
 
 Nested event-overlay data-source helpers may produce source evidence before it is written into the overview table, for example:
 
 ```text
-src/data_source/source_09_event_risk_governor/equity_abnormal_activity/
+src/data_source/source_10_event_risk_governor/equity_abnormal_activity/
 ```
 
-`price_action` is an accepted Layer 9 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
+`price_action` is an accepted Layer 10 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
 
 ## Boundary
 
-Layer 9 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector`.
+Layer 10 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector`.
 
-`source_09_event_risk_governor` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
+`source_10_event_risk_governor` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
 
-`feature_09_event_risk_governor` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
+`feature_10_event_risk_governor` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
 
 `trading-model` builds `event_risk_intervention / event_context_vector` from the feature rows plus referenced artifacts and upstream context states.
 
@@ -80,11 +80,11 @@ option_activity_ref
 prediction_market_activity_ref
 ```
 
-Startup abnormality scope is limited to compact point-in-time detector refs for: false breakout/breakdown, liquidity sweep high/low, bull/bear trap, residual board/tape disturbance after upstream conditioning, spread/depth/quote-quality/halt or one-sided liquidity disruption, and reviewed option IV/skew/term-structure/volume/OI/liquidity disturbance. Raw bar, target-state, liquidity-feature, option-expression, Layer 9 event-risk guidance, strategy-failure, and post-event realized-label fields are excluded from activity evidence unless a later reviewed artifact proves residual/non-overlap status.
+Startup abnormality scope is limited to compact point-in-time detector refs for: false breakout/breakdown, liquidity sweep high/low, bull/bear trap, residual board/tape disturbance after upstream conditioning, spread/depth/quote-quality/halt or one-sided liquidity disruption, and reviewed option IV/skew/term-structure/volume/OI/liquidity disturbance. Raw bar, target-state, liquidity-feature, option-expression, Layer 10 event-risk guidance, strategy-failure, and post-event realized-label fields are excluded from activity evidence unless a later reviewed artifact proves residual/non-overlap status.
 
 `trading-data` owns source refs, windows, availability clocks, and compact detector evidence. It does not decide final bridge scores, prediction-market probabilities, event-risk interventions, or trading actions.
 
-Bridge evidence must preserve a non-overlap audit trail. Price, liquidity, and option activity refs are eligible for model-side scoring only when the artifact can show that the activity leg is not already represented in upstream market/sector/target-state features, liquidity features, option-expression inputs, or Layer 8 trading-guidance payloads for the same decision context. If overlap is unknown, `trading-data` should keep the ref as provenance/review evidence and let `trading-model` mark the bridge `review_required_overlap_unknown` rather than treating it as incremental event evidence.
+Bridge evidence must preserve a non-overlap audit trail. Price, liquidity, and option activity refs are eligible for model-side scoring only when the artifact can show that the activity leg is not already represented in upstream market/sector/target-state features, liquidity features, option-expression inputs, or Layer 9 trading-guidance payloads for the same decision context. If overlap is unknown, `trading-data` should keep the ref as provenance/review evidence and let `trading-model` mark the bridge `review_required_overlap_unknown` rather than treating it as incremental event evidence.
 
 Event-family scouting adds one data requirement: raw provider rows must preserve enough source metadata for `trading-model` to create reviewed `event_family_scouting_packet` evidence. For news this means source name, provider id, headline/summary or source artifact ref, URL/ref, published/updated times, available time when known, symbol/entity tags, and dedup/canonical refs when available. `trading-data` should not collapse raw news into a final family label or event-risk conclusion; it may provide deterministic source fields and evidence refs.
 
@@ -105,8 +105,8 @@ This prevents price-derived abnormality from being validated against the same pr
 ```text
 trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
-  -> source_09_event_risk_governor
-  -> feature_09_event_risk_governor
+  -> source_10_event_risk_governor
+  -> feature_10_event_risk_governor
   -> trading-model EventRiskGovernor / EventRiskGovernor event_risk_intervention / event_context_vector construction
   -> evaluation/promotion review outside trading-data
 ```
@@ -125,7 +125,7 @@ trading-manager event/source request
 
 ## Acceptance notes
 
-Layer 9 data changes are acceptable when they:
+Layer 10 data changes are acceptable when they:
 
 - preserve point-in-time availability;
 - keep source evidence separate from model labels and alpha scores;

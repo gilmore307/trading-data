@@ -1,6 +1,6 @@
-# feature_08_option_expression
+# feature_09_option_expression
 
-Deterministic option-expression feature builder for the Layer 8 trading-guidance option-expression subset.
+Deterministic option-expression feature builder for the Layer 9 trading-guidance option-expression subset.
 
 ## Boundary
 
@@ -16,7 +16,7 @@ for the per-snapshot candidate feature table.
 ## Output table
 
 ```text
-trading_data.feature_08_option_expression
+trading_data.feature_09_option_expression
 ```
 
 Rows are keyed by `underlying + snapshot_time + snapshot_type + option_symbol`

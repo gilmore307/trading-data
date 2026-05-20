@@ -1,10 +1,10 @@
-# feature_09_event_risk_governor
+# feature_10_event_risk_governor
 
-Deterministic event-overlay feature builder for Layer 9 event-risk-governor inputs.
+Deterministic event-overlay feature builder for Layer 10 event-risk-governor inputs.
 
 ## Boundary
 
-Input is accepted `source_09_event_risk_governor` overview rows. Output is a compact
+Input is accepted `source_10_event_risk_governor` overview rows. Output is a compact
 feature surface keyed by `event_id` for `EventRiskGovernor` / `EventIntelligenceOverlay`
 input preparation. The package name remains legacy until a dedicated physical
 rename migration is accepted.
@@ -16,7 +16,7 @@ the final `event_risk_intervention` / event vector; those belong to
 ## Output table
 
 ```text
-trading_data.feature_09_event_risk_governor
+trading_data.feature_10_event_risk_governor
 ```
 
 Rows carry event identity, availability clocks, and JSONB payload blocks with

@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. `trading-data` owns no dedicated Layer 5 source/feature by default; AlphaConfidenceModel belongs to `trading-model` and consumes reviewed upstream state artifacts.
 
-Event data is no longer a hard AlphaConfidence prerequisite. Reviewed failure-risk conditioning may feed Layer 4; broader event evidence feeds the later Layer 9 event-risk governor when standardized and point-in-time valid.
+Event data is no longer a hard AlphaConfidence prerequisite. Reviewed failure-risk conditioning may feed Layer 4; broader event evidence feeds the later Layer 10 event-risk governor when standardized and point-in-time valid.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 

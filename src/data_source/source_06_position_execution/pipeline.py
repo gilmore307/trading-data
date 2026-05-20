@@ -147,7 +147,13 @@ def _read_csv(path: Path) -> list[dict[str, Any]]:
         return [dict(row) for row in csv.DictReader(handle)]
 
 
-def _fetch_contract_rows(context: SourceContext, contract: Mapping[str, Any], *, client: HttpClient | None = None) -> tuple[list[dict[str, Any]], list[str]]:
+def _fetch_contract_rows(
+    context: SourceContext,
+    contract: Mapping[str, Any],
+    *,
+    client: HttpClient | None = None,
+    client_is_fixture: bool = False,
+) -> tuple[list[dict[str, Any]], list[str]]:
     inline = _as_list(contract.get("option_rows") or contract.get("timeseries_rows"))
     if inline:
         return [dict(row) for row in inline if isinstance(row, Mapping)], []

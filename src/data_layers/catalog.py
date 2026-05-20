@@ -106,9 +106,21 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
     ),
     LayerDataContract(
         layer=6,
+        slug="dynamic_risk_policy",
+        model_name="DynamicRiskPolicyModel",
+        doc_path="docs/15_layer_06_dynamic_risk_policy.md",
+        owns_dedicated_data_surface=False,
+        test_paths=("tests/test_layer_structure_catalog.py",),
+        no_source_reason=(
+            "Consumes global market regime, broad event-risk context, Layer 5 alpha confidence, and portfolio/account replay state; "
+            "trading-data must not create a target-specific or hard-limit source/feature surface for this policy layer."
+        ),
+    ),
+    LayerDataContract(
+        layer=7,
         slug="position_projection",
         model_name="PositionProjectionModel",
-        doc_path="docs/15_layer_06_position_projection.md",
+        doc_path="docs/16_layer_07_position_projection.md",
         owns_dedicated_data_surface=False,
         test_paths=("tests/test_layer_structure_catalog.py",),
         no_source_reason=(
@@ -117,10 +129,10 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         ),
     ),
     LayerDataContract(
-        layer=7,
+        layer=8,
         slug="underlying_action",
         model_name="UnderlyingActionModel",
-        doc_path="docs/16_layer_07_underlying_action.md",
+        doc_path="docs/17_layer_08_underlying_action.md",
         owns_dedicated_data_surface=False,
         test_paths=("tests/test_layer_structure_catalog.py",),
         no_source_reason=(
@@ -128,13 +140,13 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         ),
     ),
     LayerDataContract(
-        layer=8,
+        layer=9,
         slug="trading_guidance",
         model_name="TradingGuidanceModel / OptionExpressionModel",
-        doc_path="docs/17_layer_08_trading_guidance.md",
+        doc_path="docs/18_layer_09_trading_guidance.md",
         owns_dedicated_data_surface=True,
         source_packages=("data_source.source_05_option_expression", "data_source.source_06_position_execution"),
-        feature_packages=("data_feature.feature_08_option_expression",),
+        feature_packages=("data_feature.feature_09_option_expression",),
         feed_packages=(
             "data_feed.09_feed_thetadata_option_selection_snapshot",
             "data_feed.10_feed_thetadata_option_primary_tracking",
@@ -143,7 +155,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         cli_commands=(
             "trading-data-source-05-option-expression",
             "trading-data-source-06-position-execution",
-            "trading-data-feature-08-option-expression",
+            "trading-data-feature-09-option-expression",
             "trading-data-09-feed-thetadata-option-selection-snapshot",
             "trading-data-10-feed-thetadata-option-primary-tracking",
             "trading-data-11-feed-thetadata-option-event-timeline",
@@ -157,14 +169,14 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         ),
     ),
     LayerDataContract(
-        layer=9,
+        layer=10,
         slug="event_risk_governor",
         model_name="EventRiskGovernor / EventIntelligenceOverlay",
-        doc_path="docs/18_layer_09_event_risk_governor.md",
+        doc_path="docs/19_layer_10_event_risk_governor.md",
         owns_dedicated_data_surface=True,
-        source_packages=("data_source.source_09_event_risk_governor",),
-        feature_packages=("data_feature.feature_09_event_risk_governor",),
-        cli_commands=("trading-data-source-09-event-risk-governor", "trading-data-feature-09-event-risk-governor"),
+        source_packages=("data_source.source_10_event_risk_governor",),
+        feature_packages=("data_feature.feature_10_event_risk_governor",),
+        cli_commands=("trading-data-source-10-event-risk-governor", "trading-data-feature-10-event-risk-governor"),
         test_paths=(
             "tests/data_source/test_numbered_data_sources.py",
             "tests/data_source/test_equity_abnormal_activity_pipeline.py",

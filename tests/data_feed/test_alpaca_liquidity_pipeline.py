@@ -119,8 +119,42 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, 'succeeded')
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
             manifest = json.loads((Path(receipt['runs'][0]['output_dir']) / 'request_manifest.json').read_text())
-            self.assertEqual(len(manifest['params']['sample_windows']), 2)
-            self.assertEqual({page['sample_window'] for page in manifest['trade_pages']}, {'open_sample', 'midday_sample'})
+            self.assertEqual(len(manifest['params']['acquisition_windows']), 2)
+            self.assertEqual({page['acquisition_window'] for page in manifest['trade_pages']}, {'open_sample', 'midday_sample'})
+
+    def test_pipeline_accepts_full_acquisition_windows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                'task_id': '02_feed_alpaca_liquidity_full_task_test',
+                'feed': '02_feed_alpaca_liquidity',
+                'params': {
+                    'symbol': 'AAPL',
+                    'start': '2024-01-01T00:00:00Z',
+                    'end': '2024-02-01T00:00:00Z',
+                    'timeframe': '1Min',
+                    'feed': 'iex',
+                    'benchmark_liquidity_acquisition_policy': 'full_iex_daily_regular_session_windows_per_component_month',
+                    'fail_on_incomplete_pagination': True,
+                    'acquisition_windows': [
+                        {'label': '2024-01-02_regular_session', 'start': '2024-01-02T14:30:00Z', 'end': '2024-01-02T21:00:00Z'},
+                    ],
+                },
+                'output_root': str(Path(tmp) / '02_feed_alpaca_liquidity_full_task_test'),
+            }
+            pipeline = _liquidity_pipeline
+            class Secret:
+                alias='alpaca'; path=Path('/root/secrets/alpaca.json'); present=True; keys_present=('api_key','secret_key'); values={'api_key':'k','secret_key':'s','data_endpoint':'https://data.alpaca.markets'}
+            old = pipeline.load_secret_alias
+            pipeline.load_secret_alias = lambda alias: Secret()
+            try:
+                result = run(task_key, run_id='02_feed_alpaca_liquidity_full_run_test', client=FakeAlpacaClient(), client_is_fixture=True)
+            finally:
+                pipeline.load_secret_alias = old
+            self.assertEqual(result.status, 'succeeded')
+            receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
+            manifest = json.loads((Path(receipt['runs'][0]['output_dir']) / 'request_manifest.json').read_text())
+            self.assertEqual(manifest['params']['benchmark_liquidity_acquisition_policy'], 'full_iex_daily_regular_session_windows_per_component_month')
+            self.assertTrue(manifest['params']['fail_on_incomplete_pagination'])
 
 
 if __name__ == '__main__':

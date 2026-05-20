@@ -106,17 +106,18 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
 def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedPayload]:
     params = dict(context.task_key.get("params") or {})
     symbol = str(_required(params, "symbol")).upper()
-    sample_windows = _sample_windows(params)
-    if params.get("sample_windows") is None:
+    acquisition_windows = _acquisition_windows(params)
+    if params.get("acquisition_windows") is None and params.get("sample_windows") is None:
         start = str(_required(params, "start"))
         end = str(_required(params, "end"))
     else:
-        start = sample_windows[0]["start"]
-        end = sample_windows[-1]["end"]
+        start = acquisition_windows[0]["start"]
+        end = acquisition_windows[-1]["end"]
     limit = str(params.get("limit", 1000))
     max_pages = int(params.get("max_pages", 10))
+    fail_on_incomplete_pagination = bool(params.get("fail_on_incomplete_pagination"))
     feed = params.get("feed")
-    window_count = len(sample_windows)
+    window_count = len(acquisition_windows)
     if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
@@ -140,21 +141,30 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     quotes: list[dict[str, Any]] = []
     trade_evidence: list[dict[str, Any]] = []
     quote_evidence: list[dict[str, Any]] = []
-    for window in sample_windows:
+    for window in acquisition_windows:
         common = {"start": window["start"], "end": window["end"], "limit": limit}
         if feed:
             common["feed"] = str(feed)
-        window_trades, window_trade_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/trades", "trades", common, headers, max_pages)
-        window_quotes, window_quote_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/quotes", "quotes", common, headers, max_pages)
+        window_trades, window_trade_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/trades", "trades", common, headers, max_pages, fail_on_incomplete_pagination=fail_on_incomplete_pagination)
+        window_quotes, window_quote_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/quotes", "quotes", common, headers, max_pages, fail_on_incomplete_pagination=fail_on_incomplete_pagination)
         trades.extend(window_trades)
         quotes.extend(window_quotes)
-        trade_evidence.extend({**item, "sample_window": window["label"]} for item in window_trade_evidence)
-        quote_evidence.extend({**item, "sample_window": window["label"]} for item in window_quote_evidence)
+        trade_evidence.extend({**item, "acquisition_window": window["label"]} for item in window_trade_evidence)
+        quote_evidence.extend({**item, "acquisition_window": window["label"]} for item in window_quote_evidence)
     evidence = {
         "symbol": symbol,
         "trade_pages": trade_evidence,
         "quote_pages": quote_evidence,
-        "params": sanitize_value({"start": start, "end": end, "limit": limit, "max_pages": max_pages, "sample_windows": sample_windows, "feed": feed}),
+        "params": sanitize_value({
+            "start": start,
+            "end": end,
+            "limit": limit,
+            "max_pages": max_pages,
+            "acquisition_windows": acquisition_windows,
+            "feed": feed,
+            "benchmark_liquidity_acquisition_policy": params.get("benchmark_liquidity_acquisition_policy"),
+            "fail_on_incomplete_pagination": fail_on_incomplete_pagination,
+        }),
         "raw_persistence": "not_persisted_by_default; raw trades/quotes aggregate-only transient inputs",
         "fetched_at_utc": _now_utc(),
     }
@@ -164,16 +174,20 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     return StepResult("succeeded", [str(manifest)], {"raw_trades_transient": len(trades), "raw_quotes_transient": len(quotes)}, details={"symbol": symbol}), FetchedPayload(symbol, trades, quotes, evidence, public_secret_summary(secret))
 
 
-def _sample_windows(params: dict[str, Any]) -> list[dict[str, str]]:
-    raw = params.get("sample_windows")
+def _acquisition_windows(params: dict[str, Any]) -> list[dict[str, str]]:
+    raw = params.get("acquisition_windows")
+    field_name = "acquisition_windows"
+    if raw is None:
+        raw = params.get("sample_windows")
+        field_name = "sample_windows"
     if raw is None:
         return [{"label": "full_window", "start": str(_required(params, "start")), "end": str(_required(params, "end"))}]
     if not isinstance(raw, list) or not raw:
-        raise AlpacaLiquidityError("02_feed_alpaca_liquidity.params.sample_windows must be a non-empty list when provided")
+        raise AlpacaLiquidityError(f"02_feed_alpaca_liquidity.params.{field_name} must be a non-empty list when provided")
     windows: list[dict[str, str]] = []
     for index, item in enumerate(raw):
         if not isinstance(item, dict):
-            raise AlpacaLiquidityError("02_feed_alpaca_liquidity.params.sample_windows entries must be objects")
+            raise AlpacaLiquidityError(f"02_feed_alpaca_liquidity.params.{field_name} entries must be objects")
         start = str(_required(item, "start"))
         end = str(_required(item, "end"))
         if _parse_ts(end) <= _parse_ts(start):
@@ -182,7 +196,16 @@ def _sample_windows(params: dict[str, Any]) -> list[dict[str, str]]:
     return windows
 
 
-def _fetch_paginated(client: HttpClient, url: str, row_key: str, params: dict[str, str], headers: dict[str, str], max_pages: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _fetch_paginated(
+    client: HttpClient,
+    url: str,
+    row_key: str,
+    params: dict[str, str],
+    headers: dict[str, str],
+    max_pages: int,
+    *,
+    fail_on_incomplete_pagination: bool = False,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     rows: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
     page_token: str | None = None
@@ -204,6 +227,8 @@ def _fetch_paginated(client: HttpClient, url: str, row_key: str, params: dict[st
             break
     else:
         evidence.append({"warning": f"max_pages={max_pages} reached before pagination completed"})
+        if fail_on_incomplete_pagination:
+            raise AlpacaLiquidityError(f"{row_key} pagination did not complete within max_pages={max_pages}")
     return rows, evidence
 
 

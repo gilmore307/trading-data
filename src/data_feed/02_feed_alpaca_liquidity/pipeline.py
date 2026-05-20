@@ -51,6 +51,7 @@ class FetchedPayload:
     quotes: list[dict[str, Any]]
     request_evidence: dict[str, Any]
     secret_alias: dict[str, Any] | None = None
+    liquidity_rows: list[dict[str, Any]] | None = None
 
 
 class AlpacaLiquidityError(ValueError):
@@ -117,6 +118,10 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     max_pages = int(params.get("max_pages", 10))
     fail_on_incomplete_pagination = bool(params.get("fail_on_incomplete_pagination"))
     feed = params.get("feed")
+    timeframe = str(params.get("timeframe", "1Min"))
+    if timeframe not in SUPPORTED_TIMEFRAMES:
+        raise AlpacaLiquidityError(f"unsupported timeframe {timeframe!r}; supported={sorted(SUPPORTED_TIMEFRAMES)}")
+    stream_aggregate = params.get("acquisition_windows") is not None
     window_count = len(acquisition_windows)
     if not client_is_fixture:
         require_provider_execution_allowed(
@@ -139,6 +144,9 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     headers = {"APCA-API-KEY-ID": str(api_key), "APCA-API-SECRET-KEY": str(secret_key)}
     trades: list[dict[str, Any]] = []
     quotes: list[dict[str, Any]] = []
+    liquidity_rows: list[dict[str, Any]] = []
+    total_trades = 0
+    total_quotes = 0
     trade_evidence: list[dict[str, Any]] = []
     quote_evidence: list[dict[str, Any]] = []
     for window in acquisition_windows:
@@ -147,8 +155,13 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             common["feed"] = str(feed)
         window_trades, window_trade_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/trades", "trades", common, headers, max_pages, fail_on_incomplete_pagination=fail_on_incomplete_pagination)
         window_quotes, window_quote_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/quotes", "quotes", common, headers, max_pages, fail_on_incomplete_pagination=fail_on_incomplete_pagination)
-        trades.extend(window_trades)
-        quotes.extend(window_quotes)
+        total_trades += len(window_trades)
+        total_quotes += len(window_quotes)
+        if stream_aggregate:
+            liquidity_rows.extend(aggregate_liquidity_bars(symbol, window_trades, window_quotes, timeframe))
+        else:
+            trades.extend(window_trades)
+            quotes.extend(window_quotes)
         trade_evidence.extend({**item, "acquisition_window": window["label"]} for item in window_trade_evidence)
         quote_evidence.extend({**item, "acquisition_window": window["label"]} for item in window_quote_evidence)
     evidence = {
@@ -166,12 +179,13 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             "fail_on_incomplete_pagination": fail_on_incomplete_pagination,
         }),
         "raw_persistence": "not_persisted_by_default; raw trades/quotes aggregate-only transient inputs",
+        "aggregation_mode": "streamed_per_acquisition_window" if stream_aggregate else "aggregate_after_fetch",
         "fetched_at_utc": _now_utc(),
     }
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps({**evidence, "secret_alias": public_secret_summary(secret), "raw_counts": {"trades": len(trades), "quotes": len(quotes)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], {"raw_trades_transient": len(trades), "raw_quotes_transient": len(quotes)}, details={"symbol": symbol}), FetchedPayload(symbol, trades, quotes, evidence, public_secret_summary(secret))
+    manifest.write_text(json.dumps({**evidence, "secret_alias": public_secret_summary(secret), "raw_counts": {"trades": total_trades, "quotes": total_quotes}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(manifest)], {"raw_trades_transient": total_trades, "raw_quotes_transient": total_quotes}, details={"symbol": symbol}), FetchedPayload(symbol, trades, quotes, evidence, public_secret_summary(secret), liquidity_rows if stream_aggregate else None)
 
 
 def _acquisition_windows(params: dict[str, Any]) -> list[dict[str, str]]:
@@ -237,7 +251,11 @@ def clean(context: FeedContext, fetched: FetchedPayload) -> StepResult:
     timeframe = str(params.get("timeframe", "1Min"))
     if timeframe not in SUPPORTED_TIMEFRAMES:
         raise AlpacaLiquidityError(f"unsupported timeframe {timeframe!r}; supported={sorted(SUPPORTED_TIMEFRAMES)}")
-    liquidity_rows = aggregate_liquidity_bars(fetched.symbol, fetched.trades, fetched.quotes, timeframe)
+    liquidity_rows = (
+        sorted(fetched.liquidity_rows, key=lambda row: row["interval_start"])
+        if fetched.liquidity_rows is not None
+        else aggregate_liquidity_bars(fetched.symbol, fetched.trades, fetched.quotes, timeframe)
+    )
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     output = context.cleaned_dir / "equity_liquidity_bar.jsonl"
     with output.open("w", encoding="utf-8") as handle:

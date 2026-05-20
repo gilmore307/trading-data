@@ -132,7 +132,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
                     'start': '2024-01-01T00:00:00Z',
                     'end': '2024-02-01T00:00:00Z',
                     'timeframe': '1Min',
-                    'benchmark_liquidity_acquisition_policy': 'full_daily_regular_session_windows_per_component_month',
+                    'benchmark_liquidity_acquisition_policy': 'full_hourly_regular_session_windows_per_component_month',
                     'fail_on_incomplete_pagination': True,
                     'acquisition_windows': [
                         {'label': '2024-01-02_regular_session', 'start': '2024-01-02T14:30:00Z', 'end': '2024-01-02T21:00:00Z'},
@@ -152,7 +152,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, 'succeeded')
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
             manifest = json.loads((Path(receipt['runs'][0]['output_dir']) / 'request_manifest.json').read_text())
-            self.assertEqual(manifest['params']['benchmark_liquidity_acquisition_policy'], 'full_daily_regular_session_windows_per_component_month')
+            self.assertEqual(manifest['params']['benchmark_liquidity_acquisition_policy'], 'full_hourly_regular_session_windows_per_component_month')
             self.assertTrue(manifest['params']['fail_on_incomplete_pagination'])
             self.assertEqual(manifest['aggregation_mode'], 'streamed_per_acquisition_window')
 

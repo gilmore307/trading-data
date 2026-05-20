@@ -6,7 +6,7 @@ This document records the production-hardening contracts that can be defined bef
 
 `trading-data` owns provider/source acquisition and normalized source/feature outputs. `trading-manager` owns requests, scheduling, approvals, and control-plane policy. `trading-storage` owns durable manifests, artifact references, ready signals, retention, backup, and restore. Runtime path defaults live in `src/data_runtime/config.py` and can be overridden with environment variables such as `TRADING_DATA_STORAGE_ROOT`, `TRADING_MANAGER_REGISTRY_CSV`, `TRADING_STORAGE_REPO_ROOT`, `TRADING_SECRET_ROOT`, `TRADING_DATABASE_URL_FILE`, and `TRADING_ECONOMICS_COOKIE_JAR` instead of hard-coded host paths.
 
-File artifacts and runtime evidence default to `trading-storage/storage/source_data/`. Production handoff must use the storage-owned V1 contracts:
+File artifacts and runtime evidence default to `trading-storage/storage/01_source_data/`. Production handoff must use the storage-owned V1 contracts:
 
 - `manager_request`
 - `run_manifest`

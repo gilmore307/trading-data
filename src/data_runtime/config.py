@@ -28,7 +28,7 @@ def storage_root() -> Path:
     `storage/monthly_backfill/...` are resolved under this component root.
     """
 
-    return Path(os.environ.get("TRADING_DATA_STORAGE_ROOT") or shared_storage_repo_root() / "storage" / "source_data")
+    return Path(os.environ.get("TRADING_DATA_STORAGE_ROOT") or shared_storage_repo_root() / "storage" / "01_source_data")
 
 
 def secret_root() -> Path:

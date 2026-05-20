@@ -30,7 +30,7 @@ class RuntimeConfigTests(unittest.TestCase):
     def test_default_storage_root_is_storage_owned_data_root(self):
         with mock.patch.dict(os.environ, {"TRADING_STORAGE_REPO_ROOT": "/tmp/storage-repo"}, clear=False):
             os.environ.pop("TRADING_DATA_STORAGE_ROOT", None)
-            self.assertEqual(config.storage_root(), Path("/tmp/storage-repo/storage/source_data"))
+            self.assertEqual(config.storage_root(), Path("/tmp/storage-repo/storage/01_source_data"))
 
     def test_manager_registry_csv_env_override(self):
         with mock.patch.dict(os.environ, {"TRADING_MANAGER_REGISTRY_CSV": "/tmp/registry.csv"}, clear=False):

@@ -29,7 +29,7 @@ These items are intentionally outside the current promote-first historical-train
 - Alpaca bars now treats provider `bars: null` no-data responses as empty successful acquisitions with headers/schema/manifests rather than failed component receipts. This supports historical months where current-universe symbols did not yet have bars.
 - Repository data-stack acceptance: current feed/source/feature surfaces cover the accepted local Layers 1-9 model-input route.
 - Production hardening policy: provider-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/40_production_hardening.md`.
-- Storage-owned V1 handoff contracts are the production handoff vocabulary; file artifacts and runtime evidence belong under `trading-storage/storage/source_data/`.
+- Storage-owned V1 handoff contracts are the production handoff vocabulary; file artifacts and runtime evidence belong under `trading-storage/storage/01_source_data/`.
 - ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.
 - `source_02_target_candidate_holdings` preserves point-in-time visibility with a conservative next-session-open default when no explicit availability timestamp exists.
 - `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative` with `conservative_fixture_default_not_production_calibrated` until reviewed calibration exists.

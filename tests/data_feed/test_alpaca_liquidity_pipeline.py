@@ -90,6 +90,38 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
             self.assertEqual(receipt['runs'][0]['row_counts']['equity_liquidity_bar'], 2)
 
+    def test_pipeline_accepts_benchmark_sample_windows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                'task_id': '02_feed_alpaca_liquidity_sample_task_test',
+                'feed': '02_feed_alpaca_liquidity',
+                'params': {
+                    'symbol': 'AAPL',
+                    'start': '2024-01-01T00:00:00Z',
+                    'end': '2024-02-01T00:00:00Z',
+                    'timeframe': '1Min',
+                    'sample_windows': [
+                        {'label': 'open_sample', 'start': '2024-01-02T14:30:00Z', 'end': '2024-01-02T14:32:00Z'},
+                        {'label': 'midday_sample', 'start': '2024-01-16T17:00:00Z', 'end': '2024-01-16T17:02:00Z'},
+                    ],
+                },
+                'output_root': str(Path(tmp) / '02_feed_alpaca_liquidity_sample_task_test'),
+            }
+            pipeline = _liquidity_pipeline
+            class Secret:
+                alias='alpaca'; path=Path('/root/secrets/alpaca.json'); present=True; keys_present=('api_key','secret_key'); values={'api_key':'k','secret_key':'s','data_endpoint':'https://data.alpaca.markets'}
+            old = pipeline.load_secret_alias
+            pipeline.load_secret_alias = lambda alias: Secret()
+            try:
+                result = run(task_key, run_id='02_feed_alpaca_liquidity_sample_run_test', client=FakeAlpacaClient(), client_is_fixture=True)
+            finally:
+                pipeline.load_secret_alias = old
+            self.assertEqual(result.status, 'succeeded')
+            receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
+            manifest = json.loads((Path(receipt['runs'][0]['output_dir']) / 'request_manifest.json').read_text())
+            self.assertEqual(len(manifest['params']['sample_windows']), 2)
+            self.assertEqual({page['sample_window'] for page in manifest['trade_pages']}, {'open_sample', 'midday_sample'})
+
 
 if __name__ == '__main__':
     unittest.main()

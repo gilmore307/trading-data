@@ -106,19 +106,25 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
 def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedPayload]:
     params = dict(context.task_key.get("params") or {})
     symbol = str(_required(params, "symbol")).upper()
-    start = str(_required(params, "start"))
-    end = str(_required(params, "end"))
+    sample_windows = _sample_windows(params)
+    if params.get("sample_windows") is None:
+        start = str(_required(params, "start"))
+        end = str(_required(params, "end"))
+    else:
+        start = sample_windows[0]["start"]
+        end = sample_windows[-1]["end"]
     limit = str(params.get("limit", 1000))
     max_pages = int(params.get("max_pages", 10))
     feed = params.get("feed")
+    window_count = len(sample_windows)
     if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="alpaca",
             endpoint_family="trades_quotes",
             requested_symbols=1,
-            requested_rows=int(limit) * max_pages * 2,
-            requested_requests=max_pages * 2,
+            requested_rows=int(limit) * max_pages * 2 * window_count,
+            requested_requests=max_pages * 2 * window_count,
             requested_start=start,
             requested_end=end,
         )
@@ -130,16 +136,25 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         raise AlpacaLiquidityError("Alpaca requires api_key and secret_key in /root/secrets/alpaca.json or ALPACA_SECRET_ALIAS override")
     base = str(secret.values.get("data_endpoint") or "https://data.alpaca.markets").rstrip("/")
     headers = {"APCA-API-KEY-ID": str(api_key), "APCA-API-SECRET-KEY": str(secret_key)}
-    common = {"start": start, "end": end, "limit": limit}
-    if feed:
-        common["feed"] = str(feed)
-    trades, trade_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/trades", "trades", common, headers, max_pages)
-    quotes, quote_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/quotes", "quotes", common, headers, max_pages)
+    trades: list[dict[str, Any]] = []
+    quotes: list[dict[str, Any]] = []
+    trade_evidence: list[dict[str, Any]] = []
+    quote_evidence: list[dict[str, Any]] = []
+    for window in sample_windows:
+        common = {"start": window["start"], "end": window["end"], "limit": limit}
+        if feed:
+            common["feed"] = str(feed)
+        window_trades, window_trade_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/trades", "trades", common, headers, max_pages)
+        window_quotes, window_quote_evidence = _fetch_paginated(client, f"{base}/v2/stocks/{symbol}/quotes", "quotes", common, headers, max_pages)
+        trades.extend(window_trades)
+        quotes.extend(window_quotes)
+        trade_evidence.extend({**item, "sample_window": window["label"]} for item in window_trade_evidence)
+        quote_evidence.extend({**item, "sample_window": window["label"]} for item in window_quote_evidence)
     evidence = {
         "symbol": symbol,
         "trade_pages": trade_evidence,
         "quote_pages": quote_evidence,
-        "params": sanitize_value({**common, "max_pages": max_pages}),
+        "params": sanitize_value({"start": start, "end": end, "limit": limit, "max_pages": max_pages, "sample_windows": sample_windows, "feed": feed}),
         "raw_persistence": "not_persisted_by_default; raw trades/quotes aggregate-only transient inputs",
         "fetched_at_utc": _now_utc(),
     }
@@ -147,6 +162,24 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(json.dumps({**evidence, "secret_alias": public_secret_summary(secret), "raw_counts": {"trades": len(trades), "quotes": len(quotes)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(manifest)], {"raw_trades_transient": len(trades), "raw_quotes_transient": len(quotes)}, details={"symbol": symbol}), FetchedPayload(symbol, trades, quotes, evidence, public_secret_summary(secret))
+
+
+def _sample_windows(params: dict[str, Any]) -> list[dict[str, str]]:
+    raw = params.get("sample_windows")
+    if raw is None:
+        return [{"label": "full_window", "start": str(_required(params, "start")), "end": str(_required(params, "end"))}]
+    if not isinstance(raw, list) or not raw:
+        raise AlpacaLiquidityError("02_feed_alpaca_liquidity.params.sample_windows must be a non-empty list when provided")
+    windows: list[dict[str, str]] = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, dict):
+            raise AlpacaLiquidityError("02_feed_alpaca_liquidity.params.sample_windows entries must be objects")
+        start = str(_required(item, "start"))
+        end = str(_required(item, "end"))
+        if _parse_ts(end) <= _parse_ts(start):
+            raise AlpacaLiquidityError("02_feed_alpaca_liquidity.params.sample_windows end must be after start")
+        windows.append({"label": str(item.get("label") or f"sample_{index + 1}"), "start": start, "end": end})
+    return windows
 
 
 def _fetch_paginated(client: HttpClient, url: str, row_key: str, params: dict[str, str], headers: dict[str, str], max_pages: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -160,6 +193,8 @@ def _fetch_paginated(client: HttpClient, url: str, row_key: str, params: dict[st
         result = client.get(url, params=page_params, headers=headers)
         payload = _json_response(result)
         batch = payload.get(row_key, []) if isinstance(payload, dict) else []
+        if batch is None:
+            batch = []
         if not isinstance(batch, list):
             raise AlpacaLiquidityError(f"Alpaca response field {row_key!r} was not a list")
         rows.extend(batch)

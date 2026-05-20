@@ -11,7 +11,7 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 | Docs band | Implementation surface | Purpose |
 |---|---|---|
 | `10_*` | `src/data_source/source_*`, `src/data_feature/feature_*`, `src/data_layers/` | Layer-specific data boundaries for Layers 1-9. |
-| `20_*` | `src/data_feed/`, `src/feed_interfaces/`, `src/feed_availability/`, `storage/templates/` | Provider feeds, feed availability, and API/data-kind templates. |
+| `20_*` | `src/data_feed/`, `src/feed_interfaces/`, `src/feed_availability/`, `trading-storage/main/templates/` | Provider feeds, feed availability, and API/data-kind templates. |
 | `30_*` | model-input bundle interfaces | Data-output to model-input handoff rules. |
 | `40_*` | repository-wide hardening surfaces | Production hardening and non-production safety policy. |
 
@@ -63,4 +63,4 @@ Before a source composes feeds, document:
 
 ## Output Rule
 
-Generated datasets do not belong in Git. Local ignored `storage/` files are development evidence. Durable production handoff uses reviewed SQL/artifact contracts, manifests, artifact references, and ready signals owned with `trading-manager` / `trading-storage`.
+Generated datasets do not belong in Git. File artifacts and runtime evidence default to `trading-storage/storage/data/`. Durable production handoff uses reviewed SQL/artifact contracts, manifests, artifact references, and ready signals owned with `trading-manager` / `trading-storage`.

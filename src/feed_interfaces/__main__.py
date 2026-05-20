@@ -11,6 +11,7 @@ from pathlib import Path
 from feed_availability.__main__ import DEFAULT_SEC_USER_AGENT
 from feed_availability.http import HttpClient
 from feed_availability.report import report_payload, write_report
+from data_runtime.config import storage_root
 
 from .catalog import INTERFACES
 from .probes import interface_payload, probe_many
@@ -22,7 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--feed", help="Filter by feed package key, e.g. 02_feed_alpaca_liquidity.")
     parser.add_argument("--data-kind", action="append", choices=sorted(INTERFACES), help="Probe one data_kind; repeatable.")
     parser.add_argument("--timeout-seconds", type=int, default=8)
-    parser.add_argument("--report-root", type=Path, default=Path("storage/feed_interfaces"))
+    parser.add_argument("--report-root", type=Path, default=storage_root() / "feed_interfaces")
     parser.add_argument("--no-write", action="store_true")
     parser.add_argument("--sec-user-agent", default=os.environ.get("SEC_EDGAR_USER_AGENT", DEFAULT_SEC_USER_AGENT))
     return parser

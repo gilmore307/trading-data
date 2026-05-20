@@ -21,14 +21,14 @@ def projects_root() -> Path:
 
 
 def storage_root() -> Path:
-    """Return the local development storage root.
+    """Return the storage-owned data artifact root.
 
-    Defaults to `storage/` to preserve existing CLI behavior; set
-    `TRADING_DATA_STORAGE_ROOT` for service/test environments that need an
-    absolute or isolated root.
+    Data code produces source/evidence files, but durable filesystem ownership
+    belongs to trading-storage. Relative task-key roots such as
+    `storage/monthly_backfill/...` are resolved under this component root.
     """
 
-    return Path(os.environ.get("TRADING_DATA_STORAGE_ROOT") or "storage")
+    return Path(os.environ.get("TRADING_DATA_STORAGE_ROOT") or shared_storage_repo_root() / "storage" / "data")
 
 
 def secret_root() -> Path:
@@ -61,7 +61,13 @@ def shared_path(*parts: str) -> Path:
 def resolve_output_root(task_key: Mapping[str, Any], *, default_task_id: str) -> Path:
     explicit = task_key.get("output_root")
     if explicit:
-        return Path(str(explicit))
+        path = Path(str(explicit))
+        if path.is_absolute():
+            return path
+        parts = path.parts
+        if parts and parts[0] == "storage":
+            return storage_root().joinpath(*parts[1:])
+        return storage_root() / path
     task_id = str(task_key.get("task_id") or default_task_id)
     return storage_root() / task_id
 

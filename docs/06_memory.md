@@ -11,7 +11,7 @@
 - Market-state discovery, labels, training, evaluation, and promotion belong in `trading-model`; `trading-data` emits observed data and deterministic features only.
 - Historical planning labels were market board data / 盘面数据, instrument data / 标的数据, and option data / 期权数据. Current docs should prefer feed/source/feature boundaries and model-layer mappings.
 - `trading-manager` issues historical task/request instructions. `trading-data` executes the accepted source/feed route and writes reviewed outputs plus sanitized evidence.
-- Accepted SQL outputs are the preferred numbered-source boundary. Local ignored `storage/` files are development evidence, not durable interfaces.
+- Accepted SQL outputs are the preferred numbered-source boundary. File artifacts and runtime evidence default to `trading-storage/storage/data/`; component-local `storage/` roots should not be created.
 - Realtime data and broker-facing execution feeds belong to `trading-execution`.
 
 ## Provider Notes

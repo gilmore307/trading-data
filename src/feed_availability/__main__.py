@@ -11,7 +11,7 @@ from pathlib import Path
 from .http import HttpClient
 from .probes import PROBES
 from .registry import FEEDS, STATUS_FIELDS
-from .report import ProbeResult, report_payload, write_report
+from .report import DEFAULT_REPORT_ROOT, ProbeResult, report_payload, write_report
 
 
 DEFAULT_SEC_USER_AGENT = (
@@ -36,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--report-root",
         type=Path,
-        default=Path("storage/feed_availability"),
+        default=DEFAULT_REPORT_ROOT,
         help="Directory for JSON reports.",
     )
     parser.add_argument(

@@ -27,7 +27,7 @@ Fields, statuses, data kinds, feed/source names, config keys, artifact/request/m
 
 ## D004 — Durable storage belongs to trading-storage
 
-`trading-storage` owns durable layout, retention, archive, backup, restore, manifests, artifact references, and ready signals. Local ignored `storage/` files in this repo are development evidence, not production interfaces.
+`trading-storage` owns durable layout, retention, archive, backup, restore, manifests, artifact references, and ready signals. File artifacts and runtime evidence for this repository default to `trading-storage/storage/data/`; component-local `storage/` directories are not production interfaces.
 
 ## D005 — Secrets stay outside Git
 

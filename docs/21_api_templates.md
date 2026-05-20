@@ -65,7 +65,7 @@ src/data_source/<source>/
 
 - `fetch(...)` retrieves provider/source evidence;
 - `clean(...)` normalizes rows;
-- `save(...)` writes accepted SQL/artifact outputs or local ignored development evidence;
+- `save(...)` writes accepted SQL/artifact outputs or storage-owned development evidence;
 - `write_receipt(...)` emits sanitized run evidence.
 
 Split into more modules only when one file becomes harder to audit than the split.

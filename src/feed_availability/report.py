@@ -8,11 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from data_runtime.io import atomic_write_json
+from data_runtime.config import storage_root
 
 from .registry import FeedCandidate
 
 
-DEFAULT_REPORT_ROOT = Path("storage/feed_availability")
+DEFAULT_REPORT_ROOT = storage_root() / "feed_availability"
 
 
 @dataclass

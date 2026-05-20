@@ -20,6 +20,18 @@ class RuntimeConfigTests(unittest.TestCase):
                 Path("/tmp/data-storage") / "task-a",
             )
 
+    def test_relative_storage_output_root_resolves_under_data_storage_root(self):
+        with mock.patch.dict(os.environ, {"TRADING_DATA_STORAGE_ROOT": "/tmp/data-storage"}, clear=False):
+            self.assertEqual(
+                config.resolve_output_root({"output_root": "storage/monthly_backfill/alpaca_bars/SPY/2016-01"}, default_task_id="default"),
+                Path("/tmp/data-storage/monthly_backfill/alpaca_bars/SPY/2016-01"),
+            )
+
+    def test_default_storage_root_is_storage_owned_data_root(self):
+        with mock.patch.dict(os.environ, {"TRADING_STORAGE_REPO_ROOT": "/tmp/storage-repo"}, clear=False):
+            os.environ.pop("TRADING_DATA_STORAGE_ROOT", None)
+            self.assertEqual(config.storage_root(), Path("/tmp/storage-repo/storage/data"))
+
     def test_manager_registry_csv_env_override(self):
         with mock.patch.dict(os.environ, {"TRADING_MANAGER_REGISTRY_CSV": "/tmp/registry.csv"}, clear=False):
             self.assertEqual(config.manager_registry_csv(), Path("/tmp/registry.csv"))

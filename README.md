@@ -26,7 +26,7 @@ tests/       Fixture-safe tests for feeds, sources, features, storage, and probe
 - `data_layers` catalogs the Layer 1-10 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
 - `storage` provides low-level persistence helpers; durable layout and retention remain `trading-storage` responsibilities.
 
-Accepted SQL outputs are the preferred model-input boundary. Local ignored `storage/` files are development evidence, not durable interfaces. `source_NN_*` numbers identify accepted source contracts; they do not necessarily equal model layer numbers.
+Accepted SQL outputs are the preferred model-input boundary. File artifacts and runtime evidence default to `trading-storage/storage/data/`; component-local `storage/` directories are not part of the active repository shape. `source_NN_*` numbers identify accepted source contracts; they do not necessarily equal model layer numbers.
 
 ## Key Docs
 

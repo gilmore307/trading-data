@@ -78,4 +78,4 @@ Source-specific parameter dictionaries should be defined before a manager route 
 
 - Persist final cleaned outputs or accepted SQL rows.
 - Treat high-volume raw rows as transient unless an explicit debug/incident artifact is approved.
-- Record sanitized request/response evidence, row counts, entitlement status, and validation outcomes in manifests or local ignored reports.
+- Record sanitized request/response evidence, row counts, entitlement status, and validation outcomes in manifests or storage-owned reports.

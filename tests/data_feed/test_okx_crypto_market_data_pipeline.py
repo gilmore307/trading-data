@@ -16,7 +16,15 @@ run = _okx_pipeline.run
 
 class FakeOkxClient:
     def get(self, url, *, params=None, headers=None):
-        if url.endswith('/candles'):
+        if url.endswith('/history-candles'):
+            payload = {
+                'code': '0',
+                'data': [
+                    ['1601568000000', '10716.3', '10716.3', '10375', '10511.4', '46936.6', '494694868.1', '494694868.1', '1'],
+                    ['1601654400000', '10777.7', '10922', '10681.6', '10716.2', '39536.6', '427380464.5', '427380464.5', '1'],
+                ],
+            }
+        elif url.endswith('/candles'):
             payload = {
                 'code': '0',
                 'data': [[
@@ -80,6 +88,30 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
             self.assertTrue((Path(task_key['output_root']) / 'runs' / '04_feed_okx_crypto_market_data_run_test' / 'cleaned' / 'crypto_trade_transient.jsonl').exists())
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
             self.assertEqual(receipt['feed'], '04_feed_okx_crypto_market_data')
+
+    def test_run_can_fetch_historical_candles_without_historical_trades(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                'task_id': '04_feed_okx_crypto_market_data_history_task_test',
+                'feed': '04_feed_okx_crypto_market_data',
+                'params': {
+                    'instId': 'BTC-USDT',
+                    'timeframe': '1Day',
+                    'limit': 100,
+                    'benchmark_window_start': '2020-10-01',
+                    'benchmark_window_end_exclusive': '2020-10-03',
+                },
+                'output_root': str(Path(tmp) / '04_feed_okx_crypto_market_data_history_task_test'),
+            }
+            result = run(task_key, run_id='04_feed_okx_crypto_market_data_history_run_test', client=FakeOkxClient(), client_is_fixture=True)
+            saved = Path(task_key['output_root']) / 'runs' / '04_feed_okx_crypto_market_data_history_run_test' / 'saved'
+            self.assertEqual(result.row_counts['crypto_bar'], 2)
+            self.assertEqual(result.row_counts['crypto_liquidity_bar'], 0)
+            receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
+            manifest = json.loads((Path(receipt['runs'][0]['output_dir']) / 'request_manifest.json').read_text())
+            self.assertTrue(manifest['historical_mode'])
+            self.assertIsNone(manifest['trades_endpoint'])
+            self.assertTrue((saved / 'crypto_bar.csv').exists())
 
 
 if __name__ == '__main__':

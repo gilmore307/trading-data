@@ -82,6 +82,24 @@ def _et_iso(dt: datetime) -> str:
     return dt.astimezone(ET).isoformat()
 
 
+def _parse_window_datetime(value: str) -> datetime:
+    text = str(value or "").strip()
+    if not text:
+        raise OkxCryptoMarketDataError("historical window bound must be non-empty")
+    if len(text) == 10:
+        return datetime.fromisoformat(text).replace(tzinfo=UTC)
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    parsed = datetime.fromisoformat(text)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
+def _ms(dt: datetime) -> str:
+    return str(int(dt.astimezone(UTC).timestamp() * 1000))
+
+
 def _bucket_start_et(dt_utc: datetime, timeframe: str) -> datetime:
     dt = dt_utc.astimezone(ET)
     if timeframe == "1Day":
@@ -118,39 +136,112 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     if timeframe not in OKX_BAR_MAP:
         raise OkxCryptoMarketDataError(f"unsupported timeframe {timeframe!r}; supported={sorted(OKX_BAR_MAP)}")
     limit = str(params.get("limit", 100))
+    historical_start = params.get("benchmark_window_start") or params.get("start")
+    historical_end = params.get("benchmark_window_end_exclusive") or params.get("end")
+    historical_mode = bool(historical_start and historical_end)
+    max_pages = int(params.get("max_pages", 40 if historical_mode else 1))
     if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="okx",
             endpoint_family="market_data",
             requested_symbols=1,
-            requested_rows=int(limit) * 2,
-            requested_requests=2,
+            requested_rows=int(limit) * max_pages * (1 if historical_mode else 2),
+            requested_requests=max_pages if historical_mode else 2,
         )
     client = client or HttpClient(timeout_seconds=int(params.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS)))
     headers = {"User-Agent": "trading-data-04-feed-okx-crypto-market-data/0.1", "Accept": "application/json"}
     base = str(params.get("base_url") or "https://www.okx.com").rstrip("/")
-    candles_http = client.get(f"{base}/api/v5/market/candles", params={"instId": symbol, "bar": OKX_BAR_MAP[timeframe], "limit": limit}, headers=headers)
-    trades_http = client.get(f"{base}/api/v5/market/trades", params={"instId": symbol, "limit": limit}, headers=headers)
-    candles_payload = _json_response(candles_http)
-    trades_payload = _json_response(trades_http)
-    candles = candles_payload.get("data", []) if isinstance(candles_payload, dict) else []
-    trades = trades_payload.get("data", []) if isinstance(trades_payload, dict) else []
+    if historical_mode:
+        candles, candle_evidence = _fetch_historical_candles(
+            client,
+            base=base,
+            headers=headers,
+            symbol=symbol,
+            timeframe=timeframe,
+            start=str(historical_start),
+            end=str(historical_end),
+            limit=int(limit),
+            max_pages=max_pages,
+        )
+        trades: list[dict[str, Any]] = []
+        trades_endpoint = None
+    else:
+        candles_http = client.get(f"{base}/api/v5/market/candles", params={"instId": symbol, "bar": OKX_BAR_MAP[timeframe], "limit": limit}, headers=headers)
+        trades_http = client.get(f"{base}/api/v5/market/trades", params={"instId": symbol, "limit": limit}, headers=headers)
+        candles_payload = _json_response(candles_http)
+        trades_payload = _json_response(trades_http)
+        candles = candles_payload.get("data", []) if isinstance(candles_payload, dict) else []
+        trades = trades_payload.get("data", []) if isinstance(trades_payload, dict) else []
+        candle_evidence = [{"endpoint": sanitize_url(candles_http.url), "row_count": len(candles)}]
+        trades_endpoint = sanitize_url(trades_http.url)
     if not isinstance(candles, list) or not isinstance(trades, list):
         raise OkxCryptoMarketDataError("OKX data fields must be lists")
     evidence = {
         "symbol": symbol,
         "timeframe": timeframe,
-        "params": sanitize_value({"instId": symbol, "timeframe": timeframe, "limit": limit}),
-        "candles_endpoint": sanitize_url(candles_http.url),
-        "trades_endpoint": sanitize_url(trades_http.url),
+        "historical_mode": historical_mode,
+        "params": sanitize_value({"instId": symbol, "timeframe": timeframe, "limit": limit, "max_pages": max_pages, "start": historical_start, "end": historical_end}),
+        "candle_pages": candle_evidence,
+        "trades_endpoint": trades_endpoint,
         "fetched_at_utc": _now_utc(),
         "quote_persistence": "quote/order-book derived features are nullable unless sampled snapshots are available",
+        "trade_persistence": "historical benchmark mode saves candles and leaves raw trades transient/unavailable unless a historical trade route is accepted",
     }
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(json.dumps({**evidence, "row_counts": {"raw_candles": len(candles), "raw_trades": len(trades)}}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(manifest)], {"raw_candles_transient": len(candles), "raw_trades_transient": len(trades)}, details={"symbol": symbol, "timeframe": timeframe}), FetchedPayload(symbol, timeframe, candles, trades, evidence)
+
+
+def _fetch_historical_candles(
+    client: HttpClient,
+    *,
+    base: str,
+    headers: dict[str, str],
+    symbol: str,
+    timeframe: str,
+    start: str,
+    end: str,
+    limit: int,
+    max_pages: int,
+) -> tuple[list[list[Any]], list[dict[str, Any]]]:
+    start_dt = _parse_window_datetime(start)
+    end_dt = _parse_window_datetime(end)
+    if end_dt <= start_dt:
+        raise OkxCryptoMarketDataError("historical candle end must be after start")
+    before_ms = _ms(start_dt)
+    after_ms = _ms(end_dt)
+    all_rows: list[list[Any]] = []
+    evidence: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for _page in range(max_pages):
+        result = client.get(
+            f"{base}/api/v5/market/history-candles",
+            params={"instId": symbol, "bar": OKX_BAR_MAP[timeframe], "before": before_ms, "after": after_ms, "limit": str(limit)},
+            headers=headers,
+        )
+        payload = _json_response(result)
+        rows = payload.get("data", []) if isinstance(payload, dict) else []
+        if not isinstance(rows, list):
+            raise OkxCryptoMarketDataError("OKX history-candles data field must be a list")
+        page_new = 0
+        oldest_ms: int | None = None
+        for row in rows:
+            if not isinstance(row, list) or not row:
+                continue
+            ts_text = str(row[0])
+            ts = int(ts_text)
+            if ts_text not in seen and start_dt <= _ms_to_utc(ts) < end_dt:
+                all_rows.append(row)
+                seen.add(ts_text)
+                page_new += 1
+            oldest_ms = ts if oldest_ms is None else min(oldest_ms, ts)
+        evidence.append({"endpoint": sanitize_url(result.url), "row_count": len(rows), "accepted_row_count": page_new})
+        if not rows or page_new == 0 or oldest_ms is None or oldest_ms <= int(before_ms):
+            break
+        before_ms = str(oldest_ms - 1)
+    return sorted(all_rows, key=lambda row: int(row[0])), evidence
 
 
 def normalize_bars(symbol: str, candles: list[list[Any]], timeframe: str) -> list[dict[str, Any]]:

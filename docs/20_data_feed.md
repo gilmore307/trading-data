@@ -81,6 +81,34 @@ Browser-scraped provider routes use the shared session-cookie pattern:
 
 This policy applies to Trading Economics and any future browser-scraped source accepted into `data_feed`.
 
+## Trading Economics Recent Refresh
+
+Trading Economics calendar rows are reusable event/source data. Historical monthly backfill lives under:
+
+```text
+storage/01_source_data/monthly_backfill/trading_economics_calendar_web
+```
+
+Continuous recent refresh writes the current rolling window under:
+
+```text
+storage/01_source_data/realtime/trading_economics_calendar_web
+```
+
+The wrapper is:
+
+```bash
+PYTHONPATH=src python3 scripts/data/run_trading_economics_recent_calendar_refresh.py
+```
+
+Default behavior is plan-only and performs no provider calls. Add `--execute-live-fetch` only for the bounded visible-page recent calendar fetch. The checked-in systemd timer is:
+
+```text
+deploy/systemd/trading-data-te-calendar-refresh.timer
+```
+
+It runs one visible-page request per cycle with a 7-day trailing and 35-day forward window, `date_range_mode=recent`, no authenticated cookies, and manager-controls set for realtime provider maintenance.
+
 ## Implementation Rules
 
 - A feed starts as one `pipeline.py` with clear fetch/clean/save/receipt steps; split only when complexity demands it.

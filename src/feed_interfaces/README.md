@@ -9,10 +9,10 @@ Commands:
 
 ```bash
 PYTHONPATH=src python3 -m feed_interfaces --list
-PYTHONPATH=src python3 -m feed_interfaces --feed alpaca
-PYTHONPATH=src python3 -m feed_interfaces --feed okx
+PYTHONPATH=src python3 -m feed_interfaces --feed 01_feed_alpaca_bars
+PYTHONPATH=src python3 -m feed_interfaces --feed 04_feed_okx_crypto_market_data
 PYTHONPATH=src python3 -m feed_interfaces --feed 08_feed_sec_company_financials
-PYTHONPATH=src python3 -m feed_interfaces --feed thetadata
+PYTHONPATH=src python3 -m feed_interfaces --feed 09_feed_thetadata_option_selection_snapshot
 ```
 
 Reports write to ignored `storage/feed_interfaces/` unless `--no-write`

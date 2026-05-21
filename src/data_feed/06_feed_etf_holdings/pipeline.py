@@ -26,6 +26,7 @@ from xml.etree import ElementTree
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_runtime.provider_policy import require_provider_execution_allowed
 
 FEED = "06_feed_etf_holdings"
 FIELDS = [
@@ -141,6 +142,13 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
     if payload is None:
         source_url = source_url or _default_source_url(etf_symbol, issuer, params)
         if source_url:
+            require_provider_execution_allowed(
+                context.task_key,
+                provider="etf_issuer_holdings",
+                endpoint_family="holdings_file",
+                requested_symbols=1,
+                requested_requests=2 if "vaneck.com" in source_url.lower() else 1,
+            )
             payload = _fetch_source_url(source_url)
     if payload is None:
         raise EtfHoldingsError("provide one of params.csv_path/csv_text/html_path/html/json_path/json_text/xlsx_path or params.source_url")

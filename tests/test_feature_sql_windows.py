@@ -44,23 +44,38 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertNotIn("timestamp <= %s", sql)
         self.assertEqual(params, ["2026-05-01T00:00:00Z"])
 
-    def test_target_state_source_and_context_end_are_half_open(self):
+    def test_target_state_source_end_is_half_open(self):
         module = importlib.import_module("data_feature.feature_03_target_state_vector.sql")
-        for call in (module.fetch_source_rows, module.fetch_context_rows):
-            cursor = FakeCursor()
-            kwargs = {
-                "source_start": "2026-04-01T00:00:00Z",
-                "source_end": "2026-05-01T00:00:00Z",
-            }
-            if call is module.fetch_source_rows:
-                call(cursor, source_schema="trading_data", source_table="source_03_target_state", **kwargs)
-            else:
-                call(cursor, schema="trading_data", table="feature_01_market_regime", ref_column="market_context_state_ref", **kwargs)
-            sql, params = cursor.calls[0]
-            self.assertIn("available_time >= %s", sql)
-            self.assertIn("available_time < %s", sql)
-            self.assertNotIn("available_time <= %s", sql)
-            self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
+        cursor = FakeCursor()
+        module.fetch_source_rows(
+            cursor,
+            source_schema="trading_data",
+            source_table="source_03_target_state",
+            source_start="2026-04-01T00:00:00Z",
+            source_end="2026-05-01T00:00:00Z",
+        )
+        sql, params = cursor.calls[0]
+        self.assertIn("available_time >= %s", sql)
+        self.assertIn("available_time < %s", sql)
+        self.assertNotIn("available_time <= %s", sql)
+        self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
+
+    def test_target_state_context_keeps_prior_point_in_time_rows(self):
+        module = importlib.import_module("data_feature.feature_03_target_state_vector.sql")
+        cursor = FakeCursor()
+        module.fetch_context_rows(
+            cursor,
+            schema="trading_data",
+            table="feature_01_market_regime",
+            ref_column="market_context_state_ref",
+            source_start="2026-04-01T09:30:00Z",
+            source_end="2026-04-01T16:00:00Z",
+        )
+        sql, params = cursor.calls[0]
+        self.assertNotIn("available_time >= %s", sql)
+        self.assertIn("available_time < %s", sql)
+        self.assertNotIn("available_time <= %s", sql)
+        self.assertEqual(params, ["2026-04-01T16:00:00Z"])
 
     def test_event_risk_governor_source_end_is_half_open(self):
         module = importlib.import_module("data_feature.feature_10_event_risk_governor.sql")

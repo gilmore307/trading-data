@@ -134,9 +134,6 @@ def fetch_context_rows(
 ) -> list[dict[str, Any]]:
     where: list[str] = []
     params: list[Any] = []
-    if source_start:
-        where.append("available_time >= %s")
-        params.append(source_start)
     if source_end:
         where.append("available_time < %s")
         params.append(source_end)
@@ -163,6 +160,8 @@ def fetch_candidate_rows(
     source_table: str,
     sector_context_schema: str,
     sector_context_table: str,
+    holdings_schema: str,
+    holdings_table: str,
     source_start: str | None = None,
     source_end: str | None = None,
 ) -> list[dict[str, Any]]:
@@ -175,7 +174,8 @@ def fetch_candidate_rows(
         where.append('s."available_time" < %s')
         params.append(source_end)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
-    cursor.execute("SELECT to_regclass(%s) AS table_ref", ("trading_data.source_02_target_candidate_holdings",))
+    holdings_table_ref = f"{holdings_schema}.{holdings_table}"
+    cursor.execute("SELECT to_regclass(%s) AS table_ref", (holdings_table_ref,))
     exists = cursor.fetchone()
     if isinstance(exists, Mapping):
         holdings_exists = exists.get("table_ref") is not None
@@ -184,10 +184,10 @@ def fetch_candidate_rows(
     holdings_join = ""
     holdings_select = "NULL::text"
     if holdings_exists:
-        holdings_join = """
+        holdings_join = f"""
         LEFT JOIN LATERAL (
           SELECT h."etf_symbol"
-          FROM "trading_data"."source_02_target_candidate_holdings" AS h
+          FROM {_qualified(holdings_schema, holdings_table)} AS h
           WHERE h."holding_symbol" = s."symbol"
             AND h."available_time" <= s."available_time"
           ORDER BY h."available_time" DESC, h."weight" DESC NULLS LAST, h."etf_symbol" ASC
@@ -281,6 +281,8 @@ def generate_sql(
     market_context_table: str,
     sector_context_schema: str,
     sector_context_table: str,
+    holdings_schema: str,
+    holdings_table: str,
     run_id: str,
     target_context_state_version: str,
 ) -> int:
@@ -297,6 +299,8 @@ def generate_sql(
                 source_table=source_table,
                 sector_context_schema=sector_context_schema,
                 sector_context_table=sector_context_table,
+                holdings_schema=holdings_schema,
+                holdings_table=holdings_table,
                 source_start=source_start,
                 source_end=source_end,
             )
@@ -317,6 +321,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--market-context-table", default="model_01_market_regime")
     parser.add_argument("--sector-context-schema", default="trading_model")
     parser.add_argument("--sector-context-table", default="model_02_sector_context")
+    parser.add_argument("--holdings-schema", default="trading_data")
+    parser.add_argument("--holdings-table", default="source_02_target_candidate_holdings")
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
     parser.add_argument("--run-id", default="feature_03_target_state_vector_sql")
@@ -340,6 +346,8 @@ def main(argv: list[str] | None = None) -> int:
         market_context_table=args.market_context_table,
         sector_context_schema=args.sector_context_schema,
         sector_context_table=args.sector_context_table,
+        holdings_schema=args.holdings_schema,
+        holdings_table=args.holdings_table,
         run_id=args.run_id,
         target_context_state_version=args.target_context_state_version,
     )

@@ -65,6 +65,8 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             source_table="source_03_target_state",
             sector_context_schema="trading_model",
             sector_context_table="model_02_sector_context",
+            holdings_schema="trading_data",
+            holdings_table="source_02_target_candidate_holdings",
             source_start="2016-01-01",
             source_end="2016-02-01",
         )
@@ -82,12 +84,31 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             source_table="source_03_target_state",
             sector_context_schema="trading_model",
             sector_context_table="model_02_sector_context",
+            holdings_schema="custom_data",
+            holdings_table="custom_holdings",
         )
 
         statements = "\n".join(statement for statement, _ in cursor.calls)
-        self.assertIn('"source_02_target_candidate_holdings"', statements)
+        self.assertIn('"custom_data"."custom_holdings"', statements)
         self.assertIn('h."holding_symbol" = s."symbol"', statements)
         self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", h."etf_symbol")', statements)
+
+    def test_context_rows_keep_prior_point_in_time_context_before_source_start(self) -> None:
+        cursor = FakeCursor()
+
+        sql.fetch_context_rows(
+            cursor,
+            schema="trading_model",
+            table="model_01_market_regime",
+            ref_column="market_context_state_ref",
+            source_start="2016-01-04T09:30:00-05:00",
+            source_end="2016-01-04T16:00:00-05:00",
+        )
+
+        statement, params = cursor.calls[0]
+        self.assertNotIn("available_time >= %s", statement)
+        self.assertIn("available_time < %s", statement)
+        self.assertEqual(params, ["2016-01-04T16:00:00-05:00"])
 
 
 if __name__ == "__main__":

@@ -43,6 +43,43 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 
+    def test_local_payload_inputs_do_not_require_live_provider_controls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "06_feed_etf_holdings_local_payload_test",
+                "feed": "06_feed_etf_holdings",
+                "params": {
+                    "etf_symbol": "VGT",
+                    "issuer_name": "vanguard",
+                    "as_of_date": "2026-04-24",
+                    "csv_text": "Ticker,Name,Weight (%)\nNVDA,NVIDIA Corp,18.53%\n",
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+
+            result = run(task_key, run_id="run")
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["etf_holding_snapshot"], 1)
+
+    def test_live_source_url_fails_closed_without_manager_controls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "06_feed_etf_holdings_live_gate_test",
+                "feed": "06_feed_etf_holdings",
+                "params": {
+                    "etf_symbol": "XLK",
+                    "issuer_name": "State Street / SPDR",
+                    "source_url": "https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-xlk.xlsx",
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+
+            result = run(task_key, run_id="run")
+
+            self.assertEqual(result.status, "failed")
+            self.assertEqual(result.details["error"]["type"], "ProviderPolicyError")
+
     def test_parse_html_holdings_table(self):
         html = """
         <table>

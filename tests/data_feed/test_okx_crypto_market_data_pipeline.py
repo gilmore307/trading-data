@@ -98,8 +98,8 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
                     'instId': 'BTC-USDT',
                     'timeframe': '1Day',
                     'limit': 100,
-                    'benchmark_window_start': '2020-10-01',
-                    'benchmark_window_end_exclusive': '2020-10-03',
+                    'replay_window_start': '2020-10-01',
+                    'replay_window_end_exclusive': '2020-10-03',
                 },
                 'output_root': str(Path(tmp) / '04_feed_okx_crypto_market_data_history_task_test'),
             }

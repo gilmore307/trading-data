@@ -2,12 +2,12 @@
 
 Derived event detector inside the `source_10_event_risk_governor` Layer 10 EventRiskGovernor surface. This is not a standalone manager-facing numbered data source.
 
-It converts saved equity/ETF bars, optional benchmark bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the Layer 10 event-risk evidence surface. Layer 4 may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
+It converts saved equity/ETF bars, optional reference bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the Layer 10 event-risk evidence surface. Layer 4 may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
 
 ## Inputs
 
 - `params.bar_path` — required saved `equity_bar.csv` path.
-- `params.benchmark_bar_path` — optional benchmark/sector ETF `equity_bar.csv` path.
+- `params.reference_bars_csv_path` — optional reference/sector ETF `equity_bar.csv` path.
 - `params.liquidity_path` — optional `equity_liquidity_bar.csv` path.
 - `params.config_path` — reviewed one-off config override path; normal runs use this folder's `config.json`.
 

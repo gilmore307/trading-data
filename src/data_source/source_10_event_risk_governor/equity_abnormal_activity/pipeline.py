@@ -65,7 +65,7 @@ class StepResult:
 @dataclass(frozen=True)
 class SourcePayload:
     bars: list[dict[str, str]]
-    benchmark_bars: list[dict[str, str]]
+    reference_bars: list[dict[str, str]]
     liquidity_rows: list[dict[str, str]]
 
 
@@ -100,10 +100,10 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
 def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     bars_path = Path(str(_require(params, "bars_csv_path")))
-    benchmark_path = Path(str(params["benchmark_bars_csv_path"])) if params.get("benchmark_bars_csv_path") else None
+    reference_path = Path(str(params["reference_bars_csv_path"])) if params.get("reference_bars_csv_path") else None
     liquidity_path = Path(str(params["liquidity_csv_path"])) if params.get("liquidity_csv_path") else None
     bars = _read_csv(bars_path)
-    benchmark_bars = _read_csv(benchmark_path) if benchmark_path else []
+    reference_bars = _read_csv(reference_path) if reference_path else []
     liquidity_rows = _read_csv(liquidity_path) if liquidity_path else []
     if not bars:
         raise EquityAbnormalActivityError("bars_csv_path produced zero rows")
@@ -113,17 +113,17 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
         "source": SOURCE,
         "config": config_path or "source-local config.json",
         "bars_csv_path": str(bars_path),
-        "benchmark_bars_csv_path": str(benchmark_path) if benchmark_path else None,
+        "reference_bars_csv_path": str(reference_path) if reference_path else None,
         "liquidity_csv_path": str(liquidity_path) if liquidity_path else None,
         "bar_rows": len(bars),
-        "benchmark_bar_rows": len(benchmark_bars),
+        "reference_bar_rows": len(reference_bars),
         "liquidity_rows": len(liquidity_rows),
         "raw_persistence": "not_applicable; derived from saved equity_bar/equity_liquidity_bar CSV inputs",
         "fetched_at_utc": _now_utc(),
     }
     path = context.run_dir / "request_manifest.json"
     path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(path)], {"equity_bar_input": len(bars)}, details=manifest), SourcePayload(bars, benchmark_bars, liquidity_rows)
+    return StepResult("succeeded", [str(path)], {"equity_bar_input": len(bars)}, details=manifest), SourcePayload(bars, reference_bars, liquidity_rows)
 
 
 def _float(value: Any) -> float | None:
@@ -216,11 +216,11 @@ def _price_action_activity(
     return activity, details
 
 
-def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, str]] | None = None, liquidity_rows: list[dict[str, str]] | None = None, lookback_intervals: int = 20, min_abs_return_zscore: float = 3.0, min_volume_zscore: float = 3.0, min_abs_relative_strength_zscore: float = 3.0, min_abs_gap_pct: float = 0.04, min_liquidity_spread_zscore: float = 3.0, min_price_action_breakout_pct: float = 0.001, min_price_action_wick_ratio: float = 0.35, model_standard: str = "equity_abnormal_activity_conservative") -> list[dict[str, str]]:
+def detect_events(*, bars: list[dict[str, str]], reference_bars: list[dict[str, str]] | None = None, liquidity_rows: list[dict[str, str]] | None = None, lookback_intervals: int = 20, min_abs_return_zscore: float = 3.0, min_volume_zscore: float = 3.0, min_abs_relative_strength_zscore: float = 3.0, min_abs_gap_pct: float = 0.04, min_liquidity_spread_zscore: float = 3.0, min_price_action_breakout_pct: float = 0.001, min_price_action_wick_ratio: float = 0.35, model_standard: str = "equity_abnormal_activity_conservative") -> list[dict[str, str]]:
     sorted_bars = sorted(bars, key=lambda row: str(row.get("timestamp") or ""))
     symbol = str(sorted_bars[0].get("symbol") or "").upper() if sorted_bars else ""
     timeframe = str(sorted_bars[0].get("timeframe") or "") if sorted_bars else ""
-    benchmark_returns = _returns_by_timestamp(benchmark_bars or [])
+    reference_returns = _returns_by_timestamp(reference_bars or [])
     liquidity_by_time = {str(row.get("interval_start") or ""): row for row in (liquidity_rows or [])}
     return_history: list[float] = []
     volume_history: list[float] = []
@@ -241,8 +241,8 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
             continue
         ret = close / prev_close - 1.0 if prev_close not in (None, 0) else None
         gap = open_ / prev_close - 1.0 if open_ is not None and prev_close not in (None, 0) else None
-        benchmark_ret = benchmark_returns.get(ts)
-        relative = ret - benchmark_ret if ret is not None and benchmark_ret is not None else None
+        reference_ret = reference_returns.get(ts)
+        relative = ret - reference_ret if ret is not None and reference_ret is not None else None
         liq = liquidity_by_time.get(ts, {})
         spread = _float(liq.get("avg_spread"))
         return_window = return_history[-lookback_intervals:] if len(return_history) >= lookback_intervals else []
@@ -281,9 +281,9 @@ def detect_events(*, bars: list[dict[str, str]], benchmark_bars: list[dict[str, 
             refs = [f"01_feed_alpaca_bars:{symbol}:{ts}"]
             if liq:
                 refs.append(f"02_feed_alpaca_liquidity:{symbol}:{ts}")
-            if benchmark_ret is not None:
-                refs.append(f"benchmark_return:{ts}")
-            taxonomy = {"detector": model_standard, "benchmark_present": benchmark_ret is not None, "price_action_event_types": price_action}
+            if reference_ret is not None:
+                refs.append(f"reference_return:{ts}")
+            taxonomy = {"detector": model_standard, "reference_present": reference_ret is not None, "price_action_event_types": price_action}
             events.append({
                 "event_id": event_id,
                 "symbol": symbol,
@@ -326,7 +326,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> StepResult:
     effective = {**defaults, **params}
     rows = detect_events(
         bars=payload.bars,
-        benchmark_bars=payload.benchmark_bars,
+        reference_bars=payload.reference_bars,
         liquidity_rows=payload.liquidity_rows,
         lookback_intervals=int(effective.get("lookback_intervals", 20)),
         min_abs_return_zscore=float(effective.get("min_abs_return_zscore", 3.0)),

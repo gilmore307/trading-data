@@ -175,7 +175,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             "max_pages": max_pages,
             "acquisition_windows": acquisition_windows,
             "feed": feed,
-            "benchmark_liquidity_acquisition_policy": params.get("benchmark_liquidity_acquisition_policy"),
+            "replay_liquidity_acquisition_policy": params.get("replay_liquidity_acquisition_policy"),
             "fail_on_incomplete_pagination": fail_on_incomplete_pagination,
         }),
         "raw_persistence": "not_persisted_by_default; raw trades/quotes aggregate-only transient inputs",

@@ -136,8 +136,8 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     if timeframe not in OKX_BAR_MAP:
         raise OkxCryptoMarketDataError(f"unsupported timeframe {timeframe!r}; supported={sorted(OKX_BAR_MAP)}")
     limit = str(params.get("limit", 100))
-    historical_start = params.get("benchmark_window_start") or params.get("start")
-    historical_end = params.get("benchmark_window_end_exclusive") or params.get("end")
+    historical_start = params.get("replay_window_start") or params.get("start")
+    historical_end = params.get("replay_window_end_exclusive") or params.get("end")
     historical_mode = bool(historical_start and historical_end)
     max_pages = int(params.get("max_pages", 40 if historical_mode else 1))
     if not client_is_fixture:
@@ -186,7 +186,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         "trades_endpoint": trades_endpoint,
         "fetched_at_utc": _now_utc(),
         "quote_persistence": "quote/order-book derived features are nullable unless sampled snapshots are available",
-        "trade_persistence": "historical benchmark mode saves candles and leaves raw trades transient/unavailable unless a historical trade route is accepted",
+        "trade_persistence": "historical replay mode saves candles and leaves raw trades transient/unavailable unless a historical trade route is accepted",
     }
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"

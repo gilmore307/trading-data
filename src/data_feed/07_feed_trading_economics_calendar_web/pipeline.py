@@ -2,9 +2,9 @@
 
 This feed intentionally handles only normal website-visible calendar rows. It
 must not call Trading Economics API or download/export endpoints. Historical
-live fetches use authenticated website cookies plus a request-specific custom
-date range cookie; realtime/recent fetches may use the logged-out recent page
-without authentication cookies.
+custom-window fetches use visible-page date/filter cookies and do not require
+authenticated website cookies by default; realtime/recent fetches use the
+logged-out recent page without authentication cookies.
 """
 
 from __future__ import annotations
@@ -122,7 +122,7 @@ def _use_authenticated_cookies(params: Mapping[str, Any]) -> bool:
     if value is None:
         value = params.get("authenticated_cookies")
     if value is None:
-        return _range_mode(params) == "custom"
+        return False
     return bool(value)
 
 

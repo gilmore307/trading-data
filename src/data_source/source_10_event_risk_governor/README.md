@@ -89,10 +89,10 @@ Feed-artifact extraction is local and offline only. It reads already-saved artif
 
 Trading Economics calendar artifacts have two accepted roles:
 
-- historical seed artifacts are one-time bootstrap evidence; after successful SQL ingest and manifest review, their raw saved CSV originals may become deletion candidates because they are reproducible through the reviewed TE acquisition route;
+- historical seed artifacts are one-time bootstrap evidence; after successful SQL ingest and manifest review, their raw saved CSV originals may become deletion candidates because the accepted replay seed has already been completed and reviewed;
 - realtime recent artifacts are ongoing event-clock maintenance evidence. Scheduled future releases use the artifact `request_manifest.fetched_at_utc` as `available_time`, keep the release timestamp as `event_time`, and mark the summary as `event_phase=scheduled_release; actual_status=pending`. Released rows with actual/revised values remain `event_phase=release_result`.
 
-Model training should read TE macro events from SQL first. If a historical training gap remains, the manager may fill it through the reviewed authenticated TE historical route or, for public macro releases, through web-search-backed provenance rows; those fallback rows must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
+Model training should read TE macro events from SQL first. If a narrow historical training gap remains, the manager may fill it through the reviewed logged-out visible-page custom-date route or, for public macro releases, through web-search-backed provenance rows; fallback rows must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

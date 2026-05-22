@@ -14,7 +14,7 @@ Purpose:
 - Keep `data_source` and `data_kind` separate: sources route execution; data kinds name requested/produced categories.
 - Prefer one canonical source per economic measure. FRED is limited to FRED/St. Louis Fed/ALFRED-unique data unless an exception is reviewed.
 - Do not store credentials, full raw responses, or generated datasets in this repository.
-- Browser-scraped sources use a persistent authenticated browser profile only to maintain login/cookies; normal feed tasks consume the exported cookie jar through bounded HTTP requests and must not rely on mutating a long-lived page/tab.
+- Browser-scraped sources prefer logged-out visible pages when the accepted fields are available. Authenticated browser profiles or exported cookie jars are recovery-only surfaces, not the default data route.
 
 ## Probe CLIs
 
@@ -47,7 +47,7 @@ Reports write under ignored `storage/feed_availability/` or `storage/feed_interf
 | OKX | Crypto bars, trades, tickers/quotes, order book. | Public market endpoints for current data; private endpoints need credentials if separately accepted. | Live interface checks succeeded for current market-data families. |
 | SEC EDGAR | Submissions, company facts, company concepts, XBRL frames, filing references. | No key; identifying User-Agent and fair-access behavior required. | Live checks succeeded with bounded Apple examples; large responses require segmentation/field selection. |
 | ETF issuers | Holdings rows/snapshots, weights, fund metadata. | Usually public web/file downloads. | Adapter-specific; preserve URL, as-of date, retrieval timestamp, and file/page format. |
-| Trading Economics visible pages | Macro calendar/value rows visible on logged-in web pages. | Authenticated browser-session cookie jar for the accepted route; no historical API, download/export, WAF, or captcha bypass. | Accepted macro model-input route using the shared browser-session/cookie pattern. |
+| Trading Economics visible pages | Macro calendar/value rows visible on public recent/custom calendar pages. | No key and no authenticated cookies for the accepted current route; no historical API, download/export, WAF, or captcha bypass. | Accepted macro model-input route. Historical replay seed is complete; ongoing maintenance fetches recent/future visible calendar rows. |
 | FOMC / official macro pages | Meeting calendars and release calendars. | Public official pages. | Source-of-truth rule accepted; adapter-specific. |
 | FRED / ALFRED | FRED-native research series/groups and vintage views. | `FRED_SECRET_ALIAS`. | Optional reviewed research path; not a duplicate default for agency-owned measures. |
 | BLS / Census / BEA / Treasury | Official agency macro/economic measures. | Public or registered aliases depending on provider. | Documentation and probes exist for optional research; not the active macro model-input route. |

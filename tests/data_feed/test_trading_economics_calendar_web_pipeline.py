@@ -37,7 +37,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 
-    def test_parse_authenticated_calendar_page_rows(self):
+    def test_parse_visible_calendar_page_rows(self):
         html = """
         <table id="calendar">
           <thead><tr><th colspan='3'>Friday January 08 2016</th><th>Actual</th><th>Previous</th><th>Consensus</th><th>Forecast</th></tr></thead>
@@ -83,6 +83,12 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
         params = {"date_range_mode": "custom", "use_authenticated_cookies": False, "start_date": "2018-10-01", "end_date": "2018-11-01", "importance": "3"}
         self.assertIn("start=2018-10-01", te_pipeline._build_url(params))
         self.assertIn("cal-custom-range=2018-10-01 00:00|2018-11-01 00:00", te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")))
+
+    def test_custom_mode_defaults_to_no_authenticated_cookies(self):
+        params = {"date_range_mode": "custom", "start_date": "2018-10-01", "end_date": "2018-11-01", "importance": "3"}
+        self.assertFalse(te_pipeline._use_authenticated_cookies(params))
+        cookie_header = te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file"))
+        self.assertIn("cal-custom-range=2018-10-01 00:00|2018-11-01 00:00", cookie_header)
 
     def test_requires_explicit_html_or_live_fetch(self):
         with tempfile.TemporaryDirectory() as tmp:

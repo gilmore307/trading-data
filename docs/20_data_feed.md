@@ -42,7 +42,7 @@ Provider credentials must never be committed. Secret material stays outside Git 
 | OKX | Crypto market data; private surfaces only when separately approved. | `OKX_SECRET_ALIAS` -> `okx` | Public market data may not need private credentials. |
 | SEC EDGAR | Company submissions, facts, concepts, frames, filing metadata. | no key | Requires fair-access behavior and identifying User-Agent. |
 | ETF issuers | Holdings rows, weights, fund metadata. | issuer-specific/no key | Preserve source URL, as-of date, retrieval time, and file/page format. |
-| Trading Economics visible calendar | Macro calendar/value rows visible on logged-in pages. | authenticated browser-session cookie jar; no API key for accepted route | Session/cookie helper maintains login; feed tasks consume cookies. No API/download/WAF/captcha bypass. |
+| Trading Economics visible calendar | Macro calendar/value rows visible on the public recent/custom calendar pages. | no key for accepted current route; no authenticated cookies by default | Feed tasks use logged-out visible-page requests with bounded date/filter cookies. No API/download/WAF/captcha bypass. |
 | FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes unless separately accepted. |
 | FOMC/official release pages | Official calendar events. | no key | Use official source pages and preserve retrieval metadata. |
 
@@ -68,18 +68,17 @@ Installed entrypoints mirror package modules:
 
 ## Browser-Scraped Web Feeds
 
-Browser-scraped provider routes use the shared session-cookie pattern:
+Browser-scraped provider routes use bounded visible-page requests:
 
-- keep one authenticated browser profile/session for login, consent, and cookie refresh;
-- export provider cookies to local secret storage such as `/root/secrets/<provider>-cookies.txt`;
-- normal feed tasks fetch provider pages through bounded HTTP requests that consume the cookie jar and task-specific date/filter cookies or query params;
+- prefer logged-out public pages when they provide the accepted fields;
+- pass task-specific date/filter cookies or query params through ordinary HTTP requests;
 - do not start a new browser or log in for every data task;
 - do not make normal data acquisition depend on mutating a long-lived page/tab state;
-- when cookies expire, refresh the authenticated profile/session first, then rerun the feed task;
+- use an authenticated browser profile or exported cookie jar only for a reviewed manual recovery route that explicitly requires it;
 - if captcha, MFA, permission prompts, or WAF blocks appear, stop and require operator action instead of bypassing them;
 - parser output must be filtered to the requested time/window and record skipped out-of-window rows in receipt warnings/details.
 
-This policy applies to Trading Economics and any future browser-scraped source accepted into `data_feed`.
+Trading Economics now uses the logged-out visible-page route for recent/future rows and custom-date recovery by default. Its historical replay seed was a one-time bootstrap and is complete; ongoing maintenance should fetch current/recent/future calendar rows rather than rebuilding old history.
 
 ## Trading Economics Recent Refresh
 

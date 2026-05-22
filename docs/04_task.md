@@ -8,10 +8,11 @@ The accepted local feed/source/feature route is structurally closed; see `docs/0
 
 ## Historical-Training Readiness Status
 
-- Current route coverage is accepted for the bounded historical training start: Alpaca bars/liquidity/news, GDELT news, SEC company financials, ThetaData option primary tracking, and ThetaData option event timeline.
-- Source-specific dry-run parameter defaults are now manager-owned in `trading-manager/src/trading_manager_tasks/request_payloads.py`; `trading-data` should not duplicate that control-plane policy locally.
+- Current route coverage is accepted for the bounded historical training start: Alpaca bars/liquidity/news, GDELT news, OKX public market data, Trading Economics logged-out visible calendar rows, SEC company financials, ThetaData option primary tracking, and ThetaData option event timeline.
+- Source-specific dry-run parameter defaults are manager-owned in `trading-manager/src/trading_manager_tasks/request_payloads.py`; `trading-data` should not duplicate that control-plane policy locally.
 - Manager/storage V1 request, manifest, artifact, and ready-signal contracts are accepted and implemented through the current manager/storage MVP path; `trading-data` consumes task-key payloads and emits component evidence, not manager lifecycle state.
 - Event standards remain conservative evidence until reviewed historical calibration reports promote them into labels/gates.
+- Candidate-dependent Alpaca target-state rows remain deferred until manager-issued candidate rows or reviewed local bar/liquidity artifacts are supplied.
 
 ## Not Current Historical-Training Scope
 
@@ -24,9 +25,9 @@ These items are intentionally outside the current promote-first historical-train
 - broader historical ETF issuer archives before point-in-time availability is reviewed;
 - production data-derived event label/gate calibration before reviewed historical reports exist.
 
-## Recently Accepted
+## Current Accepted Details
 
-- Alpaca bars now treats provider `bars: null` no-data responses as empty successful acquisitions with headers/schema/manifests rather than failed component receipts. This supports historical months where current-universe symbols did not yet have bars.
+- Alpaca bars treats provider `bars: null` no-data responses as empty successful acquisitions with headers/schema/manifests rather than failed component receipts. This supports historical months where current-universe symbols did not yet have bars.
 - Repository data-stack acceptance: current feed/source/feature surfaces cover the accepted local Layers 1-9 model-input route.
 - Production hardening policy: provider-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/40_production_hardening.md`.
 - Storage-owned V1 handoff contracts are the production handoff vocabulary; file artifacts and runtime evidence belong under `trading-storage/storage/01_source_data/`.
@@ -42,7 +43,7 @@ These items are intentionally outside the current promote-first historical-train
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.
 - ThetaData option feeds are implemented for selection snapshot, specified-contract primary tracking, and event timeline.
 - `feed_availability` and `feed_interfaces` provide bounded provider/data-kind inventory and smoke support.
-- `macro_data` is not active. Macro model-input rows use `07_feed_trading_economics_calendar_web` visible-page evidence.
+- `macro_data` is not active. Macro model-input rows use `07_feed_trading_economics_calendar_web` logged-out visible-page evidence.
 - Current task key / receipt fields are registered through `trading-manager`; new shared fields need registry review.
 
 ## Closed Design Notes

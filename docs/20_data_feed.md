@@ -42,7 +42,7 @@ Provider credentials must never be committed. Secret material stays outside Git 
 | OKX | Crypto market data; private surfaces only when separately approved. | `OKX_SECRET_ALIAS` -> `okx` | Public market data may not need private credentials. |
 | SEC EDGAR | Company submissions, facts, concepts, frames, filing metadata. | no key | Requires fair-access behavior and identifying User-Agent. |
 | ETF issuers | Holdings rows, weights, fund metadata. | issuer-specific/no key | Preserve source URL, as-of date, retrieval time, and file/page format. |
-| Trading Economics visible calendar | Macro calendar/value rows visible on the public recent/custom calendar pages. | no key for accepted current route; no authenticated cookies by default | Feed tasks use logged-out visible-page requests with bounded date/filter cookies. No API/download/WAF/captcha bypass. |
+| Trading Economics visible calendar | Macro calendar/value rows visible on the public recent/custom calendar pages. | no key; no authenticated cookies by default | Feed tasks use logged-out visible-page requests with bounded date/filter cookies. No API/download/WAF/captcha bypass. |
 | FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes unless separately accepted. |
 | FOMC/official release pages | Official calendar events. | no key | Use official source pages and preserve retrieval metadata. |
 
@@ -78,7 +78,7 @@ Browser-scraped provider routes use bounded visible-page requests:
 - if captcha, MFA, permission prompts, or WAF blocks appear, stop and require operator action instead of bypassing them;
 - parser output must be filtered to the requested time/window and record skipped out-of-window rows in receipt warnings/details.
 
-Trading Economics now uses the logged-out visible-page route for recent/future rows and custom-date recovery by default. Its historical replay seed was a one-time bootstrap and is complete; ongoing maintenance should fetch current/recent/future calendar rows rather than rebuilding old history.
+Trading Economics uses logged-out visible-page requests for replay windows, recent rows, and future scheduled releases. Ongoing maintenance fetches bounded current/recent/future calendar rows and keeps parser output filtered to the requested window.
 
 ## Trading Economics Recent Refresh
 

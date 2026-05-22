@@ -6,8 +6,8 @@ Deterministic event-overlay feature builder for Layer 10 event-risk-governor inp
 
 Input is accepted `source_10_event_risk_governor` overview rows. Output is a compact
 feature surface keyed by `event_id` for `EventRiskGovernor` / `EventIntelligenceOverlay`
-input preparation. The package name remains legacy until a dedicated physical
-rename migration is accepted.
+input preparation. The package name is the accepted physical feature package for
+this boundary.
 
 This package does not score alpha, decide event impact, create labels, or build
 the final `event_risk_intervention` / event vector; those belong to

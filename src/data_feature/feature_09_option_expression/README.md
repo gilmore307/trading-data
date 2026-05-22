@@ -6,8 +6,8 @@ Deterministic option-expression feature builder for the Layer 9 trading-guidance
 
 Input is accepted `source_05_option_expression` option-chain snapshot rows. Output
 is a compact per-contract feature surface for the `TradingGuidanceModel /
-OptionExpressionModel` input boundary. The package name remains legacy until a
-dedicated physical rename migration is accepted.
+OptionExpressionModel` input boundary. The package name is the accepted physical
+feature package for this boundary.
 
 Selected-contract market-path rows from `source_06_position_execution` remain
 replay/evaluation evidence; they are not order instructions and are not required

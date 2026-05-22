@@ -56,7 +56,7 @@ ETF holdings coverage is allowed to be partial. When an official issuer route is
 
 Layer 3 has two target-state surfaces with different maturity.
 
-Raw target-local observed inputs remain source-scoped: candidate-builder-supplied `params.start`, `params.end`, and `params.symbols` default to 1Min, fetch Alpaca bars plus transient trade/quote liquidity inputs, and should write SQL table `source_03_target_state`.
+Raw target-local observed inputs remain source-scoped: candidate-builder-supplied candidate rows plus reviewed local bar/liquidity artifacts are normalized into SQL table `source_03_target_state`. Alpaca acquisition for these candidate-dependent rows is deferred until the manager supplies the candidate universe and bounded feed artifacts; `source_03_target_state` itself performs no provider calls.
 
 Target state-vector construction is feature-scoped: `trading-manager` issues a request with a reviewed window, anonymous candidate-universe reference, Layer 1/2 state references, and output target; `trading-data` builds deterministic market/sector/target/cross-state feature blocks and writes `feature_03_target_state_vector`. `trading-model` consumes that surface to train/evaluate `TargetStateVectorModel` against market-only and market+sector baselines.
 

@@ -7,9 +7,9 @@ Boundary:
 - Use visible website calendar data only; current/recent and custom-date routes do not require a logged-in session by default.
 - Do not call Trading Economics API endpoints or Download/export features.
 - Do not bypass WAF/captcha/permissions.
-- Historical custom-window live fetches use a request-specific custom date-range cookie, then parse the returned calendar page rows. The current accepted route is logged-out visible-page fetch.
+- Replay/custom-window live fetches use a request-specific custom date-range cookie, then parse the returned logged-out visible calendar rows.
 - Realtime recent fetches use `date_range_mode=recent` and `use_authenticated_cookies=false`; this reads the logged-out recent visible calendar page and filters rows to the task window.
-- Operational historical acquisition order is logged-out visible-page HTTP first for efficiency; if it fails, retry once after 60 seconds; if the retry also fails, use the reviewed real browser UI route (`Custom` From/Until, `Submit`, captured rendered page parsed through `html_path`) as a narrow fallback.
+- `html_path`/`html` are parser-test and reviewed manual-capture inputs, not the normal provider acquisition path.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 - Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported in receipt warnings/details.
 

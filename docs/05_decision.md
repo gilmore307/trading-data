@@ -127,9 +127,9 @@ These rows are source-detector event evidence. They do not create a ninth model 
 Date: 2026-05-15
 Status: Accepted
 
-For browser-scraped sources such as Trading Economics, normal acquisition should prefer logged-out visible pages when the accepted fields are available. Feed tasks use bounded HTTP page fetches plus task-specific date/filter cookies or query params, and must not repeatedly open/login browser pages or rely on a mutable long-lived tab. An exported local cookie jar is allowed only for a reviewed recovery route that explicitly needs it. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
+For browser-scraped sources such as Trading Economics, normal acquisition uses logged-out visible pages when the accepted fields are available. Feed tasks use bounded HTTP page fetches plus task-specific date/filter cookies or query params, and must not repeatedly open/login browser pages or rely on a mutable long-lived tab. An exported local cookie jar is allowed only for a reviewed recovery route that explicitly needs it. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
 
-Trading Economics current/recent/future calendar maintenance uses logged-out visible pages with `use_authenticated_cookies=false`. The replay historical TE seed was a one-time bootstrap; ongoing operation does not depend on an active TE subscription.
+Trading Economics replay and current/recent/future calendar maintenance use logged-out visible pages with `use_authenticated_cookies=false`. Operation does not depend on an active TE subscription.
 
 All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.
 

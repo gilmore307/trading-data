@@ -15,7 +15,7 @@ File artifacts and runtime evidence default to `trading-storage/storage/01_sourc
 
 ## Provider-Call Guardrails
 
-Historical provider/API acquisition may run autonomously when issued by `trading-manager` under bounded manager controls. The retired manual approval-packet path is not part of the active historical route.
+Historical provider/API acquisition may run autonomously when issued by `trading-manager` under bounded manager controls.
 
 Required manager-control fields for autonomous historical acquisition:
 

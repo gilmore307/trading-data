@@ -8,6 +8,8 @@ Layer 4 is `EventFailureRiskModel`. It conditions alpha confidence using agent-r
 
 Layer 4 is the quantitative event-failure-risk model. `trading-data` may preserve point-in-time event observation rows and support refs for Layer 4, but it does not decide whether an event relationship exists, whether a co-event caused the failure, or how much risk Layer 4 should score.
 
+Predictable trading-calendar closure exposure is not automatically a Layer 4 event. Ordinary overnight, weekend, holiday, long-weekend, early-close, Thanksgiving, Christmas, and other long-closure facts support Layer 6 base calendar risk unless a reviewed Layer 10/Layer 4 supervision packet specifically accepts an event-amplified session-gap relationship.
+
 ## Owned artifact
 
 ```text

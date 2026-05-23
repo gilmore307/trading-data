@@ -47,10 +47,10 @@ Reports write under ignored `storage/feed_availability/` or `storage/feed_interf
 | OKX | Crypto bars, trades, tickers/quotes, order book. | Public market endpoints for current data; private endpoints need credentials if separately accepted. | Live interface checks succeeded for current market-data families. |
 | SEC EDGAR | Submissions, company facts, company concepts, XBRL frames, filing references. | No key; identifying User-Agent and fair-access behavior required. | Live checks succeeded with bounded Apple examples; large responses require segmentation/field selection. |
 | ETF issuers | Holdings rows/snapshots, weights, fund metadata. | Usually public web/file downloads. | Adapter-specific; preserve URL, as-of date, retrieval timestamp, and file/page format. |
-| Trading Economics visible pages | Macro calendar/value rows visible on public recent/custom calendar pages. | No key and no authenticated cookies by default; no historical API, download/export, WAF, or captcha bypass. | Accepted macro model-input route for replay and ongoing recent/future visible calendar rows. |
-| FOMC / official macro pages | Meeting calendars and release calendars. | Public official pages. | Source-of-truth rule accepted; adapter-specific. |
+| Trading Economics visible pages | Macro calendar/value rows visible on public recent/custom calendar pages. | No key and no authenticated cookies by default; no historical API, download/export, WAF, or captcha bypass. | Accepted runtime authority for macro event observations in replay and ongoing recent/future rows because it carries expectation/previous/actual-style fields in one route. |
+| FOMC / official macro pages | Meeting calendars and release calendars. | Public official pages. | Manual fallback/audit only while TE is the accepted macro runtime route. |
 | FRED / ALFRED | FRED-native research series/groups and vintage views. | `FRED_SECRET_ALIAS`. | Optional reviewed research path; not a duplicate default for agency-owned measures. |
-| BLS / Census / BEA / Treasury | Official agency macro/economic measures. | Public or registered aliases depending on provider. | Documentation and probes exist for optional research; not the active macro model-input route. |
+| BLS / Census / BEA / Treasury | Official agency macro/economic measures. | Public or registered aliases depending on provider. | Documentation and probes exist for optional research and incident review; not active macro runtime routes. |
 
 ## API-Level Findings
 

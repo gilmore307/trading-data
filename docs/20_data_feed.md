@@ -42,9 +42,9 @@ Provider credentials must never be committed. Secret material stays outside Git 
 | OKX | Crypto market data; private surfaces only when separately approved. | `OKX_SECRET_ALIAS` -> `okx` | Public market data may not need private credentials. |
 | SEC EDGAR | Company submissions, facts, concepts, frames, filing metadata. | no key | Requires fair-access behavior and identifying User-Agent. |
 | ETF issuers | Holdings rows, weights, fund metadata. | issuer-specific/no key | Preserve source URL, as-of date, retrieval time, and file/page format. |
-| Trading Economics visible calendar | Macro calendar/value rows visible on the public recent/custom calendar pages. | no key; no authenticated cookies by default | Feed tasks use logged-out visible-page requests with bounded date/filter cookies. No API/download/WAF/captcha bypass. |
-| FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes unless separately accepted. |
-| FOMC/official release pages | Official calendar events. | no key | Use official source pages and preserve retrieval metadata. |
+| Trading Economics visible calendar | Macro calendar/value rows visible on the public recent/custom calendar pages. | no key; no authenticated cookies by default | Accepted runtime authority for macro event observations because the row shape includes scheduled time plus expectation/previous/actual-style fields when visible. Feed tasks use logged-out visible-page requests with bounded date/filter cookies. No API/download/WAF/captcha bypass. |
+| FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes; use only for incident review, audit, or a separately accepted replacement route. |
+| FOMC/official release pages | Official calendar events. | no key | Not an active macro runtime route while TE is accepted; preserve as manual fallback/audit source. |
 
 Provider term rows, data-kind rows, config aliases, and shared metadata are owned by `trading-manager`.
 

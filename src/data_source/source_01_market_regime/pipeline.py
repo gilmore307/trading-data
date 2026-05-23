@@ -29,6 +29,7 @@ DEFAULT_LIMIT = 1000
 DEFAULT_MAX_PAGES = 10
 DEFAULT_TIMEOUT_SECONDS = 20
 DEFAULT_ADJUSTMENT = "raw"
+DEFAULT_SOURCE_TIMEFRAME = "1Min"
 DEFAULT_SECRET_ALIAS = "alpaca"
 
 
@@ -99,6 +100,13 @@ def _normalize_timeframe(value: str) -> str:
     return mapping.get(text.lower(), text)
 
 
+def _source_timeframe(params: Mapping[str, Any]) -> str:
+    timeframe = _normalize_timeframe(str(params.get("timeframe") or DEFAULT_SOURCE_TIMEFRAME))
+    if timeframe != DEFAULT_SOURCE_TIMEFRAME:
+        raise MarketRegimeInputsError("source_01_market_regime only downloads 1Min raw bars; aggregate downstream frames during feature_generation")
+    return timeframe
+
+
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     if task_key.get("source") != SOURCE:
         raise MarketRegimeInputsError(f"task_key.source must be {SOURCE}")
@@ -159,7 +167,6 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is
         universe_path = projects_root() / "trading-manager" / universe_path
     universe_rows = _read_universe(universe_path)
     symbols = sorted({row["symbol"].upper() for row in universe_rows})
-    universe_by_symbol = {row["symbol"].upper(): row for row in universe_rows}
     if params.get("symbols"):
         requested = {str(item).strip().upper() for item in (params["symbols"] if isinstance(params["symbols"], list) else str(params["symbols"]).split(",")) if str(item).strip()}
         symbols = [symbol for symbol in symbols if symbol in requested]
@@ -189,11 +196,12 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is
     headers = {"APCA-API-KEY-ID": str(api_key), "APCA-API-SECRET-KEY": str(secret_key)}
     adjustment = str(params.get("adjustment", DEFAULT_ADJUSTMENT))
     feed = str(params.get("feed", "")).strip()
+    source_timeframe = _source_timeframe(params)
 
     evidence: list[dict[str, Any]] = []
     bars_by_symbol: dict[str, list[dict[str, Any]]] = {}
     for symbol in symbols:
-        timeframe = _normalize_timeframe(str(universe_by_symbol[symbol].get("bar_grain") or "1Day"))
+        timeframe = source_timeframe
         request = {"timeframe": timeframe, "start": start, "end": end, "limit": limit, "adjustment": adjustment}
         if feed:
             request["feed"] = feed
@@ -203,15 +211,15 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is
 
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "market_regime_etf_universe_path": str(universe_path), "symbols": symbols, "bar_requests": evidence, "secret_alias": public_secret_summary(secret), "raw_persistence": "not_persisted_by_default", "fetched_at_utc": _now_utc()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], {"raw_bars_transient": sum(len(rows) for rows in bars_by_symbol.values())}, details={"symbols": symbols, "market_regime_etf_universe_path": str(universe_path)}), SourcePayload(universe_rows, bars_by_symbol, public_secret_summary(secret))
+    manifest.write_text(json.dumps({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "source_timeframe": source_timeframe, "market_regime_etf_universe_path": str(universe_path), "symbols": symbols, "bar_requests": evidence, "secret_alias": public_secret_summary(secret), "raw_persistence": "not_persisted_by_default", "fetched_at_utc": _now_utc()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(manifest)], {"raw_bars_transient": sum(len(rows) for rows in bars_by_symbol.values())}, details={"symbols": symbols, "source_timeframe": source_timeframe, "market_regime_etf_universe_path": str(universe_path)}), SourcePayload(universe_rows, bars_by_symbol, public_secret_summary(secret))
 
 
 def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
-    universe_by_symbol = {row["symbol"].upper(): row for row in payload.universe_rows}
+    source_timeframe = _source_timeframe(dict(context.task_key.get("params") or {}))
     rows: list[dict[str, Any]] = []
     for symbol in sorted(payload.bars_by_symbol):
-        timeframe = _normalize_timeframe(str(universe_by_symbol[symbol].get("bar_grain") or "1Day"))
+        timeframe = source_timeframe
         for bar in payload.bars_by_symbol[symbol]:
             rows.append({"symbol": symbol, "timeframe": timeframe, "timestamp": _et_iso(bar["t"]), "bar_open": bar.get("o"), "bar_high": bar.get("h"), "bar_low": bar.get("l"), "bar_close": bar.get("c"), "bar_volume": bar.get("v"), "bar_vwap": bar.get("vw"), "bar_trade_count": bar.get("n")})
     rows.sort(key=lambda row: (str(row["timeframe"]), str(row["symbol"]), str(row["timestamp"])))

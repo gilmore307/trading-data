@@ -71,12 +71,9 @@ def fetch_source_bars(
     where: list[str] = [
         """
         (
-          lower(timeframe) NOT IN ('1m', '1min', '1minute')
-          OR (
-            (timestamp AT TIME ZONE 'America/New_York')::time BETWEEN TIME '09:30' AND TIME '16:00'
-            AND EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)
-            AND EXTRACT(SECOND FROM timestamp AT TIME ZONE 'America/New_York') = 0
-          )
+          lower(timeframe) IN ('1m', '1min', '1minute')
+          AND (timestamp AT TIME ZONE 'America/New_York')::time BETWEEN TIME '09:30' AND TIME '16:00'
+          AND EXTRACT(SECOND FROM timestamp AT TIME ZONE 'America/New_York') = 0
         )
         """
     ]

@@ -135,8 +135,8 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="source_01_market_regime")
 
         sql_text = cursor.calls[0][0]
-        self.assertIn("lower(timeframe) NOT IN ('1m', '1min', '1minute', '5m', '5min', '5minute', '30m', '30min', '30minute')", sql_text)
-        self.assertNotIn("EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)", sql_text)
+        self.assertIn("lower(timeframe) IN ('1m', '1min', '1minute')", sql_text)
+        self.assertNotIn("lower(timeframe) NOT IN", sql_text)
         self.assertIn("BETWEEN TIME '09:30' AND TIME '16:00'", sql_text)
 
     def test_sql_writer_stores_generated_features_in_jsonb_payload(self) -> None:

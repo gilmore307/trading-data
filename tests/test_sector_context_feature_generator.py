@@ -166,7 +166,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(smh_row["rotation_pair_type"], "daily_context")
         self.assertIn("relative_strength_return_1d", smh_row)
 
-    def test_sql_fetch_downsamples_one_minute_bars_to_decision_surface(self) -> None:
+    def test_sql_fetch_reads_one_minute_source_bars_for_local_frame_generation(self) -> None:
         class FakeCursor:
             def __init__(self) -> None:
                 self.calls: list[tuple[str, list[object] | None]] = []
@@ -182,8 +182,9 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="source_01_market_regime")
 
         sql_text = cursor.calls[0][0]
-        self.assertIn("lower(timeframe) NOT IN ('1m', '1min', '1minute')", sql_text)
-        self.assertIn("EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)", sql_text)
+        self.assertIn("lower(timeframe) IN ('1m', '1min', '1minute')", sql_text)
+        self.assertNotIn("lower(timeframe) NOT IN", sql_text)
+        self.assertNotIn("EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)", sql_text)
         self.assertIn("BETWEEN TIME '09:30' AND TIME '16:00'", sql_text)
 
     def test_sql_writer_persists_candidate_comparison_rows(self) -> None:

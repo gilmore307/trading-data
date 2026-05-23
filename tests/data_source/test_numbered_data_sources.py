@@ -11,7 +11,7 @@ class FakeBarsClient:
         symbol = url.rstrip("/").split("/")[-2]
         timeframe = (params or {}).get("timeframe", "1Day")
         payload = {"bars": [{"t": "2026-04-24T13:30:00Z", "o": 100, "h": 101, "l": 99, "c": 100.5, "v": 1000, "vw": 100.25, "n": 10}]}
-        if timeframe == "30Min":
+        if timeframe != "1Min":
             payload["bars"][0]["t"] = "2026-04-24T14:00:00Z"
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
@@ -78,10 +78,34 @@ class NumberedDataSourceTests(unittest.TestCase):
                 self.assertEqual(call["key_columns"], ["symbol", "timeframe", "timestamp"])
                 rows = sorted(call["rows"], key=lambda row: row["symbol"])
                 self.assertEqual(len(rows), 2)
-                self.assertEqual({row["symbol"]: row["timeframe"] for row in rows}, {"BITW": "30Min", "SPY": "1Day"})
+                self.assertEqual({row["symbol"]: row["timeframe"] for row in rows}, {"BITW": "1Min", "SPY": "1Min"})
                 self.assertNotIn("run_id", rows[0])
                 self.assertNotIn("task_id", rows[0])
                 self.assertEqual(call["columns"], ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
+        finally:
+            module.load_secret_alias = old_load_secret
+
+    def test_market_regime_source_rejects_non_one_minute_download_timeframe(self):
+        module = import_module("data_source.source_01_market_regime.pipeline")
+        old_load_secret = module.load_secret_alias
+        module.load_secret_alias = lambda alias: Secret()
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                universe_path = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
+                universe_path.write_text(
+                    "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
+                    "SPY,broad_market,core,1d,SPDR S&P 500 ETF,State Street\n",
+                    encoding="utf-8",
+                )
+                task_key = {
+                    "task_id": "source_01_market_regime_task_bad_timeframe",
+                    "source": "source_01_market_regime",
+                    "params": {"start": "2026-04-24", "end": "2026-04-25", "timeframe": "1Day", "market_regime_etf_universe_path": str(universe_path)},
+                    "output_root": str(Path(tmp) / "task"),
+                }
+                result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=FakeSqlWriter(), client_is_fixture=True)
+
+            self.assertEqual(result.status, "failed")
         finally:
             module.load_secret_alias = old_load_secret
 

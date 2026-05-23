@@ -18,6 +18,18 @@ Layer 4 may reference evidence produced from accepted upstream event/feed artifa
 
 `trading-data` may only add Layer 4 data work when a reviewed contract requires a real point-in-time source observation or deterministic feature package. It must not automatically promote Layer 10 research events into Layer 4.
 
+When accepted, the direct Layer 4 event-facing artifact is a point-in-time event observation row, not raw provider payloads or raw article/filing/transcript text. The observation row must carry the inference-time scope fields Layer 4 may consume:
+
+- `event_id` / `canonical_event_id`;
+- `available_time`;
+- `event_family` / `normalized_event_type`;
+- `expected_impact_scope`;
+- `affected_scope`;
+- `affected_entities`;
+- `scope_confidence_score`;
+- `scope_support_evidence_ref`;
+- `review_status`.
+
 ## Event partitions and retention
 
 Any accepted Layer 4 data work must partition event evidence by **impact scope**, not by provider, feed, document type, or article/source category. SEC filings, earnings releases, company news, macro releases, sector news, and political events can each become local or broad depending on reviewed point-in-time impact evidence.

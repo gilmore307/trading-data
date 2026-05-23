@@ -20,12 +20,16 @@ Layer 4 may reference evidence produced from accepted upstream event/feed artifa
 
 ## Event partitions and retention
 
-Any accepted Layer 4 data work must keep event evidence split into:
+Any accepted Layer 4 data work must partition event evidence by **impact scope**, not by provider, feed, document type, or article/source category. SEC filings, earnings releases, company news, macro releases, sector news, and political events can each become local or broad depending on reviewed point-in-time impact evidence.
 
-- global/common event context: macro data releases, broad market policy/geopolitical/rates/liquidity events, sector or industry news, and other reusable context for all targets or sector baskets;
-- target event context: symbol/issuer/target-specific news, SEC filings, earnings/guidance artifacts, same-symbol option events, corporate actions, and other target-scoped evidence.
+The required storage/feature boundary is:
 
-Training-fold cleanup may remove only the fold-local target event working set for the completed or abandoned fold. It must not remove global/common event rows, shared macro/sector/political evidence, reviewed global event-family packets, or reusable event references. Fold-local target data should reference global event rows instead of copying them into a namespace that lifecycle cleanup can delete.
+- global/common impact context: reviewed events whose expected impact is reusable across the market, broad sectors, industries, themes, peer groups, supply chains, index constituents, or other multi-target scopes;
+- target-local impact context: reviewed events whose expected impact is limited to the current symbol, issuer, target candidate, or same-symbol instrument set.
+
+Data artifacts must keep point-in-time `expected_impact_scope` separate from evaluation-only `realized_impact_scope_label`. The expected scope can be produced only from evidence available at `available_time`, prior reviewed event-family rules, and contemporaneous issuer/sector/index/peer/supply-chain metadata. The realized scope is a later label for calibration/review and must not be fed back into the same fold as an inference fact.
+
+Training-fold cleanup may remove only the fold-local target event working set for the completed or abandoned fold. It must not remove global/common impact rows, reviewed global event-family packets, reusable cross-target evidence, or shared event references. Fold-local target data should reference global/common impact rows instead of copying them into a namespace that lifecycle cleanup can delete.
 
 ## Non-ownership
 

@@ -1,7 +1,7 @@
 # Layer 10 — Event Risk Governor Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. Layer 10 owns `EventRiskGovernor / EventIntelligenceOverlay` event intelligence / event-risk intervention. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features, not event interpretation, risk policy, execution, or broker mutation.
+Status: active architecture revision. Layer 10 owns `EventRiskGovernor / EventIntelligenceOverlay` qualitative event attribution, reviewed-pool governance, and event-risk intervention. `trading-data` owns point-in-time event evidence indexes, deterministic event-overview features, and attribution evidence refs, not event interpretation, attribution decisions, risk policy, execution, or broker mutation.
 
 Current physical source/feature names are `source_10_event_risk_governor` and `feature_10_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
@@ -36,6 +36,8 @@ Layer 10 data is an event index plus deterministic event-overview features, not 
 
 Layer 10's post-failure attribution route adds one data requirement: event rows and referenced artifacts must remain joinable to model failure/residual windows by point-in-time clocks. `trading-data` preserves event availability, source refs, activity windows, and compact detector evidence; `trading-model` decides whether those events explain a failure, computes `realized_impact_scope_label`, builds attribution labels, and proposes Layer 4 promotion packets.
 
+Layer 10 is the qualitative event-impact and attribution layer, but qualitative decisions belong to `trading-model` and review. `trading-data` supports that route by preserving the evidence needed to test attribution, including co-event grouping and confounder controls when available.
+
 ## Input boundary
 
 Accepted event rows may include:
@@ -55,6 +57,19 @@ Required semantics:
 - `canonical_event_id`, `dedup_status`, `source_priority`, `coverage_reason`, and `covered_by_event_id` prevent derivative coverage from becoming duplicate alpha.
 - Event evidence must preserve lifecycle clocks when the source provides or implies them: awareness, scheduled, published, available, interpretation, resolution, and reaction/evaluation windows.
 - Scheduled-known events and unscheduled surprise events must not be collapsed into the same raw timing shape. Earnings and macro-calendar shells may be visible before results; sudden news is only visible after the first credible source.
+
+Co-event/confounder evidence should be preserved when available:
+
+```text
+co_event_group_id
+dominant_event_candidate_ref
+confounder_event_ref
+co_event_window
+co_event_relation_type
+source_scope_hint
+```
+
+These fields or refs are evidence only. `trading-data` does not decide whether a candidate event is dominant, spurious, incrementally explanatory, or eligible for Layer 4 supervision.
 
 Accepted lifecycle classes for downstream interpretation:
 
@@ -122,6 +137,7 @@ trading-manager event/source request
 - event-context vector modeling;
 - event-failure attribution decisions;
 - `realized_impact_scope_label` evaluation labels;
+- co-event/confounder attribution decisions;
 - Layer 4 event-family promotion packets;
 - alpha labels;
 - buy/sell/hold decisions;

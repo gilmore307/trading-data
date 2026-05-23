@@ -6,6 +6,8 @@ Status: active architecture revision. `trading-data` owns no dedicated Layer 4 s
 
 Layer 4 is `EventFailureRiskModel`. It conditions alpha confidence using agent-reviewed event/strategy-failure relationships. It is not a raw-news ingestion layer and must not create a symmetry-only `trading-data` source or feature surface.
 
+Layer 4 is the quantitative event-failure-risk model. `trading-data` may preserve point-in-time event observation rows and support refs for Layer 4, but it does not decide whether an event relationship exists, whether a co-event caused the failure, or how much risk Layer 4 should score.
+
 ## Owned artifact
 
 ```text
@@ -17,6 +19,8 @@ none in trading-data
 Layer 4 may reference evidence produced from accepted upstream event/feed artifacts, including reviewed event-amplified session-gap risk for overnight, weekend, holiday, halt, or other non-continuous-market holding windows. The reviewed promotion gate, model vector, labels, and production-readiness decision belong outside this repository.
 
 `trading-data` may only add Layer 4 data work when a reviewed contract requires a real point-in-time source observation or deterministic feature package. It must not automatically promote Layer 10 research events into Layer 4.
+
+Accepted Layer 4 data work must be traceable to a reviewed Layer 10/review supervision packet or training contract. Source/event rows without that reviewed route remain observation or Layer 10 research evidence, not active Layer 4 training input.
 
 When accepted, the direct Layer 4 event-facing artifact is a point-in-time event observation row, not raw provider payloads or raw article/filing/transcript text. The observation row must carry the inference-time scope fields Layer 4 may consume:
 

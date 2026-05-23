@@ -29,6 +29,14 @@ The required storage/feature boundary is:
 
 Data artifacts must keep point-in-time `expected_impact_scope` separate from evaluation-only `realized_impact_scope_label`. The expected scope can be produced only from evidence available at `available_time`, prior reviewed event-family rules, and contemporaneous issuer/sector/index/peer/supply-chain metadata. The realized scope is a later label for calibration/review and must not be fed back into the same fold as an inference fact.
 
+When `trading-data` is asked to produce deterministic Layer 4 source observations or feature packages, impact-scope evidence must be joinable to the current state stack at the event `available_time`:
+
+- Layer 1 market context for broad regime, stress, liquidity, breadth, dispersion, correlation/crowding, and transition-risk comparison;
+- Layer 2 sector/industry/theme/peer context for affected basket behavior, trend stability, relative strength, correlation, and tradability comparison;
+- Layer 3 target context for target-specific liquidity, path/tradability, residual behavior, state-transition quality, and target-vs-sector/market alignment.
+
+Data work should preserve candidate scope support rows or references for market/global, sector/industry/theme, peer/supply-chain/index basket, and target-local impact. These rows are evidence for a reviewed scope resolver; they are not permission to use future reaction windows as current-fold input facts.
+
 Training-fold cleanup may remove only the fold-local target event working set for the completed or abandoned fold. It must not remove global/common impact rows, reviewed global event-family packets, reusable cross-target evidence, or shared event references. Fold-local target data should reference global/common impact rows instead of copying them into a namespace that lifecycle cleanup can delete.
 
 ## Non-ownership

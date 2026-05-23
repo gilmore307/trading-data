@@ -93,7 +93,7 @@ Persistent regimes are a news-topic promotion route. They require interval evide
 ```text
 high_frequency_news_topic
 -> candidate_regime
--> agent_regime_promotion_review
+-> `regime-promotion-review`
 -> persistent_event_regime
 -> Layer 10 attribution
 -> watched event pool only if later accepted for Layer 4 supervision
@@ -116,7 +116,7 @@ affected_scope_hint
 representative_evidence_refs
 ```
 
-Agent review decides whether the topic is a real regime, a short-lived news cluster, duplicate coverage of another regime, or noise. The accepted review packet should define `regime_family`, inclusion/exclusion rules, start status, affected scopes, material update rules, decay/staleness rules, and evidence-quality thresholds.
+Agent review uses the `regime-promotion-review` skill to decide whether the topic is a real regime, a short-lived news cluster, duplicate coverage of another regime, or noise. The accepted review packet should define `regime_family`, inclusion/exclusion rules, start status, affected scopes, material update rules, decay/staleness rules, and evidence-quality thresholds.
 
 Accepted source classes include:
 

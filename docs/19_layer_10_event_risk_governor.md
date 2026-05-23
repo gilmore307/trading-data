@@ -73,6 +73,8 @@ These fields or refs are evidence only. `trading-data` does not decide whether a
 
 Trading-calendar and market-structure windows are attribution evidence when failures occur around non-trading intervals, expiry, or rebalance windows. `trading-data` should preserve calendar facts such as closure type, non-trading interval length, next market open, holiday name, early close, pre-holiday session flags, triple-witching/option-expiry flags, and index rebalance flags when available. `trading-model` decides whether the date has enough incremental explanatory value to supervise future Layer 4 risk conditioning.
 
+Calendar and market-structure rows live first in the global event observation pool. The row's job is to make the date, lifecycle clocks, and source/provenance knowable; it must not assert that the date caused a failure. When Layer 10 later accepts a relationship after attribution and review, the accepted family/mechanism enters the watched event pool for future Layer 4 training.
+
 Accepted lifecycle classes for downstream interpretation:
 
 ```text

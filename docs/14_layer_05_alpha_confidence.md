@@ -1,9 +1,9 @@
 # Layer 05 — Alpha Confidence Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. `trading-data` owns no dedicated Layer 5 source/feature by default; AlphaConfidenceModel belongs to `trading-model` and consumes reviewed upstream state artifacts.
+Status: active architecture revision. `trading-data` owns no dedicated Layer 5 source/feature by default; AlphaConfidenceModel belongs to `trading-model` and consumes reviewed upstream state artifacts plus Layer 4 event-failure-risk outputs.
 
-Event data is no longer a hard AlphaConfidence prerequisite. Reviewed failure-risk conditioning may feed Layer 4; broader event evidence feeds the later Layer 10 event-risk governor when standardized and point-in-time valid.
+Event data does not feed Layer 5 directly. Reviewed event observations and event/strategy-failure gates feed Layer 4; broader post-failure attribution evidence feeds Layer 10 and can affect future Layer 4 only after review.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
@@ -23,6 +23,7 @@ none in trading-data
 
 - `target_context_state` from Layer 3;
 - upstream market/sector/target context references;
+- Layer 4 `event_failure_risk_vector` when reviewed event-failure conditioning applies;
 - realized outcomes and labels through reviewed evaluation contracts.
 
 Those are not new `trading-data` source acquisitions. Labels, calibration, training rows, model outputs, and promotion decisions belong outside this repository.
@@ -31,6 +32,7 @@ Those are not new `trading-data` source acquisitions. Labels, calibration, train
 
 ```text
 accepted Layer 1-3 outputs and references
+  -> accepted Layer 4 event_failure_risk_vector when present
   -> trading-model AlphaConfidenceModel
   -> alpha_confidence_vector
   -> model-side evaluation/promotion review
@@ -41,6 +43,7 @@ accepted Layer 1-3 outputs and references
 `trading-data` must not create a symmetry-only `source_05_alpha_confidence` or `feature_05_alpha_confidence` just because Layer 4 exists. It also must not emit:
 
 - alpha confidence scores;
+- event-failure-risk scores;
 - return labels;
 - buy/sell/hold decisions;
 - target exposure;

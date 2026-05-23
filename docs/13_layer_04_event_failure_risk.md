@@ -10,7 +10,7 @@ Layer 4 is the quantitative event-failure-risk model. `trading-data` may preserv
 
 Trading-calendar and market-structure dates are scheduled event-family evidence for Layer 4 when they can change liquidity, de-risking, forced flow, gap behavior, or path risk. Ordinary overnight, Friday/weekend de-risking, holiday and long-weekend closures, early closes, Thanksgiving/Christmas closures, triple-witching, major option-expiry windows, index reconstitution, Nasdaq-100 rebalance, and similar dates remain observation evidence until a reviewed Layer 10/Layer 4 supervision packet accepts the relationship.
 
-The data-side task is to build and preserve the point-in-time calendar in the global event observation pool. These rows make the key dates knowable before model evaluation, but they are not active Layer 4 training rows until Layer 10/review promotes a specific calendar or market-structure relationship into the watched event pool.
+The data-side task is to build and preserve point-in-time observations in the global event observation pool. Calendar/market-structure rows make key dates knowable before model evaluation. Persistent-regime rows make special periods knowable across intervals even when no fresh article appears on a given decision date. These rows are not active Layer 4 training rows until Layer 10/review promotes a specific relationship into the watched event pool.
 
 ## Owned artifact
 

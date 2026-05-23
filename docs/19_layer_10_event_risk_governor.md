@@ -45,6 +45,7 @@ Accepted event rows may include:
 - macro calendar/data-release events;
 - macro, sector, symbol, or broad-market news events;
 - SEC/company/regulatory filings or disclosures;
+- persistent event-regime intervals such as pandemic, tariff-war, geopolitical war/escalation, sanctions, banking-system stress, or policy crisis periods;
 - option abnormal-activity evidence, when not duplicating option-expression inputs already consumed by the base path;
 - equity/ETF residual abnormal-activity evidence, only as trigger/provenance/residual evidence rather than duplicated bar/liquidity features;
 - price-action detector evidence such as false breakouts, failed breakdowns, liquidity sweeps, bull traps, or bear traps;
@@ -75,6 +76,8 @@ Trading-calendar and market-structure windows are attribution evidence when fail
 
 Calendar and market-structure rows live first in the global event observation pool. The row's job is to make the date, lifecycle clocks, and source/provenance knowable; it must not assert that the date caused a failure. When Layer 10 later accepts a relationship after attribution and review, the accepted family/mechanism enters the watched event pool for future Layer 4 training.
 
+Persistent event-regime rows also live first in the global event observation pool. Their job is to preserve point-in-time interval evidence: regime start, optional end, active/shadow/decay status, last material update, affected scopes, decay/staleness rule, and source refs. They may remain active or shadow-active without same-day news, but `trading-data` must not assert causal impact or keep stale pressure alive without a reviewed status/decay rule.
+
 Accepted lifecycle classes for downstream interpretation:
 
 ```text
@@ -82,6 +85,7 @@ scheduled_known_outcome_later
 unscheduled_surprise
 scheduled_recurring_data_release
 multi_stage_developing_event
+persistent_event_regime
 unknown
 ```
 

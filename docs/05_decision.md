@@ -230,3 +230,18 @@ Accepted: 2026-05-15
 `11_feed_thetadata_option_event_timeline` must preserve option abnormality evidence as explicit fields instead of relying on implied ask-side proxies. Event detail outputs should include bid/ask touch, trade notional, side evidence, sweep/block context, OI/open-interest context, opening-vs-closing context, IV change, skew direction, term-structure direction, underlying confirmation/divergence, direction confidence, and abnormality coverage status.
 
 Missing upstream evidence must be recorded as missing or partial evidence. The feed must not fabricate OI, skew, term-structure, sweep/block, or direction confidence coverage merely to produce bullish/bearish labels.
+
+## D034 — Layer 1 market-regime data preserves frame identity
+
+Accepted: 2026-05-22
+
+Layer 1 market-regime source and feature construction must preserve the input frame used by `MarketRegimeModel`. The accepted frame/horizon families are:
+
+```text
+1min  -> 5min, 10min, 30min
+5min  -> 15min, 30min, 60min
+30min -> 1h, 2h, 1d
+1d    -> 3d, 5d, 20d
+```
+
+`trading-data` owns point-in-time source and deterministic feature evidence for those input frames. Future return, volatility, drawdown, transition, liquidity, and tradability outcomes are model labels/evaluation evidence, not inference features. SQL business keys such as `input_frame`, `prediction_horizon`, and `market_universe_ref` require registry/schema migration before implementation depends on them.

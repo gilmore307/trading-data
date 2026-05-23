@@ -30,7 +30,7 @@ model_NN_<layer_slug>_diagnostics
 
 | Model layer | Input source | Core data products | Notes |
 |---|---|---|---|
-| `MarketRegimeModel` | `source_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. |
+| `MarketRegimeModel` | `source_01_market_regime` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. Layer 1 source/features must preserve input-frame identity so `trading-model` can pair `1min`, `5min`, `30min`, and `1d` market contexts with compatible prediction horizons. |
 | `SectorContextModel` | `feature_02_sector_context` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
 | Anonymous target candidate builder / Layer 3 input preparation | `source_02_target_candidate_holdings` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Materialized by the Layer 2 feature stage; consumed by downstream target-candidate preparation, not by the core SectorContextModel. |
 | `TargetStateVectorModel` | `source_03_target_state` | candidate-symbol bars, liquidity, and point-in-time target-local evidence | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for target state-vector construction. |
@@ -46,7 +46,7 @@ model_NN_<layer_slug>_diagnostics
 
 Each accepted model layer that needs new `trading-data` acquisition has a control-plane-facing source-backed source under `src/data_source/source_NN_<layer_slug>/`. These sources fetch/prepare external observations needed by the layer; they are not the complete model-input or training-data universe.
 
-Layer 1 accepts `params.start` and `params.end`, reads the reviewed `layer_01_02_market_context_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`.
+Layer 1 accepts `params.start` and `params.end`, reads the reviewed `layer_01_02_market_context_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `source_01_market_regime`. Its feature construction must keep market-context input frames separate. The accepted training/evaluation pairing is `1min -> 5min/10min/30min`, `5min -> 15min/30min/60min`, `30min -> 1h/2h/1d`, and `1d -> 3d/5d/20d`. Future outcomes for those horizons are labels/evaluation indicators, not inference features.
 
 Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `feature_02_sector_context`. It owns deterministic point-in-time evidence for sector/industry behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. The same Layer 2 feature stage also materializes `source_02_target_candidate_holdings` after sector/basket context is available; those holdings rows are downstream candidate-preparation inputs, not core behavior-model inputs.
 

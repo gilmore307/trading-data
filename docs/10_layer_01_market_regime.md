@@ -13,6 +13,21 @@ trading_data.feature_01_market_regime
 
 Historical feeds may legitimately produce zero rows for a requested symbol/month when the instrument was not yet listed or the provider returns a reviewed no-data response. `trading-data` preserves that absence as explicit receipt/manifest evidence with schema headers where possible. It must not fabricate bars, and it should not convert valid absent history into a component failure. Downstream models consume this through coverage and data-quality diagnostics.
 
+## Timeframe boundary
+
+Layer 1 source and feature rows must preserve the observation frame needed by the market-context model. Feature construction may aggregate source evidence into reviewed input frames, but it must not collapse short-horizon and daily evidence into one undifferentiated market state.
+
+Accepted Layer 1 frame/horizon families:
+
+```text
+input_frame = 1min   -> prediction_horizon = 5min, 10min, 30min
+input_frame = 5min   -> prediction_horizon = 15min, 30min, 60min
+input_frame = 30min  -> prediction_horizon = 1h, 2h, 1d
+input_frame = 1d     -> prediction_horizon = 3d, 5d, 20d
+```
+
+`trading-data` owns point-in-time source and deterministic feature construction for the input frame. Future outcome columns for the paired prediction horizon are labels/evaluation evidence and belong outside inference feature construction. Before implementation depends on `input_frame`, `prediction_horizon`, or `market_universe_ref` as SQL business keys, those names must be registered and migrated through `trading-manager`.
+
 ## Input boundary
 
 Layer 1 data may use broad and cross-asset market evidence such as market ETF bars, rates/duration proxies, dollar/commodity proxies, volatility, correlation, breadth, concentration, credit, liquidity, and risk-appetite sensors.
@@ -48,6 +63,7 @@ flowchart LR
 Layer 1 data changes are acceptable when they:
 
 - keep acquisition historical and point-in-time;
+- preserve input-frame identity and do not evaluate short-frame evidence against unrelated long-horizon labels;
 - preserve the broad-market-only boundary and exclude sector rotation, ETF holdings, selected securities, strategy labels, option outcomes, portfolio PnL, and future-return labels;
 - write accepted source/feature outputs to reviewed SQL contracts and keep any local development artifacts ignored outside the cross-repository contract;
 - produce validation, row-count, provenance, and completion evidence without committing generated data or secrets;

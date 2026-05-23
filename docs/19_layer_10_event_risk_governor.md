@@ -61,6 +61,22 @@ Required semantics:
 - Event evidence must preserve lifecycle clocks when the source provides or implies them: awareness, scheduled, published, available, interpretation, resolution, and reaction/evaluation windows.
 - Scheduled-known events and unscheduled surprise events must not be collapsed into the same raw timing shape. Earnings and macro-calendar shells may be visible before results; sudden news is only visible after the first credible source.
 
+The event-standardization route is:
+
+```text
+raw source artifact
+-> point-in-time source evidence row / artifact ref
+-> event_interpretation artifact
+-> standardized event observation row
+-> model-side event_context_vector or Layer 4 candidate training route
+```
+
+`trading-data` owns the raw source artifact, evidence row, artifact refs, clocks, source priority, dedup/canonical metadata, and source-specific parsed fields. It does not own semantic direction, final risk scoring, event attribution, or production Layer 4 acceptance.
+
+For calendar/market-structure families, data rows should preserve source-backed facts such as next market open, non-trading interval minutes, closure type, closure-length bucket, holiday name, early-close flag, pre-holiday-session flag, expiry/rebalance/triple-witching flags, index-event family, and certainty/source refs.
+
+For persistent-regime families, data rows should preserve regime family, candidate topic refs, status, start/end, last material update, affected scopes/entities, decay/staleness rule refs, source-quality evidence, and review refs from `regime-promotion-review`.
+
 Co-event/confounder evidence should be preserved when available:
 
 ```text

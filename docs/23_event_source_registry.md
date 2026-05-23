@@ -11,6 +11,8 @@ Event acquisition has two separate jobs:
 
 Rows produced from this registry are observation evidence only. They do not imply production Layer 4 eligibility, strategy failure attribution, alpha, trade direction, position size, or execution permission. Layer 10 may separately place an event family in the focused/watched event pool, which lets `trading-data` systematically acquire and standardize candidate observations for offline Layer 4 training and Layer 5 validation.
 
+Raw source rows are not model-ready semantics. The required route is source acquisition -> point-in-time evidence row/artifact ref -> `event_interpretation` artifact -> standardized event observation row. `trading-data` owns acquisition, clocks, source priority, dedup/canonical metadata, source-specific parsed fields, and artifact refs. `trading-model` owns semantic interpretation, event-context vector scoring, failure attribution, and Layer 4/Layer 5 validation.
+
 ## Required Clocks
 
 Every event observation should preserve the clocks that are available for its source class:
@@ -73,6 +75,64 @@ Future events may enter the global event observation pool when `available_time <
 | Earnings and issuer events | SEC EDGAR filings, company IR archives, accepted historical earnings calendars | company IR, SEC EDGAR submissions, Nasdaq/other calendars as tentative discovery | vendor calendars for tentative dates only | company/SEC official artifacts outrank calendars; result/guidance facts require visible official artifact |
 | Index reconstitution / rebalance | index provider announcements, methodology calendars, archived PDF/list files | FTSE Russell/LSEG, Nasdaq indexes, MSCI, S&P DJI official announcements/calendars | provider/member files where licensed and approved | calendar window can be known before constituent/result files; membership changes require official announcement visibility |
 | Persistent event regimes | high-frequency reviewed news-topic timelines plus official action archives where available | high-frequency reviewed news-topic monitoring plus official action feeds/pages where available | Reuters/AP/Bloomberg/WSJ/FT style sources and official refs as evidence | same-day news is not required after regime is active; topic-frequency promotion must be agent-reviewed and decay-rule backed |
+
+## Standardized Event Observation Requirements
+
+Every event family must preserve the source fields needed for downstream `event_interpretation` and standardized quantification. The shared minimum is:
+
+```text
+event_id
+canonical_event_id
+source_artifact_ref
+source_name
+source_type
+source_priority
+dedup_status
+coverage_reason
+covered_by_event_id
+published_time
+available_time
+lifecycle_type
+event_family
+certainty_status
+affected_scope_hint
+affected_entities_hint
+review_ref
+```
+
+Trading-calendar and market-structure observations should also preserve:
+
+```text
+next_market_open_time
+non_trading_interval_minutes
+closure_type
+closure_length_bucket
+holiday_name
+early_close_flag
+pre_holiday_session_flag
+expiry_window_flag
+triple_witching_flag
+index_rebalance_flag
+index_event_family
+```
+
+Persistent-regime observations should also preserve:
+
+```text
+regime_family
+candidate_regime_ref
+regime_status
+regime_start_time
+regime_end_time
+last_material_update_time
+affected_scope
+affected_entities
+decay_rule_ref
+staleness_review_time
+regime_review_ref
+```
+
+These fields are standardization evidence. Layer 10 and review decide whether they become focused-pool candidates or accepted Layer 4 production conditioning.
 
 ## Macro TE Route
 

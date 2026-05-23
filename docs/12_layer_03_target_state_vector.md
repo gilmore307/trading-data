@@ -107,3 +107,5 @@ The first target-state feature contract should use sparse synchronized state win
 ```
 
 These windows are for trailing return, volatility, volume, liquidity, and relative-strength state summaries. They are not downstream action variants and should not create a variant universe.
+
+Each market, sector, target, and cross-state block should expose a `multi_frame_state` map keyed by those same windows. Target frames are derived from completed 1-minute source bars; market/sector frames project point-in-time upstream context; cross-state frames compare target behavior against market and sector behavior at the matching frame. The 15-minute scalar fields may remain for compatibility, but model training should consume the explicit multi-frame map.

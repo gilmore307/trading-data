@@ -71,6 +71,9 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
             )
 
         target_state = row["target_state_features"]
+        self.assertEqual(set(target_state["multi_frame_state"]), set(expected_windows))
+        self.assertAlmostEqual(target_state["multi_frame_state"]["15min"]["return"], 115 / 100 - 1)
+        self.assertIn("path_stability", target_state["multi_frame_state"]["15min"])
         self.assertAlmostEqual(target_state["target_direction_return_shape"]["return_15min"], 115 / 100 - 1)
         self.assertIn("target_liquidity_tradability_state", target_state)
         self.assertIn("target_trend_age_state", target_state)
@@ -82,6 +85,8 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertGreater(target_state["target_vwap_location_state"]["vwap_distance_pct"], 0)
 
         cross_state = row["cross_state_features"]
+        self.assertEqual(set(cross_state["multi_frame_state"]), set(expected_windows))
+        self.assertAlmostEqual(cross_state["multi_frame_state"]["15min"]["target_vs_market_residual_direction"], (115 / 100 - 1) - 0.03)
         self.assertAlmostEqual(cross_state["target_vs_market_residual_direction"], (115 / 100 - 1) - 0.03)
         self.assertAlmostEqual(cross_state["target_vs_sector_residual_direction"], (115 / 100 - 1) - 0.06)
         self.assertEqual(cross_state["sector_confirmation_state"], "sector_confirmed")

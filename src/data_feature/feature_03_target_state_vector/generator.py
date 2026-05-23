@@ -293,15 +293,32 @@ def _project_context(context: ContextRow | None, *, groups: Sequence[str], defau
     projected: dict[str, Any] = {
         "state_observation_windows": list(STATE_WINDOW_LABELS),
         "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
+        "multi_frame_state": {},
     }
     if context is None:
         projected.update({group: None for group in groups})
         projected[default_key] = {}
+        projected["multi_frame_state"] = {label: {} for label in STATE_WINDOW_LABELS}
         return projected
     payload = dict(context.payload)
     projected.update({group: payload.get(group) for group in groups})
     projected[default_key] = {key: value for key, value in payload.items() if key not in groups}
+    projected["multi_frame_state"] = _context_multi_frame_state(payload)
     return projected
+
+
+def _context_multi_frame_state(payload: Mapping[str, Any]) -> dict[str, dict[str, float | None]]:
+    frames: dict[str, dict[str, float | None]] = {}
+    for window, label in zip(STATE_WINDOWS, STATE_WINDOW_LABELS):
+        frames[label] = {
+            "return": _first_float(payload, f"return_{label}", f"market_return_{label}", f"sector_return_{label}"),
+            "direction_score": _first_float(payload, f"direction_score_{label}", f"1_market_direction_score_{label}", f"2_sector_relative_direction_score_{label}"),
+            "volatility": _first_float(payload, f"realized_vol_{label}", f"market_volatility_{label}", f"sector_volatility_{label}"),
+            "trend_quality": _first_float(payload, f"trend_quality_{label}", f"1_trend_quality_score_{label}", f"2_sector_trend_quality_score_{label}"),
+            "liquidity_tradability": _first_float(payload, f"liquidity_tradability_{label}", "2_sector_liquidity_tradability_score"),
+            "observation_minutes": float(window),
+        }
+    return frames
 
 
 def _target_state_features(
@@ -357,6 +374,7 @@ def _target_state_features(
         state["target_exhaustion_decay_state"][f"volatility_exhaustion_score_{window}min"] = _volatility_exhaustion_score(closes, index, window)
         state["target_exhaustion_decay_state"][f"late_trend_risk_score_{window}min"] = _late_trend_risk_score(closes, volumes, index, window)
 
+    state["multi_frame_state"] = _target_multi_frame_state(state)
     state["target_trend_age_state"]["time_since_last_direction_flip_bars"] = _time_since_last_direction_flip(closes, index)
     state["target_trend_quality_state"]["return_5m_minus_15m"] = _delta(
         state["target_direction_return_shape"].get("return_5min"),
@@ -381,36 +399,99 @@ def _target_state_features(
     return state
 
 
+def _target_multi_frame_state(target_state: Mapping[str, Any]) -> dict[str, dict[str, float | int | None]]:
+    direction = target_state.get("target_direction_return_shape") if isinstance(target_state.get("target_direction_return_shape"), Mapping) else {}
+    volatility = target_state.get("target_volatility_range_state") if isinstance(target_state.get("target_volatility_range_state"), Mapping) else {}
+    trend = target_state.get("target_trend_quality_state") if isinstance(target_state.get("target_trend_quality_state"), Mapping) else {}
+    trend_age = target_state.get("target_trend_age_state") if isinstance(target_state.get("target_trend_age_state"), Mapping) else {}
+    exhaustion = target_state.get("target_exhaustion_decay_state") if isinstance(target_state.get("target_exhaustion_decay_state"), Mapping) else {}
+    volume = target_state.get("target_volume_activity_state") if isinstance(target_state.get("target_volume_activity_state"), Mapping) else {}
+    frames: dict[str, dict[str, float | int | None]] = {}
+    for window, label in zip(STATE_WINDOWS, STATE_WINDOW_LABELS):
+        frames[label] = {
+            "return": _safe_float(direction.get(f"return_{label}")),
+            "realized_vol": _safe_float(volatility.get(f"realized_vol_{label}")),
+            "atr_pct": _safe_float(volatility.get(f"atr_pct_{label}")),
+            "range_position": _safe_float(volatility.get(f"range_position_{label}")),
+            "relative_volume": _safe_float(volume.get(f"relative_volume_{label}")),
+            "relative_dollar_volume": _safe_float(volume.get(f"relative_dollar_volume_{label}")),
+            "trend_quality": _safe_float(trend.get(f"trend_quality_{label}")),
+            "path_stability": _safe_float(trend.get(f"path_stability_{label}")),
+            "trend_age_bars": _safe_float(trend_age.get(f"trend_age_bars_{label}")),
+            "direction_flip_count": _safe_float(trend_age.get(f"direction_flip_count_{label}")),
+            "state_persistence_score": _safe_float(trend_age.get(f"state_persistence_score_{label}")),
+            "late_trend_risk_score": _safe_float(exhaustion.get(f"late_trend_risk_score_{label}")),
+            "observation_minutes": float(window),
+        }
+    return frames
+
+
 def _cross_state_features(target_state: Mapping[str, Any], market_state: Mapping[str, Any], sector_state: Mapping[str, Any]) -> dict[str, Any]:
-    target_return = _nested_float(target_state, "target_direction_return_shape", "return_15min")
-    target_vol = _nested_float(target_state, "target_volatility_range_state", "realized_vol_15min")
     market_payload = market_state.get("market_context_payload") if isinstance(market_state.get("market_context_payload"), Mapping) else {}
     sector_payload = sector_state.get("sector_context_payload") if isinstance(sector_state.get("sector_context_payload"), Mapping) else {}
-    market_return = _first_float(market_payload, "market_return_15min", "market_return", "return_15min", "relative_strength_return")
-    sector_return = _first_float(sector_payload, "sector_return_15min", "sector_return", "return_15min", "relative_strength_return")
-    market_vol = _first_float(market_payload, "market_volatility_15min", "market_volatility", "realized_vol_15min")
-    sector_vol = _first_float(sector_payload, "sector_volatility_15min", "sector_volatility", "realized_vol_15min", "relative_strength_realized_vol_20d_ratio")
     beta_sector_market = _first_float(sector_payload, "beta_sector_market", "sector_market_beta", "2_conditional_beta_score")
     beta_target_market = _first_float(sector_payload, "beta_target_market", "target_market_beta")
     beta_target_sector = _first_float(sector_payload, "beta_target_sector", "target_sector_beta")
-    simple_market_residual = _delta(target_return, market_return)
-    simple_sector_residual = _delta(target_return, sector_return)
-    sector_beta_residual = _beta_residual(sector_return, ((market_return, beta_sector_market),))
-    target_beta_residual = _beta_residual(target_return, ((market_return, beta_target_market), (sector_beta_residual, beta_target_sector)))
+    multi_frame = _cross_multi_frame_state(
+        target_state=target_state,
+        market_payload=market_payload,
+        sector_payload=sector_payload,
+        beta_sector_market=beta_sector_market,
+        beta_target_market=beta_target_market,
+        beta_target_sector=beta_target_sector,
+    )
+    frame_15 = multi_frame.get("15min", {})
     return {
         "state_observation_windows": list(STATE_WINDOW_LABELS),
         "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
-        "target_vs_market_residual_direction": simple_market_residual,
-        "target_vs_sector_residual_direction": target_beta_residual if target_beta_residual is not None else simple_sector_residual,
-        "target_vs_market_volatility": _safe_div(target_vol, market_vol),
-        "target_vs_sector_volatility": _safe_div(target_vol, sector_vol),
+        "multi_frame_state": multi_frame,
+        "target_vs_market_residual_direction": frame_15.get("target_vs_market_residual_direction"),
+        "target_vs_sector_residual_direction": frame_15.get("target_vs_sector_residual_direction"),
+        "target_vs_market_volatility": frame_15.get("target_vs_market_volatility"),
+        "target_vs_sector_volatility": frame_15.get("target_vs_sector_volatility"),
         "target_market_beta_correlation": beta_target_market,
         "target_sector_beta_correlation": beta_target_sector,
-        "sector_confirmation_state": _sector_confirmation(target_return, sector_return),
-        "idiosyncratic_residual_state": target_beta_residual if target_beta_residual is not None else _delta(simple_market_residual, sector_return),
+        "sector_confirmation_state": frame_15.get("sector_confirmation_state"),
+        "idiosyncratic_residual_state": frame_15.get("idiosyncratic_residual_state"),
         "relative_liquidity_tradability_state": None,
         "beta_adjustment_policy": "uses_beta_adjusted_target_minus_market_and_sector_residuals_when_point_in_time_betas_are_available_else_simple_residuals",
     }
+
+
+def _cross_multi_frame_state(
+    *,
+    target_state: Mapping[str, Any],
+    market_payload: Mapping[str, Any],
+    sector_payload: Mapping[str, Any],
+    beta_sector_market: float | None,
+    beta_target_market: float | None,
+    beta_target_sector: float | None,
+) -> dict[str, dict[str, float | str | None]]:
+    frames: dict[str, dict[str, float | str | None]] = {}
+    for label in STATE_WINDOW_LABELS:
+        target_return = _nested_float(target_state, "target_direction_return_shape", f"return_{label}")
+        target_vol = _nested_float(target_state, "target_volatility_range_state", f"realized_vol_{label}")
+        market_return = _first_float(market_payload, f"market_return_{label}", "market_return", f"return_{label}", "relative_strength_return")
+        sector_return = _first_float(sector_payload, f"sector_return_{label}", "sector_return", f"return_{label}", "relative_strength_return")
+        market_vol = _first_float(market_payload, f"market_volatility_{label}", "market_volatility", f"realized_vol_{label}")
+        sector_vol = _first_float(sector_payload, f"sector_volatility_{label}", "sector_volatility", f"realized_vol_{label}", "relative_strength_realized_vol_20d_ratio")
+        simple_market_residual = _delta(target_return, market_return)
+        simple_sector_residual = _delta(target_return, sector_return)
+        sector_beta_residual = _beta_residual(sector_return, ((market_return, beta_sector_market),))
+        target_beta_residual = _beta_residual(target_return, ((market_return, beta_target_market), (sector_beta_residual, beta_target_sector)))
+        sector_residual = target_beta_residual if target_beta_residual is not None else simple_sector_residual
+        frames[label] = {
+            "target_return": target_return,
+            "market_return": market_return,
+            "sector_return": sector_return,
+            "target_vs_market_residual_direction": simple_market_residual,
+            "target_vs_sector_residual_direction": sector_residual,
+            "target_vs_market_volatility": _safe_div(target_vol, market_vol),
+            "target_vs_sector_volatility": _safe_div(target_vol, sector_vol),
+            "sector_confirmation_state": _sector_confirmation(target_return, sector_return),
+            "idiosyncratic_residual_state": sector_residual if sector_residual is not None else _delta(simple_market_residual, sector_return),
+        }
+    return frames
 
 
 def _feature_quality(index: int, bar: Bar, market_context: ContextRow | None, sector_context: ContextRow | None) -> dict[str, Any]:

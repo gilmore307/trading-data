@@ -33,6 +33,12 @@ V1 sparse synchronized state windows:
 
 These are state observation windows, not downstream action variants. They are synchronized across market, sector, target, and cross-state blocks.
 
+Each block also exposes a `multi_frame_state` map keyed by the same windows. The map is the canonical feature route for Layer 3 state fitting:
+
+- market/sector frames project point-in-time context return, direction, volatility, trend quality, and liquidity/tradability values when supplied by upstream rows;
+- target frames derive completed-bar return, volatility/range, volume, trend quality, path stability, persistence, and late-trend risk from target-local source rows;
+- cross-state frames compare target return/volatility against market and sector context for the matching window, falling back to the 15-minute frame only for legacy scalar compatibility.
+
 ## Required row keys
 
 - `available_time`

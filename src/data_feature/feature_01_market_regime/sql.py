@@ -66,10 +66,9 @@ def fetch_source_bars(
     where: list[str] = [
         """
         (
-          lower(timeframe) NOT IN ('1m', '1min', '1minute')
+          lower(timeframe) NOT IN ('1m', '1min', '1minute', '5m', '5min', '5minute', '30m', '30min', '30minute')
           OR (
             (timestamp AT TIME ZONE 'America/New_York')::time BETWEEN TIME '09:30' AND TIME '16:00'
-            AND EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)
             AND EXTRACT(SECOND FROM timestamp AT TIME ZONE 'America/New_York') = 0
           )
         )
@@ -116,27 +115,72 @@ def write_feature_rows_sql(
     for row in rows:
         if "snapshot_time" not in row:
             raise ValueError("feature rows must include snapshot_time")
+        if "input_frame" not in row:
+            raise ValueError("feature rows must include input_frame")
+        if "prediction_horizon" not in row:
+            raise ValueError("feature rows must include prediction_horizon")
+        if "market_universe_ref" not in row:
+            raise ValueError("feature rows must include market_universe_ref")
 
     qualified_table = _qualified(target_schema, target_table)
     cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(target_schema)}")
     cursor.execute(
         f"""
         CREATE TABLE IF NOT EXISTS {qualified_table} (
-          "snapshot_time" TIMESTAMPTZ PRIMARY KEY,
-          "feature_payload_json" JSONB NOT NULL DEFAULT '{{}}'::jsonb
+          "snapshot_time" TIMESTAMPTZ NOT NULL,
+          "input_frame" TEXT NOT NULL,
+          "prediction_horizon" TEXT NOT NULL,
+          "market_universe_ref" TEXT NOT NULL,
+          "feature_payload_json" JSONB NOT NULL DEFAULT '{{}}'::jsonb,
+          PRIMARY KEY ("snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref")
         )
+        """
+    )
+    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"input_frame\" TEXT NOT NULL DEFAULT '30min'")
+    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"prediction_horizon\" TEXT NOT NULL DEFAULT '1d'")
+    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"market_universe_ref\" TEXT NOT NULL DEFAULT 'layer_01_02_market_context_etf_universe'")
+    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"feature_payload_json\" JSONB NOT NULL DEFAULT '{{}}'::jsonb")
+    cursor.execute(
+        f"""
+        DO $$
+        DECLARE primary_key_name text;
+        BEGIN
+          SELECT conname INTO primary_key_name
+          FROM pg_constraint
+          WHERE conrelid = '{target_schema}.{target_table}'::regclass
+            AND contype = 'p';
+          IF primary_key_name IS NOT NULL THEN
+            EXECUTE format('ALTER TABLE {qualified_table} DROP CONSTRAINT %I', primary_key_name);
+          END IF;
+        END $$;
+        """
+    )
+    cursor.execute(
+        f"""
+        ALTER TABLE {qualified_table}
+        ADD PRIMARY KEY ("snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref")
         """
     )
 
     insert_sql = f"""
-        INSERT INTO {qualified_table} ("snapshot_time", "feature_payload_json")
-        VALUES (%s, %s::jsonb)
-        ON CONFLICT ("snapshot_time") DO UPDATE SET
+        INSERT INTO {qualified_table} ("snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref", "feature_payload_json")
+        VALUES (%s, %s, %s, %s, %s::jsonb)
+        ON CONFLICT ("snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref") DO UPDATE SET
           "feature_payload_json" = EXCLUDED."feature_payload_json"
     """
+    identity_columns = {"snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref"}
     for row in rows:
-        payload = {key: value for key, value in row.items() if key != "snapshot_time"}
-        cursor.execute(insert_sql, [row.get("snapshot_time"), json.dumps(payload, sort_keys=True, default=str)])
+        payload = {key: value for key, value in row.items() if key not in identity_columns}
+        cursor.execute(
+            insert_sql,
+            [
+                row.get("snapshot_time"),
+                row.get("input_frame"),
+                row.get("prediction_horizon"),
+                row.get("market_universe_ref"),
+                json.dumps(payload, sort_keys=True, default=str),
+            ],
+        )
 
 
 def _parse_time_bound(value: str | datetime | None) -> datetime | None:
@@ -194,6 +238,7 @@ def generate_sql(
     snapshot_times: Sequence[str] | None,
     snapshot_start: str | None = None,
     snapshot_end: str | None = None,
+    input_frames: Sequence[str] = ("30min",),
 ) -> int:
     generator = _load_generator()
     psycopg, dict_row = _load_psycopg()
@@ -211,14 +256,17 @@ def generate_sql(
                 universe_rows=generator.read_csv_rows(universe_csv),
                 combination_rows=generator.read_csv_rows(combinations_csv),
             )
-            bounded_snapshot_times = snapshot_times
-            if bounded_snapshot_times is None and (snapshot_start or snapshot_end):
-                bounded_snapshot_times = filter_snapshot_times(
-                    generator.infer_snapshot_times(inputs),
-                    snapshot_start=snapshot_start,
-                    snapshot_end=snapshot_end,
-                )
-            rows = generator.generate_rows(inputs, snapshot_times=bounded_snapshot_times)
+            rows: list[dict[str, Any]] = []
+            if snapshot_times is not None:
+                rows = generator.generate_rows(inputs, snapshot_times=snapshot_times, input_frames=input_frames)
+            else:
+                for input_frame in input_frames:
+                    bounded_snapshot_times = filter_snapshot_times(
+                        generator.infer_snapshot_times(inputs, input_frame=input_frame),
+                        snapshot_start=snapshot_start,
+                        snapshot_end=snapshot_end,
+                    )
+                    rows.extend(generator.generate_rows(inputs, snapshot_times=bounded_snapshot_times, input_frames=(input_frame,)))
             write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
             return len(rows)
 
@@ -237,6 +285,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--snapshot-time", action="append", help="Optional ISO snapshot time. Repeat for multiple snapshots. Defaults to SPY 30-minute source-bar timestamps.")
     parser.add_argument("--snapshot-start", help="Optional lower timestamp bound for inferred snapshot rows. Use with a wider source-start lookback.")
     parser.add_argument("--snapshot-end", help="Optional upper timestamp bound for inferred snapshot rows. The bound is half-open.")
+    parser.add_argument("--input-frame", action="append", choices=["1min", "5min", "30min", "1d"], help="Layer 1 input frame to generate. Repeat for multiple frames. Defaults to 30min.")
     args = parser.parse_args(argv)
 
     row_count = generate_sql(
@@ -252,8 +301,7 @@ def main(argv: list[str] | None = None) -> int:
         snapshot_times=args.snapshot_time,
         snapshot_start=args.snapshot_start,
         snapshot_end=args.snapshot_end,
+        input_frames=tuple(args.input_frame or ["30min"]),
     )
     print(f"generated {row_count} rows into {args.target_schema}.{args.target_table}")
     return 0
-
-

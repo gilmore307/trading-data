@@ -96,6 +96,9 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         row = generator.generate_row(inputs, snapshot)
 
         self.assertEqual(row["snapshot_time"], snapshot.isoformat())
+        self.assertEqual(row["input_frame"], "30min")
+        self.assertEqual(row["prediction_horizon"], "1d")
+        self.assertEqual(row["market_universe_ref"], "layer_01_02_market_context_etf_universe")
         self.assertAlmostEqual(row["spy_return_30m"], math.log(370.0 / 369.0))
         self.assertAlmostEqual(row["qqq_spy_30m"], math.log((525.0 / 370.0) / (520.0 / 369.0)))
         self.assertIn("spy_realized_vol_20d", row)
@@ -116,7 +119,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         self.assertNotEqual(row_before_close["spy_return_1d"], row_at_close["spy_return_1d"])
 
-    def test_sql_fetch_downsamples_one_minute_bars_to_decision_surface(self) -> None:
+    def test_sql_fetch_preserves_regular_session_intraday_bars(self) -> None:
         class FakeCursor:
             def __init__(self) -> None:
                 self.calls: list[tuple[str, list[object] | None]] = []
@@ -132,8 +135,8 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="source_01_market_regime")
 
         sql_text = cursor.calls[0][0]
-        self.assertIn("lower(timeframe) NOT IN ('1m', '1min', '1minute')", sql_text)
-        self.assertIn("EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)", sql_text)
+        self.assertIn("lower(timeframe) NOT IN ('1m', '1min', '1minute', '5m', '5min', '5minute', '30m', '30min', '30minute')", sql_text)
+        self.assertNotIn("EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/New_York') IN (0, 30)", sql_text)
         self.assertIn("BETWEEN TIME '09:30' AND TIME '16:00'", sql_text)
 
     def test_sql_writer_stores_generated_features_in_jsonb_payload(self) -> None:
@@ -148,6 +151,9 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         rows = [
             {
                 "snapshot_time": "2026-01-02T16:00:00-05:00",
+                "input_frame": "30min",
+                "prediction_horizon": "1d",
+                "market_universe_ref": "layer_01_02_market_context_etf_universe",
                 "spy_return_30m": 0.01,
                 "qqq_spy_return_corr_20d": None,
             }
@@ -164,11 +170,15 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_01_market_regime"', joined_sql)
         self.assertIn('"feature_payload_json" JSONB NOT NULL DEFAULT', joined_sql)
         self.assertNotIn('ADD COLUMN IF NOT EXISTS "spy_return_30m" DOUBLE PRECISION', joined_sql)
-        self.assertIn('ON CONFLICT ("snapshot_time") DO UPDATE SET', joined_sql)
+        self.assertIn('PRIMARY KEY ("snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref")', joined_sql)
+        self.assertIn('ON CONFLICT ("snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]
         self.assertIsNotNone(insert_params)
         self.assertEqual(insert_params[0], "2026-01-02T16:00:00-05:00")
-        self.assertIn('"spy_return_30m": 0.01', insert_params[1])
+        self.assertEqual(insert_params[1], "30min")
+        self.assertEqual(insert_params[2], "1d")
+        self.assertEqual(insert_params[3], "layer_01_02_market_context_etf_universe")
+        self.assertIn('"spy_return_30m": 0.01', insert_params[4])
 
     def test_inferred_snapshots_use_30_minute_decision_surface(self) -> None:
         inputs, snapshot = self._inputs()
@@ -177,6 +187,24 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertIn(snapshot, inferred)
         self.assertIn(snapshot - timedelta(minutes=30), inferred)
         self.assertNotIn(snapshot.replace(hour=9, minute=30), inferred)
+
+    def test_generate_rows_can_emit_multiple_frame_horizon_identities(self) -> None:
+        inputs, snapshot = self._inputs()
+
+        rows = generator.generate_rows(inputs, snapshot_times=[snapshot], input_frames=("1min", "30min"))
+
+        identities = {(row["input_frame"], row["prediction_horizon"]) for row in rows}
+        self.assertEqual(
+            identities,
+            {
+                ("1min", "5min"),
+                ("1min", "10min"),
+                ("1min", "30min"),
+                ("30min", "1h"),
+                ("30min", "2h"),
+                ("30min", "1d"),
+            },
+        )
 
     def test_sql_snapshot_bounds_filter_lookback_context(self) -> None:
         snapshots = [
@@ -273,7 +301,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertEqual(inputs.market_state_symbols, sorted(inputs.market_state_symbols))
         self.assertNotIn("XLK", inputs.market_state_symbols)
         self.assertTrue(all(combo.model_layer == "layer_01_market_regime" for combo in generator._market_regime_combinations(inputs)))
-        self.assertEqual(len(row), 744)
+        self.assertEqual(len(row), 748)
         self.assertFalse(any(key.startswith("ibit_") for key in row))
         self.assertFalse(any(key.startswith("etha_") for key in row))
         self.assertFalse(any(key.startswith("fsol_") for key in row))

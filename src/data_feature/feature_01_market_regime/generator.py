@@ -21,6 +21,13 @@ MARKET_STATE_TYPE = "market_state_etf"
 SECTOR_OBSERVATION_TYPE = "sector_observation_etf"
 LAYER_01_MARKET_REGIME = "layer_01_market_regime"
 LAYER_02_SECTOR_CONTEXT = "layer_02_sector_context"
+DEFAULT_MARKET_UNIVERSE_REF = "layer_01_02_market_context_etf_universe"
+INPUT_FRAME_HORIZONS: dict[str, tuple[str, ...]] = {
+    "1min": ("5min", "10min", "30min"),
+    "5min": ("15min", "30min", "60min"),
+    "30min": ("1h", "2h", "1d"),
+    "1d": ("3d", "5d", "20d"),
+}
 MODEL2_ROTATION_COMBINATION_TYPES = {"sector_rotation", "daily_context"}
 SINGLE_RETURN_TREND_EXCLUDED_SYMBOLS = {"SHY"}
 RETURN_LOOKBACKS = ("30m", "1d", "5d", "20d")
@@ -99,6 +106,41 @@ def _parse_timestamp(value: Any) -> datetime:
 
 def _is_daily_timeframe(value: Any) -> bool:
     return str(value or "").strip().lower() in {"1d", "1day", "day", "daily", "1day"}
+
+
+def normalize_input_frame(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    aliases = {
+        "1m": "1min",
+        "1min": "1min",
+        "1minute": "1min",
+        "5m": "5min",
+        "5min": "5min",
+        "5minute": "5min",
+        "30m": "30min",
+        "30min": "30min",
+        "30minute": "30min",
+        "1h": "1h",
+        "60m": "1h",
+        "60min": "1h",
+        "1d": "1d",
+        "1day": "1d",
+        "day": "1d",
+        "daily": "1d",
+    }
+    normalized = aliases.get(text)
+    if normalized is None:
+        raise ValueError(f"unsupported Layer 1 input frame: {value!r}")
+    if normalized == "1h":
+        return "30min"
+    if normalized not in INPUT_FRAME_HORIZONS:
+        raise ValueError(f"unsupported Layer 1 input frame: {value!r}")
+    return normalized
+
+
+def prediction_horizons_for_input_frame(input_frame: str) -> tuple[str, ...]:
+    normalized = normalize_input_frame(input_frame)
+    return INPUT_FRAME_HORIZONS[normalized]
 
 
 def _daily_available_time(timestamp: datetime) -> datetime:
@@ -222,30 +264,87 @@ def build_inputs(
     )
 
 
-def infer_snapshot_times(inputs: MarketRegimeInputs, *, anchor_symbol: str = "SPY") -> list[datetime]:
+def infer_snapshot_times(inputs: MarketRegimeInputs, *, anchor_symbol: str = "SPY", input_frame: str = "30min") -> list[datetime]:
+    normalized_frame = normalize_input_frame(input_frame)
     bars = inputs.bars_by_symbol.get(anchor_symbol.upper(), [])
-    times = {bar.available_time for bar in bars if not _is_daily_timeframe(bar.timeframe) and _is_30_minute_snapshot_time(bar.available_time)}
+    if normalized_frame == "1d":
+        times = {bar.available_time for bar in bars if _is_daily_timeframe(bar.timeframe)}
+        return sorted(times)
+    times = {
+        bar.available_time
+        for bar in bars
+        if not _is_daily_timeframe(bar.timeframe) and _is_snapshot_time_for_input_frame(bar.available_time, normalized_frame)
+    }
     return sorted(times)
 
 
-def _is_30_minute_snapshot_time(value: datetime) -> bool:
+def _is_snapshot_time_for_input_frame(value: datetime, input_frame: str) -> bool:
     et_value = value.astimezone(ET)
     regular_open = time(9, 30)
     regular_close = time(16, 0)
     local_time = et_value.time()
-    if local_time <= regular_open or local_time > regular_close:
+    if local_time < regular_open or local_time > regular_close:
         return False
-    return et_value.second == 0 and et_value.microsecond == 0 and et_value.minute in {0, 30}
+    if et_value.second != 0 or et_value.microsecond != 0:
+        return False
+    if input_frame == "1min":
+        return True
+    if input_frame == "5min":
+        return et_value.minute % 5 == 0
+    if input_frame == "30min":
+        return et_value.minute in {0, 30}
+    raise ValueError(f"unsupported Layer 1 input frame: {input_frame!r}")
 
 
-def generate_rows(inputs: MarketRegimeInputs, snapshot_times: Sequence[str | datetime] | None = None) -> list[dict[str, Any]]:
-    snapshots = [_parse_timestamp(value) if not isinstance(value, datetime) else value.astimezone(ET) for value in (snapshot_times or infer_snapshot_times(inputs))]
-    return [generate_row(inputs, snapshot_time) for snapshot_time in sorted(snapshots)]
+def _is_30_minute_snapshot_time(value: datetime) -> bool:
+    return _is_snapshot_time_for_input_frame(value, "30min")
 
 
-def generate_row(inputs: MarketRegimeInputs, snapshot_time: datetime) -> dict[str, Any]:
+def generate_rows(
+    inputs: MarketRegimeInputs,
+    snapshot_times: Sequence[str | datetime] | None = None,
+    *,
+    input_frames: Sequence[str] = ("30min",),
+    market_universe_ref: str = DEFAULT_MARKET_UNIVERSE_REF,
+) -> list[dict[str, Any]]:
+    normalized_frames = tuple(normalize_input_frame(input_frame) for input_frame in input_frames)
+    rows: list[dict[str, Any]] = []
+    for normalized_frame in normalized_frames:
+        frame_snapshot_times = snapshot_times or infer_snapshot_times(inputs, input_frame=normalized_frame)
+        snapshots = [_parse_timestamp(value) if not isinstance(value, datetime) else value.astimezone(ET) for value in frame_snapshot_times]
+        for snapshot_time in sorted(snapshots):
+            for prediction_horizon in prediction_horizons_for_input_frame(normalized_frame):
+                rows.append(
+                    generate_row(
+                        inputs,
+                        snapshot_time,
+                        input_frame=normalized_frame,
+                        prediction_horizon=prediction_horizon,
+                        market_universe_ref=market_universe_ref,
+                    )
+                )
+    return rows
+
+
+def generate_row(
+    inputs: MarketRegimeInputs,
+    snapshot_time: datetime,
+    *,
+    input_frame: str = "30min",
+    prediction_horizon: str = "1d",
+    market_universe_ref: str = DEFAULT_MARKET_UNIVERSE_REF,
+) -> dict[str, Any]:
     snapshot_time = snapshot_time.astimezone(ET)
-    row: dict[str, Any] = {"snapshot_time": snapshot_time.isoformat()}
+    normalized_frame = normalize_input_frame(input_frame)
+    if prediction_horizon not in prediction_horizons_for_input_frame(normalized_frame):
+        raise ValueError(f"prediction horizon {prediction_horizon!r} is not valid for input frame {normalized_frame!r}")
+    row: dict[str, Any] = {
+        "snapshot_time": snapshot_time.isoformat(),
+        "input_frame": normalized_frame,
+        "prediction_horizon": prediction_horizon,
+        "market_universe_ref": str(market_universe_ref or DEFAULT_MARKET_UNIVERSE_REF),
+        "feature_bar_grain": normalized_frame,
+    }
 
     daily_cache: dict[str, list[Bar]] = {}
     close_cache: dict[tuple[str, datetime], float | None] = {}

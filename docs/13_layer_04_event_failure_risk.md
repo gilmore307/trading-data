@@ -18,6 +18,15 @@ Layer 4 may reference evidence produced from accepted upstream event/feed artifa
 
 `trading-data` may only add Layer 4 data work when a reviewed contract requires a real point-in-time source observation or deterministic feature package. It must not automatically promote Layer 10 research events into Layer 4.
 
+## Event partitions and retention
+
+Any accepted Layer 4 data work must keep event evidence split into:
+
+- global/common event context: macro data releases, broad market policy/geopolitical/rates/liquidity events, sector or industry news, and other reusable context for all targets or sector baskets;
+- target event context: symbol/issuer/target-specific news, SEC filings, earnings/guidance artifacts, same-symbol option events, corporate actions, and other target-scoped evidence.
+
+Training-fold cleanup may remove only the fold-local target event working set for the completed or abandoned fold. It must not remove global/common event rows, shared macro/sector/political evidence, reviewed global event-family packets, or reusable event references. Fold-local target data should reference global event rows instead of copying them into a namespace that lifecycle cleanup can delete.
+
 ## Non-ownership
 
 `trading-data` must not emit:

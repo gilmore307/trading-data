@@ -8,9 +8,9 @@ Layer 4 is `EventFailureRiskModel`. It conditions alpha confidence using agent-r
 
 Layer 4 is the quantitative event-failure-risk model. `trading-data` may preserve point-in-time event observation rows and support refs for Layer 4, but it does not decide whether an event relationship exists, whether a co-event caused the failure, or how much risk Layer 4 should score.
 
-Trading-calendar and market-structure dates are scheduled event-family evidence for Layer 4 when they can change liquidity, de-risking, forced flow, gap behavior, or path risk. Ordinary overnight, Friday/weekend de-risking, holiday and long-weekend closures, early closes, Thanksgiving/Christmas closures, triple-witching, major option-expiry windows, index reconstitution, Nasdaq-100 rebalance, and similar dates remain observation evidence until a reviewed Layer 10/Layer 4 supervision packet accepts the relationship.
+Trading-calendar and market-structure dates are scheduled event-family evidence for Layer 4 when they can change liquidity, de-risking, forced flow, gap behavior, or path risk. Ordinary overnight, Friday/weekend de-risking, holiday and long-weekend closures, early closes, Thanksgiving/Christmas closures, triple-witching, major option-expiry windows, index reconstitution, Nasdaq-100 rebalance, and similar dates remain global observation evidence until Layer 10 links a failure to the family and places it in the focused/watched event pool for candidate training and validation. Production conditioning still requires a later accepted supervision packet.
 
-The data-side task is to build and preserve point-in-time observations in the global event observation pool. Calendar/market-structure rows make key dates knowable before model evaluation. Persistent-regime rows make special periods knowable across intervals even when no fresh article appears on a given decision date. These rows are not active Layer 4 training rows until Layer 10/review promotes a specific relationship into the watched event pool.
+The data-side task is to build and preserve point-in-time observations in the global event observation pool. Calendar/market-structure rows make key dates knowable before model evaluation. Persistent-regime rows make special periods knowable across intervals even when no fresh article appears on a given decision date. These rows are not production Layer 4 conditioning rows by default. When Layer 10 links a failure to a candidate family, `trading-data` may systematically acquire and standardize rows for the focused/watched event pool so Layer 4 can run offline candidate training and Layer 5 can validate the result.
 
 ## Owned artifact
 
@@ -22,9 +22,9 @@ none in trading-data
 
 Layer 4 may reference evidence produced from accepted upstream event/feed artifacts, including reviewed calendar/market-structure session-gap risk for overnight, weekend, holiday, expiry, rebalance, halt, or other non-continuous-market windows. The reviewed promotion gate, model vector, labels, and production-readiness decision belong outside this repository.
 
-`trading-data` may only add Layer 4 data work when a reviewed contract requires a real point-in-time source observation or deterministic feature package. It must not automatically promote Layer 10 research events into Layer 4.
+`trading-data` may only add Layer 4 data work when a reviewed contract requires a real point-in-time source observation or deterministic feature package. It may support focused-pool candidate training after Layer 10 identifies a plausible failure relationship, but it must not automatically promote Layer 10 research events into production Layer 4 conditioning.
 
-Accepted Layer 4 data work must be traceable to a reviewed Layer 10/review supervision packet or training contract. Source/event rows without that reviewed route remain observation or Layer 10 research evidence, not active Layer 4 training input.
+Accepted production Layer 4 data work must be traceable to a reviewed Layer 10/review supervision packet or training contract. Focused-pool source/event rows may be used for candidate training/evaluation only; without later acceptance they remain observation or Layer 10 research evidence, not production Layer 4 input.
 
 When accepted, the direct Layer 4 event-facing artifact is a point-in-time event observation row, not raw provider payloads or raw article/filing/transcript text. The observation row must carry the inference-time scope fields Layer 4 may consume:
 

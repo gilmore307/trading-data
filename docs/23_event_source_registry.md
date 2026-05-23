@@ -9,7 +9,7 @@ Event acquisition has two separate jobs:
 1. historical replay: reconstruct what was knowable at each historical `available_time`;
 2. realtime maintenance: keep the forward-looking global event observation pool current without making causal claims.
 
-Rows produced from this registry are observation evidence only. They do not imply Layer 4 training eligibility, strategy failure attribution, alpha, trade direction, position size, or execution permission.
+Rows produced from this registry are observation evidence only. They do not imply production Layer 4 eligibility, strategy failure attribution, alpha, trade direction, position size, or execution permission. Layer 10 may separately place an event family in the focused/watched event pool, which lets `trading-data` systematically acquire and standardize candidate observations for offline Layer 4 training and Layer 5 validation.
 
 ## Required Clocks
 
@@ -60,7 +60,7 @@ estimated
 inferred_rule
 ```
 
-Future events may enter the global event observation pool when `available_time <= decision_time`. They remain observation-only until Layer 10/review accepts a relationship for the watched event pool.
+Future events may enter the global event observation pool when `available_time <= decision_time`. They remain observation-only until Layer 10 identifies a plausible failure relationship and places the family in the focused/watched event pool for candidate training and validation. Production Layer 4 use still requires later acceptance.
 
 ## Source Families
 
@@ -84,7 +84,7 @@ Official macro agency sources are reserved for:
 - one-off audit of critical macro event handling;
 - future replacement only after a separate reviewed route decision.
 
-This means macro rows can be promoted into the global event observation pool from TE alone, provided their `available_time`, retrieval evidence, row fields, and source URL are preserved. TE rows still do not become Layer 4 training samples unless Layer 10/review later promotes the event family/mechanism.
+This means macro rows can be promoted into the global event observation pool from TE alone, provided their `available_time`, retrieval evidence, row fields, and source URL are preserved. TE rows still do not become production Layer 4 conditioning samples unless Layer 10/review later accepts the event family/mechanism. They may support focused-pool candidate training after Layer 10 identifies a plausible failure relationship.
 
 ## Persistent-Regime Source Rules
 
@@ -96,7 +96,11 @@ high_frequency_news_topic
 -> `regime-promotion-review`
 -> persistent_event_regime
 -> Layer 10 attribution
--> watched event pool only if later accepted for Layer 4 supervision
+-> focused/watched event pool for systematic acquisition and candidate training
+-> Layer 4 candidate training
+-> Layer 5 validation
+-> Layer 10 disposition
+-> accepted_layer4_event_family only if later accepted for production supervision
 ```
 
 A candidate regime should include:
@@ -116,7 +120,7 @@ affected_scope_hint
 representative_evidence_refs
 ```
 
-Agent review uses the `regime-promotion-review` skill to decide whether the topic is a real regime, a short-lived news cluster, duplicate coverage of another regime, or noise. The accepted review packet should define `regime_family`, inclusion/exclusion rules, start status, affected scopes, material update rules, decay/staleness rules, and evidence-quality thresholds.
+Agent review uses the `regime-promotion-review` skill to decide whether the topic is a real regime, a short-lived news cluster, duplicate coverage of another regime, or noise. The accepted review packet should define `regime_family`, inclusion/exclusion rules, start status, affected scopes, material update rules, decay/staleness rules, and evidence-quality thresholds. Approval can authorize focused-pool candidate acquisition and Layer 4 candidate training/evaluation; it does not authorize production Layer 4 conditioning.
 
 Accepted source classes include:
 
@@ -147,6 +151,7 @@ evidence_refs
 
 - Do not backfill future-known results as historical pre-event facts.
 - Do not treat vendor/news calendars as higher priority than official issuer/agency/exchange sources.
-- Do not turn a global event-pool row into a Layer 4 training row without Layer 10/review promotion.
+- Do not turn a global event-pool row into production Layer 4 conditioning without Layer 10/review acceptance.
+- Do not skip the focused-pool candidate stage when Layer 10 has only identified a plausible failure relationship.
 - Do not keep a persistent regime active forever without decay/staleness evidence.
 - Do not bypass WAF, captcha, login, or provider terms to obtain source data.

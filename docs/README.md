@@ -24,6 +24,7 @@ This directory contains the current documentation spine for `trading-data`.
 - `20_data_feed.md` — Data Feed.
 - `21_api_templates.md` — API Templates.
 - `22_feed_availability.md` — Source Availability.
+- `23_event_source_registry.md` — Event Source Registry.
 - `30_model_inputs.md` — Source Outputs For Model Layers.
 - `40_production_hardening.md` — Production Hardening.
 

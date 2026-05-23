@@ -9,6 +9,8 @@ Current physical source/feature names are `source_10_event_risk_governor` and `f
 
 `trading-data` owns the point-in-time event evidence index for Layer 10. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
 
+Historical replay and realtime/future event acquisition rules live in `docs/23_event_source_registry.md`. That registry defines official source priority, fallback posture, certainty flags, `available_time` handling, and persistent-regime interval evidence for the global event observation pool.
+
 ## Owned artifacts
 
 ```text

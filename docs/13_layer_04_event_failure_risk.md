@@ -14,7 +14,7 @@ none in trading-data
 
 ## Boundary
 
-Layer 4 may reference evidence produced from accepted upstream event/feed artifacts, but the reviewed promotion gate, model vector, labels, and production-readiness decision belong outside this repository.
+Layer 4 may reference evidence produced from accepted upstream event/feed artifacts, including reviewed event-amplified session-gap risk for overnight, weekend, holiday, halt, or other non-continuous-market holding windows. The reviewed promotion gate, model vector, labels, and production-readiness decision belong outside this repository.
 
 `trading-data` may only add Layer 4 data work when a reviewed contract requires a real point-in-time source observation or deterministic feature package. It must not automatically promote Layer 10 research events into Layer 4.
 

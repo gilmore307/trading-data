@@ -71,7 +71,7 @@ source_scope_hint
 
 These fields or refs are evidence only. `trading-data` does not decide whether a candidate event is dominant, spurious, incrementally explanatory, or eligible for Layer 4 supervision.
 
-Trading-calendar closure windows are attribution evidence when failures occur across non-trading intervals. `trading-data` should preserve calendar facts such as closure type, non-trading interval length, next market open, holiday name, early close, and pre-holiday session flags when available. `trading-model` decides whether the failure is explained by Layer 6 base calendar risk or by an event-amplified closure relationship eligible for future Layer 4 supervision.
+Trading-calendar and market-structure windows are attribution evidence when failures occur around non-trading intervals, expiry, or rebalance windows. `trading-data` should preserve calendar facts such as closure type, non-trading interval length, next market open, holiday name, early close, pre-holiday session flags, triple-witching/option-expiry flags, and index rebalance flags when available. `trading-model` decides whether the date has enough incremental explanatory value to supervise future Layer 4 risk conditioning.
 
 Accepted lifecycle classes for downstream interpretation:
 

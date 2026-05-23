@@ -8,7 +8,7 @@ Layer 4 is `EventFailureRiskModel`. It conditions alpha confidence using agent-r
 
 Layer 4 is the quantitative event-failure-risk model. `trading-data` may preserve point-in-time event observation rows and support refs for Layer 4, but it does not decide whether an event relationship exists, whether a co-event caused the failure, or how much risk Layer 4 should score.
 
-Predictable trading-calendar closure exposure is not automatically a Layer 4 event. Ordinary overnight, weekend, holiday, long-weekend, early-close, Thanksgiving, Christmas, and other long-closure facts support Layer 6 base calendar risk unless a reviewed Layer 10/Layer 4 supervision packet specifically accepts an event-amplified session-gap relationship.
+Trading-calendar and market-structure dates are scheduled event-family evidence for Layer 4 when they can change liquidity, de-risking, forced flow, gap behavior, or path risk. Ordinary overnight, Friday/weekend de-risking, holiday and long-weekend closures, early closes, Thanksgiving/Christmas closures, triple-witching, major option-expiry windows, index reconstitution, Nasdaq-100 rebalance, and similar dates remain observation evidence until a reviewed Layer 10/Layer 4 supervision packet accepts the relationship.
 
 ## Owned artifact
 
@@ -18,7 +18,7 @@ none in trading-data
 
 ## Boundary
 
-Layer 4 may reference evidence produced from accepted upstream event/feed artifacts, including reviewed event-amplified session-gap risk for overnight, weekend, holiday, halt, or other non-continuous-market holding windows. The reviewed promotion gate, model vector, labels, and production-readiness decision belong outside this repository.
+Layer 4 may reference evidence produced from accepted upstream event/feed artifacts, including reviewed calendar/market-structure session-gap risk for overnight, weekend, holiday, expiry, rebalance, halt, or other non-continuous-market windows. The reviewed promotion gate, model vector, labels, and production-readiness decision belong outside this repository.
 
 `trading-data` may only add Layer 4 data work when a reviewed contract requires a real point-in-time source observation or deterministic feature package. It must not automatically promote Layer 10 research events into Layer 4.
 

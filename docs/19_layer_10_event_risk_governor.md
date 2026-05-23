@@ -26,13 +26,15 @@ src/data_source/source_10_event_risk_governor/equity_abnormal_activity/
 
 ## Boundary
 
-Layer 10 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector`.
+Layer 10 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector` and not event-failure attribution.
 
 `source_10_event_risk_governor` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
 
 `feature_10_event_risk_governor` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
 
 `trading-model` builds `event_risk_intervention / event_context_vector` from the feature rows plus referenced artifacts and upstream context states.
+
+Layer 10's post-failure attribution route adds one data requirement: event rows and referenced artifacts must remain joinable to model failure/residual windows by point-in-time clocks. `trading-data` preserves event availability, source refs, activity windows, and compact detector evidence; `trading-model` decides whether those events explain a failure, computes `realized_impact_scope_label`, builds attribution labels, and proposes Layer 4 promotion packets.
 
 ## Input boundary
 
@@ -107,8 +109,9 @@ trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
   -> source_10_event_risk_governor
   -> feature_10_event_risk_governor
-  -> trading-model EventRiskGovernor / EventRiskGovernor event_risk_intervention / event_context_vector construction
+  -> trading-model Layer 10 event-failure attribution or reviewed-pool governance
   -> evaluation/promotion review outside trading-data
+  -> accepted future Layer 4 event_strategy_failure_gate / event-observation scope rules
 ```
 
 ## Non-ownership
@@ -117,6 +120,9 @@ trading-manager event/source request
 
 - final event impact scores;
 - event-context vector modeling;
+- event-failure attribution decisions;
+- `realized_impact_scope_label` evaluation labels;
+- Layer 4 event-family promotion packets;
 - alpha labels;
 - buy/sell/hold decisions;
 - position sizing;

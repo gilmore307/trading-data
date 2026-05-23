@@ -55,7 +55,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmp:
                 universe_path = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
                 universe_path.write_text(
-                    "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
+                    "symbol,universe_type,exposure_type,feature_grain,fund_name,issuer_name\n"
                     "SPY,broad_market,core,1d,SPDR S&P 500 ETF,State Street\n"
                     "BITW,sector_observation_etf,crypto_beta,30m,Bitwise 10 Crypto Index ETF,Bitwise\n",
                     encoding="utf-8",
@@ -93,7 +93,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmp:
                 universe_path = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
                 universe_path.write_text(
-                    "symbol,universe_type,exposure_type,bar_grain,fund_name,issuer_name\n"
+                    "symbol,universe_type,exposure_type,feature_grain,fund_name,issuer_name\n"
                     "SPY,broad_market,core,1d,SPDR S&P 500 ETF,State Street\n",
                     encoding="utf-8",
                 )

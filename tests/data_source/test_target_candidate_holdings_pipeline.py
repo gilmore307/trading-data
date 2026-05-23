@@ -58,7 +58,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
             universe.write_text(
-                "symbol,universe_type,model_layer,exposure_type,bar_grain,fund_name,issuer_name\n"
+                "symbol,universe_type,model_layer,exposure_type,feature_grain,fund_name,issuer_name\n"
                 "SPY,market_state_etf,layer_01_market_regime,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"
                 "SMH,sector_observation_etf,layer_02_sector_context,industry_chain,1d,VanEck Semiconductor ETF,VanEck\n",
                 encoding="utf-8",
@@ -118,7 +118,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
             universe.write_text(
-                "symbol,universe_type,model_layer,exposure_type,bar_grain,fund_name,issuer_name\n"
+                "symbol,universe_type,model_layer,exposure_type,feature_grain,fund_name,issuer_name\n"
                 "XLK,sector_observation_etf,layer_02_sector_context,sp500_sector,1d,Technology Select Sector SPDR Fund,State Street / SPDR\n",
                 encoding="utf-8",
             )

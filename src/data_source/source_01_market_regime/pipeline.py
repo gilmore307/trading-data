@@ -152,7 +152,7 @@ def _fetch_paginated(client: HttpClient, url: str, params: dict[str, str], heade
 def _read_universe(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         rows = [{str(k): str(v or "").strip() for k, v in row.items()} for row in csv.DictReader(handle)]
-    rows = [row for row in rows if row.get("symbol") and row.get("bar_grain")]
+    rows = [row for row in rows if row.get("symbol") and row.get("feature_grain")]
     if not rows:
         raise MarketRegimeInputsError(f"market regime ETF universe produced zero rows: {path}")
     return rows

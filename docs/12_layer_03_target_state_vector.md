@@ -103,7 +103,7 @@ The output is accepted only if it is point-in-time, identity-safe, reproducible 
 The first target-state feature contract should use sparse synchronized state windows rather than action-like parameter grids:
 
 ```text
-5min, 15min, 60min, 390min
+10min, 1h, 1D, 1W
 ```
 
 These windows are for trailing return, volatility, volume, liquidity, and relative-strength state summaries. They are not downstream action variants and should not create a variant universe.

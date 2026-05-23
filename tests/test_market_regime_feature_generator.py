@@ -96,8 +96,8 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         row = generator.generate_row(inputs, snapshot)
 
         self.assertEqual(row["snapshot_time"], snapshot.isoformat())
-        self.assertEqual(row["input_frame"], "30min")
-        self.assertEqual(row["prediction_horizon"], "1d")
+        self.assertEqual(row["input_frame"], "1h")
+        self.assertEqual(row["prediction_horizon"], "1D")
         self.assertEqual(row["market_universe_ref"], "layer_01_02_market_context_etf_universe")
         self.assertAlmostEqual(row["spy_return_30m"], math.log(370.0 / 369.0))
         self.assertAlmostEqual(row["qqq_spy_30m"], math.log((525.0 / 370.0) / (520.0 / 369.0)))
@@ -151,8 +151,8 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         rows = [
             {
                 "snapshot_time": "2026-01-02T16:00:00-05:00",
-                "input_frame": "30min",
-                "prediction_horizon": "1d",
+                "input_frame": "1h",
+                "prediction_horizon": "1D",
                 "market_universe_ref": "layer_01_02_market_context_etf_universe",
                 "spy_return_30m": 0.01,
                 "qqq_spy_return_corr_20d": None,
@@ -175,34 +175,32 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         insert_params = cursor.calls[-1][1]
         self.assertIsNotNone(insert_params)
         self.assertEqual(insert_params[0], "2026-01-02T16:00:00-05:00")
-        self.assertEqual(insert_params[1], "30min")
-        self.assertEqual(insert_params[2], "1d")
+        self.assertEqual(insert_params[1], "1h")
+        self.assertEqual(insert_params[2], "1D")
         self.assertEqual(insert_params[3], "layer_01_02_market_context_etf_universe")
         self.assertIn('"spy_return_30m": 0.01', insert_params[4])
 
-    def test_inferred_snapshots_use_30_minute_decision_surface(self) -> None:
+    def test_inferred_snapshots_use_one_hour_decision_surface(self) -> None:
         inputs, snapshot = self._inputs()
         inferred = generator.infer_snapshot_times(inputs)
 
         self.assertIn(snapshot, inferred)
-        self.assertIn(snapshot - timedelta(minutes=30), inferred)
+        self.assertNotIn(snapshot - timedelta(minutes=30), inferred)
         self.assertNotIn(snapshot.replace(hour=9, minute=30), inferred)
 
     def test_generate_rows_can_emit_multiple_frame_horizon_identities(self) -> None:
         inputs, snapshot = self._inputs()
 
-        rows = generator.generate_rows(inputs, snapshot_times=[snapshot], input_frames=("1min", "30min"))
+        rows = generator.generate_rows(inputs, snapshot_times=[snapshot], input_frames=("1min", "10min", "1h", "1D"))
 
         identities = {(row["input_frame"], row["prediction_horizon"]) for row in rows}
         self.assertEqual(
             identities,
             {
-                ("1min", "5min"),
                 ("1min", "10min"),
-                ("1min", "30min"),
-                ("30min", "1h"),
-                ("30min", "2h"),
-                ("30min", "1d"),
+                ("10min", "1h"),
+                ("1h", "1D"),
+                ("1D", "1W"),
             },
         )
 

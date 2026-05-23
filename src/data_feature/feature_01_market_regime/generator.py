@@ -23,10 +23,10 @@ LAYER_01_MARKET_REGIME = "layer_01_market_regime"
 LAYER_02_SECTOR_CONTEXT = "layer_02_sector_context"
 DEFAULT_MARKET_UNIVERSE_REF = "layer_01_02_market_context_etf_universe"
 INPUT_FRAME_HORIZONS: dict[str, tuple[str, ...]] = {
-    "1min": ("5min", "10min", "30min"),
-    "5min": ("15min", "30min", "60min"),
-    "30min": ("1h", "2h", "1d"),
-    "1d": ("3d", "5d", "20d"),
+    "1min": ("10min",),
+    "10min": ("1h",),
+    "1h": ("1D",),
+    "1D": ("1W",),
 }
 MODEL2_ROTATION_COMBINATION_TYPES = {"sector_rotation", "daily_context"}
 SINGLE_RETURN_TREND_EXCLUDED_SYMBOLS = {"SHY"}
@@ -105,7 +105,7 @@ def _parse_timestamp(value: Any) -> datetime:
 
 
 def _is_daily_timeframe(value: Any) -> bool:
-    return str(value or "").strip().lower() in {"1d", "1day", "day", "daily", "1day"}
+    return str(value or "").strip().lower() in {"1d", "1day", "day", "daily"}
 
 
 def normalize_input_frame(value: Any) -> str:
@@ -117,22 +117,25 @@ def normalize_input_frame(value: Any) -> str:
         "5m": "5min",
         "5min": "5min",
         "5minute": "5min",
+        "10m": "10min",
+        "10min": "10min",
+        "10minute": "10min",
         "30m": "30min",
         "30min": "30min",
         "30minute": "30min",
         "1h": "1h",
         "60m": "1h",
         "60min": "1h",
-        "1d": "1d",
-        "1day": "1d",
-        "day": "1d",
-        "daily": "1d",
+        "1d": "1D",
+        "1day": "1D",
+        "day": "1D",
+        "daily": "1D",
     }
     normalized = aliases.get(text)
     if normalized is None:
         raise ValueError(f"unsupported Layer 1 input frame: {value!r}")
-    if normalized == "1h":
-        return "30min"
+    if normalized in {"5min", "30min"}:
+        return {"5min": "10min", "30min": "1h"}[normalized]
     if normalized not in INPUT_FRAME_HORIZONS:
         raise ValueError(f"unsupported Layer 1 input frame: {value!r}")
     return normalized
@@ -264,11 +267,11 @@ def build_inputs(
     )
 
 
-def infer_snapshot_times(inputs: MarketRegimeInputs, *, anchor_symbol: str = "SPY", input_frame: str = "30min") -> list[datetime]:
+def infer_snapshot_times(inputs: MarketRegimeInputs, *, anchor_symbol: str = "SPY", input_frame: str = "1h") -> list[datetime]:
     normalized_frame = normalize_input_frame(input_frame)
     bars = inputs.bars_by_symbol.get(anchor_symbol.upper(), [])
-    if normalized_frame == "1d":
-        times = {bar.available_time for bar in bars if _is_daily_timeframe(bar.timeframe)}
+    if normalized_frame == "1D":
+        times = {bar.available_time for bar in _prepared_bars(bars).eod_bars}
         return sorted(times)
     times = {
         bar.available_time
@@ -289,22 +292,18 @@ def _is_snapshot_time_for_input_frame(value: datetime, input_frame: str) -> bool
         return False
     if input_frame == "1min":
         return True
-    if input_frame == "5min":
-        return et_value.minute % 5 == 0
-    if input_frame == "30min":
-        return et_value.minute in {0, 30}
+    if input_frame == "10min":
+        return et_value.minute % 10 == 0
+    if input_frame == "1h":
+        return et_value.minute == 0
     raise ValueError(f"unsupported Layer 1 input frame: {input_frame!r}")
-
-
-def _is_30_minute_snapshot_time(value: datetime) -> bool:
-    return _is_snapshot_time_for_input_frame(value, "30min")
 
 
 def generate_rows(
     inputs: MarketRegimeInputs,
     snapshot_times: Sequence[str | datetime] | None = None,
     *,
-    input_frames: Sequence[str] = ("30min",),
+    input_frames: Sequence[str] = ("1h",),
     market_universe_ref: str = DEFAULT_MARKET_UNIVERSE_REF,
 ) -> list[dict[str, Any]]:
     normalized_frames = tuple(normalize_input_frame(input_frame) for input_frame in input_frames)
@@ -330,8 +329,8 @@ def generate_row(
     inputs: MarketRegimeInputs,
     snapshot_time: datetime,
     *,
-    input_frame: str = "30min",
-    prediction_horizon: str = "1d",
+    input_frame: str = "1h",
+    prediction_horizon: str = "1D",
     market_universe_ref: str = DEFAULT_MARKET_UNIVERSE_REF,
 ) -> dict[str, Any]:
     snapshot_time = snapshot_time.astimezone(ET)

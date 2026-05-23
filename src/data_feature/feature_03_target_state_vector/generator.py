@@ -21,8 +21,13 @@ ET = ZoneInfo("America/New_York")
 FEATURE = "feature_03_target_state_vector"
 DEFAULT_VECTOR_VERSION = "target_context_state"
 DEFAULT_RUN_ID = "adhoc"
-STATE_WINDOWS = (5, 15, 60, 390)
-STATE_WINDOW_LABELS = tuple(f"{window}min" for window in STATE_WINDOWS)
+STATE_WINDOW_MINUTES: dict[str, int] = {
+    "10min": 10,
+    "1h": 60,
+    "1D": 24 * 60,
+    "1W": 7 * 24 * 60,
+}
+STATE_WINDOW_LABELS = tuple(STATE_WINDOW_MINUTES)
 STATE_WINDOW_SYNC_POLICY = "market_sector_target_blocks_must_share_identical_observation_windows"
 METADATA_COLUMNS = {
     "run_id",
@@ -309,7 +314,7 @@ def _project_context(context: ContextRow | None, *, groups: Sequence[str], defau
 
 def _context_multi_frame_state(payload: Mapping[str, Any]) -> dict[str, dict[str, float | None]]:
     frames: dict[str, dict[str, float | None]] = {}
-    for window, label in zip(STATE_WINDOWS, STATE_WINDOW_LABELS):
+    for label, window in STATE_WINDOW_MINUTES.items():
         frames[label] = {
             "return": _first_float(payload, f"return_{label}", f"market_return_{label}", f"sector_return_{label}"),
             "direction_score": _first_float(payload, f"direction_score_{label}", f"1_market_direction_score_{label}", f"2_sector_relative_direction_score_{label}"),
@@ -355,34 +360,34 @@ def _target_state_features(
     state["target_price_state"]["bar_high"] = highs[index]
     state["target_price_state"]["bar_low"] = lows[index]
     state["target_price_state"]["session_open"] = next((value for value in closes[: index + 1] if value is not None), None)
-    for window in STATE_WINDOWS:
+    for label, window in STATE_WINDOW_MINUTES.items():
         window_return = _window_return(closes, index, window)
         realized_vol = _realized_vol(closes, index, window)
-        state["target_direction_return_shape"][f"return_{window}min"] = window_return
-        state["target_volatility_range_state"][f"realized_vol_{window}min"] = realized_vol
-        state["target_volatility_range_state"][f"range_position_{window}min"] = _range_position(closes, highs, lows, index, window)
-        state["target_volatility_range_state"][f"atr_pct_{window}min"] = _atr_pct(closes, highs, lows, index, window)
-        state["target_volume_activity_state"][f"relative_volume_{window}min"] = _relative_to_window(volumes, index, window)
-        state["target_volume_activity_state"][f"relative_dollar_volume_{window}min"] = _relative_to_window(dollar_volumes, index, window)
-        state["target_trend_quality_state"][f"trend_quality_{window}min"] = _trend_quality_score(closes, index, window)
-        state["target_trend_quality_state"][f"path_stability_{window}min"] = _path_stability_score(closes, index, window)
-        state["target_trend_age_state"][f"trend_age_bars_{window}min"] = _trend_age_bars(closes, index, window)
-        state["target_trend_age_state"][f"direction_flip_count_{window}min"] = _direction_flip_count(closes, index, window)
-        state["target_trend_age_state"][f"state_persistence_score_{window}min"] = _state_persistence_score(closes, index, window)
-        state["target_exhaustion_decay_state"][f"momentum_decay_score_{window}min"] = _momentum_decay_score(closes, index, window)
-        state["target_exhaustion_decay_state"][f"volume_exhaustion_score_{window}min"] = _volume_exhaustion_score(volumes, index, window)
-        state["target_exhaustion_decay_state"][f"volatility_exhaustion_score_{window}min"] = _volatility_exhaustion_score(closes, index, window)
-        state["target_exhaustion_decay_state"][f"late_trend_risk_score_{window}min"] = _late_trend_risk_score(closes, volumes, index, window)
+        state["target_direction_return_shape"][f"return_{label}"] = window_return
+        state["target_volatility_range_state"][f"realized_vol_{label}"] = realized_vol
+        state["target_volatility_range_state"][f"range_position_{label}"] = _range_position(closes, highs, lows, index, window)
+        state["target_volatility_range_state"][f"atr_pct_{label}"] = _atr_pct(closes, highs, lows, index, window)
+        state["target_volume_activity_state"][f"relative_volume_{label}"] = _relative_to_window(volumes, index, window)
+        state["target_volume_activity_state"][f"relative_dollar_volume_{label}"] = _relative_to_window(dollar_volumes, index, window)
+        state["target_trend_quality_state"][f"trend_quality_{label}"] = _trend_quality_score(closes, index, window)
+        state["target_trend_quality_state"][f"path_stability_{label}"] = _path_stability_score(closes, index, window)
+        state["target_trend_age_state"][f"trend_age_bars_{label}"] = _trend_age_bars(closes, index, window)
+        state["target_trend_age_state"][f"direction_flip_count_{label}"] = _direction_flip_count(closes, index, window)
+        state["target_trend_age_state"][f"state_persistence_score_{label}"] = _state_persistence_score(closes, index, window)
+        state["target_exhaustion_decay_state"][f"momentum_decay_score_{label}"] = _momentum_decay_score(closes, index, window)
+        state["target_exhaustion_decay_state"][f"volume_exhaustion_score_{label}"] = _volume_exhaustion_score(volumes, index, window)
+        state["target_exhaustion_decay_state"][f"volatility_exhaustion_score_{label}"] = _volatility_exhaustion_score(closes, index, window)
+        state["target_exhaustion_decay_state"][f"late_trend_risk_score_{label}"] = _late_trend_risk_score(closes, volumes, index, window)
 
     state["multi_frame_state"] = _target_multi_frame_state(state)
     state["target_trend_age_state"]["time_since_last_direction_flip_bars"] = _time_since_last_direction_flip(closes, index)
-    state["target_trend_quality_state"]["return_5m_minus_15m"] = _delta(
-        state["target_direction_return_shape"].get("return_5min"),
-        state["target_direction_return_shape"].get("return_15min"),
+    state["target_trend_quality_state"]["return_10min_minus_1h"] = _delta(
+        state["target_direction_return_shape"].get("return_10min"),
+        state["target_direction_return_shape"].get("return_1h"),
     )
-    state["target_trend_quality_state"]["return_15m_minus_60m"] = _delta(
-        state["target_direction_return_shape"].get("return_15min"),
-        state["target_direction_return_shape"].get("return_60min"),
+    state["target_trend_quality_state"]["return_1h_minus_1D"] = _delta(
+        state["target_direction_return_shape"].get("return_1h"),
+        state["target_direction_return_shape"].get("return_1D"),
     )
     state["target_gap_jump_state"]["current_bar_return"] = _window_return(closes, index, 1)
     state["target_gap_jump_state"]["current_range_pct"] = None if close in (None, 0) or highs[index] is None or lows[index] is None else (highs[index] - lows[index]) / close
@@ -407,7 +412,7 @@ def _target_multi_frame_state(target_state: Mapping[str, Any]) -> dict[str, dict
     exhaustion = target_state.get("target_exhaustion_decay_state") if isinstance(target_state.get("target_exhaustion_decay_state"), Mapping) else {}
     volume = target_state.get("target_volume_activity_state") if isinstance(target_state.get("target_volume_activity_state"), Mapping) else {}
     frames: dict[str, dict[str, float | int | None]] = {}
-    for window, label in zip(STATE_WINDOWS, STATE_WINDOW_LABELS):
+    for label, window in STATE_WINDOW_MINUTES.items():
         frames[label] = {
             "return": _safe_float(direction.get(f"return_{label}")),
             "realized_vol": _safe_float(volatility.get(f"realized_vol_{label}")),
@@ -440,19 +445,19 @@ def _cross_state_features(target_state: Mapping[str, Any], market_state: Mapping
         beta_target_market=beta_target_market,
         beta_target_sector=beta_target_sector,
     )
-    frame_15 = multi_frame.get("15min", {})
+    frame_primary = multi_frame.get("1h", {})
     return {
         "state_observation_windows": list(STATE_WINDOW_LABELS),
         "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
         "multi_frame_state": multi_frame,
-        "target_vs_market_residual_direction": frame_15.get("target_vs_market_residual_direction"),
-        "target_vs_sector_residual_direction": frame_15.get("target_vs_sector_residual_direction"),
-        "target_vs_market_volatility": frame_15.get("target_vs_market_volatility"),
-        "target_vs_sector_volatility": frame_15.get("target_vs_sector_volatility"),
+        "target_vs_market_residual_direction": frame_primary.get("target_vs_market_residual_direction"),
+        "target_vs_sector_residual_direction": frame_primary.get("target_vs_sector_residual_direction"),
+        "target_vs_market_volatility": frame_primary.get("target_vs_market_volatility"),
+        "target_vs_sector_volatility": frame_primary.get("target_vs_sector_volatility"),
         "target_market_beta_correlation": beta_target_market,
         "target_sector_beta_correlation": beta_target_sector,
-        "sector_confirmation_state": frame_15.get("sector_confirmation_state"),
-        "idiosyncratic_residual_state": frame_15.get("idiosyncratic_residual_state"),
+        "sector_confirmation_state": frame_primary.get("sector_confirmation_state"),
+        "idiosyncratic_residual_state": frame_primary.get("idiosyncratic_residual_state"),
         "relative_liquidity_tradability_state": None,
         "beta_adjustment_policy": "uses_beta_adjusted_target_minus_market_and_sector_residuals_when_point_in_time_betas_are_available_else_simple_residuals",
     }
@@ -510,12 +515,12 @@ def _attach_peer_ranks(rows: list[dict[str, Any]]) -> None:
     for row in rows:
         by_time.setdefault(str(row.get("available_time")), []).append(row)
     rank_specs = {
-        "trend_quality_rank_in_peer_pool_15min": lambda r: _nested_float(r["target_state_features"], "target_trend_quality_state", "trend_quality_15min"),
-        "path_stability_rank_in_peer_pool_15min": lambda r: _nested_float(r["target_state_features"], "target_trend_quality_state", "path_stability_15min"),
-        "noise_low_rank_in_peer_pool_15min": lambda r: _invert_for_rank(_nested_float(r["target_state_features"], "target_trend_quality_state", "path_stability_15min")),
+        "trend_quality_rank_in_peer_pool_1h": lambda r: _nested_float(r["target_state_features"], "target_trend_quality_state", "trend_quality_1h"),
+        "path_stability_rank_in_peer_pool_1h": lambda r: _nested_float(r["target_state_features"], "target_trend_quality_state", "path_stability_1h"),
+        "noise_low_rank_in_peer_pool_1h": lambda r: _invert_for_rank(_nested_float(r["target_state_features"], "target_trend_quality_state", "path_stability_1h")),
         "liquidity_tradability_rank_in_peer_pool": lambda r: _liquidity_rank_value(r["target_state_features"]),
-        "residual_direction_strength_rank_in_peer_pool_15min": lambda r: abs(_safe_float(r["cross_state_features"].get("idiosyncratic_residual_state")) or 0.0),
-        "transition_risk_low_rank_in_peer_pool_15min": lambda r: _invert_for_rank(_nested_float(r["target_state_features"], "target_exhaustion_decay_state", "late_trend_risk_score_15min")),
+        "residual_direction_strength_rank_in_peer_pool_1h": lambda r: abs(_safe_float(r["cross_state_features"].get("idiosyncratic_residual_state")) or 0.0),
+        "transition_risk_low_rank_in_peer_pool_1h": lambda r: _invert_for_rank(_nested_float(r["target_state_features"], "target_exhaustion_decay_state", "late_trend_risk_score_1h")),
     }
     for peers in by_time.values():
         for field, getter in rank_specs.items():

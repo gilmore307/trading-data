@@ -134,8 +134,8 @@ def write_feature_rows_sql(
         )
         """
     )
-    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"input_frame\" TEXT NOT NULL DEFAULT '30min'")
-    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"prediction_horizon\" TEXT NOT NULL DEFAULT '1d'")
+    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"input_frame\" TEXT NOT NULL DEFAULT '1h'")
+    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"prediction_horizon\" TEXT NOT NULL DEFAULT '1D'")
     cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"market_universe_ref\" TEXT NOT NULL DEFAULT 'layer_01_02_market_context_etf_universe'")
     cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"feature_payload_json\" JSONB NOT NULL DEFAULT '{{}}'::jsonb")
     cursor.execute(
@@ -236,7 +236,7 @@ def generate_sql(
     snapshot_times: Sequence[str] | None,
     snapshot_start: str | None = None,
     snapshot_end: str | None = None,
-    input_frames: Sequence[str] = ("30min",),
+    input_frames: Sequence[str] = ("1h",),
 ) -> int:
     generator = _load_generator()
     psycopg, dict_row = _load_psycopg()
@@ -280,10 +280,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-end", help="Optional upper timestamp bound for source bars.")
     parser.add_argument("--universe-csv", type=Path, default=DEFAULT_UNIVERSE_CSV)
     parser.add_argument("--combinations-csv", type=Path, default=DEFAULT_COMBINATIONS_CSV)
-    parser.add_argument("--snapshot-time", action="append", help="Optional ISO snapshot time. Repeat for multiple snapshots. Defaults to SPY 30-minute source-bar timestamps.")
+    parser.add_argument("--snapshot-time", action="append", help="Optional ISO snapshot time. Repeat for multiple snapshots. Defaults to SPY one-hour source-bar timestamps.")
     parser.add_argument("--snapshot-start", help="Optional lower timestamp bound for inferred snapshot rows. Use with a wider source-start lookback.")
     parser.add_argument("--snapshot-end", help="Optional upper timestamp bound for inferred snapshot rows. The bound is half-open.")
-    parser.add_argument("--input-frame", action="append", choices=["1min", "5min", "30min", "1d"], help="Layer 1 input frame to generate. Repeat for multiple frames. Defaults to 30min.")
+    parser.add_argument("--input-frame", action="append", choices=["1min", "10min", "1h", "1D"], help="Layer 1 input frame to generate. Repeat for multiple frames. Defaults to 1h.")
     args = parser.parse_args(argv)
 
     row_count = generate_sql(
@@ -299,7 +299,7 @@ def main(argv: list[str] | None = None) -> int:
         snapshot_times=args.snapshot_time,
         snapshot_start=args.snapshot_start,
         snapshot_end=args.snapshot_end,
-        input_frames=tuple(args.input_frame or ["30min"]),
+        input_frames=tuple(args.input_frame or ["1h"]),
     )
     print(f"generated {row_count} rows into {args.target_schema}.{args.target_table}")
     return 0

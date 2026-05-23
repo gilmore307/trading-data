@@ -38,9 +38,9 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             "market_context_state_ref": "mkt_001",
             "sector_context_state_ref": "sec_001",
             "target_context_state_version": "target_context_state",
-            "market_state_features": {"state_observation_windows": ["5min"]},
-            "sector_state_features": {"state_observation_windows": ["5min"]},
-            "target_state_features": {"target_direction_return_shape": {"return_5min": 0.01}},
+            "market_state_features": {"state_observation_windows": ["10min"]},
+            "sector_state_features": {"state_observation_windows": ["10min"]},
+            "target_state_features": {"target_direction_return_shape": {"return_10min": 0.01}},
             "cross_state_features": {"target_vs_sector_residual_direction": 0.02},
             "feature_quality_diagnostics": {"has_target_bar": True},
         }

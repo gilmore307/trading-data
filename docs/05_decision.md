@@ -238,10 +238,10 @@ Accepted: 2026-05-22
 Layer 1 market-regime source and feature construction must preserve the input frame used by `MarketRegimeModel`. The accepted frame/horizon families are:
 
 ```text
-1min  -> 5min, 10min, 30min
-5min  -> 15min, 30min, 60min
-30min -> 1h, 2h, 1d
-1d    -> 3d, 5d, 20d
+1min  -> 10min
+10min -> 1h
+1h    -> 1D
+1D    -> 1W
 ```
 
 `trading-data` owns point-in-time source and deterministic feature evidence for those input frames. Future return, volatility, drawdown, transition, liquidity, and tradability outcomes are model labels/evaluation evidence, not inference features. SQL business keys such as `input_frame`, `prediction_horizon`, and `market_universe_ref` require registry/schema migration before implementation depends on them.

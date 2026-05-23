@@ -20,10 +20,10 @@ Layer 1 source and feature rows must preserve the observation frame needed by th
 Accepted Layer 1 frame/horizon families:
 
 ```text
-input_frame = 1min   -> prediction_horizon = 5min, 10min, 30min
-input_frame = 5min   -> prediction_horizon = 15min, 30min, 60min
-input_frame = 30min  -> prediction_horizon = 1h, 2h, 1d
-input_frame = 1d     -> prediction_horizon = 3d, 5d, 20d
+input_frame = 1min   -> prediction_horizon = 10min
+input_frame = 10min  -> prediction_horizon = 1h
+input_frame = 1h     -> prediction_horizon = 1D
+input_frame = 1D     -> prediction_horizon = 1W
 ```
 
 `trading-data` owns point-in-time source and deterministic feature construction for the input frame. Future outcome columns for the paired prediction horizon are labels/evaluation evidence and belong outside inference feature construction. Before implementation depends on `input_frame`, `prediction_horizon`, or `market_universe_ref` as SQL business keys, those names must be registered and migrated through `trading-manager`.

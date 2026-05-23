@@ -28,7 +28,7 @@ The first implementation stores these as Python dictionaries and `sql.py` persis
 V1 sparse synchronized state windows:
 
 ```text
-5min, 15min, 60min, 390min
+10min, 1h, 1D, 1W
 ```
 
 These are state observation windows, not downstream action variants. They are synchronized across market, sector, target, and cross-state blocks.

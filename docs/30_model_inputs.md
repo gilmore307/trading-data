@@ -14,7 +14,22 @@ This document maps `trading-data` source-backed outputs to accepted `trading-mod
 
 ## Layer Artifact Naming
 
-Current layer artifacts use the pattern:
+New SQL table surfaces use the shared owner-domain-stage pattern from `trading-manager/scripts/registry/rules/model-layer-naming.md`:
+
+```text
+<schema>.<owner_prefix>_<domain_slug>_<task_stage>[_<artifact_role>]
+```
+
+`trading-data` owns data-acquisition and deterministic feature-generation surfaces. Use model prefixes when the data surface is generated for a reviewed model layer:
+
+```text
+trading_data.m01_market_regime_data_acquisition
+trading_data.m01_market_regime_feature_generation
+```
+
+SQL identifiers stay lowercase snake_case. Use `.` only for SQL namespace separation such as `schema.table`; do not create three-part pseudo-names such as `trading_data.m01_market_regime.data_acquisition`, and do not use hyphens in SQL identifiers.
+
+Existing implemented layer artifacts still include the older compatibility pattern:
 
 ```text
 source_NN_<layer_slug>
@@ -24,7 +39,9 @@ model_NN_<layer_slug>_explainability
 model_NN_<layer_slug>_diagnostics
 ```
 
-`trading-data` owns `source` and `feature` artifacts only. Layer-owned fields use compact numeric prefixes such as `1_*` and `2_*` when they represent reviewed layer concepts; raw/source observation fields may remain generic. Do not introduce `layer01_*` or `layer02_*` aliases for the same concept.
+Do not use that older pattern for newly planned tables unless a reviewed compatibility migration explicitly requires it.
+
+`trading-data` owns source/data-acquisition and feature-generation artifacts only. Layer-owned fields use compact numeric prefixes such as `1_*` and `2_*` when they represent reviewed layer concepts; raw/source observation fields may remain generic. Do not introduce `layer01_*` or `layer02_*` aliases for the same concept.
 
 ## Layer Input Sources
 

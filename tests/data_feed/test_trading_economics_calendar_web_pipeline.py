@@ -113,7 +113,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             with june_saved.open(newline="", encoding="utf-8") as handle:
                 self.assertEqual([row["event"] for row in csv.DictReader(handle)], ["Non Farm Payrolls"])
             self.assertTrue((output_root / "2026-05" / "completion_receipt.json").exists())
-            self.assertTrue((output_root / "_recent_refresh_completion_receipt.json").exists())
+            self.assertTrue((output_root / "_manifests" / "recent_refresh_completion_receipt.json").exists())
 
     def test_custom_mode_uses_date_url_and_range_cookie(self):
         params = {"date_range_mode": "custom", "use_authenticated_cookies": False, "start_date": "2018-10-01", "end_date": "2018-11-01", "importance": "3"}

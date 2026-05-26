@@ -87,8 +87,8 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     output_root = resolve_output_root(task_key, default_task_id=f"{FEED}_task")
     params = dict(task_key.get("params") or {})
     if params.get("monthly_backfill_bucketed_output"):
-        run_dir = output_root / "_recent_refresh_runs" / run_id
-        receipt_path = output_root / "_recent_refresh_completion_receipt.json"
+        run_dir = output_root / "_manifests" / "recent_refresh_runs" / run_id
+        receipt_path = output_root / "_manifests" / "recent_refresh_completion_receipt.json"
     else:
         run_dir = output_root / "runs" / run_id
         receipt_path = output_root / "completion_receipt.json"

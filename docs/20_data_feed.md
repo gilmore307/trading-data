@@ -106,7 +106,7 @@ Default behavior is plan-only and performs no provider calls. Add `--execute-liv
 deploy/systemd/trading-data-te-calendar-refresh.timer
 ```
 
-It runs one visible-page request per cycle with a 7-day trailing and 35-day forward window, `date_range_mode=recent`, no authenticated cookies, and manager-controls set for provider maintenance. Because the recent window can cross month boundaries, the feed writes month-specific CSV/JSONL copies under each affected `YYYY-MM` directory and keeps the run-wide control receipt under the TE monthly root. Existing historical TE artifacts remain append-only and are not deletion candidates.
+It runs one visible-page request per cycle with a 7-day trailing and 35-day forward window, `date_range_mode=recent`, no authenticated cookies, and manager-controls set for provider maintenance. Because the recent window can cross month boundaries, the feed writes month-specific CSV/JSONL copies under each affected `YYYY-MM` directory and keeps run-wide control receipts under the TE monthly root's `_manifests/` area. Existing historical TE artifacts remain append-only and are not deletion candidates.
 
 ## Implementation Rules
 

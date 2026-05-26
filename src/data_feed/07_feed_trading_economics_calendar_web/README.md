@@ -1,14 +1,13 @@
 # 07_feed_trading_economics_calendar_web feed
 
-`07_feed_trading_economics_calendar_web` is a conservative web-page interface for Trading Economics calendar rows. It is intended to enrich macro-release events with visible page fields such as Actual, Previous, Consensus, and Forecast.
+`07_feed_trading_economics_calendar_web` is the historical parser for Trading Economics calendar rows. The active macro source is now the canonical storage snapshot; the Trading Economics subscription is expired and the website is not an active provider source.
 
 Boundary:
 
-- Use visible website calendar data only; current/recent and custom-date routes do not require a logged-in session by default.
+- Use canonical storage TE source data for active macro inputs.
+- Do not use the Trading Economics website as an active source while the subscription is expired.
 - Do not call Trading Economics API endpoints or Download/export features.
 - Do not bypass WAF/captcha/permissions.
-- Replay/custom-window live fetches use a request-specific custom date-range cookie, then parse the returned logged-out visible calendar rows.
-- Realtime recent fetches use `date_range_mode=recent` and `use_authenticated_cookies=false`; this reads the logged-out recent visible calendar page and filters rows to the task window.
 - `html_path`/`html` are parser-test and reviewed manual-capture inputs, not the normal provider acquisition path.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 - Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported in receipt warnings/details.
@@ -26,8 +25,7 @@ Params:
 - `importance` — defaults to `3` for high-impact rows.
 - `html_path` — optional captured/sanitized HTML for parser tests or manual page captures.
 - `html` — optional inline sanitized HTML.
-- `allow_live_fetch` — optional; when true, fetches the visible page.
-- `date_range_mode` — optional; `custom` by default for bounded historical windows, or `recent` for the logged-out recent calendar page.
+- `date_range_mode` — optional parser compatibility field; `custom` by default for bounded historical windows, or `recent` for the retired recent-calendar shape.
 - `use_authenticated_cookies` — optional; defaults to false. Set true only for a reviewed manual recovery route that explicitly needs an exported local cookie jar.
 - `persist_failure_diagnostics` — optional; when true and parsing finds zero in-window rows, writes sanitized structural diagnostics under the run directory. It does not persist request headers, cookies, or raw page HTML.
 

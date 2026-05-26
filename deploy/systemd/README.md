@@ -1,4 +1,8 @@
 # systemd units
 
-- `trading-data-te-calendar-refresh.service` runs one bounded recent Trading Economics calendar refresh.
-- `trading-data-te-calendar-refresh.timer` schedules the refresh so reusable macro/event rows keep rolling into storage.
+There are no accepted Trading Economics website refresh units.
+
+The TE website subscription is expired. Macro source data comes only from the
+canonical storage snapshot under
+`trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web`.
+Do not install or revive a TE website refresh timer from this repository.

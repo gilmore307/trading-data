@@ -225,49 +225,6 @@ def _gdelt_news_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[di
     return events
 
 
-def _trading_economics_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
-    events: list[dict[str, Any]] = []
-    fetched_at = _artifact_fetched_at(path)
-    fetched_dt = _parse_dt(fetched_at)
-    for row in rows:
-        event_time = _first(row, "event_time")
-        title = _first(row, "event")
-        if not event_time or not title:
-            continue
-        event_dt = _parse_dt(event_time)
-        actual = _first(row, "actual")
-        revised = _first(row, "revised")
-        is_scheduled_future = bool(fetched_dt and event_dt and event_dt > fetched_dt and not actual)
-        available_time = fetched_at if is_scheduled_future and fetched_at else event_time
-        values = []
-        event_phase = "scheduled_release" if is_scheduled_future else "release_result" if actual or revised else "calendar_observation"
-        values.append(f"event_phase={event_phase}")
-        if is_scheduled_future:
-            values.append("actual_status=pending")
-        for key in ("actual", "previous", "consensus", "te_forecast", "revised", "reference", "importance"):
-            value = _first(row, key)
-            if value:
-                values.append(f"{key}={value}")
-        events.append(
-            _base_event(
-                artifact_path=path,
-                event_time=event_time,
-                available_time=available_time,
-                information_role_type="prior_signal",
-                event_category_type="macro_data",
-                scope_type="macro",
-                title=title,
-                summary="; ".join(values) or title,
-                source_name="07_feed_trading_economics_calendar_web",
-                reference_type="web_url" if _first(row, "source_url") else "source_reference",
-                reference=_reference(path, row, "source_url", "event"),
-                source_priority="approved_calendar" if is_scheduled_future else "official_data_release",
-                coverage_reason="scheduled_macro_release_from_trading_economics_recent_calendar" if is_scheduled_future else "canonical_macro_data_from_trading_economics_calendar_feed",
-            )
-        )
-    return events
-
-
 def _release_calendar_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
     """Normalize reviewed calendar-discovery artifacts into event shells.
 
@@ -401,8 +358,6 @@ def _detect_artifact_kind(path: Path, rows: Sequence[Mapping[str, str]]) -> str:
         return "alpaca_news"
     if "gdelt_article" in name or "article_id" in columns and "source_theme_tags" in columns:
         return "gdelt_news"
-    if "trading_economics_calendar_event" in name or {"event", "actual", "consensus"}.intersection(columns) and "source_url" in columns:
-        return "trading_economics_calendar"
     if "release_calendar" in name or {"calendar_source", "event_name", "release_time"}.issubset(columns):
         return "release_calendar"
     if name.startswith("sec_") or "accession_number" in columns or {"cik", "taxonomy", "tag"}.issubset(columns):
@@ -424,8 +379,6 @@ def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict
             events.extend(_alpaca_news_events(path, rows))
         elif kind == "gdelt_news":
             events.extend(_gdelt_news_events(path, rows))
-        elif kind == "trading_economics_calendar":
-            events.extend(_trading_economics_events(path, rows))
         elif kind == "release_calendar":
             events.extend(_release_calendar_events(path, rows))
         elif kind == "sec_company_financials":

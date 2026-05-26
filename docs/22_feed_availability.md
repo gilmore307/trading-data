@@ -47,7 +47,7 @@ Reports write under ignored `storage/feed_availability/` or `storage/feed_interf
 | OKX | Crypto bars, trades, tickers/quotes, order book. | Public market endpoints for current data; private endpoints need credentials if separately accepted. | Live interface checks succeeded for current market-data families. |
 | SEC EDGAR | Submissions, company facts, company concepts, XBRL frames, filing references. | No key; identifying User-Agent and fair-access behavior required. | Live checks succeeded with bounded Apple examples; large responses require segmentation/field selection. |
 | ETF issuers | Holdings rows/snapshots, weights, fund metadata. | Usually public web/file downloads. | Adapter-specific; preserve URL, as-of date, retrieval timestamp, and file/page format. |
-| Trading Economics visible pages | Macro calendar/value rows visible on public recent/custom calendar pages. | No key and no authenticated cookies by default; no historical API, download/export, WAF, or captcha bypass. | Accepted runtime authority for macro event observations in replay and ongoing recent/future rows because it carries expectation/previous/actual-style fields in one route. |
+| Trading Economics storage snapshot | Macro calendar/value rows captured before subscription expiry. | Canonical `trading-storage` source snapshot; no website refresh. | Accepted macro source evidence is storage-only. The website route is expired/retired and should not be used for ongoing maintenance. |
 | FOMC / official macro pages | Meeting calendars and release calendars. | Public official pages. | Manual fallback/audit only while TE is the accepted macro runtime route. |
 | FRED / ALFRED | FRED-native research series/groups and vintage views. | `FRED_SECRET_ALIAS`. | Optional reviewed research path; not a duplicate default for agency-owned measures. |
 | BLS / Census / BEA / Treasury | Official agency macro/economic measures. | Public or registered aliases depending on provider. | Documentation and probes exist for optional research and incident review; not active macro runtime routes. |
@@ -58,7 +58,7 @@ Reports write under ignored `storage/feed_availability/` or `storage/feed_interf
 - OKX bars are positional arrays; trades, tickers, and books are JSON objects under `data[]`.
 - SEC EDGAR companyfacts can be large; production code should request only needed concepts or normalize segmented facts.
 - ThetaData v3 endpoint families are available through the local Terminal; entitlement blocks are captured as evidence, not treated as parser failures.
-- BLS, Census, BEA, Treasury, and FRED probes confirmed basic official API response shapes; active macro model-input work remains on the accepted visible-page route unless separately re-approved.
+- BLS, Census, BEA, Treasury, and FRED probes confirmed basic official API response shapes; active macro model-input work remains on the canonical TE storage snapshot unless separately re-approved.
 
 ## Registered Data-Kind Groups
 

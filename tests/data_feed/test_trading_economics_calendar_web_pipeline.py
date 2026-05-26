@@ -74,9 +74,8 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(row["consensus"], "200K")
             self.assertEqual(row["te_forecast"], "205K")
 
-    def test_recent_mode_uses_plain_calendar_url_without_auth_cookie(self):
+    def test_recent_mode_uses_no_auth_cookie(self):
         params = {"date_range_mode": "recent", "use_authenticated_cookies": False, "start_date": "2026-05-18", "end_date": "2026-06-12"}
-        self.assertEqual(te_pipeline._build_url(params), "https://tradingeconomics.com/united-states/calendar")
         self.assertEqual(te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")), "")
 
     def test_recent_monthly_backfill_bucketed_output_writes_event_month_dirs(self):
@@ -115,9 +114,8 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertTrue((output_root / "2026-05" / "completion_receipt.json").exists())
             self.assertTrue((output_root / "_manifests" / "recent_refresh_completion_receipt.json").exists())
 
-    def test_custom_mode_uses_date_url_and_range_cookie(self):
+    def test_custom_mode_uses_range_cookie(self):
         params = {"date_range_mode": "custom", "use_authenticated_cookies": False, "start_date": "2018-10-01", "end_date": "2018-11-01", "importance": "3"}
-        self.assertIn("start=2018-10-01", te_pipeline._build_url(params))
         self.assertIn("cal-custom-range=2018-10-01 00:00|2018-11-01 00:00", te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")))
 
     def test_custom_mode_defaults_to_no_authenticated_cookies(self):
@@ -126,7 +124,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
         cookie_header = te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file"))
         self.assertIn("cal-custom-range=2018-10-01 00:00|2018-11-01 00:00", cookie_header)
 
-    def test_requires_explicit_html_or_live_fetch(self):
+    def test_requires_explicit_html_source(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "te_calendar_task_no_fetch",

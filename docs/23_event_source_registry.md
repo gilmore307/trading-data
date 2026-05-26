@@ -36,7 +36,7 @@ last_material_update_time
 
 Historical acquisition should prefer immutable or archived artifacts with point-in-time clocks:
 
-- Trading Economics visible calendar artifacts for macro calendars and macro release values;
+- Trading Economics storage-snapshot artifacts for macro calendars and macro release values;
 - official agency/archive pages, machine-readable historical APIs, release archives, filing timestamps, announcement PDFs, and stored local snapshots for non-macro or exception routes;
 - provider calendars only when official history is unavailable or as corroborating evidence;
 - rule-generated calendars only for deterministic structures, and still tagged as `inferred_rule` until official confirmation is available.
@@ -48,7 +48,7 @@ Historical replay must store enough evidence refs to prove what was knowable bef
 Realtime maintenance should run bounded refreshes:
 
 - yearly or monthly for exchange holiday and index methodology calendars;
-- weekly or daily for Trading Economics macro calendars and macro release rows;
+- reviewed storage refresh/import only for Trading Economics macro calendars and macro release rows; the website timer is retired;
 - daily or intraday for SEC/company filings, company IR/news, sanctions/trade actions, and persistent-regime status updates when active;
 - event-window refreshes around known expiry, rebalance, macro, or earnings windows.
 
@@ -70,7 +70,7 @@ Future events may enter the global event observation pool when `available_time <
 |---|---|---|---|---|
 | Exchange holidays, early closes, long weekends | NYSE/Nasdaq official calendars and saved snapshots | NYSE/Nasdaq official current/future calendars | rule-generated US exchange holidays tagged `inferred_rule` until official confirmation | source page retrieval time or official published/update time; early-close details must be source-backed |
 | Option expiry / triple-witching | Cboe/OCC historical calendars or archived calendars plus deterministic monthly/quarterly rules | Cboe/OCC annual calendars plus deterministic rule projection | exchange calendars and local generated rule rows | rule-generated future windows are `inferred_rule`; official calendar rows upgrade to `confirmed` |
-| Macro scheduled releases | Trading Economics visible calendar artifacts | Trading Economics visible calendar artifacts | official agency source only for manual incident review or severe TE anomaly | TE is the accepted runtime authority because it provides scheduled time plus useful expectation/previous/actual-style fields in one route; shell/scheduled fields and value fields must still obey TE row visibility |
+| Macro scheduled releases | Trading Economics storage-snapshot artifacts | Trading Economics storage-snapshot artifacts when reviewed/imported | official agency source only for manual incident review or severe TE anomaly | TE storage is the accepted macro evidence because it preserves scheduled time plus expectation/previous/actual-style fields captured before subscription expiry; no TE website URL is a source reference |
 | Treasury auctions | TreasuryDirect auction schedules, announcements, results archive | TreasuryDirect upcoming auctions and announcements | Treasury fiscal-data APIs if separately accepted | announcement/schedule time separate from auction/result time |
 | Earnings and issuer events | SEC EDGAR filings, company IR archives, accepted historical earnings calendars | company IR, SEC EDGAR submissions, Nasdaq/other calendars as tentative discovery | vendor calendars for tentative dates only | company/SEC official artifacts outrank calendars; result/guidance facts require visible official artifact |
 | Index reconstitution / rebalance | index provider announcements, methodology calendars, archived PDF/list files | FTSE Russell/LSEG, Nasdaq indexes, MSCI, S&P DJI official announcements/calendars | provider/member files where licensed and approved | calendar window can be known before constituent/result files; membership changes require official announcement visibility |
@@ -136,7 +136,7 @@ These fields are standardization evidence. Layer 10 and review decide whether th
 
 ## Macro TE Route
 
-Trading Economics is the accepted runtime route for macro event observations because it provides a unified calendar shape with useful market-facing fields such as expected/consensus, previous, and actual-style values when visible. `trading-data` should not run a parallel routine official-source macro calendar path by default.
+Trading Economics storage is the accepted macro source route because it preserves a unified calendar shape with market-facing fields such as expected/consensus, previous, and actual-style values captured before subscription expiry. `trading-data` should not run a parallel routine official-source macro calendar path by default and must not use the expired TE website as an active source.
 
 Official macro agency sources are reserved for:
 
@@ -144,7 +144,7 @@ Official macro agency sources are reserved for:
 - one-off audit of critical macro event handling;
 - future replacement only after a separate reviewed route decision.
 
-This means macro rows can be promoted into the global event observation pool from TE alone, provided their `available_time`, retrieval evidence, row fields, source URL, and retained storage artifact path are preserved. TE source artifacts are keep-forever append-only evidence under the canonical monthly storage root; SQL stores the normalized event envelope and points back to those artifacts. TE rows still do not become production Layer 4 conditioning samples unless Layer 10/review later accepts the event family/mechanism. They may support focused-pool candidate training after Layer 10 identifies a plausible failure relationship.
+This means macro rows can be promoted into the global event observation pool from TE storage alone, provided their `available_time`, retrieval evidence, row fields, and retained storage artifact path are preserved. TE source artifacts are keep-forever append-only evidence under the canonical monthly storage root; SQL stores the normalized event envelope and points back to those artifacts. TE rows still do not become production Layer 4 conditioning samples unless Layer 10/review later accepts the event family/mechanism. They may support focused-pool candidate training after Layer 10 identifies a plausible failure relationship.
 
 ## Persistent-Regime Source Rules
 

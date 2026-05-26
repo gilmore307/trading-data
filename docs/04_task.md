@@ -8,7 +8,7 @@ The accepted local feed/source/feature route is structurally closed; see `docs/0
 
 ## Historical-Training Readiness Status
 
-- Current route coverage is accepted for the bounded historical training start: Alpaca bars/liquidity/news, GDELT news, OKX public market data, Trading Economics logged-out visible calendar rows, SEC company financials, ThetaData option primary tracking, and ThetaData option event timeline.
+- Current route coverage is accepted for the bounded historical training start: Alpaca bars/liquidity/news, GDELT news, OKX public market data, Trading Economics storage-snapshot calendar rows, SEC company financials, ThetaData option primary tracking, and ThetaData option event timeline.
 - Source-specific dry-run parameter defaults are manager-owned in `trading-manager/src/trading_manager_tasks/request_payloads.py`; `trading-data` should not duplicate that control-plane policy locally.
 - Manager/storage V1 request, manifest, artifact, and ready-signal contracts are accepted and implemented through the current manager/storage MVP path; `trading-data` consumes task-key payloads and emits component evidence, not manager lifecycle state.
 - Event standards remain conservative evidence until reviewed historical calibration reports promote them into labels/gates.
@@ -43,7 +43,7 @@ These items are intentionally outside the current promote-first historical-train
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.
 - ThetaData option feeds are implemented for selection snapshot, specified-contract primary tracking, and event timeline.
 - `feed_availability` and `feed_interfaces` provide bounded provider/data-kind inventory and smoke support.
-- `macro_data` is not active. Macro model-input rows use `07_feed_trading_economics_calendar_web` logged-out visible-page evidence.
+- `macro_data` is not active. Macro source evidence is the canonical Trading Economics storage snapshot; the TE website route is retired.
 - Current task key / receipt fields are registered through `trading-manager`; new shared fields need registry review.
 
 ## Closed Design Notes

@@ -39,7 +39,7 @@ Current provider/source surfaces include:
 - OKX crypto market data;
 - SEC EDGAR company filings/facts;
 - ETF issuer holdings pages/files;
-- Trading Economics visible macro calendar rows;
+- Trading Economics storage-snapshot macro calendar rows;
 - official FOMC and macro release pages;
 - optional reviewed official macro/economic APIs such as FRED, BLS, Census, BEA, and Treasury.
 

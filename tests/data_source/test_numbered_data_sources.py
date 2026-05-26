@@ -238,8 +238,8 @@ class NumberedDataSourceTests(unittest.TestCase):
                             "title": "US durable goods release",
                             "summary": "Macro calendar release overview.",
                             "source_name": "07_feed_trading_economics_calendar_web",
-                            "reference_type": "web_url",
-                            "reference": "https://tradingeconomics.com/united-states/calendar",
+                            "reference_type": "source_reference",
+                            "reference": "trading_economics_calendar_event.csv",
                         },
                         {
                             "event_id": "evt_nvda_false_breakout_1",

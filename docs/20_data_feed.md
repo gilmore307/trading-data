@@ -42,7 +42,7 @@ Provider credentials must never be committed. Secret material stays outside Git 
 | OKX | Crypto market data; private surfaces only when separately approved. | `OKX_SECRET_ALIAS` -> `okx` | Public market data may not need private credentials. |
 | SEC EDGAR | Company submissions, facts, concepts, frames, filing metadata. | no key | Requires fair-access behavior and identifying User-Agent. |
 | ETF issuers | Holdings rows, weights, fund metadata. | issuer-specific/no key | Preserve source URL, as-of date, retrieval time, and file/page format. |
-| Trading Economics visible calendar | Macro calendar/value rows visible on the public recent/custom calendar pages. | no key; no authenticated cookies by default | Accepted runtime authority for macro event observations because the row shape includes scheduled time plus expectation/previous/actual-style fields when visible. Feed tasks use logged-out visible-page requests with bounded date/filter cookies. No API/download/WAF/captcha bypass. |
+| Trading Economics storage snapshot | Macro calendar/value rows captured before subscription expiry. | canonical `trading-storage` source snapshot | Accepted macro source evidence is the storage snapshot only. The website route is retired and source artifacts must not carry TE website URLs. |
 | FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes; use only for incident review, audit, or a separately accepted replacement route. |
 | FOMC/official release pages | Official calendar events. | no key | Not an active macro runtime route while TE is accepted; preserve as manual fallback/audit source. |
 
@@ -60,7 +60,7 @@ Installed entrypoints mirror package modules:
 | OKX crypto market data | `trading-data-04-feed-okx-crypto-market-data` / `python -m data_feed.04_feed_okx_crypto_market_data` | cleaned crypto market outputs |
 | GDELT news | `trading-data-05-feed-gdelt-news` / `python -m data_feed.05_feed_gdelt_news` | bounded news evidence |
 | ETF holdings | `trading-data-06-feed-etf-holdings` / `python -m data_feed.06_feed_etf_holdings` | issuer holdings evidence |
-| Trading Economics calendar web | `trading-data-07-feed-trading-economics-calendar-web` / `python -m data_feed.07_feed_trading_economics_calendar_web` | visible calendar/value rows |
+| Trading Economics calendar web | `trading-data-07-feed-trading-economics-calendar-web` / `python -m data_feed.07_feed_trading_economics_calendar_web` | historical parser for storage-captured rows |
 | SEC company financials | `trading-data-08-feed-sec-company-financials` / `python -m data_feed.08_feed_sec_company_financials` | cleaned SEC company facts/submission evidence |
 | ThetaData option selection snapshot | `trading-data-09-feed-thetadata-option-selection-snapshot` / `python -m data_feed.09_feed_thetadata_option_selection_snapshot` | final option-chain snapshot artifact |
 | ThetaData option primary tracking | `trading-data-10-feed-thetadata-option-primary-tracking` / `python -m data_feed.10_feed_thetadata_option_primary_tracking` | final `option_bar.csv` for a supplied contract |
@@ -78,35 +78,29 @@ Browser-scraped provider routes use bounded visible-page requests:
 - if captcha, MFA, permission prompts, or WAF blocks appear, stop and require operator action instead of bypassing them;
 - parser output must be filtered to the requested time/window and record skipped out-of-window rows in receipt warnings/details.
 
-Trading Economics uses logged-out visible-page requests for replay windows, recent rows, and future scheduled releases. Ongoing maintenance fetches bounded current/recent/future calendar rows and keeps parser output filtered to the requested window.
-
-## Trading Economics Recent Refresh
-
-Trading Economics calendar rows are reusable event/source data. Historical monthly backfill lives under:
+Trading Economics website access is retired because the subscription is expired. The active macro source is the canonical storage snapshot owned by `trading-storage`:
 
 ```text
 storage/01_source_data/monthly_backfill/trading_economics_calendar_web
 ```
 
-Continuous recent refresh fetches one bounded rolling window, then appends the parsed rows into the same month-bucketed historical root by `event_time` month:
+The feed package remains as a historical parser for already captured TE source files. It must not be treated as the active macro source and must not write website URLs into source artifacts.
+
+## Trading Economics Recent Refresh
+
+Trading Economics calendar rows are reusable source data only from the storage snapshot. The canonical monthly backfill lives under:
 
 ```text
-storage/01_source_data/monthly_backfill/trading_economics_calendar_web/YYYY-MM/runs/<run_id>
+storage/01_source_data/monthly_backfill/trading_economics_calendar_web
 ```
 
-The wrapper is:
+The retired wrapper is:
 
 ```bash
 PYTHONPATH=src python3 scripts/data/run_trading_economics_recent_calendar_refresh.py
 ```
 
-Default behavior is plan-only and performs no provider calls. Add `--execute-live-fetch` only for the bounded visible-page recent calendar fetch. The checked-in systemd timer is:
-
-```text
-deploy/systemd/trading-data-te-calendar-refresh.timer
-```
-
-It runs one visible-page request per cycle with a 7-day trailing and 35-day forward window, `date_range_mode=recent`, no authenticated cookies, and manager-controls set for provider maintenance. Because the recent window can cross month boundaries, the feed writes month-specific CSV/JSONL copies under each affected `YYYY-MM` directory and keeps run-wide control receipts under the TE monthly root's `_manifests/` area. Existing historical TE artifacts remain append-only and are not deletion candidates.
+It now returns a `retired_storage_source_only` receipt and performs no provider calls. `--execute-live-fetch` is rejected. The old checked-in systemd refresh units were removed; there is no accepted timer that refreshes TE from the website.
 
 ## Implementation Rules
 
@@ -129,7 +123,7 @@ Credential material is generated from `/root/secrets/thetadata.json` into local 
 
 ## Macro Route
 
-`macro_data` is not an active feed. Macro model-input rows currently use `07_feed_trading_economics_calendar_web` visible-page evidence. Official macro API aliases may remain for reviewed research, but manager-issued macro tasks must use an accepted active route.
+`macro_data` is not an active feed. Macro model-input rows use the canonical Trading Economics storage snapshot when a reviewed route materializes macro rows. Official macro API aliases may remain for reviewed research, but manager-issued macro tasks must not use the expired TE website route.
 
 ## Acceptance Checklist
 

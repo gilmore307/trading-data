@@ -53,7 +53,7 @@ Market board / 盘面数据, instrument / 标的数据, and option / 期权数�
 
 ## D010 — Macro model-input route
 
-The executable `macro_data` feed is not active. Macro model-input rows use `07_feed_trading_economics_calendar_web` visible-page evidence unless a separately reviewed route replaces it. Official macro API aliases may remain for reviewed research but are not active manager routes by default.
+The executable `macro_data` feed is not active. Macro model-input rows use the canonical Trading Economics storage snapshot unless a separately reviewed route replaces it. Official macro API aliases may remain for reviewed research but are not active manager routes by default.
 
 ## D011 — Provider surfaces
 
@@ -64,7 +64,7 @@ Current provider/source surfaces:
 - OKX for accepted crypto market data.
 - SEC EDGAR for official company submissions/facts/concepts/frames.
 - ETF issuer pages/files for holdings.
-- Trading Economics visible pages for current macro calendar/value rows.
+- Trading Economics storage snapshot for macro calendar/value rows.
 - Official FOMC and macro release pages for calendar events.
 - FRED/Census/BEA/BLS/Treasury only through reviewed optional economic-data routes.
 
@@ -129,9 +129,9 @@ These rows are source-detector event evidence. They do not create a ninth model 
 Date: 2026-05-15
 Status: Accepted
 
-For browser-scraped sources such as Trading Economics, normal acquisition uses logged-out visible pages when the accepted fields are available. Feed tasks use bounded HTTP page fetches plus task-specific date/filter cookies or query params, and must not repeatedly open/login browser pages or rely on a mutable long-lived tab. An exported local cookie jar is allowed only for a reviewed recovery route that explicitly needs it. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
+For browser-scraped sources, normal acquisition uses logged-out visible pages when the accepted fields are available. Feed tasks use bounded HTTP page fetches plus task-specific date/filter cookies or query params, and must not repeatedly open/login browser pages or rely on a mutable long-lived tab. An exported local cookie jar is allowed only for a reviewed recovery route that explicitly needs it. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
 
-Trading Economics replay and current/recent/future calendar maintenance use logged-out visible pages with `use_authenticated_cookies=false`. Operation does not depend on an active TE subscription.
+Trading Economics is the exception: the subscription is expired, so replay and current/recent/future macro maintenance use the canonical storage snapshot only. The website route and TE refresh timer are retired.
 
 All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.
 

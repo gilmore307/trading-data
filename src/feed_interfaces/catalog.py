@@ -149,9 +149,9 @@ INTERFACES: dict[str, DataKindInterface] = {
         ("Requires feed-specific official calendar adapters; not a universal API.",),
     ),
     "trading_economics_calendar_event": DataKindInterface(
-        "trading_economics_calendar_event", "trading_economics", "07_feed_trading_economics_calendar_web", "visible macro calendar web page",
-        "https://tradingeconomics.com/united-states/calendar", "web/login", {"country": "United States", "importance": "3"},
-        ("Visible page only; no Trading Economics API or Download/export endpoint; no bulk backfill until explicitly accepted.",),
+        "trading_economics_calendar_event", "trading_economics", "07_feed_trading_economics_calendar_web", "canonical storage source only",
+        None, "expired/storage-only", {"country": "United States", "importance": "3"},
+        ("Trading Economics subscription is expired; macro source is the canonical storage snapshot, not the website.",),
     ),
     "etf_holding_snapshot": DataKindInterface(
         "etf_holding_snapshot", "etf_issuer_holdings", "06_feed_etf_holdings", "issuer-published holdings file/page", None, "web/file", {"etf_symbol": "VGT", "issuer": "vanguard"},

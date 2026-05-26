@@ -30,7 +30,7 @@ class FeedInterfaceTests(unittest.TestCase):
         interface = INTERFACES["trading_economics_calendar_event"]
         self.assertEqual(interface.provider, "trading_economics")
         self.assertEqual(interface.feed, "07_feed_trading_economics_calendar_web")
-        self.assertEqual(interface.access, "web/login")
+        self.assertEqual(interface.access, "expired/storage-only")
 
     def test_cli_list_no_network(self):
         stdout = io.StringIO()

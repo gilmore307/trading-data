@@ -92,7 +92,7 @@ ThetaData option acquisition is split by use case:
 - primary tracking: bars for one supplied contract;
 - event timeline: timestamped option activity events for one supplied contract and standard.
 
-`macro_data` is not an active executable feed. Macro model-input rows use `07_feed_trading_economics_calendar_web` unless a separately reviewed route replaces it.
+`macro_data` is not an active executable feed. Trading Economics macro source rows are retained in `trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web`; the expired website route is not an active model-input acquisition path.
 
 ## Implemented CLIs
 

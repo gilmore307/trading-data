@@ -38,6 +38,19 @@ Generic contract-envelope schemas live in `schemas/`:
 
 These schemas define shared envelope fields only. Feed/source-specific payload fields remain owned by the corresponding module docs and tests until a reviewed registry-backed schema is accepted.
 
+## Temporal Explorer Substrate
+
+`trading-data` owns the provider-neutral calendar/timewheel SQL substrate used by dashboard, replay, and model-context inspection:
+
+- `calendar_day`: one row per date from the accepted historical start, with timezone and day/month/quarter/year flags.
+- `calendar_market_session`: venue-level session facts for NYSE, NASDAQ, and `CRYPTO_24_7`. Rule-generated NYSE/NASDAQ rows are marked `source_priority = inferred_rule`; official holiday/early-close sources may later override or enrich them.
+- `calendar_scheduled_event`: events known before occurrence, such as macro releases, earnings dates, FOMC meetings, Treasury auctions, option expiry, index rebalance windows, and issuer events. Result payloads are forbidden here.
+- `calendar_event_result`: post-release actual/consensus/surprise payloads with `released_at`, `available_time`, and `retrieved_at`.
+- `calendar_news_event_index`: discovery/news event index rows with headline/ref metadata. Full raw text and interpretations stay behind artifact references.
+- `chart_ohlcv_cache`: compact OHLCV visualization cache by symbol/timeframe/bucket. It supports dashboard Timewheel charts but is not a model-training or replay truth source.
+
+The executable installer is `scripts/data/install_temporal_explorer_tables.py`. It may create tables, upsert deterministic day/session spine rows, and copy accepted scheduled macro/earnings shell rows from `source_10_event_risk_governor` into `calendar_scheduled_event`. It must not call data providers, fabricate early closes, populate event results, write news bodies, or infer chart bars without accepted source rows.
+
 ## Freshness and model-standard acceptance
 
 Conservative acceptance rules:

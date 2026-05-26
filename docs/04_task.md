@@ -2,7 +2,7 @@
 
 ## Active Tasks
 
-- None for the repository-design boundary in the current promote-first model phase.
+- Install and use the Temporal Explorer substrate as the shared calendar/timewheel foundation for dashboard and replay inspection. The first accepted slice creates the SQL tables, deterministic day spine, rule-generated venue sessions, and chart-cache contract without pretending that unconnected early-close, event-result, news-body, or chart-bar sources are populated.
 
 The accepted local feed/source/feature route is structurally closed; see `docs/03_contracts.md`. Current data work should support historical evidence production for the first usable production-promotable model version, starting with Layer 1 `MarketRegimeModel` evidence/gate repair. Historical training may proceed through manager-planned request payloads, handoff validation, and autonomous historical provider acquisition under bounded manager controls. Realtime feed/source expansion is parked until a model has an approved/promotable version.
 

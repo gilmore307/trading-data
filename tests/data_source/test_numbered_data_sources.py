@@ -209,6 +209,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                             "source_name": "sec_company_financials",
                             "reference_type": "sec_file_path",
                             "reference": "/tmp/sec/nvda-10q.html",
+                            "source_artifact_path": "/tmp/sec/nvda-10q.html",
                         },
                         {
                             "event_id": "evt_nvda_news_covered_1",
@@ -271,9 +272,11 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertIn("source_priority", call["columns"])
             self.assertIn("coverage_reason", call["columns"])
             self.assertIn("covered_by_event_id", call["columns"])
+            self.assertIn("source_artifact_path", call["columns"])
             self.assertEqual({row["information_role_type"] for row in call["rows"]}, {"lagging_evidence", "prior_signal"})
             by_event = {row["event_id"]: row for row in call["rows"]}
             self.assertEqual(by_event["evt_nvda_10q_2026q1"]["canonical_event_id"], "evt_nvda_10q_2026q1")
+            self.assertEqual(by_event["evt_nvda_10q_2026q1"]["source_artifact_path"], "/tmp/sec/nvda-10q.html")
             self.assertEqual(by_event["evt_nvda_10q_2026q1"]["dedup_status"], "canonical")
             self.assertEqual(by_event["evt_nvda_10q_2026q1"]["source_priority"], "official_disclosure")
             self.assertEqual(by_event["evt_nvda_news_covered_1"]["canonical_event_id"], "evt_nvda_10q_2026q1")
@@ -294,6 +297,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             "source_priority TEXT NOT NULL",
             "coverage_reason TEXT",
             "covered_by_event_id TEXT",
+            "source_artifact_path TEXT",
         }:
             self.assertIn(column, ddl)
 

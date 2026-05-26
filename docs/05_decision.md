@@ -45,6 +45,8 @@ Raw provider trades, quotes, bulky SEC facts, and other high-volume payloads sho
 
 Numbered model-input sources should write accepted SQL tables unless a reviewed compact artifact is the better boundary. Business tables should not carry `task_id`, `run_id`, or write-audit timestamps when those belong in receipts/manifests.
 
+Event originals such as articles, filings, calendar captures, and reviewed local source artifacts stay in storage when their original text/file matters. The SQL event table stores the normalized event envelope and a dereferenceable source artifact path, not the full original payload. Trading Economics artifacts are keep-forever append-only source evidence because historical rows are not reliably recoverable through the current route; they are still materialized into SQL with other events for normal model use.
+
 ## D009 — Historical product labels are not runtime boundaries
 
 Market board / 盘面数据, instrument / 标的数据, and option / 期权数据 remain useful product concepts. Runtime keys, package names, registry rows, and storage paths should follow feed/source/feature contracts instead.

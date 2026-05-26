@@ -55,6 +55,7 @@ SQL_FIELDS = [
     "source_name",
     "reference_type",
     "reference",
+    "source_artifact_path",
 ]
 KEY_COLUMNS = ["event_id"]
 
@@ -287,6 +288,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
             "source_name": str(source.get("source_name") or source.get("source") or "").strip(),
             "reference_type": _enum(source.get("reference_type") or "source_reference", REFERENCE_TYPES, "reference_type"),
             "reference": reference,
+            "source_artifact_path": str(source.get("source_artifact_path") or "").strip() or None,
         }
         if not row["title"]:
             raise EventRiskInputsError("each event requires title/headline")

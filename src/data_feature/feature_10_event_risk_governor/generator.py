@@ -47,6 +47,7 @@ def _payload(row: Mapping[str, Any]) -> dict[str, Any]:
         "has_symbol_scope": _bool_int(bool(row.get("symbol"))),
         "has_sector_scope": _bool_int(bool(row.get("sector_type"))),
         "has_coverage_reason": _bool_int(bool(row.get("coverage_reason"))),
+        "has_source_artifact_path": _bool_int(bool(row.get("source_artifact_path"))),
         "has_summary": _bool_int(bool(summary)),
         "title_length": len(title),
         "summary_length": len(summary),

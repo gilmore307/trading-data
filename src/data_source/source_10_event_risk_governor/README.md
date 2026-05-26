@@ -37,6 +37,7 @@ Each event row requires:
 - `source_name`
 - `reference_type`: `web_url`, `sec_file_path`, `internal_artifact_path`, or `source_reference`
 - `reference`
+- `source_artifact_path`: optional local source artifact path when the event row was normalized from retained storage evidence
 
 Optional deduplication fields:
 
@@ -82,6 +83,7 @@ Columns:
 - `source_name`
 - `reference_type`
 - `reference`
+- `source_artifact_path`
 
 The table stores overview rows only. It does not store full article text, SEC filing contents, browser/agent analysis transcripts, event artifact payloads, model impact scores, labels, alpha confidence, or trade recommendations.
 
@@ -92,7 +94,7 @@ Trading Economics calendar artifacts have two accepted roles:
 - replay artifacts provide macro calendar/value evidence for reviewed historical windows;
 - realtime recent artifacts are ongoing event-clock maintenance evidence. Scheduled future releases use the artifact `request_manifest.fetched_at_utc` as `available_time`, keep the release timestamp as `event_time`, and mark the summary as `event_phase=scheduled_release; actual_status=pending`. Released rows with actual/revised values remain `event_phase=release_result`.
 
-Model training should read TE macro events from SQL first. If a narrow historical training gap remains, the manager may fill it through the reviewed logged-out visible-page custom-date route. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
+TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later. SQL rows keep the compact event envelope plus `source_artifact_path`; model training should read TE macro events from SQL first and dereference storage only when it needs original-row evidence. If a narrow historical training gap remains, the manager may fill it through the reviewed logged-out visible-page custom-date route. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

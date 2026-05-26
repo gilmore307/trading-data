@@ -331,6 +331,7 @@ def _source_10_event_risk_governor_ddl(qualified_table: str) -> str:
         source_name TEXT NOT NULL,
         reference_type TEXT NOT NULL,
         reference TEXT NOT NULL,
+        source_artifact_path TEXT,
         PRIMARY KEY (event_id)
     );
     ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS canonical_event_id TEXT;
@@ -344,4 +345,5 @@ def _source_10_event_risk_governor_ddl(qualified_table: str) -> str:
     ALTER TABLE {qualified_table} ALTER COLUMN source_priority SET NOT NULL;
     ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS coverage_reason TEXT;
     ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS covered_by_event_id TEXT;
+    ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS source_artifact_path TEXT;
     """

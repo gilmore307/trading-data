@@ -63,7 +63,7 @@ def fetch_source_rows(cursor: Any, *, source_schema: str, source_table: str, sou
         f"""
         SELECT event_id, canonical_event_id, dedup_status, source_priority, coverage_reason, covered_by_event_id,
                event_time, available_time, information_role_type, event_category_type, scope_type, symbol, sector_type,
-               title, summary, source_name, reference_type, reference
+               title, summary, source_name, reference_type, reference, source_artifact_path
         FROM {_qualified(source_schema, source_table)}
         {where_sql}
         ORDER BY available_time ASC, event_id ASC

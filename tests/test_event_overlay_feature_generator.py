@@ -26,6 +26,7 @@ class EventOverlayFeatureGeneratorTests(unittest.TestCase):
                     "source_name": "sec",
                     "reference_type": "url",
                     "reference": "https://example.test/filing",
+                    "source_artifact_path": "/storage/sec/aapl-10q.html",
                 }
             ],
             run_id="unit_run",
@@ -40,6 +41,7 @@ class EventOverlayFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(row["feature_payload_json"]["source_priority_rank"], 1)
         self.assertEqual(row["feature_payload_json"]["is_canonical_event"], 1)
         self.assertEqual(row["feature_payload_json"]["has_symbol_scope"], 1)
+        self.assertEqual(row["feature_payload_json"]["has_source_artifact_path"], 1)
         self.assertTrue(row["feature_quality_diagnostics"]["has_required_fields"])
 
     def test_skips_rows_without_event_id_or_clock(self) -> None:

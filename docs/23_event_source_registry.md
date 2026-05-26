@@ -144,7 +144,7 @@ Official macro agency sources are reserved for:
 - one-off audit of critical macro event handling;
 - future replacement only after a separate reviewed route decision.
 
-This means macro rows can be promoted into the global event observation pool from TE alone, provided their `available_time`, retrieval evidence, row fields, and source URL are preserved. TE rows still do not become production Layer 4 conditioning samples unless Layer 10/review later accepts the event family/mechanism. They may support focused-pool candidate training after Layer 10 identifies a plausible failure relationship.
+This means macro rows can be promoted into the global event observation pool from TE alone, provided their `available_time`, retrieval evidence, row fields, source URL, and retained storage artifact path are preserved. TE source artifacts are keep-forever append-only evidence under the canonical monthly storage root; SQL stores the normalized event envelope and points back to those artifacts. TE rows still do not become production Layer 4 conditioning samples unless Layer 10/review later accepts the event family/mechanism. They may support focused-pool candidate training after Layer 10 identifies a plausible failure relationship.
 
 ## Persistent-Regime Source Rules
 

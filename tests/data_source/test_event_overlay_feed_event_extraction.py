@@ -105,6 +105,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             row = rows[0]
             self.assertEqual(row["available_time"], "2026-05-18T05:00:00Z")
             self.assertEqual(row["source_priority"], "approved_calendar")
+            self.assertEqual(row["source_artifact_path"], str(te))
             self.assertIn("event_phase=scheduled_release", row["summary"])
             self.assertIn("actual_status=pending", row["summary"])
             self.assertEqual(row["coverage_reason"], "scheduled_macro_release_from_trading_economics_recent_calendar")
@@ -130,6 +131,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             row = writer.calls[0]["rows"][0]
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_name"], "03_feed_alpaca_news")
+            self.assertEqual(row["source_artifact_path"], str(alpaca))
 
     def test_source_pipeline_preserves_same_time_macro_calendar_events(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:

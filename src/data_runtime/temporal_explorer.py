@@ -21,17 +21,11 @@ ET = ZoneInfo("America/New_York")
 
 CALENDAR_DAY_TABLE = "calendar_day"
 CALENDAR_MARKET_SESSION_TABLE = "calendar_market_session"
-CALENDAR_SCHEDULED_EVENT_TABLE = "calendar_scheduled_event"
-CALENDAR_EVENT_RESULT_TABLE = "calendar_event_result"
-CALENDAR_NEWS_EVENT_INDEX_TABLE = "calendar_news_event_index"
 CHART_OHLCV_CACHE_TABLE = "chart_ohlcv_cache"
 
 TEMPORAL_TABLES = (
     CALENDAR_DAY_TABLE,
     CALENDAR_MARKET_SESSION_TABLE,
-    CALENDAR_SCHEDULED_EVENT_TABLE,
-    CALENDAR_EVENT_RESULT_TABLE,
-    CALENDAR_NEWS_EVENT_INDEX_TABLE,
     CHART_OHLCV_CACHE_TABLE,
 )
 
@@ -242,7 +236,6 @@ def install_temporal_tables(
     schema: str = "trading_data",
     start_date: date | str = "2016-01-01",
     end_date_exclusive: date | str | None = None,
-    include_source10_events: bool = True,
 ) -> dict[str, Any]:
     """Create temporal tables and upsert the deterministic day/session spine."""
 
@@ -298,21 +291,6 @@ def install_temporal_tables(
                 key_columns=("venue", "calendar_date"),
                 rows=session_rows,
             )
-            scheduled_event_rows = (
-                _upsert_scheduled_events_from_source10(cursor, schema=schema)
-                if include_source10_events
-                else 0
-            )
-            event_result_rows = (
-                _upsert_event_results_from_source10(cursor, schema=schema)
-                if include_source10_events
-                else 0
-            )
-            news_event_rows = (
-                _upsert_news_events_from_source10(cursor, schema=schema)
-                if include_source10_events
-                else 0
-            )
         connection.commit()
     return {
         "contract_type": "temporal_explorer_table_install_receipt",
@@ -320,9 +298,6 @@ def install_temporal_tables(
         "tables": list(TEMPORAL_TABLES),
         "calendar_day_rows": len(day_rows),
         "market_session_rows": len(session_rows),
-        "scheduled_event_rows_from_source10": scheduled_event_rows,
-        "event_result_rows_from_source10": event_result_rows,
-        "news_event_rows_from_source10": news_event_rows,
         "start_date": str(_coerce_date(start_date)),
         "end_date_exclusive": str(_coerce_date(end_date_exclusive)),
     }
@@ -332,9 +307,6 @@ def temporal_table_ddls(schema: str = "trading_data") -> list[str]:
     return [
         _calendar_day_ddl(schema),
         _calendar_market_session_ddl(schema),
-        _calendar_scheduled_event_ddl(schema),
-        _calendar_event_result_ddl(schema),
-        _calendar_news_event_index_ddl(schema),
         _chart_ohlcv_cache_ddl(schema),
     ]
 
@@ -372,63 +344,6 @@ def _calendar_market_session_ddl(schema: str) -> str:
         source_priority TEXT NOT NULL,
         source_ref TEXT,
         PRIMARY KEY (venue, calendar_date)
-    )
-    """
-
-
-def _calendar_scheduled_event_ddl(schema: str) -> str:
-    table = _qualified(schema, CALENDAR_SCHEDULED_EVENT_TABLE)
-    return f"""
-    CREATE TABLE IF NOT EXISTS {table} (
-        event_id TEXT PRIMARY KEY,
-        event_date DATE NOT NULL,
-        event_time TIMESTAMPTZ,
-        event_type TEXT NOT NULL,
-        event_scope TEXT NOT NULL,
-        symbol TEXT,
-        country TEXT,
-        source_priority TEXT NOT NULL,
-        scheduled_known_at TIMESTAMPTZ NOT NULL,
-        source_url TEXT,
-        raw_artifact_ref TEXT,
-        metadata_json JSONB NOT NULL DEFAULT '{{}}'::jsonb
-    )
-    """
-
-
-def _calendar_event_result_ddl(schema: str) -> str:
-    table = _qualified(schema, CALENDAR_EVENT_RESULT_TABLE)
-    return f"""
-    CREATE TABLE IF NOT EXISTS {table} (
-        event_id TEXT NOT NULL,
-        released_at TIMESTAMPTZ NOT NULL,
-        available_time TIMESTAMPTZ NOT NULL,
-        actual_payload JSONB,
-        consensus_payload JSONB,
-        surprise_payload JSONB,
-        source_url TEXT,
-        retrieved_at TIMESTAMPTZ NOT NULL,
-        raw_artifact_ref TEXT,
-        PRIMARY KEY (event_id, released_at, available_time)
-    )
-    """
-
-
-def _calendar_news_event_index_ddl(schema: str) -> str:
-    table = _qualified(schema, CALENDAR_NEWS_EVENT_INDEX_TABLE)
-    return f"""
-    CREATE TABLE IF NOT EXISTS {table} (
-        news_event_id TEXT PRIMARY KEY,
-        event_date DATE NOT NULL,
-        first_seen_at TIMESTAMPTZ NOT NULL,
-        source TEXT NOT NULL,
-        headline TEXT NOT NULL,
-        symbol TEXT,
-        event_family_candidate TEXT,
-        canonical_event_id TEXT,
-        dedup_status TEXT NOT NULL,
-        raw_artifact_ref TEXT,
-        interpreted_event_ref TEXT
     )
     """
 
@@ -526,199 +441,6 @@ def _upsert_rows(
     cursor.executemany(statement, values)
 
 
-def _upsert_scheduled_events_from_source10(cursor: Any, *, schema: str) -> int:
-    cursor.execute(
-        """
-        SELECT EXISTS (
-          SELECT 1 FROM information_schema.tables
-          WHERE table_schema = %s AND table_name = 'source_10_event_risk_governor'
-        ) AS exists
-        """,
-        (schema,),
-    )
-    if not bool(cursor.fetchone()[0]):
-        return 0
-    statement = f"""
-    INSERT INTO {_qualified(schema, CALENDAR_SCHEDULED_EVENT_TABLE)} (
-        event_id,
-        event_date,
-        event_time,
-        event_type,
-        event_scope,
-        symbol,
-        country,
-        source_priority,
-        scheduled_known_at,
-        source_url,
-        raw_artifact_ref,
-        metadata_json
-    )
-    SELECT
-        event_id,
-        COALESCE(event_time::date, available_time::date) AS event_date,
-        event_time,
-        COALESCE(NULLIF(event_category_type, ''), 'scheduled_event') AS event_type,
-        COALESCE(NULLIF(scope_type, ''), 'market') AS event_scope,
-        NULLIF(symbol, '') AS symbol,
-        NULL::text AS country,
-        COALESCE(NULLIF(source_priority, ''), 'source_10_event_risk_governor') AS source_priority,
-        COALESCE(available_time, event_time, now()) AS scheduled_known_at,
-        CASE WHEN reference_type IN ('url', 'web_url') THEN reference ELSE NULL END AS source_url,
-        NULLIF(source_artifact_path, '') AS raw_artifact_ref,
-        jsonb_strip_nulls(jsonb_build_object(
-            'title', NULLIF(title, ''),
-            'summary', NULLIF(summary, ''),
-            'source_name', NULLIF(source_name, ''),
-            'coverage_reason', NULLIF(coverage_reason, ''),
-            'reference_type', NULLIF(reference_type, ''),
-            'reference', NULLIF(reference, '')
-        )) AS metadata_json
-    FROM {_qualified(schema, "source_10_event_risk_governor")}
-    WHERE event_time IS NOT NULL
-      AND (
-        event_category_type IN ('macro_data', 'earnings_guidance')
-        OR source_name = '07_feed_trading_economics_calendar_web'
-      )
-    ON CONFLICT (event_id) DO UPDATE SET
-        event_date = EXCLUDED.event_date,
-        event_time = EXCLUDED.event_time,
-        event_type = EXCLUDED.event_type,
-        event_scope = EXCLUDED.event_scope,
-        symbol = EXCLUDED.symbol,
-        country = EXCLUDED.country,
-        source_priority = EXCLUDED.source_priority,
-        scheduled_known_at = EXCLUDED.scheduled_known_at,
-        source_url = EXCLUDED.source_url,
-        raw_artifact_ref = EXCLUDED.raw_artifact_ref,
-        metadata_json = EXCLUDED.metadata_json
-    """
-    cursor.execute(statement)
-    return int(cursor.rowcount or 0)
-
-
-def _upsert_event_results_from_source10(cursor: Any, *, schema: str) -> int:
-    if not _source10_exists(cursor, schema=schema):
-        return 0
-    statement = f"""
-    INSERT INTO {_qualified(schema, CALENDAR_EVENT_RESULT_TABLE)} (
-        event_id,
-        released_at,
-        available_time,
-        actual_payload,
-        consensus_payload,
-        surprise_payload,
-        source_url,
-        retrieved_at,
-        raw_artifact_ref
-    )
-    SELECT
-        event_id,
-        COALESCE(available_time, event_time) AS released_at,
-        COALESCE(available_time, event_time) AS available_time,
-        jsonb_strip_nulls(jsonb_build_object(
-            'actual', NULLIF(substring(summary FROM 'actual=([^;]+)'), ''),
-            'previous', NULLIF(substring(summary FROM 'previous=([^;]+)'), ''),
-            'raw_summary', NULLIF(summary, ''),
-            'title', NULLIF(title, '')
-        )) AS actual_payload,
-        jsonb_strip_nulls(jsonb_build_object(
-            'consensus', NULLIF(substring(summary FROM 'consensus=([^;]+)'), ''),
-            'te_forecast', NULLIF(substring(summary FROM 'te_forecast=([^;]+)'), '')
-        )) AS consensus_payload,
-        jsonb_strip_nulls(jsonb_build_object(
-            'raw_summary', NULLIF(summary, ''),
-            'numeric_surprise_not_computed', true
-        )) AS surprise_payload,
-        CASE WHEN reference_type IN ('url', 'web_url') THEN reference ELSE NULL END AS source_url,
-        COALESCE(available_time, event_time, now()) AS retrieved_at,
-        NULLIF(source_artifact_path, '') AS raw_artifact_ref
-    FROM {_qualified(schema, "source_10_event_risk_governor")}
-    WHERE event_time IS NOT NULL
-      AND available_time IS NOT NULL
-      AND summary ILIKE '%event_phase=release_result%'
-      AND (
-        summary ILIKE '%actual=%'
-        OR summary ILIKE '%consensus=%'
-        OR summary ILIKE '%previous=%'
-        OR summary ILIKE '%te_forecast=%'
-      )
-    ON CONFLICT (event_id, released_at, available_time) DO UPDATE SET
-        actual_payload = EXCLUDED.actual_payload,
-        consensus_payload = EXCLUDED.consensus_payload,
-        surprise_payload = EXCLUDED.surprise_payload,
-        source_url = EXCLUDED.source_url,
-        retrieved_at = EXCLUDED.retrieved_at,
-        raw_artifact_ref = EXCLUDED.raw_artifact_ref
-    """
-    cursor.execute(statement)
-    return int(cursor.rowcount or 0)
-
-
-def _upsert_news_events_from_source10(cursor: Any, *, schema: str) -> int:
-    if not _source10_exists(cursor, schema=schema):
-        return 0
-    statement = f"""
-    INSERT INTO {_qualified(schema, CALENDAR_NEWS_EVENT_INDEX_TABLE)} (
-        news_event_id,
-        event_date,
-        first_seen_at,
-        source,
-        headline,
-        symbol,
-        event_family_candidate,
-        canonical_event_id,
-        dedup_status,
-        raw_artifact_ref,
-        interpreted_event_ref
-    )
-    SELECT
-        event_id AS news_event_id,
-        COALESCE(event_time::date, available_time::date) AS event_date,
-        COALESCE(available_time, event_time) AS first_seen_at,
-        COALESCE(NULLIF(source_name, ''), 'source_10_event_risk_governor') AS source,
-        COALESCE(NULLIF(title, ''), NULLIF(summary, ''), event_id) AS headline,
-        NULLIF(symbol, '') AS symbol,
-        COALESCE(NULLIF(event_category_type, ''), 'news') AS event_family_candidate,
-        NULLIF(canonical_event_id, '') AS canonical_event_id,
-        COALESCE(NULLIF(dedup_status, ''), 'indexed') AS dedup_status,
-        COALESCE(NULLIF(source_artifact_path, ''), NULLIF(reference, '')) AS raw_artifact_ref,
-        NULL::text AS interpreted_event_ref
-    FROM {_qualified(schema, "source_10_event_risk_governor")}
-    WHERE event_time IS NOT NULL
-      AND available_time IS NOT NULL
-      AND (
-        event_category_type IN ('symbol_news', 'sector_news')
-        OR source_name IN ('03_feed_alpaca_news', '05_feed_gdelt_news')
-      )
-    ON CONFLICT (news_event_id) DO UPDATE SET
-        event_date = EXCLUDED.event_date,
-        first_seen_at = EXCLUDED.first_seen_at,
-        source = EXCLUDED.source,
-        headline = EXCLUDED.headline,
-        symbol = EXCLUDED.symbol,
-        event_family_candidate = EXCLUDED.event_family_candidate,
-        canonical_event_id = EXCLUDED.canonical_event_id,
-        dedup_status = EXCLUDED.dedup_status,
-        raw_artifact_ref = EXCLUDED.raw_artifact_ref,
-        interpreted_event_ref = EXCLUDED.interpreted_event_ref
-    """
-    cursor.execute(statement)
-    return int(cursor.rowcount or 0)
-
-
-def _source10_exists(cursor: Any, *, schema: str) -> bool:
-    cursor.execute(
-        """
-        SELECT EXISTS (
-          SELECT 1 FROM information_schema.tables
-          WHERE table_schema = %s AND table_name = 'source_10_event_risk_governor'
-        ) AS exists
-        """,
-        (schema,),
-    )
-    return bool(cursor.fetchone()[0])
-
-
 def _json_safe(value: Any) -> Any:
     if isinstance(value, Decimal):
         return float(value)
@@ -773,14 +495,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--start-date", default="2016-01-01")
     parser.add_argument("--end-date-exclusive")
     parser.add_argument("--dsn")
-    parser.add_argument("--skip-source10-events", action="store_true")
     args = parser.parse_args(argv)
     receipt = install_temporal_tables(
         dsn=args.dsn,
         schema=args.schema,
         start_date=args.start_date,
         end_date_exclusive=args.end_date_exclusive,
-        include_source10_events=not args.skip_source10_events,
     )
     json.dump(receipt, sys.stdout, indent=2, sort_keys=True)
     sys.stdout.write("\n")
@@ -789,10 +509,7 @@ def main(argv: list[str] | None = None) -> int:
 
 __all__ = [
     "CALENDAR_DAY_TABLE",
-    "CALENDAR_EVENT_RESULT_TABLE",
     "CALENDAR_MARKET_SESSION_TABLE",
-    "CALENDAR_NEWS_EVENT_INDEX_TABLE",
-    "CALENDAR_SCHEDULED_EVENT_TABLE",
     "CHART_OHLCV_CACHE_TABLE",
     "OhlcvInputRow",
     "SUPPORTED_CHART_TIMEFRAMES",

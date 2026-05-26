@@ -31,10 +31,9 @@ class TemporalExplorerTests(unittest.TestCase):
     def test_chart_cache_ddl_is_registered(self):
         ddl = "\n".join(temporal_table_ddls())
         self.assertIn(CHART_OHLCV_CACHE_TABLE, ddl)
-        self.assertIn("calendar_scheduled_event", ddl)
-        self.assertIn("scheduled_known_at", ddl)
-        self.assertIn("calendar_event_result", ddl)
-        self.assertIn("available_time", ddl)
+        self.assertNotIn("calendar_scheduled_event", ddl)
+        self.assertNotIn("calendar_event_result", ddl)
+        self.assertNotIn("calendar_news_event_index", ddl)
 
     def test_aggregates_ohlcv_rows(self):
         rows = [

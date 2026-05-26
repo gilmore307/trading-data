@@ -85,8 +85,14 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     if task_key.get("feed") != FEED:
         raise TradingEconomicsCalendarError(f"task_key.feed must be {FEED}")
     output_root = resolve_output_root(task_key, default_task_id=f"{FEED}_task")
-    run_dir = output_root / "runs" / run_id
-    return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
+    params = dict(task_key.get("params") or {})
+    if params.get("monthly_backfill_bucketed_output"):
+        run_dir = output_root / "_recent_refresh_runs" / run_id
+        receipt_path = output_root / "_recent_refresh_completion_receipt.json"
+    else:
+        run_dir = output_root / "runs" / run_id
+        receipt_path = output_root / "completion_receipt.json"
+    return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", receipt_path, {"run_id": run_id, "started_at": _now_utc(), "output_root": str(output_root)})
 
 
 def _date_param(params: Mapping[str, Any], key: str, default: date) -> date:
@@ -346,16 +352,29 @@ def parse_calendar_rows(html_text: str, *, source_url: str, default_country: str
     return parsed
 
 
-def _row_in_window(row: Mapping[str, str], *, start: date, end: date) -> bool:
+def _event_date(row: Mapping[str, str]) -> date | None:
     value = str(row.get("event_time") or "").strip()
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
     except ValueError:
         try:
-            parsed = datetime.strptime(value, "%A %B %d %Y").date()
+            return datetime.strptime(value, "%A %B %d %Y").date()
         except ValueError:
-            return False
+            return None
+
+
+def _row_in_window(row: Mapping[str, str], *, start: date, end: date) -> bool:
+    parsed = _event_date(row)
+    if parsed is None:
+        return False
     return start <= parsed < end
+
+
+def _event_month(row: Mapping[str, str]) -> str:
+    parsed = _event_date(row)
+    if parsed is None:
+        raise TradingEconomicsCalendarError("cannot bucket Trading Economics row without parseable event_time")
+    return parsed.strftime("%Y-%m")
 
 
 def _diagnostic_excerpt(html_text: str, *, max_chars: int = 4000) -> str:
@@ -438,6 +457,51 @@ def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
 
 def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     rows = [json.loads(line) for line in (context.cleaned_dir / "trading_economics_calendar_event.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    params = dict(context.task_key.get("params") or {})
+    if params.get("monthly_backfill_bucketed_output"):
+        output_root = Path(str(context.metadata["output_root"]))
+        references: list[str] = []
+        bucket_run_dirs: list[str] = []
+        bucket_counts: dict[str, int] = {}
+        for month in sorted({_event_month(row) for row in rows}):
+            month_rows = [row for row in rows if _event_month(row) == month]
+            month_run_dir = output_root / month / "runs" / str(context.metadata["run_id"])
+            cleaned_dir = month_run_dir / "cleaned"
+            saved_dir = month_run_dir / "saved"
+            atomic_write_json(
+                month_run_dir / "request_manifest.json",
+                {
+                    "feed": FEED,
+                    "source_request_manifest": str((context.run_dir / "request_manifest.json").resolve()),
+                    "month": month,
+                    "row_count": len(month_rows),
+                    "persistence": "monthly bucket copied from one bounded recent Trading Economics refresh",
+                },
+            )
+            atomic_write_text(cleaned_dir / "trading_economics_calendar_event.jsonl", "".join(json.dumps(sanitize_value(row), sort_keys=True) + "\n" for row in month_rows))
+            atomic_write_json(cleaned_dir / "schema.json", {"trading_economics_calendar_event": FIELDS, "row_count": len(month_rows)})
+            buffer = StringIO()
+            writer = csv.DictWriter(buffer, fieldnames=FIELDS, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(month_rows)
+            saved_path = saved_dir / "trading_economics_calendar_event.csv"
+            atomic_write_text(saved_path, buffer.getvalue())
+            references.append(str(saved_path))
+            references.append(str(cleaned_dir / "trading_economics_calendar_event.jsonl"))
+            bucket_run_dirs.append(str(month_run_dir))
+            bucket_counts[month] = len(month_rows)
+        return StepResult(
+            "succeeded",
+            references,
+            dict(clean_result.row_counts),
+            details={
+                "format": "csv",
+                "columns": FIELDS,
+                "monthly_backfill_bucketed_output": True,
+                "monthly_bucket_run_dirs": bucket_run_dirs,
+                "monthly_bucket_row_counts": bucket_counts,
+            },
+        )
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     path = context.saved_dir / "trading_economics_calendar_event.csv"
     buffer = StringIO()
@@ -462,6 +526,10 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != entry["run_id"]] + [entry]
     existing.update({"task_id": context.task_key.get("task_id"), "feed": FEED})
     write_receipt_bundle(context.receipt_path, context.run_dir, existing)
+    if save_result is not None:
+        for bucket_run_dir in save_result.details.get("monthly_bucket_run_dirs", []):
+            bucket_run_path = Path(str(bucket_run_dir))
+            write_receipt_bundle(bucket_run_path.parents[1] / "completion_receipt.json", bucket_run_path, existing)
     warnings = []
     for step in (fetch_result, clean_result, save_result):
         if step:

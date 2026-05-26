@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 FEED = "07_feed_trading_economics_calendar_web"
-DEFAULT_OUTPUT_ROOT = "storage/realtime/trading_economics_calendar_web"
+DEFAULT_OUTPUT_ROOT = "storage/monthly_backfill/trading_economics_calendar_web"
 
 
 def _today_utc() -> datetime:
@@ -54,6 +54,8 @@ def build_recent_calendar_task_key(
             "use_authenticated_cookies": False,
             "allow_live_fetch": bool(allow_live_fetch),
             "persist_failure_diagnostics": bool(persist_failure_diagnostics),
+            "monthly_backfill_bucketed_output": True,
+            "source_materialization_role": "append_to_trading_economics_monthly_backfill",
         },
         "manager_controls": {
             "allow_live_provider_calls": bool(allow_live_fetch),

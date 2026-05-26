@@ -79,6 +79,42 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
         self.assertEqual(te_pipeline._build_url(params), "https://tradingeconomics.com/united-states/calendar")
         self.assertEqual(te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")), "")
 
+    def test_recent_monthly_backfill_bucketed_output_writes_event_month_dirs(self):
+        html = """
+        <table>
+          <tr><th>Date</th><th>Country</th><th>Event</th><th>Category</th><th>Reference</th><th>Actual</th><th>Previous</th><th>Consensus</th><th>Forecast</th><th>Revised</th></tr>
+          <tr><td>2026-05-29 08:30</td><td>United States</td><td>PCE Price Index</td><td>Inflation</td><td>Apr</td><td>2.1%</td><td>2.2%</td><td>2.1%</td><td>2.1%</td><td></td></tr>
+          <tr><td>2026-06-05 08:30</td><td>United States</td><td>Non Farm Payrolls</td><td>Labour</td><td>May</td><td></td><td>115K</td><td>130K</td><td>125K</td><td></td></tr>
+        </table>
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "monthly_backfill" / "trading_economics_calendar_web"
+            task_key = {
+                "task_id": "te_calendar_recent_bucket_test",
+                "feed": "07_feed_trading_economics_calendar_web",
+                "params": {
+                    "html": html,
+                    "start_date": "2026-05-26",
+                    "end_date": "2026-07-01",
+                    "importance": "3",
+                    "date_range_mode": "recent",
+                    "monthly_backfill_bucketed_output": True,
+                },
+                "output_root": str(output_root),
+            }
+            result = run(task_key, run_id="run")
+            self.assertEqual(result.status, "succeeded")
+            may_saved = output_root / "2026-05" / "runs" / "run" / "saved" / "trading_economics_calendar_event.csv"
+            june_saved = output_root / "2026-06" / "runs" / "run" / "saved" / "trading_economics_calendar_event.csv"
+            self.assertTrue(may_saved.exists())
+            self.assertTrue(june_saved.exists())
+            with may_saved.open(newline="", encoding="utf-8") as handle:
+                self.assertEqual([row["event"] for row in csv.DictReader(handle)], ["PCE Price Index"])
+            with june_saved.open(newline="", encoding="utf-8") as handle:
+                self.assertEqual([row["event"] for row in csv.DictReader(handle)], ["Non Farm Payrolls"])
+            self.assertTrue((output_root / "2026-05" / "completion_receipt.json").exists())
+            self.assertTrue((output_root / "_recent_refresh_completion_receipt.json").exists())
+
     def test_custom_mode_uses_date_url_and_range_cookie(self):
         params = {"date_range_mode": "custom", "use_authenticated_cookies": False, "start_date": "2018-10-01", "end_date": "2018-11-01", "importance": "3"}
         self.assertIn("start=2018-10-01", te_pipeline._build_url(params))

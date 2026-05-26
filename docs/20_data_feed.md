@@ -88,10 +88,10 @@ Trading Economics calendar rows are reusable event/source data. Historical month
 storage/01_source_data/monthly_backfill/trading_economics_calendar_web
 ```
 
-Continuous recent refresh writes the current rolling window under:
+Continuous recent refresh fetches one bounded rolling window, then appends the parsed rows into the same month-bucketed historical root by `event_time` month:
 
 ```text
-storage/01_source_data/realtime/trading_economics_calendar_web
+storage/01_source_data/monthly_backfill/trading_economics_calendar_web/YYYY-MM/runs/<run_id>
 ```
 
 The wrapper is:
@@ -106,7 +106,7 @@ Default behavior is plan-only and performs no provider calls. Add `--execute-liv
 deploy/systemd/trading-data-te-calendar-refresh.timer
 ```
 
-It runs one visible-page request per cycle with a 7-day trailing and 35-day forward window, `date_range_mode=recent`, no authenticated cookies, and manager-controls set for realtime provider maintenance.
+It runs one visible-page request per cycle with a 7-day trailing and 35-day forward window, `date_range_mode=recent`, no authenticated cookies, and manager-controls set for provider maintenance. Because the recent window can cross month boundaries, the feed writes month-specific CSV/JSONL copies under each affected `YYYY-MM` directory and keeps the run-wide control receipt under the TE monthly root. Existing historical TE artifacts remain append-only and are not deletion candidates.
 
 ## Implementation Rules
 

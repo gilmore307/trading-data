@@ -17,11 +17,13 @@
 
 The dashboard Timewheel should consume this substrate through storage read models. It presents:
 
-- top chart viewport centered on the selected time;
+- primary chart viewport centered on the selected time;
 - selectable frames: `30m`, `1h`, `1D`, `1W`;
-- left lane for market/session/state/replay context;
-- center vertical time axis;
-- right lane for scheduled/result/news/model event markers.
+- chart x-axis used as the Timewheel axis;
+- lower subcharts such as volume and event density;
+- event/status lanes for scheduled/result/news/model event markers and explicit source gaps.
+
+Market-state summary belongs on the dashboard Status page. The Timewheel only needs market/session status where it clarifies the selected time bucket.
 
 `chart_ohlcv_cache` exists to keep the dashboard smooth without retaining every raw fold bar forever. It stores only compact OHLCV buckets and must not be used as training truth.
 

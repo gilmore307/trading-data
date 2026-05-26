@@ -8,8 +8,8 @@
 |---|---|
 | `trading_data.calendar_day` | Daily spine from the accepted historical start, one row per date. |
 | `trading_data.calendar_market_session` | Venue session state for NYSE, NASDAQ, and `CRYPTO_24_7`. |
-| `trading_data.calendar_scheduled_event` | Known-in-advance events. Result values do not belong here. Initially materialized from accepted `source_10_event_risk_governor` shell rows. |
-| `trading_data.calendar_event_result` | Actual/consensus/surprise payloads after release, with point-in-time clocks. Initially materialized from accepted `source_10_event_risk_governor` result rows without fabricating numeric surprises. |
+| `trading_data.calendar_scheduled_event` | Known-in-advance events. Result values do not belong here. Trading Economics macro rows stay as storage source data until Layer 10 explicitly promotes them into the accepted event-risk/attention pool. |
+| `trading_data.calendar_event_result` | Actual/consensus/surprise payloads after release, with point-in-time clocks. Rows may be materialized from accepted `source_10_event_risk_governor` result rows without fabricating numeric surprises after upstream event acceptance. |
 | `trading_data.calendar_news_event_index` | News/discovery event index rows with artifact refs, not full raw bodies. Initially materialized from accepted Alpaca/GDELT rows already present in `source_10_event_risk_governor`. |
 | `trading_data.chart_ohlcv_cache` | Compact visualization OHLCV cache for dashboard charts. |
 
@@ -29,4 +29,4 @@ Market-state summary belongs on the dashboard Status page. The Timewheel only ne
 
 ## Current Limits
 
-The deterministic installer can upsert `calendar_day`, rule-generated session rows, accepted scheduled macro/earnings shell rows, accepted release-result payloads, and accepted news-index rows already present in `source_10_event_risk_governor`. Early closes, official holiday-source refs, interpreted news artifacts, model event markers, replay state bodies, and chart bars require accepted source-specific producers before they appear as populated detail.
+The deterministic installer can upsert `calendar_day`, rule-generated session rows, and accepted scheduled/result/news rows already present in `source_10_event_risk_governor`. Raw Trading Economics monthly source rows are not accepted Timewheel events by default. Early closes, official holiday-source refs, interpreted news artifacts, model event markers, replay state bodies, and chart bars require accepted source-specific producers before they appear as populated detail.

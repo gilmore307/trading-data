@@ -16,10 +16,11 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
         self.assertTrue(task_key["params"]["monthly_backfill_bucketed_output"])
         self.assertFalse(task_key["params"]["use_authenticated_cookies"])
         self.assertFalse(task_key["manager_controls"]["allow_live_provider_calls"])
-        self.assertEqual(task_key["manager_controls"]["allowed_providers"], [])
-        self.assertEqual(task_key["manager_controls"]["max_requests"], 0)
+        self.assertFalse(task_key["params"]["allow_live_fetch"])
+        self.assertEqual(task_key["manager_controls"]["allowed_providers"], ["trading_economics"])
+        self.assertEqual(task_key["manager_controls"]["max_requests"], 1)
 
-    def test_cli_plan_is_retired_storage_source_only(self) -> None:
+    def test_cli_plan_requires_explicit_execute_live_fetch(self) -> None:
         completed = subprocess.run(
             [
                 sys.executable,
@@ -35,31 +36,21 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
         )
         payload = json.loads(completed.stdout)
 
-        self.assertEqual(payload["refresh_status"], "retired_storage_source_only")
+        self.assertEqual(payload["refresh_status"], "planned_requires_execute_live_fetch")
         self.assertEqual(payload["provider_calls_performed"], 0)
         self.assertFalse(payload["storage_mutation_performed"])
 
-    def test_execute_live_fetch_is_rejected(self) -> None:
-        completed = subprocess.run(
-            [
-                sys.executable,
-                "scripts/data/run_trading_economics_recent_calendar_refresh.py",
-                "--start-date",
-                "2026-05-18",
-                "--end-date",
-                "2026-06-12",
-                "--execute-live-fetch",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
+    def test_execute_task_key_opens_bounded_provider_gate(self) -> None:
+        task_key = build_recent_calendar_task_key(
+            start_date="2026-05-18",
+            end_date="2026-06-12",
+            allow_live_fetch=True,
         )
-        payload = json.loads(completed.stdout)
 
-        self.assertEqual(completed.returncode, 1)
-        self.assertEqual(payload["refresh_status"], "rejected_retired_storage_source_only")
-        self.assertEqual(payload["provider_calls_performed"], 0)
-        self.assertFalse(payload["storage_mutation_performed"])
+        self.assertTrue(task_key["params"]["allow_live_fetch"])
+        self.assertTrue(task_key["manager_controls"]["allow_live_provider_calls"])
+        self.assertEqual(task_key["manager_controls"]["allowed_endpoint_families"], ["calendar_web"])
+        self.assertNotIn("source" + "_url", json.dumps(task_key))
 
 
 if __name__ == "__main__":

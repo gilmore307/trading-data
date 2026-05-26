@@ -48,7 +48,7 @@ Historical replay must store enough evidence refs to prove what was knowable bef
 Realtime maintenance should run bounded refreshes:
 
 - yearly or monthly for exchange holiday and index methodology calendars;
-- reviewed storage refresh/import only for Trading Economics macro calendars and macro release rows; the website timer is retired;
+- bounded Trading Economics recent/future calendar refresh into canonical storage source rows only, with no website URL persistence and no Layer 10 SQL event admission;
 - daily or intraday for SEC/company filings, company IR/news, sanctions/trade actions, and persistent-regime status updates when active;
 - event-window refreshes around known expiry, rebalance, macro, or earnings windows.
 

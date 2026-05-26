@@ -25,7 +25,7 @@
 
 ## Current Route Decisions
 
-- `macro_data` is not an active executable feed. Macro model inputs use the canonical Trading Economics storage snapshot unless a separately reviewed route replaces it; the TE website route is retired.
+- `macro_data` is not an active executable feed. Macro model inputs use canonical Trading Economics storage rows; the bounded recent/future TE calendar refresh may append source rows but is not a Layer 10 SQL event route.
 - Alpaca raw trades/quotes are transient by default; `02_feed_alpaca_liquidity` persists ET-aligned aggregate `equity_liquidity_bar` rows.
 - ThetaData option feeds are split by use case: selection snapshot, specified-contract primary tracking, and event timeline.
 - `source_06_position_execution` is selected-contract option market-data tracking for `OptionExpressionModel` replay/evaluation; it is not a separate execution model.

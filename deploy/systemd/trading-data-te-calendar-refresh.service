@@ -1,0 +1,24 @@
+[Unit]
+Description=Refresh Trading Economics recent calendar source data
+Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/projects/trading-data
+Environment=PYTHONPATH=/root/projects/trading-data/src
+Environment=TRADING_DATA_TE_TRAILING_DAYS=7
+Environment=TRADING_DATA_TE_FORWARD_DAYS=35
+Environment=TRADING_DATA_TE_OUTPUT_ROOT=storage/monthly_backfill/trading_economics_calendar_web
+EnvironmentFile=-/etc/default/trading-data-te-calendar-refresh
+ExecStart=/usr/bin/python3 /root/projects/trading-data/scripts/data/run_trading_economics_recent_calendar_refresh.py \
+  --trailing-days ${TRADING_DATA_TE_TRAILING_DAYS} \
+  --forward-days ${TRADING_DATA_TE_FORWARD_DAYS} \
+  --output-root ${TRADING_DATA_TE_OUTPUT_ROOT} \
+  --execute-live-fetch
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

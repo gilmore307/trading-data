@@ -1,14 +1,16 @@
 # 07_feed_trading_economics_calendar_web feed
 
-`07_feed_trading_economics_calendar_web` is the historical parser for Trading Economics calendar rows. The active macro source is now the canonical storage snapshot; the Trading Economics subscription is expired and the website is not an active provider source.
+`07_feed_trading_economics_calendar_web` is the bounded Trading Economics calendar-page feed for recent/future macro schedule maintenance plus reviewed HTML parsing.
 
 Boundary:
 
-- Use canonical storage TE source data for active macro inputs.
-- Do not use the Trading Economics website as an active source while the subscription is expired.
+- Save accepted TE rows only as canonical storage source data.
+- Use bounded calendar-page fetches only for recent/future schedule maintenance.
 - Do not call Trading Economics API endpoints or Download/export features.
 - Do not bypass WAF/captcha/permissions.
-- `html_path`/`html` are parser-test and reviewed manual-capture inputs, not the normal provider acquisition path.
+- `html_path`/`html` are parser-test and reviewed manual-capture inputs.
+- Do not persist website URLs as source evidence.
+- Do not populate Layer 10 SQL event rows from this feed without a later reviewed route.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 - Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported in receipt warnings/details.
 
@@ -25,7 +27,8 @@ Params:
 - `importance` — defaults to `3` for high-impact rows.
 - `html_path` — optional captured/sanitized HTML for parser tests or manual page captures.
 - `html` — optional inline sanitized HTML.
-- `date_range_mode` — optional parser compatibility field; `custom` by default for bounded historical windows, or `recent` for the retired recent-calendar shape.
+- `date_range_mode` — optional parser compatibility field; `custom` by default for bounded historical windows, or `recent` for recent/future refreshes.
+- `allow_live_fetch` — optional; required for the bounded TE calendar-page request. Plan-only task keys leave this false.
 - `use_authenticated_cookies` — optional; defaults to false. Set true only for a reviewed manual recovery route that explicitly needs an exported local cookie jar.
 - `persist_failure_diagnostics` — optional; when true and parsing finds zero in-window rows, writes sanitized structural diagnostics under the run directory. It does not persist request headers, cookies, or raw page HTML.
 

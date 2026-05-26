@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
-"""Return the retired Trading Economics recent-refresh plan receipt.
-
-The active macro source is the canonical storage snapshot under
-trading-storage. The website subscription is expired, so this wrapper no
-longer performs live Trading Economics fetches.
-"""
+"""Plan or run the bounded Trading Economics recent-calendar refresh."""
 
 from __future__ import annotations
 
 import argparse
 import json
 from datetime import UTC, datetime, timedelta
+from importlib import import_module
 from pathlib import Path
 from typing import Any
 
@@ -33,9 +29,10 @@ def build_recent_calendar_task_key(
     trailing_days: int = 7,
     forward_days: int = 35,
     output_root: str = DEFAULT_OUTPUT_ROOT,
+    allow_live_fetch: bool = False,
     persist_failure_diagnostics: bool = True,
 ) -> dict[str, Any]:
-    """Build the retired recent-calendar inventory task key."""
+    """Build a bounded recent/future-calendar task key with provider controls."""
 
     if trailing_days < 0:
         raise ValueError("trailing_days must be >= 0")
@@ -55,21 +52,22 @@ def build_recent_calendar_task_key(
             "importance": "3",
             "date_range_mode": "recent",
             "use_authenticated_cookies": False,
+            "allow_live_fetch": bool(allow_live_fetch),
             "persist_failure_diagnostics": bool(persist_failure_diagnostics),
             "monthly_backfill_bucketed_output": True,
             "source_materialization_role": "append_to_trading_economics_monthly_backfill",
         },
         "manager_controls": {
-            "allow_live_provider_calls": False,
-            "realtime_provider_maintenance": False,
-            "allowed_providers": [],
-            "allowed_endpoint_families": [],
-            "max_requests": 0,
+            "allow_live_provider_calls": bool(allow_live_fetch),
+            "realtime_provider_maintenance": bool(allow_live_fetch),
+            "allowed_providers": ["trading_economics"],
+            "allowed_endpoint_families": ["calendar_web"],
+            "max_requests": 1,
             "max_rows": 2000,
             "max_time_window": "P45D",
             "timeout_seconds": 30,
-            "retry_policy_ref": "retired",
-            "rate_limit_policy_ref": "retired",
+            "retry_policy_ref": "trading-data://provider-policy/recent-calendar-single-request",
+            "rate_limit_policy_ref": "trading-data://provider-policy/trading-economics-recent-calendar",
         },
     }
 
@@ -77,33 +75,29 @@ def build_recent_calendar_task_key(
 def build_plan_receipt(*, task_key: dict[str, Any], run_id: str) -> dict[str, Any]:
     return {
         "contract_type": "trading_economics_recent_calendar_refresh_receipt",
-        "refresh_status": "retired_storage_source_only",
+        "refresh_status": "planned_requires_execute_live_fetch",
         "run_id": run_id,
         "task_key": task_key,
         "provider_calls_performed": 0,
         "storage_mutation_performed": False,
-        "boundary_note": (
-            "Trading Economics website refresh is retired because the subscription is expired. "
-            "Use trading-storage/storage/01_source_data/monthly_backfill/"
-            "trading_economics_calendar_web as the only macro source."
-        ),
+        "boundary_note": "Plan-only receipt. Add --execute-live-fetch to perform the bounded calendar-page fetch; source URLs are not persisted.",
     }
 
 
 def run_refresh(*, task_key: dict[str, Any], run_id: str, execute_live_fetch: bool) -> dict[str, Any]:
     if not execute_live_fetch:
         return build_plan_receipt(task_key=task_key, run_id=run_id)
+    pipeline = import_module("data_feed.07_feed_trading_economics_calendar_web.pipeline")
+    result = pipeline.run(task_key, run_id=run_id)
     return {
         "contract_type": "trading_economics_recent_calendar_refresh_receipt",
-        "refresh_status": "rejected_retired_storage_source_only",
+        "refresh_status": result.status,
         "run_id": run_id,
         "task_key": task_key,
-        "provider_calls_performed": 0,
-        "storage_mutation_performed": False,
-        "boundary_note": (
-            "--execute-live-fetch is disabled. The TE website subscription is expired; "
-            "use the canonical storage TE snapshot instead."
-        ),
+        "result": result.__dict__,
+        "provider_calls_performed": 1 if result.status == "succeeded" else 0,
+        "storage_mutation_performed": True,
+        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only; it does not persist source URLs or populate Layer 10 SQL rows.",
     }
 
 
@@ -115,7 +109,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trailing-days", type=int, default=7)
     parser.add_argument("--forward-days", type=int, default=35)
     parser.add_argument("--output-root", default=DEFAULT_OUTPUT_ROOT)
-    parser.add_argument("--execute-live-fetch", action="store_true", help="Rejected; TE website refresh is retired.")
+    parser.add_argument("--execute-live-fetch", action="store_true")
     parser.add_argument("--no-failure-diagnostics", action="store_true")
     parser.add_argument("--write-task-key", type=Path, default=None)
     return parser.parse_args()
@@ -130,6 +124,7 @@ def main() -> int:
         trailing_days=args.trailing_days,
         forward_days=args.forward_days,
         output_root=args.output_root,
+        allow_live_fetch=args.execute_live_fetch,
         persist_failure_diagnostics=not args.no_failure_diagnostics,
     )
     if args.write_task_key is not None:
@@ -137,7 +132,7 @@ def main() -> int:
         args.write_task_key.write_text(json.dumps(task_key, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     receipt = run_refresh(task_key=task_key, run_id=run_id, execute_live_fetch=args.execute_live_fetch)
     print(json.dumps(receipt, indent=2, sort_keys=True))
-    return 0 if receipt["refresh_status"] == "retired_storage_source_only" else 1
+    return 0 if receipt["refresh_status"] in {"succeeded", "planned_requires_execute_live_fetch"} else 1
 
 
 if __name__ == "__main__":

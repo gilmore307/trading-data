@@ -131,7 +131,7 @@ Status: Accepted
 
 For browser-scraped sources, normal acquisition uses logged-out visible pages when the accepted fields are available. Feed tasks use bounded HTTP page fetches plus task-specific date/filter cookies or query params, and must not repeatedly open/login browser pages or rely on a mutable long-lived tab. An exported local cookie jar is allowed only for a reviewed recovery route that explicitly needs it. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
 
-Trading Economics is the exception: the subscription is expired, so replay and current/recent/future macro maintenance use the canonical storage snapshot only. The website route and TE refresh timer are retired.
+Trading Economics is the exception: recent/future macro schedule maintenance may use the bounded TE calendar-page refresh, but its output is canonical storage source data only. It must not persist website URLs, call TE API/download/export endpoints, or populate Layer 10 SQL event rows without a later reviewed route.
 
 All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.
 

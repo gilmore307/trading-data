@@ -1,8 +1,6 @@
 # systemd units
 
-There are no accepted Trading Economics website refresh units.
-
-The TE website subscription is expired. Macro source data comes only from the
-canonical storage snapshot under
-`trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web`.
-Do not install or revive a TE website refresh timer from this repository.
+`trading-data-te-calendar-refresh.service` and `.timer` run the bounded
+Trading Economics recent/future calendar refresh. The route writes canonical
+storage source rows only; it must not persist website URLs or populate Layer 10
+SQL event rows.

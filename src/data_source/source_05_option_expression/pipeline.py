@@ -18,9 +18,10 @@ from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "source_05_option_expression"
+SOURCE = "m09_option_expression_data_acquisition"
+LEGACY_SOURCE = "source_05_option_expression"
 MODEL_ID = "option_expression_model"
-OUTPUT_TABLE = "source_05_option_expression"
+OUTPUT_TABLE = SOURCE
 SQL_FIELDS = [
     "underlying",
     "snapshot_time",
@@ -94,7 +95,7 @@ def _now_utc() -> str:
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") != SOURCE:
+    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
         raise OptionExpressionInputsError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})

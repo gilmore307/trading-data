@@ -17,10 +17,11 @@ from data_runtime.config import projects_root, resolve_output_root, shared_path
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "source_01_market_regime"
+SOURCE = "m01_market_regime_data_acquisition"
+LEGACY_SOURCE = "source_01_market_regime"
 MODEL_ID = "market_regime_model"
-OUTPUT_NAME = "source_01_market_regime"
-OUTPUT_TABLE = "source_01_market_regime"
+OUTPUT_NAME = SOURCE
+OUTPUT_TABLE = SOURCE
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]
 SQL_FIELDS = FIELDS
@@ -103,12 +104,12 @@ def _normalize_timeframe(value: str) -> str:
 def _source_timeframe(params: Mapping[str, Any]) -> str:
     timeframe = _normalize_timeframe(str(params.get("timeframe") or DEFAULT_SOURCE_TIMEFRAME))
     if timeframe != DEFAULT_SOURCE_TIMEFRAME:
-        raise MarketRegimeInputsError("source_01_market_regime only downloads 1Min raw bars; aggregate downstream frames during feature_generation")
+        raise MarketRegimeInputsError(f"{SOURCE} only downloads 1Min raw bars; aggregate downstream frames during feature_generation")
     return timeframe
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") != SOURCE:
+    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
         raise MarketRegimeInputsError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     run_dir = output_root / "runs" / run_id

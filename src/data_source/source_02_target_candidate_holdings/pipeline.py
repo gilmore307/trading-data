@@ -1,6 +1,6 @@
 """ETF holdings source for downstream target-candidate preparation.
 
-``source_02_target_candidate_holdings`` is the accepted source/table identifier,
+``m02_sector_context_data_acquisition`` is the accepted source/table identifier,
 but holdings are not a core Layer 2 behavior-model input. They support the
 anonymous target candidate builder / Layer 3 input-preparation boundary after
 Layer 2 selects or prioritizes sector/industry baskets.
@@ -27,9 +27,10 @@ from data_runtime.io import write_receipt_bundle
 from data_runtime.exchange_calendar import next_regular_us_equity_open_after
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "source_02_target_candidate_holdings"
+SOURCE = "m02_sector_context_data_acquisition"
+LEGACY_SOURCE = "source_02_target_candidate_holdings"
 MODEL_ID = "anonymous_target_candidate_builder"
-OUTPUT_TABLE = "source_02_target_candidate_holdings"
+OUTPUT_TABLE = SOURCE
 SQL_FIELDS = [
     "etf_symbol",
     "issuer_name",
@@ -89,7 +90,7 @@ def _now_utc() -> str:
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") != SOURCE:
+    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
         raise TargetCandidateHoldingsInputsError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})

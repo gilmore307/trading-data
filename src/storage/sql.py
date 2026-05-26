@@ -146,19 +146,19 @@ class PostgresSqlTableWriter:
 
 
 def _table_ddl(table: str, qualified_table: str) -> str | None:
-    if table == "source_01_market_regime":
+    if table in {"source_01_market_regime", "m01_market_regime_data_acquisition"}:
         return _market_regime_table_ddl(qualified_table)
     if table == "model_input_artifact_reference":
         return _model_input_artifact_reference_ddl(qualified_table)
-    if table == "source_02_target_candidate_holdings":
+    if table in {"source_02_target_candidate_holdings", "m02_sector_context_data_acquisition"}:
         return _source_02_target_candidate_holdings_ddl(qualified_table)
-    if table == "source_03_target_state":
+    if table in {"source_03_target_state", "m03_target_state_vector_data_acquisition"}:
         return _source_03_target_state_ddl(qualified_table)
-    if table == "source_05_option_expression":
+    if table in {"source_05_option_expression", "m09_option_expression_data_acquisition"}:
         return _source_05_option_expression_ddl(qualified_table)
-    if table == "source_06_position_execution":
+    if table in {"source_06_position_execution", "m09_option_expression_data_acquisition_contract_path"}:
         return _source_06_position_execution_ddl(qualified_table)
-    if table == "source_10_event_risk_governor":
+    if table in {"source_10_event_risk_governor", "m10_event_risk_governor_data_acquisition"}:
         return _source_10_event_risk_governor_ddl(qualified_table)
     return None
 

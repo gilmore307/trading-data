@@ -132,7 +132,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
 
         cursor = FakeCursor()
 
-        sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="source_01_market_regime")
+        sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="m01_market_regime_data_acquisition")
 
         sql_text = cursor.calls[0][0]
         self.assertIn("lower(timeframe) IN ('1m', '1min', '1minute')", sql_text)
@@ -163,11 +163,11 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
             cursor,
             rows,
             target_schema="trading_data",
-            target_table="feature_01_market_regime",
+            target_table="m01_market_regime_feature_generation",
         )
 
         joined_sql = "\n".join(sql for sql, _params in cursor.calls)
-        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_01_market_regime"', joined_sql)
+        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."m01_market_regime_feature_generation"', joined_sql)
         self.assertIn('"feature_payload_json" JSONB NOT NULL DEFAULT', joined_sql)
         self.assertNotIn('ADD COLUMN IF NOT EXISTS "spy_return_30m" DOUBLE PRECISION', joined_sql)
         self.assertIn('PRIMARY KEY ("snapshot_time", "input_frame", "prediction_horizon", "market_universe_ref")', joined_sql)
@@ -279,7 +279,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         written = from_feed_artifacts.materialize_source_rows(rows, sql_writer=writer)
 
         self.assertEqual(written, 1)
-        self.assertEqual(writer.calls[0][0], "source_01_market_regime")
+        self.assertEqual(writer.calls[0][0], "m01_market_regime_data_acquisition")
         self.assertEqual(writer.calls[0][3], ("symbol", "timeframe", "timestamp"))
 
     @unittest.skipUnless(

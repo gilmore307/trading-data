@@ -22,10 +22,11 @@ from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "source_06_position_execution"
+SOURCE = "m09_option_expression_data_acquisition_contract_path"
+LEGACY_SOURCE = "source_06_position_execution"
 MODEL_ID = "option_expression_model"
 SOURCE_ROLE = "selected_contract_tracking_source"
-OUTPUT_TABLE = "source_06_position_execution"
+OUTPUT_TABLE = SOURCE
 ET = ZoneInfo("America/New_York")
 DEFAULT_TIMEFRAME = "1Min"
 EXIT_EXTENSION_HOURS = 1
@@ -134,7 +135,7 @@ def _option_symbol(contract: Mapping[str, Any]) -> str:
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") != SOURCE:
+    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
         raise SelectedContractTrackingInputsError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})

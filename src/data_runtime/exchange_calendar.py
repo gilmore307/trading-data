@@ -21,7 +21,16 @@ def next_regular_us_equity_open_after(as_of_date: date | str) -> str:
 
 
 def is_regular_us_equity_session(day: date) -> bool:
-    return day.weekday() < 5 and day not in us_equity_holidays(day.year)
+    return day.weekday() < 5 and day not in us_equity_holidays_for_date(day)
+
+
+def us_equity_holidays_for_date(day: date) -> set[date]:
+    """Return holidays relevant to one trading date, including adjacent observed dates."""
+
+    holidays: set[date] = set()
+    for year in (day.year - 1, day.year, day.year + 1):
+        holidays.update(us_equity_holidays(year))
+    return holidays
 
 
 def us_equity_holidays(year: int) -> set[date]:
@@ -88,4 +97,4 @@ def _easter_sunday(year: int) -> date:
     return date(year, month, day)
 
 
-__all__ = ["is_regular_us_equity_session", "next_regular_us_equity_open_after", "us_equity_holidays"]
+__all__ = ["is_regular_us_equity_session", "next_regular_us_equity_open_after", "us_equity_holidays", "us_equity_holidays_for_date"]

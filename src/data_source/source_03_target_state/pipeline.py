@@ -1,4 +1,4 @@
-"""Deterministic source_03_target_state normalizer.
+"""Deterministic m03 target-state data-acquisition normalizer.
 
 This source consumes already-available target-local bar and liquidity evidence for
 anonymous target candidates. It performs no provider calls and does not persist
@@ -21,9 +21,10 @@ from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "source_03_target_state"
+SOURCE = "m03_target_state_vector_data_acquisition"
+LEGACY_SOURCE = "source_03_target_state"
 MODEL_ID = "target_state_vector_model"
-OUTPUT_TABLE = "source_03_target_state"
+OUTPUT_TABLE = SOURCE
 ET = ZoneInfo("America/New_York")
 SQL_FIELDS = [
     "target_candidate_id",
@@ -90,7 +91,7 @@ def _now_utc() -> str:
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") != SOURCE:
+    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
         raise TargetStateSourceError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})

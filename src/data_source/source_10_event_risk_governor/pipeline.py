@@ -16,9 +16,10 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 from .feed_event_extraction import extract_events_from_artifact_paths
 
-SOURCE = "source_10_event_risk_governor"
+SOURCE = "m10_event_risk_governor_data_acquisition"
+LEGACY_SOURCE = "source_10_event_risk_governor"
 MODEL_ID = "event_risk_governor"
-OUTPUT_TABLE = "source_10_event_risk_governor"
+OUTPUT_TABLE = SOURCE
 ET = ZoneInfo("America/New_York")
 INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
 EVENT_CATEGORIES = {
@@ -149,7 +150,7 @@ def _in_window(value: Any, *, start: datetime, end: datetime) -> bool:
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") != SOURCE:
+    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
         raise EventRiskInputsError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})

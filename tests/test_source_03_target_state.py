@@ -29,7 +29,7 @@ class Source03TargetStateTests(unittest.TestCase):
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET).isoformat()
         task_key = {
             "task_id": "source03_unit",
-            "source": "m03_target_state_vector_data_acquisition",
+            "source": "source_03_target_state",
             "params": {
                 "timeframe": "1m",
                 "target_candidates": [{"target_candidate_id": "tcand_001", "routing_symbol_ref": "AAPL"}],
@@ -46,7 +46,7 @@ class Source03TargetStateTests(unittest.TestCase):
         _, payload = pipeline.fetch(context)
         clean_result, cleaned = pipeline.clean(context, payload)
 
-        self.assertEqual(clean_result.row_counts["m03_target_state_vector_data_acquisition"], 1)
+        self.assertEqual(clean_result.row_counts["source_03_target_state"], 1)
         row = cleaned.rows[0]
         self.assertEqual(row["target_candidate_id"], "tcand_001")
         self.assertEqual(row["symbol"], "AAPL")
@@ -60,18 +60,18 @@ class Source03TargetStateTests(unittest.TestCase):
         context = pipeline.build_context(
             {
                 "task_id": "source03_unit",
-                "source": "m03_target_state_vector_data_acquisition",
+                "source": "source_03_target_state",
                 "params": {},
                 "output_root": "/tmp/source03_unit",
             },
             "run_001",
         )
-        clean_result = pipeline.StepResult("succeeded", [], {"m03_target_state_vector_data_acquisition": 1})
+        clean_result = pipeline.StepResult("succeeded", [], {"source_03_target_state": 1})
         payload = pipeline.CleanedPayload(rows=[{"target_candidate_id": "tcand_001", "timeframe": "1Min", "timestamp": "2026-01-02T09:30:00-05:00"}])
         result = pipeline.save(context, clean_result, payload, sql_writer=writer)
 
-        self.assertEqual(result.references, ["trading_data.m03_target_state_vector_data_acquisition"])
-        self.assertEqual(writer.calls[0]["table"], "m03_target_state_vector_data_acquisition")
+        self.assertEqual(result.references, ["trading_data.source_03_target_state"])
+        self.assertEqual(writer.calls[0]["table"], "source_03_target_state")
         self.assertEqual(writer.calls[0]["key_columns"], ["target_candidate_id", "timeframe", "timestamp"])
 
 

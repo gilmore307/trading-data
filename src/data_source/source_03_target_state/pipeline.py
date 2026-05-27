@@ -1,4 +1,4 @@
-"""Deterministic m03 target-state data-acquisition normalizer.
+"""Deterministic source_03 target-state data-acquisition normalizer.
 
 This source consumes already-available target-local bar and liquidity evidence for
 anonymous target candidates. It performs no provider calls and does not persist
@@ -21,8 +21,8 @@ from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "m03_target_state_vector_data_acquisition"
-LEGACY_SOURCE = "source_03_target_state"
+SOURCE = "source_03_target_state"
+LEGACY_SOURCE = "m03_target_state_vector_data_acquisition"
 MODEL_ID = "target_state_vector_model"
 OUTPUT_TABLE = SOURCE
 ET = ZoneInfo("America/New_York")

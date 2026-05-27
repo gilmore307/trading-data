@@ -110,38 +110,6 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn("available_time < %s", statement)
         self.assertEqual(params, ["2016-01-04T16:00:00-05:00"])
 
-    def test_source_and_candidate_queries_can_scope_to_target_symbol(self) -> None:
-        cursor = FakeCursor()
-
-        sql.fetch_source_rows(
-            cursor,
-            source_schema="trading_data",
-            source_table="source_03_target_state",
-            source_start="2016-01-01",
-            source_end="2016-07-01",
-            target_symbol="aapl",
-        )
-
-        statement, params = cursor.calls[0]
-        self.assertIn("UPPER(symbol) = %s", statement)
-        self.assertEqual(params[-1], "AAPL")
-
-        cursor = FakeCursor()
-        sql.fetch_candidate_rows(
-            cursor,
-            source_schema="trading_data",
-            source_table="source_03_target_state",
-            sector_context_schema="trading_model",
-            sector_context_table="model_02_sector_context",
-            holdings_schema="trading_data",
-            holdings_table="source_02_target_candidate_holdings",
-            target_symbol="msft",
-        )
-
-        statements = "\n".join(statement for statement, _ in cursor.calls)
-        self.assertIn('UPPER(s."symbol") = %s', statements)
-        self.assertEqual(cursor.calls[-1][1][-1], "MSFT")
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -79,7 +79,6 @@ def fetch_source_rows(
     source_table: str,
     source_start: str | None = None,
     source_end: str | None = None,
-    target_symbol: str | None = None,
 ) -> list[dict[str, Any]]:
     where: list[str] = []
     params: list[Any] = []
@@ -89,9 +88,6 @@ def fetch_source_rows(
     if source_end:
         where.append("available_time < %s")
         params.append(source_end)
-    if target_symbol:
-        where.append("UPPER(symbol) = %s")
-        params.append(target_symbol.upper())
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     cursor.execute(
         f"""
@@ -168,7 +164,6 @@ def fetch_candidate_rows(
     holdings_table: str,
     source_start: str | None = None,
     source_end: str | None = None,
-    target_symbol: str | None = None,
 ) -> list[dict[str, Any]]:
     where: list[str] = []
     params: list[Any] = []
@@ -178,9 +173,6 @@ def fetch_candidate_rows(
     if source_end:
         where.append('s."available_time" < %s')
         params.append(source_end)
-    if target_symbol:
-        where.append('UPPER(s."symbol") = %s')
-        params.append(target_symbol.upper())
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     holdings_table_ref = f"{holdings_schema}.{holdings_table}"
     cursor.execute("SELECT to_regclass(%s) AS table_ref", (holdings_table_ref,))
@@ -293,20 +285,12 @@ def generate_sql(
     holdings_table: str,
     run_id: str,
     target_context_state_version: str,
-    target_symbol: str | None = None,
 ) -> int:
     generator = _load_generator()
     psycopg, dict_row = _load_psycopg()
     with psycopg.connect(database_url, row_factory=dict_row) as conn:
         with conn.cursor() as cursor:
-            source_rows = fetch_source_rows(
-                cursor,
-                source_schema=source_schema,
-                source_table=source_table,
-                source_start=source_start,
-                source_end=source_end,
-                target_symbol=target_symbol,
-            )
+            source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
             market_rows = fetch_context_rows(cursor, schema=market_context_schema, table=market_context_table, ref_column="market_context_state_ref", source_start=source_start, source_end=source_end)
             sector_rows = fetch_context_rows(cursor, schema=sector_context_schema, table=sector_context_table, ref_column="sector_context_state_ref", source_start=source_start, source_end=source_end)
             candidate_rows = fetch_candidate_rows(
@@ -319,7 +303,6 @@ def generate_sql(
                 holdings_table=holdings_table,
                 source_start=source_start,
                 source_end=source_end,
-                target_symbol=target_symbol,
             )
             inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows)
             rows = generator.generate_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
@@ -342,7 +325,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--holdings-table", default="m02_sector_context_data_acquisition")
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
-    parser.add_argument("--target-symbol", help="Optional source/audit routing symbol filter for a target-symbol six-month dataset unit.")
     parser.add_argument("--run-id", default="feature_03_target_state_vector_sql")
     parser.add_argument(
         "--target-context-state-version",
@@ -368,7 +350,6 @@ def main(argv: list[str] | None = None) -> int:
         holdings_table=args.holdings_table,
         run_id=args.run_id,
         target_context_state_version=args.target_context_state_version,
-        target_symbol=args.target_symbol,
     )
     print(f"generated {row_count} rows into {args.target_schema}.{args.target_table}")
     return 0

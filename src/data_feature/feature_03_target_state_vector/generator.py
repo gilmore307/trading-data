@@ -10,7 +10,8 @@ from __future__ import annotations
 import csv
 import json
 import math
-from bisect import bisect_right
+from bisect import bisect_left, bisect_right
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -192,11 +193,12 @@ def generate_candidate_rows(
     vwaps = [bar.bar_vwap for bar in bars]
     spreads = [bar.spread_bps for bar in bars]
     dollar_volumes = [bar.dollar_volume for bar in bars]
+    feature_cache = _TargetRollingFeatures(closes, highs, lows, volumes, vwaps, dollar_volumes)
 
     for index, bar in enumerate(bars):
         market_context = market_context_lookup.latest_at(bar.available_time)
         sector_context = sector_context_lookup.latest_at(bar.available_time)
-        target_state = _target_state_features(index, closes, highs, lows, volumes, vwaps, spreads, dollar_volumes)
+        target_state = _target_state_features(index, closes, highs, lows, volumes, vwaps, spreads, dollar_volumes, feature_cache=feature_cache)
         market_state = _market_state_features(market_context)
         sector_state = _sector_state_features(sector_context)
         cross_state = _cross_state_features(target_state, market_state, sector_state)
@@ -347,6 +349,345 @@ def _context_multi_frame_state(payload: Mapping[str, Any]) -> dict[str, dict[str
     return frames
 
 
+class _TargetRollingFeatures:
+    def __init__(
+        self,
+        closes: Sequence[float | None],
+        highs: Sequence[float | None],
+        lows: Sequence[float | None],
+        volumes: Sequence[float | None],
+        vwaps: Sequence[float | None],
+        dollar_volumes: Sequence[float | None],
+    ) -> None:
+        self.closes = closes
+        self.highs = highs
+        self.lows = lows
+        self.volumes = volumes
+        self.vwaps = vwaps
+        self.dollar_volumes = dollar_volumes
+        self.simple_returns, self.log_returns = self._return_series(closes)
+        self.return_positions, self.return_signs, self.return_run_lengths, self.return_flip_prefix = self._valid_return_index(self.simple_returns)
+        self.return_abs_prefix = self._prefix_over_valid(self.simple_returns, absolute=True)
+        self.return_sum_prefix = self._prefix_over_valid(self.simple_returns)
+        self.return_sumsq_prefix = self._prefix_over_valid(self.simple_returns, square=True)
+        self.true_ranges = self._true_range_series(closes, highs, lows)
+        self.session_open = self._rolling_first(closes, 390)
+        self.session_high = self._rolling_max(highs, 390)
+        self.session_low = self._rolling_min(lows, 390)
+        self.window_highs = {window: self._rolling_max(highs, window) for window in STATE_WINDOW_MINUTES.values()}
+        self.window_lows = {window: self._rolling_min(lows, window) for window in STATE_WINDOW_MINUTES.values()}
+        self.volume_positions, self.volume_prefix = self._valid_value_prefix(volumes)
+        self.dollar_volume_positions, self.dollar_volume_prefix = self._valid_value_prefix(dollar_volumes)
+        self.true_range_positions, self.true_range_prefix = self._valid_value_prefix(self.true_ranges)
+        self.log_return_positions, self.log_return_prefix, self.log_return_sumsq_prefix = self._valid_value_prefix_with_squares(self.log_returns)
+
+    @staticmethod
+    def _return_series(values: Sequence[float | None]) -> tuple[list[float | None], list[float | None]]:
+        simple: list[float | None] = [None] * len(values)
+        logs: list[float | None] = [None] * len(values)
+        for index in range(1, len(values)):
+            current = values[index]
+            previous = values[index - 1]
+            if current is None or previous in (None, 0):
+                continue
+            simple[index] = current / previous - 1.0
+            logs[index] = math.log(current / previous)
+        return simple, logs
+
+    @staticmethod
+    def _true_range_series(closes: Sequence[float | None], highs: Sequence[float | None], lows: Sequence[float | None]) -> list[float | None]:
+        true_ranges: list[float | None] = [None] * len(closes)
+        for index in range(1, len(closes)):
+            high = highs[index]
+            low = lows[index]
+            if high is None or low is None:
+                continue
+            previous_close = closes[index - 1]
+            value = high - low
+            if previous_close is not None:
+                value = max(value, abs(high - previous_close), abs(low - previous_close))
+            true_ranges[index] = value
+        return true_ranges
+
+    @staticmethod
+    def _rolling_first(values: Sequence[float | None], window: int) -> list[float | None]:
+        output: list[float | None] = []
+        valid_indexes: deque[int] = deque()
+        for index, value in enumerate(values):
+            if value is not None:
+                valid_indexes.append(index)
+            start = max(0, index - window + 1)
+            while valid_indexes and valid_indexes[0] < start:
+                valid_indexes.popleft()
+            output.append(values[valid_indexes[0]] if valid_indexes else None)
+        return output
+
+    @staticmethod
+    def _rolling_max(values: Sequence[float | None], window: int) -> list[float | None]:
+        output: list[float | None] = []
+        indexes: deque[int] = deque()
+        for index, value in enumerate(values):
+            if value is not None:
+                while indexes and values[indexes[-1]] is not None and float(values[indexes[-1]]) <= float(value):
+                    indexes.pop()
+                indexes.append(index)
+            start = max(0, index - window + 1)
+            while indexes and indexes[0] < start:
+                indexes.popleft()
+            output.append(values[indexes[0]] if indexes else None)
+        return output
+
+    @staticmethod
+    def _rolling_min(values: Sequence[float | None], window: int) -> list[float | None]:
+        output: list[float | None] = []
+        indexes: deque[int] = deque()
+        for index, value in enumerate(values):
+            if value is not None:
+                while indexes and values[indexes[-1]] is not None and float(values[indexes[-1]]) >= float(value):
+                    indexes.pop()
+                indexes.append(index)
+            start = max(0, index - window + 1)
+            while indexes and indexes[0] < start:
+                indexes.popleft()
+            output.append(values[indexes[0]] if indexes else None)
+        return output
+
+    @staticmethod
+    def _valid_value_prefix(values: Sequence[float | None]) -> tuple[list[int], list[float]]:
+        positions: list[int] = []
+        prefix: list[float] = [0.0]
+        for index, value in enumerate(values):
+            if value is None:
+                continue
+            positions.append(index)
+            prefix.append(prefix[-1] + float(value))
+        return positions, prefix
+
+    @staticmethod
+    def _valid_value_prefix_with_squares(values: Sequence[float | None]) -> tuple[list[int], list[float], list[float]]:
+        positions: list[int] = []
+        prefix: list[float] = [0.0]
+        sumsq_prefix: list[float] = [0.0]
+        for index, value in enumerate(values):
+            if value is None:
+                continue
+            number = float(value)
+            positions.append(index)
+            prefix.append(prefix[-1] + number)
+            sumsq_prefix.append(sumsq_prefix[-1] + number * number)
+        return positions, prefix, sumsq_prefix
+
+    @staticmethod
+    def _valid_return_index(values: Sequence[float | None]) -> tuple[list[int], list[int], list[int], list[int]]:
+        positions: list[int] = []
+        signs: list[int] = []
+        run_lengths: list[int] = []
+        flip_prefix: list[int] = [0]
+        for index, value in enumerate(values):
+            if value is None:
+                continue
+            sign = 1 if value > 0 else -1 if value < 0 else 0
+            positions.append(index)
+            signs.append(sign)
+            if len(signs) == 1:
+                run_lengths.append(1)
+                flip_prefix.append(0)
+                continue
+            previous_sign = signs[-2]
+            run_lengths.append(run_lengths[-1] + 1 if sign == previous_sign else 1)
+            flip_increment = 1 if sign and previous_sign and sign != previous_sign else 0
+            flip_prefix.append(flip_prefix[-1] + flip_increment)
+        return positions, signs, run_lengths, flip_prefix
+
+    def _prefix_over_valid(self, values: Sequence[float | None], *, absolute: bool = False, square: bool = False) -> list[float]:
+        prefix: list[float] = [0.0]
+        for position in self.return_positions:
+            value = float(values[position] or 0.0)
+            if absolute:
+                value = abs(value)
+            if square:
+                value = value * value
+            prefix.append(prefix[-1] + value)
+        return prefix
+
+    def _valid_range(self, positions: Sequence[int], start: int, end: int) -> tuple[int, int]:
+        left = bisect_left(positions, start)
+        right = bisect_right(positions, end)
+        return left, right
+
+    def _time_range(self, index: int, window: int) -> tuple[int, int]:
+        return max(1, index - window + 1), index
+
+    def window_return(self, index: int, window: int) -> float | None:
+        if index < window:
+            return None
+        current = self.closes[index]
+        previous = self.closes[index - window]
+        if current is None or previous in (None, 0):
+            return None
+        return current / previous - 1
+
+    def realized_vol(self, index: int, window: int) -> float | None:
+        start, end = self._time_range(index, window)
+        left, right = self._valid_range(self.log_return_positions, start, end)
+        count = right - left
+        if count < 2:
+            return None
+        total = self.log_return_prefix[right] - self.log_return_prefix[left]
+        sumsq = self.log_return_sumsq_prefix[right] - self.log_return_sumsq_prefix[left]
+        return _pstdev_from_sums(total, sumsq, count)
+
+    def range_position(self, index: int, window: int) -> float | None:
+        close = self.closes[index]
+        high = self.window_highs[window][index]
+        low = self.window_lows[window][index]
+        if close is None or high is None or low is None or high == low:
+            return None
+        return (close - low) / (high - low)
+
+    def atr_pct(self, index: int, window: int) -> float | None:
+        close = self.closes[index]
+        if close in (None, 0) or index < 1:
+            return None
+        start, end = self._time_range(index, window)
+        left, right = self._valid_range(self.true_range_positions, start, end)
+        count = right - left
+        if count == 0:
+            return None
+        return ((self.true_range_prefix[right] - self.true_range_prefix[left]) / count) / close
+
+    def relative_to_window(self, values_name: str, index: int, window: int) -> float | None:
+        if values_name == "volume":
+            values = self.volumes
+            positions = self.volume_positions
+            prefix = self.volume_prefix
+        else:
+            values = self.dollar_volumes
+            positions = self.dollar_volume_positions
+            prefix = self.dollar_volume_prefix
+        current = values[index]
+        if current is None:
+            return None
+        start = max(0, index - window + 1)
+        left, right = self._valid_range(positions, start, index)
+        count = right - left
+        if count == 0:
+            return None
+        avg = (prefix[right] - prefix[left]) / count
+        return None if avg == 0 else current / avg
+
+    def return_stats(self, index: int, window: int) -> tuple[int, float, float, float]:
+        start, end = self._time_range(index, window)
+        left, right = self._valid_range(self.return_positions, start, end)
+        count = right - left
+        total = self.return_sum_prefix[right] - self.return_sum_prefix[left]
+        abs_total = self.return_abs_prefix[right] - self.return_abs_prefix[left]
+        sumsq = self.return_sumsq_prefix[right] - self.return_sumsq_prefix[left]
+        return count, total, abs_total, sumsq
+
+    def direction_flip_count(self, index: int, window: int) -> int | None:
+        start, end = self._time_range(index, window)
+        left, right = self._valid_range(self.return_positions, start, end)
+        if right - left < 2:
+            return None
+        return self.return_flip_prefix[right] - self.return_flip_prefix[left + 1]
+
+    def trend_age_bars(self, index: int, window: int) -> int | None:
+        start, end = self._time_range(index, window)
+        left, right = self._valid_range(self.return_positions, start, end)
+        if right <= left:
+            return None
+        sign = self.return_signs[right - 1]
+        if sign == 0:
+            return 0
+        return min(self.return_run_lengths[right - 1], right - left)
+
+    def state_persistence_score(self, index: int, window: int) -> float | None:
+        age = self.trend_age_bars(index, window)
+        if age is None:
+            return None
+        return min(age / max(window, 1), 1.0)
+
+    def time_since_last_direction_flip(self, index: int) -> int | None:
+        start, end = self._time_range(index, min(index + 1, STATE_WINDOW_MINUTES["1W"]))
+        left, right = self._valid_range(self.return_positions, start, end)
+        if right - left < 2:
+            return None
+        for position in range(right - 1, left, -1):
+            if self.return_signs[position] and self.return_signs[position - 1] and self.return_signs[position] != self.return_signs[position - 1]:
+                return right - position
+        return right - left
+
+    def path_stability_score(self, index: int, window: int) -> float | None:
+        count, total, abs_total, sumsq = self.return_stats(index, window)
+        if count < 2:
+            return None
+        efficiency = None if abs_total == 0 else abs(total) / abs_total
+        flips = self.direction_flip_count(index, window)
+        flip_penalty = None if flips is None else 1.0 - min(flips / max(count - 1, 1), 1.0)
+        vol = _pstdev_from_sums(total, sumsq, count)
+        vol_stability = None if vol is None else 1.0 - min(vol / 0.02, 1.0)
+        return _average([efficiency, flip_penalty, vol_stability])
+
+    def momentum_decay_score(self, index: int, window: int) -> float | None:
+        left, right = self._valid_range(self.return_positions, *self._time_range(index, window))
+        count = right - left
+        if count < 4:
+            return None
+        midpoint = left + count // 2
+        first_count = midpoint - left
+        second_count = right - midpoint
+        first = (self.return_abs_prefix[midpoint] - self.return_abs_prefix[left]) / first_count
+        second = (self.return_abs_prefix[right] - self.return_abs_prefix[midpoint]) / second_count
+        return None if first == 0 else max(0.0, min((first - second) / first, 1.0))
+
+    def volume_exhaustion_score(self, index: int, window: int) -> float | None:
+        current = self.volumes[index]
+        if current is None:
+            return None
+        start = max(0, index - window + 1)
+        left, right = self._valid_range(self.volume_positions, start, index)
+        count = right - left
+        if count < 4:
+            return None
+        midpoint = left + count // 2
+        first_count = midpoint - left
+        second_count = right - midpoint
+        first = (self.volume_prefix[midpoint] - self.volume_prefix[left]) / first_count
+        second = (self.volume_prefix[right] - self.volume_prefix[midpoint]) / second_count
+        return None if first == 0 else max(0.0, min((first - second) / first, 1.0))
+
+    def volatility_exhaustion_score(self, index: int, window: int) -> float | None:
+        left, right = self._valid_range(self.return_positions, *self._time_range(index, window))
+        count = right - left
+        if count < 4:
+            return None
+        midpoint = left + count // 2
+        first_count = midpoint - left
+        second_count = right - midpoint
+        first = _pstdev_from_sums(
+            self.return_sum_prefix[midpoint] - self.return_sum_prefix[left],
+            self.return_sumsq_prefix[midpoint] - self.return_sumsq_prefix[left],
+            first_count,
+        )
+        second = _pstdev_from_sums(
+            self.return_sum_prefix[right] - self.return_sum_prefix[midpoint],
+            self.return_sumsq_prefix[right] - self.return_sumsq_prefix[midpoint],
+            second_count,
+        )
+        if first in (None, 0) or second is None:
+            return None
+        return max(0.0, min((second - first) / first, 1.0))
+
+    def late_trend_risk_score(self, index: int, window: int) -> float | None:
+        return _average([
+            self.state_persistence_score(index, window),
+            self.momentum_decay_score(index, window),
+            self.volume_exhaustion_score(index, window),
+            self.volatility_exhaustion_score(index, window),
+        ])
+
+
 def _target_state_features(
     index: int,
     closes: Sequence[float | None],
@@ -356,6 +697,7 @@ def _target_state_features(
     vwaps: Sequence[float | None],
     spreads: Sequence[float | None],
     dollar_volumes: Sequence[float | None],
+    feature_cache: _TargetRollingFeatures | None = None,
 ) -> dict[str, Any]:
     close = closes[index]
     returns_cache: dict[tuple[int, int, int], list[float]] = {}
@@ -382,28 +724,28 @@ def _target_state_features(
     state["target_price_state"]["bar_high"] = highs[index]
     state["target_price_state"]["bar_low"] = lows[index]
     session_start = max(0, index - 389)
-    state["target_price_state"]["session_open"] = next((value for value in closes[session_start : index + 1] if value is not None), None)
+    state["target_price_state"]["session_open"] = feature_cache.session_open[index] if feature_cache else next((value for value in closes[session_start : index + 1] if value is not None), None)
     for label, window in STATE_WINDOW_MINUTES.items():
-        window_return = _window_return(closes, index, window)
-        realized_vol = _realized_vol(closes, index, window, returns_cache)
+        window_return = feature_cache.window_return(index, window) if feature_cache else _window_return(closes, index, window)
+        realized_vol = feature_cache.realized_vol(index, window) if feature_cache else _realized_vol(closes, index, window, returns_cache)
         state["target_direction_return_shape"][f"return_{label}"] = window_return
         state["target_volatility_range_state"][f"realized_vol_{label}"] = realized_vol
-        state["target_volatility_range_state"][f"range_position_{label}"] = _range_position(closes, highs, lows, index, window)
-        state["target_volatility_range_state"][f"atr_pct_{label}"] = _atr_pct(closes, highs, lows, index, window)
-        state["target_volume_activity_state"][f"relative_volume_{label}"] = _relative_to_window(volumes, index, window)
-        state["target_volume_activity_state"][f"relative_dollar_volume_{label}"] = _relative_to_window(dollar_volumes, index, window)
-        state["target_trend_quality_state"][f"trend_quality_{label}"] = _trend_quality_score(closes, index, window, returns_cache)
-        state["target_trend_quality_state"][f"path_stability_{label}"] = _path_stability_score(closes, index, window, returns_cache)
-        state["target_trend_age_state"][f"trend_age_bars_{label}"] = _trend_age_bars(closes, index, window, returns_cache)
-        state["target_trend_age_state"][f"direction_flip_count_{label}"] = _direction_flip_count(closes, index, window, returns_cache)
-        state["target_trend_age_state"][f"state_persistence_score_{label}"] = _state_persistence_score(closes, index, window, returns_cache)
-        state["target_exhaustion_decay_state"][f"momentum_decay_score_{label}"] = _momentum_decay_score(closes, index, window, returns_cache)
-        state["target_exhaustion_decay_state"][f"volume_exhaustion_score_{label}"] = _volume_exhaustion_score(volumes, index, window)
-        state["target_exhaustion_decay_state"][f"volatility_exhaustion_score_{label}"] = _volatility_exhaustion_score(closes, index, window, returns_cache)
-        state["target_exhaustion_decay_state"][f"late_trend_risk_score_{label}"] = _late_trend_risk_score(closes, volumes, index, window, returns_cache)
+        state["target_volatility_range_state"][f"range_position_{label}"] = feature_cache.range_position(index, window) if feature_cache else _range_position(closes, highs, lows, index, window)
+        state["target_volatility_range_state"][f"atr_pct_{label}"] = feature_cache.atr_pct(index, window) if feature_cache else _atr_pct(closes, highs, lows, index, window)
+        state["target_volume_activity_state"][f"relative_volume_{label}"] = feature_cache.relative_to_window("volume", index, window) if feature_cache else _relative_to_window(volumes, index, window)
+        state["target_volume_activity_state"][f"relative_dollar_volume_{label}"] = feature_cache.relative_to_window("dollar_volume", index, window) if feature_cache else _relative_to_window(dollar_volumes, index, window)
+        state["target_trend_quality_state"][f"trend_quality_{label}"] = _trend_quality_score_from_cache(feature_cache, closes, index, window, returns_cache)
+        state["target_trend_quality_state"][f"path_stability_{label}"] = feature_cache.path_stability_score(index, window) if feature_cache else _path_stability_score(closes, index, window, returns_cache)
+        state["target_trend_age_state"][f"trend_age_bars_{label}"] = feature_cache.trend_age_bars(index, window) if feature_cache else _trend_age_bars(closes, index, window, returns_cache)
+        state["target_trend_age_state"][f"direction_flip_count_{label}"] = feature_cache.direction_flip_count(index, window) if feature_cache else _direction_flip_count(closes, index, window, returns_cache)
+        state["target_trend_age_state"][f"state_persistence_score_{label}"] = feature_cache.state_persistence_score(index, window) if feature_cache else _state_persistence_score(closes, index, window, returns_cache)
+        state["target_exhaustion_decay_state"][f"momentum_decay_score_{label}"] = feature_cache.momentum_decay_score(index, window) if feature_cache else _momentum_decay_score(closes, index, window, returns_cache)
+        state["target_exhaustion_decay_state"][f"volume_exhaustion_score_{label}"] = feature_cache.volume_exhaustion_score(index, window) if feature_cache else _volume_exhaustion_score(volumes, index, window)
+        state["target_exhaustion_decay_state"][f"volatility_exhaustion_score_{label}"] = feature_cache.volatility_exhaustion_score(index, window) if feature_cache else _volatility_exhaustion_score(closes, index, window, returns_cache)
+        state["target_exhaustion_decay_state"][f"late_trend_risk_score_{label}"] = feature_cache.late_trend_risk_score(index, window) if feature_cache else _late_trend_risk_score(closes, volumes, index, window, returns_cache)
 
     state["multi_frame_state"] = _target_multi_frame_state(state)
-    state["target_trend_age_state"]["time_since_last_direction_flip_bars"] = _time_since_last_direction_flip(closes, index, returns_cache)
+    state["target_trend_age_state"]["time_since_last_direction_flip_bars"] = feature_cache.time_since_last_direction_flip(index) if feature_cache else _time_since_last_direction_flip(closes, index, returns_cache)
     state["target_trend_quality_state"]["return_10min_minus_1h"] = _delta(
         state["target_direction_return_shape"].get("return_10min"),
         state["target_direction_return_shape"].get("return_1h"),
@@ -417,7 +759,7 @@ def _target_state_features(
     state["target_liquidity_tradability_state"]["spread_bps"] = spreads[index]
     state["target_liquidity_tradability_state"]["dollar_volume"] = dollar_volumes[index]
     state["target_vwap_location_state"]["vwap_distance_pct"] = _safe_ratio_delta(close, vwaps[index])
-    state["target_session_position_state"].update(_session_position_state(index, closes, highs, lows, vwaps))
+    state["target_session_position_state"].update(_session_position_state(index, closes, highs, lows, vwaps, feature_cache=feature_cache))
     state["target_shortability_state"].update({"shortable_state": None, "borrow_availability_score": None, "borrow_cost_score": None, "hard_to_borrow_flag": None, "locate_quality_score": None, "short_sale_constraint_score": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
     state["target_event_risk_state"].update({"earnings_proximity_score": None, "scheduled_event_risk_score": None, "news_shock_state": None, "halt_risk_score": None, "macro_event_window_flag": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
     state["target_data_quality_state"]["has_close"] = close is not None
@@ -571,16 +913,28 @@ def _invert_for_rank(value: float | None) -> float | None:
     return None if value is None else 1.0 - max(0.0, min(value, 1.0))
 
 
-def _session_position_state(index: int, closes: Sequence[float | None], highs: Sequence[float | None], lows: Sequence[float | None], vwaps: Sequence[float | None]) -> dict[str, Any]:
+def _session_position_state(
+    index: int,
+    closes: Sequence[float | None],
+    highs: Sequence[float | None],
+    lows: Sequence[float | None],
+    vwaps: Sequence[float | None],
+    feature_cache: _TargetRollingFeatures | None = None,
+) -> dict[str, Any]:
     minute_of_session = index
     close = closes[index]
     session_window = min(index + 1, 390)
     session_start = max(0, index - session_window + 1)
-    session_open = next((value for value in closes[session_start : index + 1] if value is not None), None)
-    high_values = _window_values(highs, index, session_window)
-    low_values = _window_values(lows, index, session_window)
-    session_high = max(high_values) if high_values else None
-    session_low = min(low_values) if low_values else None
+    if feature_cache:
+        session_open = feature_cache.session_open[index]
+        session_high = feature_cache.session_high[index]
+        session_low = feature_cache.session_low[index]
+    else:
+        session_open = next((value for value in closes[session_start : index + 1] if value is not None), None)
+        high_values = _window_values(highs, index, session_window)
+        low_values = _window_values(lows, index, session_window)
+        session_high = max(high_values) if high_values else None
+        session_low = min(low_values) if low_values else None
     range_position = None if close is None or session_high is None or session_low is None or session_high == session_low else (close - session_low) / (session_high - session_low)
     return {
         "window_policy": "completed_1min_bars",
@@ -631,6 +985,23 @@ def _range_position(closes: Sequence[float | None], highs: Sequence[float | None
     high = max(high_values)
     low = min(low_values)
     return None if high == low else (close - low) / (high - low)
+
+
+def _trend_quality_score_from_cache(
+    feature_cache: _TargetRollingFeatures | None,
+    values: Sequence[float | None],
+    index: int,
+    window: int,
+    returns_cache: dict[tuple[int, int, int], list[float]] | None = None,
+) -> float | None:
+    if feature_cache is None:
+        return _trend_quality_score(values, index, window, returns_cache)
+    ret = feature_cache.window_return(index, window)
+    stability = feature_cache.path_stability_score(index, window)
+    if ret is None and stability is None:
+        return None
+    direction_strength = None if ret is None else min(abs(math.tanh(ret / 0.03)), 1.0)
+    return _average([direction_strength, stability])
 
 
 def _atr_pct(closes: Sequence[float | None], highs: Sequence[float | None], lows: Sequence[float | None], index: int, window: int) -> float | None:
@@ -866,6 +1237,13 @@ def _mean(values: Iterable[float]) -> float:
 def _pstdev(values: Sequence[float]) -> float:
     avg = _mean(values)
     return math.sqrt(sum((float(value) - avg) ** 2 for value in values) / len(values))
+
+
+def _pstdev_from_sums(total: float, sumsq: float, count: int) -> float | None:
+    if count < 2:
+        return None
+    variance = max((sumsq / count) - ((total / count) ** 2), 0.0)
+    return math.sqrt(variance)
 
 
 def _safe_float(value: Any) -> float | None:

@@ -9,6 +9,17 @@ ET = ZoneInfo("America/New_York")
 generator = importlib.import_module("data_feature.feature_03_target_state_vector.generator")
 
 
+def _assert_nested_close(test_case: unittest.TestCase, left, right) -> None:
+    if isinstance(left, dict) and isinstance(right, dict):
+        test_case.assertEqual(set(left), set(right))
+        for key in left:
+            _assert_nested_close(test_case, left[key], right[key])
+    elif isinstance(left, float) or isinstance(right, float):
+        test_case.assertAlmostEqual(left, right, places=12)
+    else:
+        test_case.assertEqual(left, right)
+
+
 def _bar(symbol: str, timestamp: datetime, close: float, *, volume: int = 1000) -> dict[str, str]:
     return {
         "symbol": symbol,
@@ -157,6 +168,41 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertIsNone(rows[4]["market_context_state_ref"])
         self.assertEqual(rows[5]["market_context_state_ref"], "mkt_early")
         self.assertEqual(rows[-1]["market_context_state_ref"], "mkt_late")
+
+    def test_rolling_feature_cache_matches_window_fallbacks(self) -> None:
+        closes = [100.0 + ((index % 17) - 8) * 0.13 + index * 0.02 for index in range(150)]
+        highs = [value + 0.35 for value in closes]
+        lows = [value - 0.31 for value in closes]
+        volumes = [1000.0 + (index % 11) * 17 for index in range(150)]
+        vwaps = [value - 0.04 for value in closes]
+        spreads = [4.0 for _ in closes]
+        dollar_volumes = [close * volume for close, volume in zip(closes, volumes)]
+        cache = generator._TargetRollingFeatures(closes, highs, lows, volumes, vwaps, dollar_volumes)
+
+        for index in (12, 65, 120, 149):
+            cached = generator._target_state_features(
+                index,
+                closes,
+                highs,
+                lows,
+                volumes,
+                vwaps,
+                spreads,
+                dollar_volumes,
+                feature_cache=cache,
+            )
+            fallback = generator._target_state_features(index, closes, highs, lows, volumes, vwaps, spreads, dollar_volumes)
+            self.assertEqual(cached["target_price_state"], fallback["target_price_state"])
+            self.assertEqual(cached["target_session_position_state"], fallback["target_session_position_state"])
+            for block in (
+                "target_direction_return_shape",
+                "target_trend_quality_state",
+                "target_trend_age_state",
+                "target_exhaustion_decay_state",
+                "target_volatility_range_state",
+                "target_volume_activity_state",
+            ):
+                _assert_nested_close(self, cached[block], fallback[block])
 
 
 if __name__ == "__main__":

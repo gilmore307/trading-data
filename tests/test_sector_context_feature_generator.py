@@ -71,7 +71,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             },
             {
                 "combination_id": "smh_xlk",
-                "combination_type": "daily_context",
+                "combination_type": "context_rotation",
                 "model_layer": "layer_02_sector_context",
                 "numerator_symbol": "SMH",
                 "denominator_symbol": "XLK",
@@ -165,7 +165,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         smh_row = next(row for row in rows if row["rotation_pair_id"] == "smh_xlk")
         self.assertEqual(smh_row["candidate_symbol"], "SMH")
         self.assertEqual(smh_row["comparison_symbol"], "XLK")
-        self.assertEqual(smh_row["rotation_pair_type"], "daily_context")
+        self.assertEqual(smh_row["rotation_pair_type"], "context_rotation")
         self.assertAlmostEqual(smh_row["relative_strength_return_1m"], math.log((125.0 / 95.0) / (124.0 / 94.0)))
 
     def test_sql_fetch_reads_one_minute_source_bars_for_local_frame_generation(self) -> None:
@@ -297,7 +297,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
         self.assertTrue(all(combo.model_layer == "layer_02_sector_context" for combo in generator.rotation_combinations(inputs)))
         self.assertEqual(len(rows), 32)
-        self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation_summary", "sector_rotation", "daily_context"})
+        self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation_summary", "sector_rotation", "context_rotation"})
         self.assertIn("sector_observation_breadth", {row["rotation_pair_id"] for row in rows})
         pair_ids = {row["rotation_pair_id"] for row in rows}
         self.assertIn("xlk_spy", pair_ids)

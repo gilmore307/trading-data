@@ -28,7 +28,7 @@ INPUT_FRAME_HORIZONS: dict[str, tuple[str, ...]] = {
     "1h": ("1D",),
     "1D": ("1W",),
 }
-MODEL2_ROTATION_COMBINATION_TYPES = {"sector_rotation", "daily_context"}
+MODEL2_ROTATION_COMBINATION_TYPES = {"sector_rotation", "context_rotation"}
 SINGLE_RETURN_TREND_EXCLUDED_SYMBOLS = {"SHY"}
 RETURN_LOOKBACKS = ("30m", "1d", "5d", "20d")
 REALIZED_VOL_LOOKBACKS = (5, 20, 60)

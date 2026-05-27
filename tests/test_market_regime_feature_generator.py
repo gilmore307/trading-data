@@ -33,7 +33,7 @@ def _bar(symbol: str, day: date, close: float, *, timeframe: str = "1Day", open_
 def _intraday_bar(symbol: str, timestamp: datetime, close: float) -> dict[str, str]:
     return {
         "symbol": symbol,
-        "timeframe": "30Min",
+        "timeframe": "1Min",
         "timestamp": timestamp.isoformat(),
         "bar_open": str(close * 0.999),
         "bar_high": str(close * 1.001),
@@ -58,7 +58,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
                 "model_layer": "layer_01_market_regime",
                 "numerator_symbol": "QQQ",
                 "denominator_symbol": "SPY",
-                "feature_bar_grain": "30m",
+                "feature_bar_grain": "1m",
             },
             {
                 "combination_id": "xlk_spy",
@@ -66,7 +66,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
                 "model_layer": "layer_02_sector_context",
                 "numerator_symbol": "XLK",
                 "denominator_symbol": "SPY",
-                "feature_bar_grain": "30m",
+                "feature_bar_grain": "1m",
             },
         ]
         start = date(2025, 1, 1)
@@ -83,8 +83,10 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         bars.extend(
             [
                 _intraday_bar("SPY", snapshot - timedelta(minutes=30), 369.0),
+                _intraday_bar("SPY", snapshot - timedelta(minutes=1), 369.0),
                 _intraday_bar("SPY", snapshot, 370.0),
                 _intraday_bar("QQQ", snapshot - timedelta(minutes=30), 520.0),
+                _intraday_bar("QQQ", snapshot - timedelta(minutes=1), 520.0),
                 _intraday_bar("QQQ", snapshot, 525.0),
             ]
         )
@@ -100,7 +102,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertEqual(row["prediction_horizon"], "1D")
         self.assertEqual(row["market_universe_ref"], "layer_01_02_market_context_etf_universe")
         self.assertAlmostEqual(row["spy_return_30m"], math.log(370.0 / 369.0))
-        self.assertAlmostEqual(row["qqq_spy_30m"], math.log((525.0 / 370.0) / (520.0 / 369.0)))
+        self.assertAlmostEqual(row["qqq_spy_1m"], math.log((525.0 / 370.0) / (520.0 / 369.0)))
         self.assertIn("spy_realized_vol_20d", row)
         self.assertIn("qqq_spy_realized_vol_20d_ratio", row)
         self.assertNotIn("qqq_spy_ma20", row)

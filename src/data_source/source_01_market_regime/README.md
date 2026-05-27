@@ -23,7 +23,7 @@ The universe CSV owns ETF scope and grain choices:
 - `symbol` — ETF symbol to fetch.
 - `universe_type` / `exposure_type` — why the ETF belongs in the universe.
 - `model_layer` — authoritative scope discriminator; `layer_01_market_regime` rows feed Layer 1 feature construction and `layer_02_sector_context` rows feed Layer 2 sector/industry/theme observation.
-- `feature_grain` — downstream observation/feature grain cue for that ETF, e.g. `1D`, `30m`. It is not a provider download grain.
+- `feature_grain` — reviewed downstream observation/feature grain cue for that ETF. Current shared Layer 1/2 ETF rows use `1m`; longer-horizon diagnostics are derived downstream from the canonical 1-minute source rows.
 - `fund_name`, `issuer_name` — human-readable metadata.
 
 `source_01_market_regime` downloads one canonical raw bar stream: `1Min`. Multi-frame market and sector evidence is derived during feature generation from those 1-minute source rows. The source stage rejects non-`1Min` task-key timeframes so the table does not mix provider-native 1-minute, 30-minute, and daily bars.

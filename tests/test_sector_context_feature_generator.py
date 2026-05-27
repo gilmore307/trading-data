@@ -33,7 +33,7 @@ def _bar(symbol: str, day: date, close: float, *, timeframe: str = "1Day") -> di
 def _intraday_bar(symbol: str, timestamp: datetime, close: float) -> dict[str, str]:
     return {
         "symbol": symbol,
-        "timeframe": "30Min",
+        "timeframe": "1Min",
         "timestamp": timestamp.isoformat(),
         "bar_open": str(close * 0.999),
         "bar_high": str(close * 1.001),
@@ -59,7 +59,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 "model_layer": "layer_01_market_regime",
                 "numerator_symbol": "QQQ",
                 "denominator_symbol": "SPY",
-                "feature_bar_grain": "30m",
+                "feature_bar_grain": "1m",
             },
             {
                 "combination_id": "xlk_spy",
@@ -67,7 +67,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 "model_layer": "layer_02_sector_context",
                 "numerator_symbol": "XLK",
                 "denominator_symbol": "SPY",
-                "feature_bar_grain": "30m",
+                "feature_bar_grain": "1m",
             },
             {
                 "combination_id": "smh_xlk",
@@ -75,7 +75,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 "model_layer": "layer_02_sector_context",
                 "numerator_symbol": "SMH",
                 "denominator_symbol": "XLK",
-                "feature_bar_grain": "1d",
+                "feature_bar_grain": "1m",
             },
         ]
         start = date(2025, 1, 1)
@@ -92,10 +92,12 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         snapshot = datetime.combine(start + timedelta(days=269), datetime.min.time(), tzinfo=ET).replace(hour=16)
         bars.extend(
             [
-                _intraday_bar("SPY", snapshot - timedelta(minutes=30), 369.0),
+                _intraday_bar("SPY", snapshot - timedelta(minutes=1), 369.0),
                 _intraday_bar("SPY", snapshot, 370.0),
-                _intraday_bar("XLK", snapshot - timedelta(minutes=30), 94.0),
+                _intraday_bar("XLK", snapshot - timedelta(minutes=1), 94.0),
                 _intraday_bar("XLK", snapshot, 95.0),
+                _intraday_bar("SMH", snapshot - timedelta(minutes=1), 124.0),
+                _intraday_bar("SMH", snapshot, 125.0),
             ]
         )
         return generator.build_inputs(bar_rows=bars, universe_rows=universe, combination_rows=combinations), snapshot
@@ -111,7 +113,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 bars.append(
                     generator.market_features.Bar(
                         symbol=symbol,
-                        timeframe="30Min",
+                        timeframe="1Min",
                         timestamp=close_time,
                         available_time=close_time,
                         open=daily_bar.open,
@@ -155,7 +157,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(xlk_row["candidate_type"], "sector_industry_etf")
         self.assertEqual(xlk_row["comparison_symbol"], "SPY")
         self.assertEqual(xlk_row["rotation_pair_type"], "sector_rotation")
-        self.assertAlmostEqual(xlk_row["relative_strength_return_30m"], math.log((95.0 / 370.0) / (94.0 / 369.0)))
+        self.assertAlmostEqual(xlk_row["relative_strength_return_1m"], math.log((95.0 / 370.0) / (94.0 / 369.0)))
         self.assertIn("relative_strength_distance_to_ma20", xlk_row)
         self.assertNotIn("relative_strength_ma20", xlk_row)
         self.assertIn("relative_strength_return_corr_20d", xlk_row)
@@ -164,7 +166,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(smh_row["candidate_symbol"], "SMH")
         self.assertEqual(smh_row["comparison_symbol"], "XLK")
         self.assertEqual(smh_row["rotation_pair_type"], "daily_context")
-        self.assertIn("relative_strength_return_1d", smh_row)
+        self.assertAlmostEqual(smh_row["relative_strength_return_1m"], math.log((125.0 / 95.0) / (124.0 / 94.0)))
 
     def test_sql_fetch_reads_one_minute_source_bars_for_local_frame_generation(self) -> None:
         class FakeCursor:
@@ -204,7 +206,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 "comparison_symbol": "SPY",
                 "rotation_pair_id": "xlk_spy",
                 "rotation_pair_type": "sector_rotation",
-                "feature_bar_grain": "30m",
+                "feature_bar_grain": "1m",
                 "relative_strength_return": 0.01,
             }
         ]
@@ -217,7 +219,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertIn('ON CONFLICT ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]
         self.assertIsNotNone(insert_params)
-        self.assertEqual(insert_params[:7], ["2026-01-02T16:00:00-05:00", "XLK", "sector_industry_etf", "SPY", "xlk_spy", "sector_rotation", "30m"])
+        self.assertEqual(insert_params[:7], ["2026-01-02T16:00:00-05:00", "XLK", "sector_industry_etf", "SPY", "xlk_spy", "sector_rotation", "1m"])
         payload = json.loads(insert_params[7])  # type: ignore[index]
         self.assertEqual(payload, {"relative_strength_return": 0.01})
 
@@ -230,7 +232,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             with csv_path.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.writer(handle)
                 writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
-                writer.writerow(["XLK", "30Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
+                writer.writerow(["XLK", "1Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
             receipt = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
             receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": [str(csv_path)]}]}) + "\n", encoding="utf-8")
 
@@ -265,7 +267,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 with csv_path.open("w", newline="", encoding="utf-8") as handle:
                     writer = csv.writer(handle)
                     writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
-                    writer.writerow(["XLK", "30Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
+                    writer.writerow(["XLK", "1Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
                 receipt = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
                 receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": [str(csv_path)]}]}) + "\n", encoding="utf-8")
 

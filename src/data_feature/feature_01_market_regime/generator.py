@@ -540,7 +540,11 @@ def _market_regime_combinations(inputs: MarketRegimeInputs) -> list[Combination]
 
 def _add_relative_strength_features(row: dict[str, Any], inputs: MarketRegimeInputs, close_at: Any, daily: Any, snapshot_time: datetime) -> None:
     for combo in _market_regime_combinations(inputs):
-        if combo.feature_bar_grain == "30m":
+        if combo.feature_bar_grain == "1m":
+            current = _safe_div(close_at(combo.numerator_symbol, snapshot_time), close_at(combo.denominator_symbol, snapshot_time))
+            previous = _safe_div(close_at(combo.numerator_symbol, snapshot_time - timedelta(minutes=1)), close_at(combo.denominator_symbol, snapshot_time - timedelta(minutes=1)))
+            row[f"{combo.combination_id}_1m"] = _safe_log_ratio(current, previous)
+        elif combo.feature_bar_grain == "30m":
             current = _safe_div(close_at(combo.numerator_symbol, snapshot_time), close_at(combo.denominator_symbol, snapshot_time))
             previous = _safe_div(close_at(combo.numerator_symbol, snapshot_time - timedelta(minutes=30)), close_at(combo.denominator_symbol, snapshot_time - timedelta(minutes=30)))
             row[f"{combo.combination_id}_30m"] = _safe_log_ratio(current, previous)

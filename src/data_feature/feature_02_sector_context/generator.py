@@ -107,7 +107,12 @@ def generate_row(inputs: MarketRegimeInputs, combo: Combination, snapshot_time: 
 
 
 def _add_relative_strength_return(row: dict[str, Any], combo: Combination, close_at: Any, daily: Any, snapshot_time: datetime) -> None:
-    if combo.feature_bar_grain == "30m":
+    if combo.feature_bar_grain == "1m":
+        current = market_features._safe_div(close_at(combo.numerator_symbol, snapshot_time), close_at(combo.denominator_symbol, snapshot_time))
+        previous = market_features._safe_div(close_at(combo.numerator_symbol, snapshot_time - timedelta(minutes=1)), close_at(combo.denominator_symbol, snapshot_time - timedelta(minutes=1)))
+        value = market_features._safe_log_ratio(current, previous)
+        row["relative_strength_return_1m"] = value
+    elif combo.feature_bar_grain == "30m":
         current = market_features._safe_div(close_at(combo.numerator_symbol, snapshot_time), close_at(combo.denominator_symbol, snapshot_time))
         previous = market_features._safe_div(close_at(combo.numerator_symbol, snapshot_time - timedelta(minutes=30)), close_at(combo.denominator_symbol, snapshot_time - timedelta(minutes=30)))
         value = market_features._safe_log_ratio(current, previous)

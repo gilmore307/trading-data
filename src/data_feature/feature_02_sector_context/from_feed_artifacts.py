@@ -22,6 +22,7 @@ from data_feature.feature_01_market_regime.from_feed_artifacts import (
     materialize_source_rows,
     read_equity_bar_rows,
 )
+from data_source.source_01_market_regime.pipeline import OUTPUT_TABLE
 
 from .sql import DEFAULT_COMBINATIONS_CSV, DEFAULT_UNIVERSE_CSV, _database_url, generate_sql
 

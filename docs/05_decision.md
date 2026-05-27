@@ -84,7 +84,9 @@ ThetaData runtime lives outside Git under `/root/tools/thetadata-terminal/` and 
 
 Layer 1 market-regime data is broad-market/ETF bar evidence and must not use sector leadership, selected securities, strategy labels, option outcomes, portfolio PnL, or future-return labels.
 
-Layer 2 sector-context features derive deterministic sector/industry behavior evidence from accepted Layer 1 source outputs and reviewed relative-strength combinations. ETF holdings are not Layer 2 core behavior input, but the Layer 2 feature stage materializes the candidate-holdings handoff after sector/basket context exists.
+Layer 2 sector-context features derive deterministic sector/industry/theme ETF behavior evidence from accepted Layer 1 source outputs and reviewed relative-strength combinations. These features support per-ETF `context_etf_state` construction and global/group `cross_etf_summary`; per-ETF cross-section calculations are construction evidence, not a separate downstream output when embedded in the ETF state.
+
+ETF holdings are not Layer 2 core behavior input, but the Layer 2 feature stage materializes the candidate-holdings handoff after ETF context exists. Holdings/manual mappings are seed or fallback evidence for ordinary targets; the accepted direction is dynamic `target_context_profile` weighting from point-in-time correlation, lead-lag, influence direction, and confidence.
 
 ## D015 — Target candidate and Layer 3 boundaries
 

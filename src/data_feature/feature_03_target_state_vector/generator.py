@@ -10,9 +10,9 @@ from __future__ import annotations
 import csv
 import json
 import math
+from bisect import bisect_right
 from dataclasses import dataclass
 from datetime import datetime
-from statistics import mean, pstdev
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
@@ -74,6 +74,16 @@ class TargetStateInputs:
 
 class TargetStateVectorError(ValueError):
     """Raised when target state-vector inputs are invalid."""
+
+
+@dataclass(frozen=True)
+class _ContextTimeline:
+    rows: tuple[ContextRow, ...]
+    available_times: tuple[datetime, ...]
+
+    def latest_at(self, available_time: datetime) -> ContextRow | None:
+        index = bisect_right(self.available_times, available_time) - 1
+        return self.rows[index] if index >= 0 else None
 
 
 def read_csv_rows(path: str | Path) -> list[dict[str, str]]:
@@ -145,9 +155,10 @@ def generate_rows(
     target_context_state_version: str = DEFAULT_VECTOR_VERSION,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    sector_rows_by_symbol = _sector_rows_by_symbol(inputs.sector_context_rows)
     for target_candidate_id in sorted(inputs.bars_by_candidate):
         sector_context_rows = _sector_rows_for_candidate(
-            inputs.sector_context_rows,
+            sector_rows_by_symbol,
             (inputs.sector_context_symbol_by_candidate or {}).get(target_candidate_id),
         )
         rows.extend(
@@ -172,6 +183,8 @@ def generate_candidate_rows(
     target_context_state_version: str = DEFAULT_VECTOR_VERSION,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    market_context_lookup = _context_timeline(market_context_rows)
+    sector_context_lookup = _context_timeline(sector_context_rows)
     closes = [bar.close for bar in bars]
     highs = [bar.high for bar in bars]
     lows = [bar.low for bar in bars]
@@ -181,8 +194,8 @@ def generate_candidate_rows(
     dollar_volumes = [bar.dollar_volume for bar in bars]
 
     for index, bar in enumerate(bars):
-        market_context = _latest_context(market_context_rows, bar.available_time)
-        sector_context = _latest_context(sector_context_rows, bar.available_time)
+        market_context = market_context_lookup.latest_at(bar.available_time)
+        sector_context = sector_context_lookup.latest_at(bar.available_time)
         target_state = _target_state_features(index, closes, highs, lows, volumes, vwaps, spreads, dollar_volumes)
         market_state = _market_state_features(market_context)
         sector_state = _sector_state_features(sector_context)
@@ -225,16 +238,24 @@ def _candidate_maps(rows: Iterable[Mapping[str, Any]]) -> tuple[dict[str, str], 
     return candidates, sector_symbols
 
 
-def _sector_rows_for_candidate(rows: Sequence[ContextRow], sector_context_symbol: str | None) -> tuple[ContextRow, ...]:
+def _context_timeline(rows: Sequence[ContextRow]) -> _ContextTimeline:
+    sorted_rows = tuple(sorted(rows, key=lambda item: item.available_time))
+    return _ContextTimeline(sorted_rows, tuple(row.available_time for row in sorted_rows))
+
+
+def _sector_rows_by_symbol(rows: Sequence[ContextRow]) -> dict[str, tuple[ContextRow, ...]]:
+    grouped: dict[str, list[ContextRow]] = {"": []}
+    for row in rows:
+        symbol = str(row.payload.get("sector_or_industry_symbol") or row.payload.get("symbol") or "").strip().upper()
+        grouped.setdefault(symbol, []).append(row)
+    return {symbol: tuple(sorted(items, key=lambda item: item.available_time)) for symbol, items in grouped.items()}
+
+
+def _sector_rows_for_candidate(rows_by_symbol: Mapping[str, tuple[ContextRow, ...]], sector_context_symbol: str | None) -> tuple[ContextRow, ...]:
     if not sector_context_symbol:
-        return tuple(row for row in rows if not str(row.payload.get("sector_or_industry_symbol") or "").strip())
+        return rows_by_symbol.get("", ())
     symbol = sector_context_symbol.strip().upper()
-    matched = tuple(
-        row
-        for row in rows
-        if str(row.payload.get("sector_or_industry_symbol") or row.payload.get("symbol") or "").strip().upper() == symbol
-    )
-    return matched or tuple(row for row in rows if not str(row.payload.get("sector_or_industry_symbol") or "").strip())
+    return rows_by_symbol.get(symbol) or rows_by_symbol.get("", ())
 
 
 def _context_rows(rows: Iterable[Mapping[str, Any]], *, default_prefix: str) -> list[ContextRow]:
@@ -337,6 +358,7 @@ def _target_state_features(
     dollar_volumes: Sequence[float | None],
 ) -> dict[str, Any]:
     close = closes[index]
+    returns_cache: dict[tuple[int, int, int], list[float]] = {}
     state: dict[str, Any] = {
         "state_observation_windows": list(STATE_WINDOW_LABELS),
         "state_window_sync_policy": STATE_WINDOW_SYNC_POLICY,
@@ -359,28 +381,29 @@ def _target_state_features(
     state["target_price_state"]["bar_close"] = close
     state["target_price_state"]["bar_high"] = highs[index]
     state["target_price_state"]["bar_low"] = lows[index]
-    state["target_price_state"]["session_open"] = next((value for value in closes[: index + 1] if value is not None), None)
+    session_start = max(0, index - 389)
+    state["target_price_state"]["session_open"] = next((value for value in closes[session_start : index + 1] if value is not None), None)
     for label, window in STATE_WINDOW_MINUTES.items():
         window_return = _window_return(closes, index, window)
-        realized_vol = _realized_vol(closes, index, window)
+        realized_vol = _realized_vol(closes, index, window, returns_cache)
         state["target_direction_return_shape"][f"return_{label}"] = window_return
         state["target_volatility_range_state"][f"realized_vol_{label}"] = realized_vol
         state["target_volatility_range_state"][f"range_position_{label}"] = _range_position(closes, highs, lows, index, window)
         state["target_volatility_range_state"][f"atr_pct_{label}"] = _atr_pct(closes, highs, lows, index, window)
         state["target_volume_activity_state"][f"relative_volume_{label}"] = _relative_to_window(volumes, index, window)
         state["target_volume_activity_state"][f"relative_dollar_volume_{label}"] = _relative_to_window(dollar_volumes, index, window)
-        state["target_trend_quality_state"][f"trend_quality_{label}"] = _trend_quality_score(closes, index, window)
-        state["target_trend_quality_state"][f"path_stability_{label}"] = _path_stability_score(closes, index, window)
-        state["target_trend_age_state"][f"trend_age_bars_{label}"] = _trend_age_bars(closes, index, window)
-        state["target_trend_age_state"][f"direction_flip_count_{label}"] = _direction_flip_count(closes, index, window)
-        state["target_trend_age_state"][f"state_persistence_score_{label}"] = _state_persistence_score(closes, index, window)
-        state["target_exhaustion_decay_state"][f"momentum_decay_score_{label}"] = _momentum_decay_score(closes, index, window)
+        state["target_trend_quality_state"][f"trend_quality_{label}"] = _trend_quality_score(closes, index, window, returns_cache)
+        state["target_trend_quality_state"][f"path_stability_{label}"] = _path_stability_score(closes, index, window, returns_cache)
+        state["target_trend_age_state"][f"trend_age_bars_{label}"] = _trend_age_bars(closes, index, window, returns_cache)
+        state["target_trend_age_state"][f"direction_flip_count_{label}"] = _direction_flip_count(closes, index, window, returns_cache)
+        state["target_trend_age_state"][f"state_persistence_score_{label}"] = _state_persistence_score(closes, index, window, returns_cache)
+        state["target_exhaustion_decay_state"][f"momentum_decay_score_{label}"] = _momentum_decay_score(closes, index, window, returns_cache)
         state["target_exhaustion_decay_state"][f"volume_exhaustion_score_{label}"] = _volume_exhaustion_score(volumes, index, window)
-        state["target_exhaustion_decay_state"][f"volatility_exhaustion_score_{label}"] = _volatility_exhaustion_score(closes, index, window)
-        state["target_exhaustion_decay_state"][f"late_trend_risk_score_{label}"] = _late_trend_risk_score(closes, volumes, index, window)
+        state["target_exhaustion_decay_state"][f"volatility_exhaustion_score_{label}"] = _volatility_exhaustion_score(closes, index, window, returns_cache)
+        state["target_exhaustion_decay_state"][f"late_trend_risk_score_{label}"] = _late_trend_risk_score(closes, volumes, index, window, returns_cache)
 
     state["multi_frame_state"] = _target_multi_frame_state(state)
-    state["target_trend_age_state"]["time_since_last_direction_flip_bars"] = _time_since_last_direction_flip(closes, index)
+    state["target_trend_age_state"]["time_since_last_direction_flip_bars"] = _time_since_last_direction_flip(closes, index, returns_cache)
     state["target_trend_quality_state"]["return_10min_minus_1h"] = _delta(
         state["target_direction_return_shape"].get("return_10min"),
         state["target_direction_return_shape"].get("return_1h"),
@@ -551,9 +574,11 @@ def _invert_for_rank(value: float | None) -> float | None:
 def _session_position_state(index: int, closes: Sequence[float | None], highs: Sequence[float | None], lows: Sequence[float | None], vwaps: Sequence[float | None]) -> dict[str, Any]:
     minute_of_session = index
     close = closes[index]
-    session_open = next((value for value in closes[: index + 1] if value is not None), None)
-    high_values = _window_values(highs, index, index + 1)
-    low_values = _window_values(lows, index, index + 1)
+    session_window = min(index + 1, 390)
+    session_start = max(0, index - session_window + 1)
+    session_open = next((value for value in closes[session_start : index + 1] if value is not None), None)
+    high_values = _window_values(highs, index, session_window)
+    low_values = _window_values(lows, index, session_window)
     session_high = max(high_values) if high_values else None
     session_low = min(low_values) if low_values else None
     range_position = None if close is None or session_high is None or session_low is None or session_high == session_low else (close - session_low) / (session_high - session_low)
@@ -588,17 +613,11 @@ def _window_return(values: Sequence[float | None], index: int, window: int) -> f
     return current / previous - 1
 
 
-def _realized_vol(values: Sequence[float | None], index: int, window: int) -> float | None:
+def _realized_vol(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> float | None:
     if index < 1:
         return None
-    returns: list[float] = []
-    start = max(1, index - window + 1)
-    for pos in range(start, index + 1):
-        current = values[pos]
-        previous = values[pos - 1]
-        if current is not None and previous not in (None, 0):
-            returns.append(math.log(current / previous))
-    return pstdev(returns) if len(returns) >= 2 else None
+    returns = _incremental_returns(values, index, window, returns_cache, log_returns=True)
+    return _pstdev(returns) if len(returns) >= 2 else None
 
 
 def _range_position(closes: Sequence[float | None], highs: Sequence[float | None], lows: Sequence[float | None], index: int, window: int) -> float | None:
@@ -630,7 +649,7 @@ def _atr_pct(closes: Sequence[float | None], highs: Sequence[float | None], lows
         if previous_close is not None:
             candidates.extend([abs(high - previous_close), abs(low - previous_close)])
         true_ranges.append(max(candidates))
-    return None if not true_ranges else mean(true_ranges) / close
+    return None if not true_ranges else _mean(true_ranges) / close
 
 
 def _relative_to_window(values: Sequence[float | None], index: int, window: int) -> float | None:
@@ -638,54 +657,66 @@ def _relative_to_window(values: Sequence[float | None], index: int, window: int)
     history = _window_values(values, index, window)
     if current is None or not history:
         return None
-    avg = mean(history)
+    avg = _mean(history)
     return None if avg == 0 else current / avg
 
 
-def _trend_quality_score(values: Sequence[float | None], index: int, window: int) -> float | None:
+def _trend_quality_score(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> float | None:
     ret = _window_return(values, index, window)
-    stability = _path_stability_score(values, index, window)
+    stability = _path_stability_score(values, index, window, returns_cache)
     if ret is None and stability is None:
         return None
     direction_strength = None if ret is None else min(abs(math.tanh(ret / 0.03)), 1.0)
     return _average([direction_strength, stability])
 
 
-def _path_stability_score(values: Sequence[float | None], index: int, window: int) -> float | None:
-    returns = _incremental_returns(values, index, window)
+def _path_stability_score(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> float | None:
+    returns = _incremental_returns(values, index, window, returns_cache)
     if len(returns) < 2:
         return None
     total_abs = sum(abs(value) for value in returns)
     net_abs = abs(sum(returns))
     efficiency = None if total_abs == 0 else net_abs / total_abs
-    flips = _direction_flip_count(values, index, window)
+    flips = _direction_flip_count(values, index, window, returns_cache)
     flip_penalty = None if flips is None else 1.0 - min(flips / max(len(returns) - 1, 1), 1.0)
-    vol = pstdev(returns) if len(returns) >= 2 else None
+    vol = _pstdev(returns) if len(returns) >= 2 else None
     vol_stability = None if vol is None else 1.0 - min(vol / 0.02, 1.0)
     return _average([efficiency, flip_penalty, vol_stability])
 
 
-def _incremental_returns(values: Sequence[float | None], index: int, window: int) -> list[float]:
+def _incremental_returns(
+    values: Sequence[float | None],
+    index: int,
+    window: int,
+    cache: dict[tuple[int, int, int], list[float]] | None = None,
+    *,
+    log_returns: bool = False,
+) -> list[float]:
+    key = (id(values), index, window * (-1 if log_returns else 1))
+    if cache is not None and key in cache:
+        return cache[key]
     returns: list[float] = []
     start = max(1, index - window + 1)
     for pos in range(start, index + 1):
         current = values[pos]
         previous = values[pos - 1]
         if current is not None and previous not in (None, 0):
-            returns.append(current / previous - 1.0)
+            returns.append(math.log(current / previous) if log_returns else current / previous - 1.0)
+    if cache is not None:
+        cache[key] = returns
     return returns
 
 
-def _direction_flip_count(values: Sequence[float | None], index: int, window: int) -> int | None:
-    returns = [value for value in _incremental_returns(values, index, window) if value != 0]
+def _direction_flip_count(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> int | None:
+    returns = [value for value in _incremental_returns(values, index, window, returns_cache) if value != 0]
     if len(returns) < 2:
         return None
     signs = [1 if value > 0 else -1 for value in returns]
     return sum(1 for left, right in zip(signs, signs[1:]) if left != right)
 
 
-def _time_since_last_direction_flip(values: Sequence[float | None], index: int) -> int | None:
-    returns = _incremental_returns(values, index, index + 1)
+def _time_since_last_direction_flip(values: Sequence[float | None], index: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> int | None:
+    returns = _incremental_returns(values, index, min(index + 1, STATE_WINDOW_MINUTES["1W"]), returns_cache)
     if len(returns) < 2:
         return None
     signs = [1 if value > 0 else -1 if value < 0 else 0 for value in returns]
@@ -695,8 +726,8 @@ def _time_since_last_direction_flip(values: Sequence[float | None], index: int) 
     return len(signs)
 
 
-def _trend_age_bars(values: Sequence[float | None], index: int, window: int) -> int | None:
-    returns = _incremental_returns(values, index, window)
+def _trend_age_bars(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> int | None:
+    returns = _incremental_returns(values, index, window, returns_cache)
     if not returns:
         return None
     last_sign = 1 if returns[-1] > 0 else -1 if returns[-1] < 0 else 0
@@ -711,20 +742,20 @@ def _trend_age_bars(values: Sequence[float | None], index: int, window: int) -> 
     return age
 
 
-def _state_persistence_score(values: Sequence[float | None], index: int, window: int) -> float | None:
-    age = _trend_age_bars(values, index, window)
+def _state_persistence_score(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> float | None:
+    age = _trend_age_bars(values, index, window, returns_cache)
     if age is None:
         return None
     return min(age / max(window, 1), 1.0)
 
 
-def _momentum_decay_score(values: Sequence[float | None], index: int, window: int) -> float | None:
-    returns = _incremental_returns(values, index, window)
+def _momentum_decay_score(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> float | None:
+    returns = _incremental_returns(values, index, window, returns_cache)
     if len(returns) < 4:
         return None
     midpoint = len(returns) // 2
-    first = mean(abs(value) for value in returns[:midpoint])
-    second = mean(abs(value) for value in returns[midpoint:])
+    first = _mean(abs(value) for value in returns[:midpoint])
+    second = _mean(abs(value) for value in returns[midpoint:])
     return None if first == 0 else max(0.0, min((first - second) / first, 1.0))
 
 
@@ -734,29 +765,29 @@ def _volume_exhaustion_score(volumes: Sequence[float | None], index: int, window
     if current is None or len(history) < 4:
         return None
     midpoint = len(history) // 2
-    first = mean(history[:midpoint])
-    second = mean(history[midpoint:])
+    first = _mean(history[:midpoint])
+    second = _mean(history[midpoint:])
     return None if first == 0 else max(0.0, min((first - second) / first, 1.0))
 
 
-def _volatility_exhaustion_score(values: Sequence[float | None], index: int, window: int) -> float | None:
-    returns = _incremental_returns(values, index, window)
+def _volatility_exhaustion_score(values: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> float | None:
+    returns = _incremental_returns(values, index, window, returns_cache)
     if len(returns) < 4:
         return None
     midpoint = len(returns) // 2
-    first = pstdev(returns[:midpoint]) if len(returns[:midpoint]) >= 2 else None
-    second = pstdev(returns[midpoint:]) if len(returns[midpoint:]) >= 2 else None
+    first = _pstdev(returns[:midpoint]) if len(returns[:midpoint]) >= 2 else None
+    second = _pstdev(returns[midpoint:]) if len(returns[midpoint:]) >= 2 else None
     if first in (None, 0) or second is None:
         return None
     return max(0.0, min((second - first) / first, 1.0))
 
 
-def _late_trend_risk_score(values: Sequence[float | None], volumes: Sequence[float | None], index: int, window: int) -> float | None:
+def _late_trend_risk_score(values: Sequence[float | None], volumes: Sequence[float | None], index: int, window: int, returns_cache: dict[tuple[int, int, int], list[float]] | None = None) -> float | None:
     return _average([
-        _state_persistence_score(values, index, window),
-        _momentum_decay_score(values, index, window),
+        _state_persistence_score(values, index, window, returns_cache),
+        _momentum_decay_score(values, index, window, returns_cache),
         _volume_exhaustion_score(volumes, index, window),
-        _volatility_exhaustion_score(values, index, window),
+        _volatility_exhaustion_score(values, index, window, returns_cache),
     ])
 
 
@@ -820,7 +851,21 @@ def _safe_div(numerator: Any, denominator: Any) -> float | None:
 
 def _average(values: Iterable[float | None]) -> float | None:
     clean = [value for value in values if value is not None]
-    return mean(clean) if clean else None
+    return _mean(clean) if clean else None
+
+
+def _mean(values: Iterable[float]) -> float:
+    total = 0.0
+    count = 0
+    for value in values:
+        total += float(value)
+        count += 1
+    return total / count
+
+
+def _pstdev(values: Sequence[float]) -> float:
+    avg = _mean(values)
+    return math.sqrt(sum((float(value) - avg) ** 2 for value in values) / len(values))
 
 
 def _safe_float(value: Any) -> float | None:

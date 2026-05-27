@@ -141,6 +141,23 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertEqual(rows[-1]["sector_context_state_ref"], "sec_tech")
         self.assertNotEqual(rows[-1]["sector_context_state_ref"], "sec_energy")
 
+    def test_context_lookup_uses_latest_prior_context_when_rows_are_unsorted(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        inputs = generator.build_inputs(
+            bar_rows=[_bar("AAPL", start + timedelta(minutes=index), 100 + index) for index in range(12)],
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
+            market_context_rows=[
+                {"available_time": (start + timedelta(minutes=10)).isoformat(), "market_context_state_ref": "mkt_late"},
+                {"available_time": (start + timedelta(minutes=5)).isoformat(), "market_context_state_ref": "mkt_early"},
+            ],
+        )
+
+        rows = generator.generate_rows(inputs)
+
+        self.assertIsNone(rows[4]["market_context_state_ref"])
+        self.assertEqual(rows[5]["market_context_state_ref"], "mkt_early")
+        self.assertEqual(rows[-1]["market_context_state_ref"], "mkt_late")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,6 +18,10 @@ class FakeCursor:
     def execute(self, statement: str, params=None) -> None:
         self.calls.append((statement, list(params or [])))
 
+    def executemany(self, statement: str, params_seq) -> None:
+        for params in params_seq:
+            self.execute(statement, params)
+
     def fetchone(self):
         return self._one
 

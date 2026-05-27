@@ -35,6 +35,7 @@ JSONB_COLUMNS = (
     "feature_quality_diagnostics",
 )
 KEY_COLUMNS = ("target_candidate_id", "available_time", "target_context_state_version")
+INSERT_BATCH_SIZE = 1000
 
 
 def _load_generator():
@@ -262,10 +263,16 @@ def write_feature_rows_sql(
         ON CONFLICT ({", ".join(_quote_identifier(column) for column in KEY_COLUMNS)}) DO UPDATE SET
           {", ".join(f'{_quote_identifier(column)} = EXCLUDED.{_quote_identifier(column)}' for column in update_columns)}
     """
+    batch: list[list[Any]] = []
     for row in rows:
         values = [row.get(column) for column in METADATA_COLUMNS]
         values.extend(json.dumps(row.get(column) or {}, sort_keys=True, default=str) for column in JSONB_COLUMNS)
-        cursor.execute(insert_sql, values)
+        batch.append(values)
+        if len(batch) >= INSERT_BATCH_SIZE:
+            cursor.executemany(insert_sql, batch)
+            batch.clear()
+    if batch:
+        cursor.executemany(insert_sql, batch)
 
 
 def generate_sql(

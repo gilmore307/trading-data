@@ -37,6 +37,15 @@ SUPPORTED_TIMEFRAMES = {
     "1Hour": 3600,
     "1Day": 86400,
 }
+THETADATA_INTERVAL_BY_TIMEFRAME = {
+    "1Sec": "1s",
+    "1Min": "1m",
+    "5Min": "5m",
+    "15Min": "15m",
+    "30Min": "30m",
+    "1Hour": "1h",
+    "1Day": "1d",
+}
 
 
 @dataclass(frozen=True)
@@ -385,6 +394,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         "right": right.lower(),
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
+        "interval": THETADATA_INTERVAL_BY_TIMEFRAME[timeframe],
         "format": "json",
     }
     result = client.get(

@@ -123,6 +123,7 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             manifest = json.loads((output_root / "runs" / "10_feed_thetadata_option_primary_tracking_run_test" / "request_manifest.json").read_text())
             self.assertEqual(manifest["raw_persistence"], "not_persisted_by_default")
             self.assertEqual(manifest["params"]["aggregation_timeframe"], "1Min")
+            self.assertEqual(manifest["params"]["interval"], "1m")
             self.assertEqual(manifest["params"]["strike"], "270.000")
 
             receipt = json.loads((output_root / "completion_receipt.json").read_text())

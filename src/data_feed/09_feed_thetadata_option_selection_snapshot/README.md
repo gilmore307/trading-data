@@ -21,7 +21,7 @@ No implicit latest/current mode exists. The caller must supply `snapshot_time`.
 - `registry_csv` — optional registry snapshot for retained registered-field validation; when missing, fixture/local runs use code-local field names without reading an external repository path.
 - `historical_mode` — defaults to `true` for past dates. Historical replay uses ThetaData history endpoints instead of realtime snapshot endpoints.
 - `max_dte` — maximum days to expiration for historical full-chain requests; defaults to `45`.
-- `strike_range` — ThetaData strike range bound for historical full-chain requests; defaults to `5`.
+- `strike_range` — ThetaData strike range bound for historical full-chain requests; defaults to `5`, the current Layer 9 closed-loop bucket runtime default.
 
 ## Source endpoints
 

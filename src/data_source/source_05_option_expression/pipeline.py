@@ -22,6 +22,9 @@ SOURCE = "m09_option_expression_data_acquisition"
 LEGACY_SOURCE = "source_05_option_expression"
 MODEL_ID = "option_expression_model"
 OUTPUT_TABLE = SOURCE
+DEFAULT_MAX_DTE = 45
+DEFAULT_STRIKE_RANGE = 5
+DEFAULT_OPTION_BUCKET_POLICY_REF = "LAYER_09_OPTION_BUCKET_STRIKE_POLICY"
 SQL_FIELDS = [
     "underlying",
     "snapshot_time",
@@ -123,7 +126,33 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is
     clean_result, snapshot = clean_snapshot(feed_context, fetched)
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "input_feed": "09_feed_thetadata_option_selection_snapshot", "params": {"underlying": params.get("underlying"), "snapshot_time": params.get("snapshot_time"), "snapshot_type": snapshot_type}, "feed_fetch": asdict(fetch_result), "feed_clean": asdict(clean_result), "raw_persistence": "ThetaData raw responses are transient; final output is contract-level SQL rows", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest.write_text(
+        json.dumps(
+            sanitize_value(
+                {
+                    "source": SOURCE,
+                    "model_id": MODEL_ID,
+                    "input_feed": "09_feed_thetadata_option_selection_snapshot",
+                    "params": {
+                        "underlying": params.get("underlying"),
+                        "snapshot_time": params.get("snapshot_time"),
+                        "snapshot_type": snapshot_type,
+                        "max_dte": params.get("max_dte", DEFAULT_MAX_DTE),
+                        "strike_range": params.get("strike_range", DEFAULT_STRIKE_RANGE),
+                        "option_bucket_policy_ref": params.get("option_bucket_policy_ref", DEFAULT_OPTION_BUCKET_POLICY_REF),
+                    },
+                    "feed_fetch": asdict(fetch_result),
+                    "feed_clean": asdict(clean_result),
+                    "raw_persistence": "ThetaData raw responses are transient; final output is contract-level SQL rows",
+                    "fetched_at_utc": _now_utc(),
+                }
+            ),
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     return StepResult("succeeded", [str(manifest)], dict(clean_result.row_counts), details={"underlying": snapshot.get("underlying"), "snapshot_time": snapshot.get("snapshot_time"), "snapshot_type": snapshot_type}), SourcePayload(snapshot, int(clean_result.row_counts.get("option_chain_snapshot_contracts", 0)), fetch_result, clean_result)
 
 

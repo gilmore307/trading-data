@@ -27,6 +27,9 @@ ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
 DEFAULT_REGISTRY_CSV = manager_registry_csv()
 FEED = "09_feed_thetadata_option_selection_snapshot"
+DEFAULT_MAX_DTE = 45
+DEFAULT_STRIKE_RANGE = 5
+DEFAULT_OPTION_BUCKET_POLICY_REF = "LAYER_09_OPTION_BUCKET_STRIKE_POLICY"
 
 
 @dataclass(frozen=True)
@@ -375,8 +378,9 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         "expiration": "*",
         "format": "json",
     }
-    max_dte = str(params.get("max_dte") or 45)
-    strike_range = str(params.get("strike_range") or 5)
+    max_dte = str(params.get("max_dte") or DEFAULT_MAX_DTE)
+    strike_range = str(params.get("strike_range") or DEFAULT_STRIKE_RANGE)
+    option_bucket_policy_ref = str(params.get("option_bucket_policy_ref") or DEFAULT_OPTION_BUCKET_POLICY_REF)
     if historical_mode:
         start_time, end_time = _history_time_window(snapshot_time)
         quote_params = {
@@ -437,7 +441,15 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
                 "feed": FEED,
                 "underlying": underlying,
                 "snapshot_time": snapshot_time.isoformat(),
-                "params": sanitize_value({**request_params, "historical_mode": historical_mode, "max_dte": max_dte, "strike_range": strike_range}),
+                "params": sanitize_value(
+                    {
+                        **request_params,
+                        "historical_mode": historical_mode,
+                        "max_dte": max_dte,
+                        "strike_range": strike_range,
+                        "option_bucket_policy_ref": option_bucket_policy_ref,
+                    }
+                ),
                 "requests": evidence,
                 "secret_alias": secret_summary,
                 "raw_persistence": "not_persisted_by_default",

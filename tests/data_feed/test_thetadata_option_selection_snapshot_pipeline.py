@@ -141,6 +141,9 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             manifest = json.loads((output_root / "runs" / "09_feed_thetadata_option_selection_snapshot_run_test" / "request_manifest.json").read_text())
             self.assertEqual(manifest["raw_persistence"], "not_persisted_by_default")
             self.assertEqual(manifest["params"]["historical_mode"], False)
+            self.assertEqual(manifest["params"]["max_dte"], "45")
+            self.assertEqual(manifest["params"]["strike_range"], "5")
+            self.assertEqual(manifest["params"]["option_bucket_policy_ref"], "LAYER_09_OPTION_BUCKET_STRIKE_POLICY")
 
             receipt = json.loads((output_root / "completion_receipt.json").read_text())
             self.assertEqual(receipt["feed"], "09_feed_thetadata_option_selection_snapshot")

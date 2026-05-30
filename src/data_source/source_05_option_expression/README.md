@@ -16,6 +16,9 @@ Required task key fields:
 Optional task key fields:
 
 - `params.snapshot_type`: `entry` or `exit`; defaults to `entry` for compatibility
+- `params.max_dte`: maximum days to expiration; defaults to `45`
+- `params.strike_range`: ThetaData strike range bound; defaults to `5`
+- `params.option_bucket_policy_ref`: Layer 9 bucket policy evidence; defaults to `LAYER_09_OPTION_BUCKET_STRIKE_POLICY`
 - `params.thetadata_base_url`: local ThetaData terminal/API base URL
 - `params.timeout_seconds`: request timeout
 - `output_root`: local receipt/request-manifest root

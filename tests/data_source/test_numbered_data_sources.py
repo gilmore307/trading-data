@@ -143,6 +143,10 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertNotIn("contracts", row)
             self.assertNotIn("run_id", row)
             self.assertNotIn("task_id", row)
+            manifest = json.loads((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["params"]["max_dte"], 45)
+            self.assertEqual(manifest["params"]["strike_range"], 5)
+            self.assertEqual(manifest["params"]["option_bucket_policy_ref"], "LAYER_09_OPTION_BUCKET_STRIKE_POLICY")
             self.assertNotIn("created_at", row)
 
     def test_selected_contract_tracking_source_writes_option_timeseries(self):

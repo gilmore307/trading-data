@@ -102,6 +102,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 "params": {
                     "underlying": "AAPL",
                     "snapshot_time": "2026-04-24T09:30:02.500000-04:00",
+                    "historical_mode": False,
                     "thetadata_base_url": "http://127.0.0.1:25503",
                 },
                 "output_root": str(output_root),
@@ -139,7 +140,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
 
             manifest = json.loads((output_root / "runs" / "09_feed_thetadata_option_selection_snapshot_run_test" / "request_manifest.json").read_text())
             self.assertEqual(manifest["raw_persistence"], "not_persisted_by_default")
-            self.assertEqual(manifest["params"]["ms_of_day"], "34202500")
+            self.assertEqual(manifest["params"]["historical_mode"], False)
 
             receipt = json.loads((output_root / "completion_receipt.json").read_text())
             self.assertEqual(receipt["feed"], "09_feed_thetadata_option_selection_snapshot")

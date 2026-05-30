@@ -283,6 +283,11 @@ def _ms_since_midnight_et(value: datetime) -> str:
     return str(int(delta.total_seconds() * 1000))
 
 
+def _history_time_window(value: datetime) -> tuple[str, str]:
+    minute_start = value.replace(second=0, microsecond=0)
+    return minute_start.strftime("%H:%M:%S.000"), value.strftime("%H:%M:%S.999")
+
+
 def _json_response(result: HttpResult) -> Any:
     if result.status is None:
         raise ThetaDataOptionSelectionSnapshotError(
@@ -364,30 +369,64 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     except Exception as exc:  # Local terminal may already be running; secret summary is evidence only.
         secret_summary = {"alias": "thetadata", "present": False, "error_type": type(exc).__name__}
 
+    historical_mode = bool(params.get("historical_mode", True)) and snapshot_time.date() < datetime.now(ET).date()
     request_params = {
         "symbol": underlying,
         "expiration": "*",
-        "date": snapshot_time.date().isoformat(),
-        "ms_of_day": _ms_since_midnight_et(snapshot_time),
         "format": "json",
     }
-    quote_rows, quote_evidence = _fetch_endpoint(
-        client, base_url, "/v3/option/snapshot/quote", request_params, "quote snapshot"
-    )
-    iv_rows, iv_evidence = _fetch_endpoint(
-        client,
-        base_url,
-        "/v3/option/snapshot/greeks/implied_volatility",
-        request_params,
-        "implied-volatility snapshot",
-    )
-    greeks_rows, greeks_evidence = _fetch_endpoint(
-        client,
-        base_url,
-        "/v3/option/snapshot/greeks/first_order",
-        request_params,
-        "first-order Greeks snapshot",
-    )
+    max_dte = str(params.get("max_dte") or 45)
+    strike_range = str(params.get("strike_range") or 5)
+    if historical_mode:
+        start_time, end_time = _history_time_window(snapshot_time)
+        quote_params = {
+            **request_params,
+            "date": snapshot_time.date().isoformat(),
+            "interval": str(params.get("interval") or "1m"),
+            "start_time": start_time,
+            "end_time": end_time,
+            "max_dte": max_dte,
+            "strike_range": strike_range,
+        }
+        greeks_params = {
+            **request_params,
+            "start_date": snapshot_time.date().isoformat(),
+            "end_date": snapshot_time.date().isoformat(),
+            "max_dte": max_dte,
+            "strike_range": strike_range,
+        }
+        quote_rows, quote_evidence = _fetch_endpoint(
+            client, base_url, "/v3/option/history/quote", quote_params, "historical quote snapshot"
+        )
+        greeks_rows, greeks_evidence = _fetch_endpoint(
+            client, base_url, "/v3/option/history/greeks/eod", greeks_params, "historical EOD Greeks snapshot"
+        )
+        iv_rows = greeks_rows
+        iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}
+    else:
+        snapshot_params = {
+            **request_params,
+            "max_dte": max_dte,
+            "strike_range": strike_range,
+            "min_time": snapshot_time.strftime("%H:%M:%S.000"),
+        }
+        quote_rows, quote_evidence = _fetch_endpoint(
+            client, base_url, "/v3/option/snapshot/quote", snapshot_params, "quote snapshot"
+        )
+        iv_rows, iv_evidence = _fetch_endpoint(
+            client,
+            base_url,
+            "/v3/option/snapshot/greeks/implied_volatility",
+            snapshot_params,
+            "implied-volatility snapshot",
+        )
+        greeks_rows, greeks_evidence = _fetch_endpoint(
+            client,
+            base_url,
+            "/v3/option/snapshot/greeks/first_order",
+            snapshot_params,
+            "first-order Greeks snapshot",
+        )
 
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
@@ -398,7 +437,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
                 "feed": FEED,
                 "underlying": underlying,
                 "snapshot_time": snapshot_time.isoformat(),
-                "params": sanitize_value(request_params),
+                "params": sanitize_value({**request_params, "historical_mode": historical_mode, "max_dte": max_dte, "strike_range": strike_range}),
                 "requests": evidence,
                 "secret_alias": secret_summary,
                 "raw_persistence": "not_persisted_by_default",

@@ -115,7 +115,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             task_key = {
                 "task_id": "m09_option_expression_data_acquisition_task_test",
                 "source": "m09_option_expression_data_acquisition",
-                "params": {"underlying": "AAPL", "snapshot_time": "2026-04-24T09:30:02.500000-04:00"},
+                "params": {"underlying": "AAPL", "snapshot_time": "2026-04-24T09:30:02.500000-04:00", "historical_mode": False},
                 "output_root": str(Path(tmp) / "task"),
             }
             writer = FakeSqlWriter()

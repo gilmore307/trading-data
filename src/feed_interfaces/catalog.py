@@ -99,11 +99,11 @@ INTERFACES: dict[str, DataKindInterface] = {
         "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_implied_volatility": DataKindInterface(
-        "option_implied_volatility", "thetadata", "09_feed_thetadata_option_selection_snapshot", "GET /v3/option/snapshot/greeks/implied_volatility",
+        "option_implied_volatility", "thetadata", "09_feed_thetadata_option_selection_snapshot", "GET /v3/option/history/greeks/eod",
         "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_greeks_first_order": DataKindInterface(
-        "option_greeks_first_order", "thetadata", "09_feed_thetadata_option_selection_snapshot", "GET /v3/option/snapshot/greeks/first_order",
+        "option_greeks_first_order", "thetadata", "09_feed_thetadata_option_selection_snapshot", "GET /v3/option/history/greeks/eod",
         "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_greeks_second_order": DataKindInterface(
@@ -119,7 +119,7 @@ INTERFACES: dict[str, DataKindInterface] = {
         "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     "option_snapshot": DataKindInterface(
-        "option_snapshot", "thetadata", "09_feed_thetadata_option_selection_snapshot", "GET /v3/option/snapshot/quote",
+        "option_snapshot", "thetadata", "09_feed_thetadata_option_selection_snapshot", "GET /v3/option/history/quote",
         "https://http-docs.thetadata.us/", "local-terminal", {"symbol": "AAPL"},
     ),
     # SEC EDGAR open APIs.

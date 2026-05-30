@@ -19,16 +19,18 @@ No implicit latest/current mode exists. The caller must supply `snapshot_time`.
 - `thetadata_base_url` — local ThetaData Terminal base URL; defaults to `http://127.0.0.1:25503`.
 - `timeout_seconds` — request timeout; defaults to `30`.
 - `registry_csv` — optional registry snapshot for retained registered-field validation; when missing, fixture/local runs use code-local field names without reading an external repository path.
+- `historical_mode` — defaults to `true` for past dates. Historical replay uses ThetaData history endpoints instead of realtime snapshot endpoints.
+- `max_dte` — maximum days to expiration for historical full-chain requests; defaults to `45`.
+- `strike_range` — ThetaData strike range bound for historical full-chain requests; defaults to `5`.
 
 ## Source endpoints
 
 ThetaData Terminal v3:
 
-- `/v3/option/snapshot/quote`
-- `/v3/option/snapshot/greeks/implied_volatility`
-- `/v3/option/snapshot/greeks/first_order`
+- Historical replay: `/v3/option/history/quote` and `/v3/option/history/greeks/eod`.
+- Realtime/current snapshot mode: `/v3/option/snapshot/quote`, `/v3/option/snapshot/greeks/implied_volatility`, and `/v3/option/snapshot/greeks/first_order`.
 
-The request passes underlying, wildcard expiration, `date`, and ET `ms_of_day` derived from `snapshot_time`. The final artifact uses `snapshot_time` as the point-in-time clock.
+Historical requests pass underlying, wildcard expiration, snapshot date, a bounded one-minute ET time window, `max_dte`, and `strike_range`. The final artifact uses `snapshot_time` as the point-in-time clock.
 
 ## Outputs
 

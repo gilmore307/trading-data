@@ -21,7 +21,7 @@ Normalize issuer-published ETF holdings evidence into `etf_holding_snapshot` row
 ## Params
 
 - `etf_symbol` — required.
-- `issuer_name` — required until a reviewed ETF-to-issuer mapping table is active. `issuer` is accepted at the ingestion boundary as a compatibility alias.
+- `issuer_name` — required until a reviewed ETF-to-issuer mapping table is active.
 - `source_url` — optional official URL. If omitted, accepted issuer adapters derive fixed official URLs for BlackRock/iShares, State Street/SPDR, Global X, ARK Invest, First Trust, and VanEck from `etf_symbol` plus `issuer_name`.
 - `csv_path` / `csv_text` — optional issuer CSV evidence.
 - `html_path` / `html` — optional issuer HTML evidence.

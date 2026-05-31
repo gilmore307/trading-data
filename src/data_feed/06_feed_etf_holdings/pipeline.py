@@ -124,7 +124,7 @@ def _issuer_key(value: str) -> str:
 def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
     params = dict(context.task_key.get("params") or {})
     etf_symbol = _etf_symbol_param(params)
-    issuer = _issuer_key(str(params.get("issuer") or _required(params, "issuer_name")))
+    issuer = _issuer_key(str(_required(params, "issuer_name")))
     source_url = str(params.get("source_url") or "")
     payload: FeedPayload | None = None
     for kind in ("csv", "html", "json", "xlsx"):
@@ -482,7 +482,7 @@ def _data_point_scalar(value: Any) -> Any:
 def clean(context: FeedContext, payload: FeedPayload) -> StepResult:
     params = dict(context.task_key.get("params") or {})
     etf_symbol = _etf_symbol_param(params)
-    issuer = _issuer_key(str(params.get("issuer") or _required(params, "issuer_name")))
+    issuer = _issuer_key(str(_required(params, "issuer_name")))
     as_of_date = str(params.get("as_of_date") or "")
     if payload.kind == "csv":
         raw_rows = _parse_csv(str(payload.text))

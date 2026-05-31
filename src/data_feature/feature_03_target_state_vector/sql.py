@@ -390,9 +390,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--target-schema", default="trading_data")
     parser.add_argument("--target-table", default="feature_03_target_state_vector")
     parser.add_argument("--market-context-schema", default="trading_model")
-    parser.add_argument("--market-context-table", default="model_01_market_regime")
+    parser.add_argument("--market-context-table", default="m01_market_regime_model_generation")
     parser.add_argument("--sector-context-schema", default="trading_model")
-    parser.add_argument("--sector-context-table", default="model_02_sector_context")
+    parser.add_argument("--sector-context-table", default="m02_sector_context_model_generation")
     parser.add_argument("--holdings-schema", default="trading_data")
     parser.add_argument("--holdings-table", default="m02_sector_context_data_acquisition")
     parser.add_argument("--target-context-mapping-path", type=Path, default=DEFAULT_TARGET_CONTEXT_MAPPING_PATH)
@@ -401,10 +401,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-id", default="feature_03_target_state_vector_sql")
     parser.add_argument(
         "--target-context-state-version",
-        "--target-state-vector-version",
         dest="target_context_state_version",
         default="target_context_state",
-        help="Layer 3 target context state contract version; --target-state-vector-version is a deprecated alias.",
+        help="Layer 3 target context state contract version.",
     )
     args = parser.parse_args(argv)
     row_count = generate_sql(

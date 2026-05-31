@@ -90,7 +90,7 @@ ETF holdings are not Layer 2 core behavior input, but the Layer 2 feature stage 
 
 ## D015 — Target candidate and Layer 3 boundaries
 
-`source_02_target_candidate_holdings` supports anonymous target candidate preparation after Layer 2 sector/basket prioritization and is owned by the Layer 2 feature stage runtime path. It preserves point-in-time visibility: explicit `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
+`m02_sector_context_data_acquisition` supports anonymous target candidate preparation after Layer 2 sector/basket prioritization and is owned by the Layer 2 feature stage runtime path. It preserves point-in-time visibility: explicit `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
 
 `source_03_target_state` provides target-local observed bars/liquidity. `feature_03_target_state_vector` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 

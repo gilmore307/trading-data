@@ -1,6 +1,6 @@
-"""Point-in-time generator for the ``feature_01_market_regime`` wide table.
+"""Point-in-time generator for the ``m01_market_regime_feature_generation`` wide table.
 
-The generator consumes cleaned ``source_01_market_regime`` bar rows plus the reviewed
+The generator consumes cleaned ``m01_market_regime_data_acquisition`` bar rows plus the reviewed
 market-regime ETF universe and relative-strength combination CSVs. It performs no
 provider calls and no database writes; the package CLI / SQL module owns runtime
 reads/writes.

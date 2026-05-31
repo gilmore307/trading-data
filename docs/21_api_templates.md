@@ -106,8 +106,8 @@ PYTHONPATH=src python3 -m data_feed.01_feed_alpaca_bars
 Source and feature CLIs follow the same rule:
 
 ```bash
-trading-data-source-01-market-regime
-trading-data-feature-01-market-regime
+trading-data-m01-market-regime-data-acquisition
+trading-data-m01-market-regime-feature-generation
 ```
 
 Reusable logic belongs in `src/`. Stable callable surfaces should use package CLIs declared in `pyproject.toml`; reviewed `scripts/` wrappers may exist only as thin operational entrypoints over package code or bounded task-key builders, such as deployed maintenance refresh commands.

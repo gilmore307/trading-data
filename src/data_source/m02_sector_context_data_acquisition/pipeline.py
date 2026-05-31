@@ -28,7 +28,6 @@ from data_runtime.exchange_calendar import next_regular_us_equity_open_after
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 SOURCE = "m02_sector_context_data_acquisition"
-LEGACY_SOURCE = "source_02_target_candidate_holdings"
 MODEL_ID = "anonymous_target_candidate_builder"
 OUTPUT_TABLE = SOURCE
 SQL_FIELDS = [
@@ -90,7 +89,7 @@ def _now_utc() -> str:
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
+    if task_key.get("source") != SOURCE:
         raise TargetCandidateHoldingsInputsError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})

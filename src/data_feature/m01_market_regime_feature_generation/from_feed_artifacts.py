@@ -2,8 +2,8 @@
 
 This command is intentionally offline: it reads already-acquired Alpaca bar CSV
 artifacts from the local trading-data storage tree, upserts them into
-``trading_data.source_01_market_regime``, and then runs the deterministic
-``feature_01_market_regime`` SQL generator. It does not call providers.
+``trading_data.m01_market_regime_data_acquisition``, and then runs the deterministic
+``m01_market_regime_feature_generation`` SQL generator. It does not call providers.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from data_runtime.config import repo_root, storage_root
 from typing import Any, Iterable, Mapping, Sequence
 from zoneinfo import ZoneInfo
 
-from data_source.source_01_market_regime.pipeline import FIELDS, OUTPUT_TABLE
+from data_source.m01_market_regime_data_acquisition.pipeline import FIELDS, OUTPUT_TABLE
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 from .sql import DEFAULT_COMBINATIONS_CSV, DEFAULT_UNIVERSE_CSV, _database_url, generate_sql
@@ -168,7 +168,7 @@ def run_from_feed_artifacts(
             snapshot_end=snapshot_end,
         )
     return FeedArtifactMaterializationSummary(
-        contract_type="feature_01_market_regime_from_feed_artifacts",
+        contract_type="m01_market_regime_feature_generation_from_feed_artifacts",
         month=month,
         receipt_count=len(artifacts),
         artifact_count=len(artifacts),

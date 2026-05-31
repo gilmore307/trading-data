@@ -11,9 +11,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
-generator = importlib.import_module("data_feature.feature_01_market_regime.generator")
-sql_runner = importlib.import_module("data_feature.feature_01_market_regime.sql")
-from_feed_artifacts = importlib.import_module("data_feature.feature_01_market_regime.from_feed_artifacts")
+generator = importlib.import_module("data_feature.m01_market_regime_feature_generation.generator")
+sql_runner = importlib.import_module("data_feature.m01_market_regime_feature_generation.sql")
+from_feed_artifacts = importlib.import_module("data_feature.m01_market_regime_feature_generation.from_feed_artifacts")
 runtime_config = importlib.import_module("data_runtime.config")
 
 

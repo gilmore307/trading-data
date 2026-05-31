@@ -14,8 +14,8 @@ Date: 2026-05-08
 | OKX crypto market data | `src/data_feed/04_feed_okx_crypto_market_data/` | accepted feed/catalog surface |
 | GDELT / ETF holdings / Trading Economics / SEC feeds | `src/data_feed/05_*` through `08_*` | accepted feed surfaces for current source planning |
 | ThetaData option feeds | `src/data_feed/09_*` through `11_*` | accepted local terminal-oriented V1 feeds for option snapshot, primary tracking, and event timeline |
-| Layer 1 data | `source_01_market_regime`, `feature_01_market_regime` | accepted market-regime input/feature surfaces |
-| Layer 2 data | `feature_02_sector_context`, `source_02_target_candidate_holdings` | accepted sector-context feature surface plus Layer 2-stage materialized target-candidate holdings handoff |
+| Layer 1 data | `m01_market_regime_data_acquisition`, `m01_market_regime_feature_generation` | accepted market-regime input/feature surfaces |
+| Layer 2 data | `m02_sector_context_feature_generation`, `m02_sector_context_data_acquisition` | accepted sector-context feature surface plus Layer 2-stage materialized target-candidate holdings handoff |
 | Layer 3 data | `source_03_target_state`, `feature_03_target_state_vector` | accepted target-state observed-input and feature-block surfaces; consumes Layer 2-stage candidate holdings |
 | Layer 4 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; EventFailureRiskModel consumes reviewed model/governance evidence, not raw source acquisition |
 | Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
@@ -52,7 +52,7 @@ The executable installer is `scripts/data/install_temporal_explorer_tables.py`. 
 
 Conservative acceptance rules:
 
-1. ETF holdings / target-candidate preparation must preserve point-in-time visibility. If no explicit `available_time` is supplied, `source_02_target_candidate_holdings` defaults holdings rows to the next regular US equity session open after `as_of_date` (`09:30 America/New_York`, skipping weekends and reviewed US market holidays). Same-day availability requires explicit source evidence or reviewed task input.
+1. ETF holdings / target-candidate preparation must preserve point-in-time visibility. If no explicit `available_time` is supplied, `m02_sector_context_data_acquisition` defaults holdings rows to the next regular US equity session open after `as_of_date` (`09:30 America/New_York`, skipping weekends and reviewed US market holidays). Same-day availability requires explicit source evidence or reviewed task input.
 2. `equity_abnormal_activity_event` uses the explicit default `model_standard = equity_abnormal_activity_conservative` with `calibration_status = conservative_fixture_default_not_production_calibrated`. The default may produce conservative event evidence, but production training labels or promoted gates still require a reviewed historical calibration report.
 
 ## Historical-training readiness classification

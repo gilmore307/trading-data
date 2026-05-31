@@ -1,4 +1,4 @@
-"""CLI runner for feature_02_sector_context SQL generation."""
+"""CLI runner for m02_sector_context_feature_generation SQL generation."""
 from __future__ import annotations
 
 from .sql import main

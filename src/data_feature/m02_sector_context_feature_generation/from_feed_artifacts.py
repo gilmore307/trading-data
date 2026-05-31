@@ -2,8 +2,8 @@
 
 This command is intentionally offline: it reads already-acquired Alpaca bar CSV
 artifacts from the local trading-data storage tree, upserts them into the shared
-``trading_data.source_01_market_regime`` bar table used by the market/sector
-feature stack, and then runs the deterministic ``feature_02_sector_context`` SQL
+``trading_data.m01_market_regime_data_acquisition`` bar table used by the market/sector
+feature stack, and then runs the deterministic ``m02_sector_context_feature_generation`` SQL
 generator. It does not call providers.
 """
 
@@ -15,14 +15,14 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Sequence
 
-from data_feature.feature_01_market_regime.from_feed_artifacts import (
+from data_feature.m01_market_regime_feature_generation.from_feed_artifacts import (
     DEFAULT_STORAGE_ROOT,
     _month_bounds,
     discover_feed_artifacts,
     materialize_source_rows,
     read_equity_bar_rows,
 )
-from data_source.source_01_market_regime.pipeline import OUTPUT_TABLE
+from data_source.m01_market_regime_data_acquisition.pipeline import OUTPUT_TABLE
 
 from .sql import DEFAULT_COMBINATIONS_CSV, DEFAULT_UNIVERSE_CSV, _database_url, generate_sql
 
@@ -76,7 +76,7 @@ def run_from_feed_artifacts(
             snapshot_times=None,
         )
     return SectorFeedArtifactMaterializationSummary(
-        contract_type="feature_02_sector_context_from_feed_artifacts",
+        contract_type="m02_sector_context_feature_generation_from_feed_artifacts",
         month=month,
         receipt_count=len(artifacts),
         artifact_count=len(artifacts),

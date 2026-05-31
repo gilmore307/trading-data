@@ -73,12 +73,12 @@ class LayerStructureCatalogTests(unittest.TestCase):
     def test_target_candidate_source_is_materialized_by_layer_two_stage(self) -> None:
         layer_2 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 2)
         layer_3 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 3)
-        self.assertIn("data_source.source_02_target_candidate_holdings", layer_2.source_packages)
-        self.assertIn("data_feature.feature_02_sector_context", layer_2.feature_packages)
-        self.assertIn("trading-data-source-02-target-candidate-holdings", layer_2.cli_commands)
-        self.assertNotIn("data_source.source_02_target_candidate_holdings", layer_3.source_packages)
+        self.assertIn("data_source.m02_sector_context_data_acquisition", layer_2.source_packages)
+        self.assertIn("data_feature.m02_sector_context_feature_generation", layer_2.feature_packages)
+        self.assertIn("trading-data-m02-sector-context-data-acquisition", layer_2.cli_commands)
+        self.assertNotIn("data_source.m02_sector_context_data_acquisition", layer_3.source_packages)
         self.assertIn("data_source.source_03_target_state", layer_3.source_packages)
-        self.assertNotIn("trading-data-source-02-target-candidate-holdings", layer_3.cli_commands)
+        self.assertNotIn("trading-data-m02-sector-context-data-acquisition", layer_3.cli_commands)
 
     def test_no_source_layers_are_explicit_and_do_not_have_symmetry_packages(self) -> None:
         for contract in LAYER_CONTRACTS:

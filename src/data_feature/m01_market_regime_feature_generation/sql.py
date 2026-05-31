@@ -1,4 +1,4 @@
-"""Generate feature_01_market_regime rows from SQL source bars into SQL storage."""
+"""Generate m01_market_regime_feature_generation rows from SQL source bars into SQL storage."""
 from __future__ import annotations
 
 import argparse
@@ -21,7 +21,7 @@ IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _load_generator():
-    return importlib.import_module("data_feature.feature_01_market_regime.generator")
+    return importlib.import_module("data_feature.m01_market_regime_feature_generation.generator")
 
 
 def _load_psycopg():

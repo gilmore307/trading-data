@@ -37,8 +37,8 @@ class TemporalExplorerTests(unittest.TestCase):
 
     def test_aggregates_ohlcv_rows(self):
         rows = [
-            OhlcvInputRow("SPY", datetime(2026, 5, 1, 13, 30, tzinfo=UTC), 100, 101, 99, 100.5, 10, 100.4, "source_01_market_regime"),
-            OhlcvInputRow("SPY", datetime(2026, 5, 1, 13, 40, tzinfo=UTC), 100.5, 103, 100, 102, 30, 101.5, "source_01_market_regime"),
+            OhlcvInputRow("SPY", datetime(2026, 5, 1, 13, 30, tzinfo=UTC), 100, 101, 99, 100.5, 10, 100.4, "m01_market_regime_data_acquisition"),
+            OhlcvInputRow("SPY", datetime(2026, 5, 1, 13, 40, tzinfo=UTC), 100.5, 103, 100, 102, 30, 101.5, "m01_market_regime_data_acquisition"),
         ]
         buckets = aggregate_ohlcv_rows(rows, "30min")
         self.assertEqual(len(buckets), 1)

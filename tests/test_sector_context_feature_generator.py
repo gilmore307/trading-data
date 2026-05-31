@@ -11,9 +11,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
-generator = importlib.import_module("data_feature.feature_02_sector_context.generator")
-sql_runner = importlib.import_module("data_feature.feature_02_sector_context.sql")
-from_feed_artifacts = importlib.import_module("data_feature.feature_02_sector_context.from_feed_artifacts")
+generator = importlib.import_module("data_feature.m02_sector_context_feature_generation.generator")
+sql_runner = importlib.import_module("data_feature.m02_sector_context_feature_generation.sql")
+from_feed_artifacts = importlib.import_module("data_feature.m02_sector_context_feature_generation.from_feed_artifacts")
 runtime_config = importlib.import_module("data_runtime.config")
 
 
@@ -181,7 +181,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
         cursor = FakeCursor()
 
-        sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="source_01_market_regime")
+        sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="m01_market_regime_data_acquisition")
 
         sql_text = cursor.calls[0][0]
         self.assertIn("lower(timeframe) IN ('1m', '1min', '1minute')", sql_text)
@@ -211,10 +211,10 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             }
         ]
 
-        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="feature_02_sector_context")
+        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="m02_sector_context_feature_generation")
 
         joined_sql = "\n".join(sql for sql, _params in cursor.calls)
-        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_02_sector_context"', joined_sql)
+        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."m02_sector_context_feature_generation"', joined_sql)
         self.assertIn('PRIMARY KEY ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id")', joined_sql)
         self.assertIn('ON CONFLICT ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]
@@ -238,7 +238,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
             summary = from_feed_artifacts.run_from_feed_artifacts(storage_root=root, month="2016-01", dry_run=True)
 
-        self.assertEqual(summary.contract_type, "feature_02_sector_context_from_feed_artifacts")
+        self.assertEqual(summary.contract_type, "m02_sector_context_feature_generation_from_feed_artifacts")
         self.assertEqual(summary.artifact_count, 1)
         self.assertEqual(summary.source_rows_found, 1)
         self.assertEqual(summary.source_rows_written, 0)

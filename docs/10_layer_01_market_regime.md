@@ -5,11 +5,11 @@ This file records the `trading-data` responsibility for Layer 1. It is intention
 ## Owned artifacts
 
 ```text
-trading_data.source_01_market_regime
-trading_data.feature_01_market_regime
+trading_data.m01_market_regime_data_acquisition
+trading_data.m01_market_regime_feature_generation
 ```
 
-`source_01_market_regime` owns point-in-time ETF bar rows for the reviewed market-context universe. `feature_01_market_regime` owns deterministic point-in-time Layer 1 feature payloads consumed by `model_01_market_regime`.
+`m01_market_regime_data_acquisition` owns point-in-time ETF bar rows for the reviewed market-context universe. `m01_market_regime_feature_generation` owns deterministic point-in-time Layer 1 feature payloads consumed by `model_01_market_regime`.
 
 Historical feeds may legitimately produce zero rows for a requested symbol/month when the instrument was not yet listed or the provider returns a reviewed no-data response. `trading-data` preserves that absence as explicit receipt/manifest evidence with schema headers where possible. It must not fabricate bars, and it should not convert valid absent history into a component failure. Downstream models consume this through coverage and data-quality diagnostics.
 
@@ -34,7 +34,7 @@ Layer 1 data may use broad and cross-asset market evidence such as market ETF ba
 
 Layer 1 data must not use sector/industry ETF leadership, sector rotation, ETF holdings, selected securities, strategy labels, option-contract outcomes, portfolio PnL, or future-return labels as construction inputs.
 
-The shared storage CSVs carry `model_layer` as the authoritative scope discriminator. Layer 1 feature construction consumes only `layer_01_market_regime` rows. `sector_observation_etf` / `layer_02_sector_context` evidence is not Layer 1 input; sector/industry behavior evidence routes to `feature_02_sector_context`.
+The shared storage CSVs carry `model_layer` as the authoritative scope discriminator. Layer 1 feature construction consumes only `layer_01_market_regime` rows. `sector_observation_etf` / `layer_02_sector_context` evidence is not Layer 1 input; sector/industry behavior evidence routes to `m02_sector_context_feature_generation`.
 
 ## Field naming
 
@@ -48,8 +48,8 @@ Layer-owned feature or model-facing keys use canonical compact prefixes when the
 flowchart LR
     request["trading-manager task/request<br/>historical broad-market data need"]
     feeds["provider/feed adapters<br/>bars, rates, volatility, breadth, liquidity, risk appetite"]
-    source["trading_data.source_01_market_regime<br/>point-in-time broad-market source rows"]
-    feature["trading_data.feature_01_market_regime<br/>deterministic Layer 1 feature payload"]
+    source["trading_data.m01_market_regime_data_acquisition<br/>point-in-time broad-market source rows"]
+    feature["trading_data.m01_market_regime_feature_generation<br/>deterministic Layer 1 feature payload"]
     model["trading-model MarketRegimeModel<br/>consumes Layer 1 features"]
     receipt["completion receipt / manifest / ready signal<br/>validation and handoff evidence"]
 

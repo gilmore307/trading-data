@@ -1,6 +1,6 @@
 {
   "contract_type": "feature_row",
-  "feature_id": "feature_01_market_regime",
+  "feature_id": "m01_market_regime_feature_generation",
   "model_layer": "layer_01_market_regime",
   "timestamp": "2026-01-02T09:30:00-05:00",
   "payload": {"market_regime_score": 0.0}

@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any, Iterable, Mapping, Sequence
 
-from data_feature.feature_01_market_regime import generator as market_features
+from data_feature.m01_market_regime_feature_generation import generator as market_features
 
 ET = market_features.ET
 ROTATION_COMBINATION_TYPES = market_features.MODEL2_ROTATION_COMBINATION_TYPES

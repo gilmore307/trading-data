@@ -7,7 +7,7 @@ from pathlib import Path
 
 from data_source.config import load_source_config
 
-holdings_pipeline = importlib.import_module("data_source.source_02_target_candidate_holdings.pipeline")
+holdings_pipeline = importlib.import_module("data_source.m02_sector_context_data_acquisition.pipeline")
 equity_activity_pipeline = importlib.import_module("data_source.source_10_event_risk_governor.equity_abnormal_activity.pipeline")
 
 

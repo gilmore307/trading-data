@@ -79,7 +79,7 @@ Historical and realtime/future event acquisition source priority is governed by 
 
 ### `stock_etf_exposure`
 
-Integrated step: `src/data_source/source_02_target_candidate_holdings/pipeline.py`
+Integrated step: `src/data_source/m02_sector_context_data_acquisition/pipeline.py`
 
 Purpose: point-in-time stock-to-ETF exposure evidence for the anonymous target candidate builder / Layer 3 input-preparation boundary.
 

@@ -18,7 +18,6 @@ from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 SOURCE = "m01_market_regime_data_acquisition"
-LEGACY_SOURCE = "source_01_market_regime"
 MODEL_ID = "market_regime_model"
 OUTPUT_NAME = SOURCE
 OUTPUT_TABLE = SOURCE
@@ -109,7 +108,7 @@ def _source_timeframe(params: Mapping[str, Any]) -> str:
 
 
 def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
-    if task_key.get("source") not in {SOURCE, LEGACY_SOURCE}:
+    if task_key.get("source") != SOURCE:
         raise MarketRegimeInputsError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     run_dir = output_root / "runs" / run_id

@@ -72,7 +72,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             sector_context_schema="trading_model",
             sector_context_table="model_02_sector_context",
             holdings_schema="trading_data",
-            holdings_table="source_02_target_candidate_holdings",
+            holdings_table="m02_sector_context_data_acquisition",
             source_start="2016-01-01",
             source_end="2016-02-01",
             target_context_mapping_path=None,
@@ -84,7 +84,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn('s."available_time" >= %s', statements)
 
         cursor = FakeCursor()
-        cursor._one = {"table_ref": "trading_data.source_02_target_candidate_holdings"}
+        cursor._one = {"table_ref": "trading_data.m02_sector_context_data_acquisition"}
         sql.fetch_candidate_rows(
             cursor,
             source_schema="trading_data",
@@ -113,7 +113,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
                 encoding="utf-8",
             )
             cursor = FakeCursor()
-            cursor._one = {"table_ref": "trading_data.source_02_target_candidate_holdings"}
+            cursor._one = {"table_ref": "trading_data.m02_sector_context_data_acquisition"}
 
             sql.fetch_candidate_rows(
                 cursor,

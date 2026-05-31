@@ -17,8 +17,8 @@ class FakeSqlWriter:
 
 class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
     def test_holdings_window_is_half_open(self):
-        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
-        task_key = {"task_id": "source_02_window", "source": "source_02_target_candidate_holdings", "params": {"start": "2026-04-24", "end": "2026-04-25"}, "output_root": "/tmp/source_02_window"}
+        module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
+        task_key = {"task_id": "m02_window", "source": "m02_sector_context_data_acquisition", "params": {"start": "2026-04-24", "end": "2026-04-25"}, "output_root": "/tmp/m02_window"}
         context = module.build_context(task_key, "run")
         universe = [{"symbol": "SMH", "issuer_name": "VanEck", "universe_type": "sector_observation_etf", "exposure_type": "industry_chain"}]
         payload = module.SourcePayload(
@@ -30,13 +30,13 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             ],
         )
         result, cleaned = module.clean(context, payload)
-        self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 1)
+        self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 1)
         self.assertEqual(result.details["skipped"]["outside_window"], 1)
         self.assertEqual(cleaned.rows[0]["holding_symbol"], "NVDA")
 
     def test_holdings_window_normalizes_us_date_format(self):
-        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
-        task_key = {"task_id": "source_02_us_date", "source": "source_02_target_candidate_holdings", "params": {"start": "2026-05-18", "end": "2026-05-19"}, "output_root": "/tmp/source_02_us_date"}
+        module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
+        task_key = {"task_id": "m02_us_date", "source": "m02_sector_context_data_acquisition", "params": {"start": "2026-05-18", "end": "2026-05-19"}, "output_root": "/tmp/m02_us_date"}
         context = module.build_context(task_key, "run")
         payload = module.SourcePayload(
             universe_rows=[{"symbol": "ARKG", "issuer_name": "ARK Invest", "universe_type": "sector_observation_etf", "exposure_type": "thematic_growth"}],
@@ -46,11 +46,11 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
 
         result, cleaned = module.clean(context, payload)
 
-        self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 1)
+        self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 1)
         self.assertEqual(cleaned.rows[0]["as_of_date"], "2026-05-18")
 
     def test_available_time_defaults_to_next_regular_us_equity_open(self):
-        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+        module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
         row = {"available_time": "", "as_of_date": "2026-04-24"}
         self.assertEqual(module._available_time({}, row, "2026-04-24"), "2026-04-27T09:30:00-04:00")
 
@@ -73,8 +73,8 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                     {"Ticker": "SAP", "Name": "SAP SE", "Weight": "1", "Asset Class": "Equity", "Sector": "Technology"},
                 ])
             task_key = {
-                "task_id": "source_02_target_candidate_holdings_task_test",
-                "source": "source_02_target_candidate_holdings",
+                "task_id": "m02_sector_context_data_acquisition_task_test",
+                "source": "m02_sector_context_data_acquisition",
                 "params": {
                     "start": "2026-04-24",
                     "end": "2026-04-25",
@@ -84,18 +84,18 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+            module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
             sql_writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=sql_writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 1)
+            self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 1)
             manifest = json.loads((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["model_layer_filter"], "layer_02_sector_context")
             self.assertEqual(manifest["universe_type_filter"], "sector_observation_etf")
             self.assertEqual(manifest["symbols"], ["SMH"])
             self.assertEqual(len(sql_writer.calls), 1)
             call = sql_writer.calls[0]
-            self.assertEqual(call["table"], "source_02_target_candidate_holdings")
+            self.assertEqual(call["table"], "m02_sector_context_data_acquisition")
             self.assertEqual(call["key_columns"], ["etf_symbol", "as_of_date", "holding_symbol"])
             self.assertEqual(call["columns"], ["etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
             rows = call["rows"]
@@ -123,8 +123,8 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                 encoding="utf-8",
             )
             task_key = {
-                "task_id": "source_02_target_candidate_default_feed_test",
-                "source": "source_02_target_candidate_holdings",
+                "task_id": "m02_target_candidate_default_feed_test",
+                "source": "m02_sector_context_data_acquisition",
                 "params": {
                     "start": "2026-04-24",
                     "end": "2026-04-25",
@@ -134,7 +134,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
+            module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
             captured = {}
 
             def fake_fetch(context):
@@ -166,8 +166,8 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             self.assertEqual(writer.calls[0]["rows"][0]["holding_symbol"], "MSFT")
 
     def test_missing_window_holdings_are_reported_as_partial_coverage_not_failure(self):
-        module = import_module("data_source.source_02_target_candidate_holdings.pipeline")
-        task_key = {"task_id": "source_02_missing_window", "source": "source_02_target_candidate_holdings", "params": {"start": "2026-05-18", "end": "2026-05-19"}, "output_root": "/tmp/source_02_missing_window"}
+        module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
+        task_key = {"task_id": "m02_missing_window", "source": "m02_sector_context_data_acquisition", "params": {"start": "2026-05-18", "end": "2026-05-19"}, "output_root": "/tmp/m02_missing_window"}
         context = module.build_context(task_key, "run")
         payload = module.SourcePayload(
             universe_rows=[
@@ -182,7 +182,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         result, cleaned = module.clean(context, payload)
 
         self.assertEqual(result.status, "succeeded")
-        self.assertEqual(result.row_counts["source_02_target_candidate_holdings"], 0)
+        self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 0)
         self.assertEqual(cleaned.rows, [])
         self.assertEqual(result.details["missing_symbols"], ["ARKF"])
         self.assertIn("accepted_partial_coverage", result.details["missing_symbol_policy"])

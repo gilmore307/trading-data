@@ -1,4 +1,4 @@
-# source_01_market_regime
+# m01_market_regime_data_acquisition
 
 Market-context ETF bar source for Layer 1 market regime and Layer 2 sector context.
 
@@ -14,7 +14,7 @@ The manager supplies these values in `task_key.params`:
 - `market_regime_etf_universe_path` — optional reviewed override. Normal runs use `TRADING_STORAGE_REPO_ROOT/main/shared/layer_01_02_market_context_etf_universe.csv`, defaulting to the sibling `trading-storage` repository.
 - `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds`, `secret_alias` — optional request/runtime overrides.
 
-The task key also carries orchestration fields outside `params`, including `task_id`, `source = "source_01_market_regime"`, and optional `output_root` for receipts/manifests.
+The task key also carries orchestration fields outside `params`, including `task_id`, `source = "m01_market_regime_data_acquisition"`, and optional `output_root` for receipts/manifests.
 
 ## Universe contract
 
@@ -26,19 +26,19 @@ The universe CSV owns ETF scope and grain choices:
 - `feature_grain` — reviewed downstream observation/feature grain cue for that ETF. Current shared Layer 1/2 ETF rows use `1m`; longer-horizon diagnostics are derived downstream from the canonical 1-minute source rows.
 - `fund_name`, `issuer_name` — human-readable metadata.
 
-`source_01_market_regime` downloads one canonical raw bar stream: `1Min`. Multi-frame market and sector evidence is derived during feature generation from those 1-minute source rows. The source stage rejects non-`1Min` task-key timeframes so the table does not mix provider-native 1-minute, 30-minute, and daily bars.
+`m01_market_regime_data_acquisition` downloads one canonical raw bar stream: `1Min`. Multi-frame market and sector evidence is derived during feature generation from those 1-minute source rows. The source stage rejects non-`1Min` task-key timeframes so the table does not mix provider-native 1-minute, 30-minute, and daily bars.
 
 ## Output format
 
 Final saved artifact is SQL-only:
 
 ```text
-source_01_market_regime
+m01_market_regime_data_acquisition
 ```
 
 Driver: PostgreSQL using the shared trading-data SQL storage target. Tests inject a fake writer; local SQLite is not the accepted production contract.
 
-Table: `source_01_market_regime`
+Table: `m01_market_regime_data_acquisition`
 
 Columns, in order:
 

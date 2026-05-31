@@ -1,4 +1,4 @@
-# source_02_target_candidate_holdings
+# m02_sector_context_data_acquisition
 
 Manager-facing ETF holdings source for downstream target-candidate preparation.
 
@@ -10,7 +10,7 @@ Boundary note: ETF holdings are not a core Layer 2 `SectorContextModel` behavior
 
 Required task key fields:
 
-- `source`: `source_02_target_candidate_holdings`
+- `source`: `m02_sector_context_data_acquisition`
 - `task_id`: stable task identifier
 - `params.start`: inclusive holdings/as-of window start date or timestamp
 - `params.end`: inclusive holdings/as-of window end date or timestamp
@@ -45,7 +45,7 @@ Exclude:
 Final saved output is SQL-only:
 
 ```text
-source_02_target_candidate_holdings
+m02_sector_context_data_acquisition
 ```
 
 Natural key:

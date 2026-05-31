@@ -1,4 +1,4 @@
-"""Generate feature_02_sector_context rows from SQL source bars."""
+"""Generate m02_sector_context_feature_generation rows from SQL source bars."""
 from __future__ import annotations
 
 import argparse
@@ -26,7 +26,7 @@ METADATA_COLUMNS = (
 
 
 def _load_generator():
-    return importlib.import_module("data_feature.feature_02_sector_context.generator")
+    return importlib.import_module("data_feature.m02_sector_context_feature_generation.generator")
 
 
 def _load_psycopg():
@@ -118,7 +118,7 @@ def write_feature_rows_sql(
     for row in rows:
         for column in METADATA_COLUMNS:
             if column not in row:
-                raise ValueError(f"feature_02 rows must include {column}")
+                raise ValueError(f"m02 sector-context feature rows must include {column}")
 
     qualified_table = _qualified(target_schema, target_table)
     cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(target_schema)}")

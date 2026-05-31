@@ -1,6 +1,6 @@
 {
   "contract_type": "source_row",
-  "source_id": "source_01_market_regime",
+  "source_id": "m01_market_regime_data_acquisition",
   "model_layer": "layer_01_market_regime",
   "timestamp": "2026-01-02T09:30:00-05:00",
   "available_time": "2026-01-02T09:30:00-05:00",

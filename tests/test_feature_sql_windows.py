@@ -15,7 +15,7 @@ class FakeCursor:
 
 class FeatureSqlWindowTests(unittest.TestCase):
     def test_market_regime_source_end_is_half_open(self):
-        module = importlib.import_module("data_feature.feature_01_market_regime.sql")
+        module = importlib.import_module("data_feature.m01_market_regime_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_source_bars(
             cursor,
@@ -31,7 +31,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
 
     def test_sector_context_source_end_is_half_open(self):
-        module = importlib.import_module("data_feature.feature_02_sector_context.sql")
+        module = importlib.import_module("data_feature.m02_sector_context_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_source_bars(
             cursor,

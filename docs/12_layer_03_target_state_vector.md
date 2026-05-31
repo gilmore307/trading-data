@@ -20,21 +20,21 @@ trading-manager request
   -> trading-model TargetStateVectorModel training/evaluation/review
 ```
 
-Active contracts use target-state names. `source_02_target_candidate_holdings` is materialized by the Layer 2 feature stage and consumed by Layer 3 as candidate-input evidence:
+Active contracts use target-state names. `m02_sector_context_data_acquisition` is materialized by the Layer 2 feature stage and consumed by Layer 3 as candidate-input evidence:
 
 ```text
-source_02_target_candidate_holdings
+m02_sector_context_data_acquisition
 source_03_target_state
 feature_03_target_state_vector
 ```
 
 Current implementation:
 
-- Layer 3 consumes `source_02_target_candidate_holdings` rows that were materialized by the Layer 2 feature stage from issuer holdings and selected/prioritized sector ETF context.
+- Layer 3 consumes `m02_sector_context_data_acquisition` rows that were materialized by the Layer 2 feature stage from issuer holdings and selected/prioritized sector ETF context.
 - `src/data_source/source_03_target_state/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.source_03_target_state` rows keyed by `target_candidate_id + timeframe + timestamp`.
 - `src/data_feature/feature_03_target_state_vector/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
 - `src/data_feature/feature_03_target_state_vector/sql.py` reads `source_03_target_state` plus optional Layer 1/2 context rows and writes `trading_data.feature_03_target_state_vector` with JSONB blocks.
-- CLI entrypoints are registered for `trading-data-source-03-target-state` and `trading-data-feature-03-target-state-vector`; the `source_02` CLI is part of the Layer 2 stage.
+- CLI entrypoints are registered for `trading-data-source-03-target-state` and `trading-data-feature-03-target-state-vector`; the `m02_sector_context_data_acquisition` CLI is part of the Layer 2 stage.
 
 ## Inputs
 

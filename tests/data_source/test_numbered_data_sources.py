@@ -48,7 +48,7 @@ class Secret:
 
 class NumberedDataSourceTests(unittest.TestCase):
     def test_market_regime_source_fetches_universe_bars_as_one_sql_long_table(self):
-        module = import_module("data_source.source_01_market_regime.pipeline")
+        module = import_module("data_source.m01_market_regime_data_acquisition.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -86,7 +86,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_market_regime_source_rejects_non_one_minute_download_timeframe(self):
-        module = import_module("data_source.source_01_market_regime.pipeline")
+        module = import_module("data_source.m01_market_regime_data_acquisition.pipeline")
         old_load_secret = module.load_secret_alias
         module.load_secret_alias = lambda alias: Secret()
         try:
@@ -307,7 +307,7 @@ class NumberedDataSourceTests(unittest.TestCase):
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
-            module = import_module("data_source.source_01_market_regime.pipeline")
+            module = import_module("data_source.m01_market_regime_data_acquisition.pipeline")
             task_key = {
                 "task_id": "m01_market_regime_data_acquisition_task_bad",
                 "source": "m01_market_regime_data_acquisition",

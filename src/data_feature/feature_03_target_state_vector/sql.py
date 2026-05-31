@@ -7,6 +7,7 @@ and Layer 2 context rows, runs the deterministic feature generator, and writes
 from __future__ import annotations
 
 import argparse
+import csv
 import importlib
 import json
 import os
@@ -36,6 +37,15 @@ JSONB_COLUMNS = (
 )
 KEY_COLUMNS = ("target_candidate_id", "available_time", "target_context_state_version")
 INSERT_BATCH_SIZE = 1000
+DEFAULT_TARGET_CONTEXT_MAPPING_PATH = Path("/root/projects/trading-storage/main/shared/layer_02_target_context_mapping.csv")
+MAPPING_METHOD_RANK = {
+    "crypto_business_context": 10,
+    "primary_business_context": 10,
+    "primary_sector_context": 20,
+    "secondary_sector_context": 30,
+    "industry_chain_context": 40,
+    "weak_demand_side_context": 90,
+}
 
 
 def _load_generator():
@@ -154,6 +164,32 @@ def fetch_context_rows(
     return rows
 
 
+def load_accepted_target_context_mappings(path: str | Path | None) -> list[dict[str, Any]]:
+    if path is None:
+        return []
+    mapping_path = Path(path)
+    if not mapping_path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    with mapping_path.open(newline="", encoding="utf-8") as csv_file:
+        for row in csv.DictReader(csv_file):
+            if str(row.get("review_status") or "").strip() != "accepted":
+                continue
+            target_symbol = str(row.get("target_symbol") or "").strip().upper()
+            layer2_context_symbol = str(row.get("layer2_context_symbol") or "").strip().upper()
+            if not target_symbol or not layer2_context_symbol:
+                continue
+            method_type = str(row.get("layer2_mapping_method_type") or "").strip()
+            rows.append(
+                {
+                    "target_symbol": target_symbol,
+                    "layer2_context_symbol": layer2_context_symbol,
+                    "mapping_rank": MAPPING_METHOD_RANK.get(method_type, 100),
+                }
+            )
+    return sorted(rows, key=lambda row: (row["target_symbol"], row["mapping_rank"], row["layer2_context_symbol"]))
+
+
 def fetch_candidate_rows(
     cursor: Any,
     *,
@@ -165,6 +201,7 @@ def fetch_candidate_rows(
     holdings_table: str,
     source_start: str | None = None,
     source_end: str | None = None,
+    target_context_mapping_path: str | Path | None = DEFAULT_TARGET_CONTEXT_MAPPING_PATH,
 ) -> list[dict[str, Any]]:
     where: list[str] = []
     params: list[Any] = []
@@ -196,12 +233,37 @@ def fetch_candidate_rows(
         ) AS h ON TRUE
         """
         holdings_select = 'h."etf_symbol"'
+    mapping_rows = load_accepted_target_context_mappings(target_context_mapping_path)
+    mapping_cte = ""
+    mapping_join = ""
+    mapping_select = "NULL::text"
+    mapping_params: list[Any] = []
+    if mapping_rows:
+        value_sql = ", ".join(["(%s, %s, %s)"] * len(mapping_rows))
+        mapping_cte = f"""
+        WITH target_context_mapping(target_symbol, layer2_context_symbol, mapping_rank) AS (
+          VALUES {value_sql}
+        )
+        """
+        for row in mapping_rows:
+            mapping_params.extend([row["target_symbol"], row["layer2_context_symbol"], row["mapping_rank"]])
+        mapping_join = """
+        LEFT JOIN LATERAL (
+          SELECT m.layer2_context_symbol
+          FROM target_context_mapping AS m
+          WHERE m.target_symbol = s."symbol"
+          ORDER BY m.mapping_rank ASC, m.layer2_context_symbol ASC
+          LIMIT 1
+        ) AS mapping_l2 ON TRUE
+        """
+        mapping_select = "mapping_l2.layer2_context_symbol"
     cursor.execute(
         f"""
+        {mapping_cte}
         SELECT DISTINCT
           s."target_candidate_id",
           s."symbol",
-          COALESCE(direct_l2."sector_or_industry_symbol", {holdings_select}) AS "sector_context_symbol"
+          COALESCE(direct_l2."sector_or_industry_symbol", {mapping_select}, {holdings_select}) AS "sector_context_symbol"
         FROM {_qualified(source_schema, source_table)} AS s
         LEFT JOIN LATERAL (
           SELECT l2."sector_or_industry_symbol"
@@ -209,11 +271,12 @@ def fetch_candidate_rows(
           WHERE l2."sector_or_industry_symbol" = s."symbol"
           LIMIT 1
         ) AS direct_l2 ON TRUE
+        {mapping_join}
         {holdings_join}
         {where_sql}
         ORDER BY s."target_candidate_id" ASC, s."symbol" ASC
         """,
-        params,
+        [*mapping_params, *params],
     )
     return [dict(row) for row in cursor.fetchall()]
 
@@ -290,6 +353,7 @@ def generate_sql(
     sector_context_table: str,
     holdings_schema: str,
     holdings_table: str,
+    target_context_mapping_path: str | Path | None,
     run_id: str,
     target_context_state_version: str,
 ) -> int:
@@ -310,6 +374,7 @@ def generate_sql(
                 holdings_table=holdings_table,
                 source_start=source_start,
                 source_end=source_end,
+                target_context_mapping_path=target_context_mapping_path,
             )
             inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows)
             rows = generator.generate_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
@@ -330,6 +395,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sector-context-table", default="model_02_sector_context")
     parser.add_argument("--holdings-schema", default="trading_data")
     parser.add_argument("--holdings-table", default="m02_sector_context_data_acquisition")
+    parser.add_argument("--target-context-mapping-path", type=Path, default=DEFAULT_TARGET_CONTEXT_MAPPING_PATH)
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
     parser.add_argument("--run-id", default="feature_03_target_state_vector_sql")
@@ -355,6 +421,7 @@ def main(argv: list[str] | None = None) -> int:
         sector_context_table=args.sector_context_table,
         holdings_schema=args.holdings_schema,
         holdings_table=args.holdings_table,
+        target_context_mapping_path=args.target_context_mapping_path,
         run_id=args.run_id,
         target_context_state_version=args.target_context_state_version,
     )

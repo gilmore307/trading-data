@@ -65,7 +65,7 @@ def _quality(row: Mapping[str, Any]) -> dict[str, Any]:
         "missing_required_fields": missing,
         "has_required_fields": not missing,
         "point_in_time_clock": "available_time",
-        "source_table": "source_10_event_risk_governor",
+        "source_table": "m10_event_risk_governor_data_acquisition",
     }
 
 
@@ -81,7 +81,7 @@ def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "feature_1
         output.append(
             {
                 "run_id": run_id,
-                "source_run_ref": row.get("source_run_ref") or row.get("run_id") or "source_10_event_risk_governor",
+                "source_run_ref": row.get("source_run_ref") or row.get("run_id") or "m10_event_risk_governor_data_acquisition",
                 "event_id": str(event_id),
                 "canonical_event_id": str(row.get("canonical_event_id") or event_id),
                 "event_time": row.get("event_time"),

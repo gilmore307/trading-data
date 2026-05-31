@@ -104,7 +104,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"id": "n1", "timeline_headline": "Apple files earnings story", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Article", "event_link_url": "https://example.com/aapl"})
             task_key = {
                 "task_id": "source_10_event_risk_governor_artifact_task",
-                "source": "source_10_event_risk_governor",
+                "source": "m10_event_risk_governor_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(alpaca)]},
                 "output_root": str(tmp / "task"),
             }
@@ -128,7 +128,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"article_id": "g2", "seen_at": "2024-01-20T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/2", "title": "Inflation story", "source_theme_tags": "ECON", "organizations": "BLS", "tone": "-2", "impact_scope": "market"})
             task_key = {
                 "task_id": "source_10_event_risk_governor_same_time_macro_task",
-                "source": "source_10_event_risk_governor",
+                "source": "m10_event_risk_governor_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(gdelt)]},
                 "output_root": str(tmp / "task"),
             }
@@ -151,7 +151,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"article_id": "g2", "seen_at": "2024-01-05T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/in", "title": "In window", "source_theme_tags": "ECON", "organizations": "Fed", "tone": "-1", "impact_scope": "market"})
             task_key = {
                 "task_id": "source_10_event_risk_governor_artifact_task",
-                "source": "source_10_event_risk_governor",
+                "source": "m10_event_risk_governor_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(gdelt)]},
                 "output_root": str(tmp / "task"),
             }

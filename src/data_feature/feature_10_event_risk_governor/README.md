@@ -4,7 +4,7 @@ Deterministic event-overlay feature builder for Layer 10 event-risk-governor inp
 
 ## Boundary
 
-Input is accepted `source_10_event_risk_governor` overview rows. Output is a compact
+Input is accepted `m10_event_risk_governor_data_acquisition` overview rows. Output is a compact
 feature surface keyed by `event_id` for `EventRiskGovernor` / `EventIntelligenceOverlay`
 input preparation. The package name is the accepted physical feature package for
 this boundary.

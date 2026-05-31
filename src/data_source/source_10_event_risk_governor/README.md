@@ -1,4 +1,4 @@
-# source_10_event_risk_governor
+# m10_event_risk_governor_data_acquisition
 
 Manager-facing EventRiskGovernor data source.
 
@@ -12,7 +12,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `source_10_event_risk_governor`
+- `source`: `m10_event_risk_governor_data_acquisition`
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date
@@ -54,7 +54,7 @@ Official SEC/exchange/company/regulatory disclosures outrank derivative news cov
 Final saved output is SQL-only:
 
 ```text
-source_10_event_risk_governor
+m10_event_risk_governor_data_acquisition
 ```
 
 Natural key:

@@ -158,7 +158,7 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _source_05_option_expression_ddl(qualified_table)
     if table in {"source_06_position_execution", "m09_option_expression_data_acquisition_contract_path"}:
         return _source_06_position_execution_ddl(qualified_table)
-    if table in {"source_10_event_risk_governor", "m10_event_risk_governor_data_acquisition"}:
+    if table == "m10_event_risk_governor_data_acquisition":
         return _source_10_event_risk_governor_ddl(qualified_table)
     return None
 

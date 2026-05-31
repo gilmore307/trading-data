@@ -21,7 +21,7 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 | Layer | Owns | Examples |
 |---|---|---|
 | Data feeds | Smallest-unit provider/API/web/file access and feed-level normalization. | Alpaca bars/news/liquidity, ThetaData option endpoints, SEC EDGAR, ETF issuer files, official calendar pages. |
-| Data sources | Manager-facing orchestration for accepted model-input or acquisition routes. | `source_01_market_regime`, `source_02_target_candidate_holdings`, `source_03_target_state`, `source_10_event_risk_governor`, `source_05_option_expression`, `source_06_position_execution`. |
+| Data sources | Manager-facing orchestration for accepted model-input or acquisition routes. | `source_01_market_regime`, `source_02_target_candidate_holdings`, `source_03_target_state`, `m10_event_risk_governor_data_acquisition`, `source_05_option_expression`, `source_06_position_execution`. |
 | Data features | Deterministic layer-ready feature blocks from accepted source outputs. | `feature_01_market_regime`, `feature_02_sector_context`, `feature_03_target_state_vector`, `feature_10_event_risk_governor`, `feature_09_option_expression`. |
 | Layer catalog | Maintained Layer 1-9 ownership map for docs/src/CLI/tests. | `src/data_layers/catalog.py`. |
 | Storage helpers | Low-level persistence helpers for reviewed outputs. | SQL writers and receipt-safe metadata helpers. |

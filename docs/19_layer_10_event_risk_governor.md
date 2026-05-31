@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. Layer 10 owns `EventRiskGovernor / EventIntelligenceOverlay` qualitative event attribution, reviewed-pool governance, and event-risk intervention. `trading-data` owns point-in-time event evidence indexes, deterministic event-overview features, and attribution evidence refs, not event interpretation, attribution decisions, risk policy, execution, or broker mutation.
 
-Current physical source/feature names are `source_10_event_risk_governor` and `feature_10_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
+Current physical source/feature names are `m10_event_risk_governor_data_acquisition` and `feature_10_event_risk_governor`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
@@ -14,7 +14,7 @@ Historical replay and realtime/future event acquisition rules live in `docs/23_e
 ## Owned artifacts
 
 ```text
-trading_data.source_10_event_risk_governor
+trading_data.m10_event_risk_governor_data_acquisition
 trading_data.feature_10_event_risk_governor
 ```
 
@@ -30,7 +30,7 @@ src/data_source/source_10_event_risk_governor/equity_abnormal_activity/
 
 Layer 10 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector` and not event-failure attribution.
 
-`source_10_event_risk_governor` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
+`m10_event_risk_governor_data_acquisition` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
 
 `feature_10_event_risk_governor` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
 
@@ -148,7 +148,7 @@ This prevents price-derived abnormality from being validated against the same pr
 ```text
 trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
-  -> source_10_event_risk_governor
+  -> m10_event_risk_governor_data_acquisition
   -> feature_10_event_risk_governor
   -> trading-model Layer 10 event-failure attribution or reviewed-pool governance
   -> evaluation/promotion review outside trading-data

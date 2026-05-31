@@ -23,7 +23,7 @@ Date: 2026-05-08
 | Layer 7 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
 | Layer 8 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
 | Layer 9 data | `source_05_option_expression`, `feature_09_option_expression`, `source_06_position_execution` | accepted trading-guidance / option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries; source numbers are accepted source identifiers, not model-layer numbers |
-| Layer 10 data | `source_10_event_risk_governor`, `feature_10_event_risk_governor` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
+| Layer 10 data | `m10_event_risk_governor_data_acquisition`, `feature_10_event_risk_governor` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 
@@ -46,7 +46,7 @@ These schemas define shared envelope fields only. Feed/source-specific payload f
 - `calendar_market_session`: venue-level session facts for NYSE, NASDAQ, and `CRYPTO_24_7`. Rule-generated NYSE/NASDAQ rows are marked `source_priority = inferred_rule`; official holiday/early-close sources may later override or enrich them.
 - `chart_ohlcv_cache`: compact OHLCV visualization cache by symbol/timeframe/bucket. It supports dashboard Timewheel charts but is not a model-training or replay truth source.
 
-The executable installer is `scripts/data/install_temporal_explorer_tables.py`. It may create tables and upsert deterministic day/session spine rows. It must not read `source_10_event_risk_governor`, treat raw Trading Economics storage rows as accepted Layer 10 events, call data providers, fabricate early closes, write raw news bodies, infer interpreted news refs, compute numeric surprises from string payloads, or infer chart bars without accepted source rows.
+The executable installer is `scripts/data/install_temporal_explorer_tables.py`. It may create tables and upsert deterministic day/session spine rows. It must not read `m10_event_risk_governor_data_acquisition`, treat raw Trading Economics storage rows as accepted Layer 10 events, call data providers, fabricate early closes, write raw news bodies, infer interpreted news refs, compute numeric surprises from string payloads, or infer chart bars without accepted source rows.
 
 ## Freshness and model-standard acceptance
 

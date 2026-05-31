@@ -37,7 +37,7 @@ These items are intentionally outside the current promote-first historical-train
 - `price_action` is accepted as a Layer 10 event-risk category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
 - `source_03_target_state` and `feature_03_target_state_vector` implement deterministic target-local observed-input and feature-block surfaces.
 - Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 materializes `source_02_target_candidate_holdings` after sector/basket context, while Layer 3 consumes those candidate inputs without owning holdings acquisition.
-- Event overlay sources are accepted through `source_10_event_risk_governor`, including equity abnormal activity evidence.
+- Event overlay sources are accepted through `m10_event_risk_governor_data_acquisition`, including equity abnormal activity evidence.
 - Option-expression inputs are accepted through `source_05_option_expression` and selected-contract tracking through `source_06_position_execution`.
 - Final saved source outputs are CSV or explicitly reviewed compact artifacts; JSONL may exist only as transient run-local evidence.
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.

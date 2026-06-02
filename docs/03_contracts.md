@@ -16,14 +16,14 @@ Date: 2026-05-08
 | ThetaData option feeds | `src/data_feed/09_*` through `11_*` | accepted local terminal-oriented V1 feeds for option snapshot, primary tracking, and event timeline |
 | Layer 1 data | `m01_market_regime_data_acquisition`, `m01_market_regime_feature_generation` | accepted market-regime input/feature surfaces |
 | Layer 2 data | `m02_sector_context_feature_generation`, `m02_sector_context_data_acquisition` | accepted sector-context feature surface plus Layer 2-stage materialized target-candidate holdings handoff |
-| Layer 3 data | `source_03_target_state`, `feature_03_target_state_vector` | accepted target-state observed-input and feature-block surfaces; consumes Layer 2-stage candidate holdings |
+| Layer 3 data | `m03_target_state_vector_data_acquisition`, `m03_target_state_vector_feature_generation` | accepted target-state observed-input and feature-block surfaces; consumes Layer 2-stage candidate holdings |
 | Layer 4 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; EventFailureRiskModel consumes reviewed model/governance evidence, not raw source acquisition |
 | Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
 | Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; dynamic risk policy belongs to `trading-model` / control-plane / execution replay state |
 | Layer 7 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
 | Layer 8 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
-| Layer 9 data | `source_05_option_expression`, `feature_09_option_expression`, `source_06_position_execution` | accepted trading-guidance / option-expression source, deterministic option-candidate feature, and selected-contract tracking boundaries; source numbers are accepted source identifiers, not model-layer numbers |
-| Layer 10 data | `m10_event_risk_governor_data_acquisition`, `feature_10_event_risk_governor` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
+| Layer 9 data | `m09_option_expression_data_acquisition`, `m09_option_expression_feature_generation`, `m09_option_expression_data_acquisition_contract_path` | accepted trading-guidance / option-expression data-acquisition, deterministic option-candidate feature-generation, and selected-contract market-path boundaries |
+| Layer 10 data | `m10_event_risk_governor_data_acquisition`, `m10_event_risk_governor_feature_generation` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 

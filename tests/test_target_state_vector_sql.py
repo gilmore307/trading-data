@@ -8,7 +8,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
-sql = importlib.import_module("data_feature.feature_03_target_state_vector.sql")
+sql = importlib.import_module("data_feature.m03_target_state_vector_feature_generation.sql")
 
 
 class FakeCursor:
@@ -51,10 +51,10 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             "feature_quality_diagnostics": {"has_target_bar": True},
         }
 
-        sql.write_feature_rows_sql(cursor, [row], target_schema="trading_data", target_table="feature_03_target_state_vector")
+        sql.write_feature_rows_sql(cursor, [row], target_schema="trading_data", target_table="m03_target_state_vector_feature_generation")
 
         statements = "\n".join(statement for statement, _ in cursor.calls)
-        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."feature_03_target_state_vector"', statements)
+        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."m03_target_state_vector_feature_generation"', statements)
         self.assertIn('PRIMARY KEY ("target_candidate_id", "available_time", "target_context_state_version")', statements)
         self.assertIn('"market_state_features" JSONB', statements)
         insert_calls = [call for call in cursor.calls if "INSERT INTO" in call[0]]
@@ -68,7 +68,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         sql.fetch_candidate_rows(
             cursor,
             source_schema="trading_data",
-            source_table="source_03_target_state",
+            source_table="m03_target_state_vector_data_acquisition",
             sector_context_schema="trading_model",
             sector_context_table="m02_sector_context_model_generation",
             holdings_schema="trading_data",
@@ -88,7 +88,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         sql.fetch_candidate_rows(
             cursor,
             source_schema="trading_data",
-            source_table="source_03_target_state",
+            source_table="m03_target_state_vector_data_acquisition",
             sector_context_schema="trading_model",
             sector_context_table="m02_sector_context_model_generation",
             holdings_schema="custom_data",
@@ -118,7 +118,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             sql.fetch_candidate_rows(
                 cursor,
                 source_schema="trading_data",
-                source_table="source_03_target_state",
+                source_table="m03_target_state_vector_data_acquisition",
                 sector_context_schema="trading_model",
                 sector_context_table="m02_sector_context_model_generation",
                 holdings_schema="custom_data",

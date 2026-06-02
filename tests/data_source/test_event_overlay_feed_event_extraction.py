@@ -8,9 +8,9 @@ from importlib import import_module
 
 
 extract_events_from_artifact_paths = import_module(
-    "data_source.source_10_event_risk_governor.feed_event_extraction"
+    "data_source.m10_event_risk_governor_data_acquisition.feed_event_extraction"
 ).extract_events_from_artifact_paths
-source_pipeline = import_module("data_source.source_10_event_risk_governor.pipeline")
+source_pipeline = import_module("data_source.m10_event_risk_governor_data_acquisition.pipeline")
 
 
 class FakeSqlWriter:
@@ -103,7 +103,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writeheader()
                 writer.writerow({"id": "n1", "timeline_headline": "Apple files earnings story", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Article", "event_link_url": "https://example.com/aapl"})
             task_key = {
-                "task_id": "source_10_event_risk_governor_artifact_task",
+                "task_id": "m10_event_risk_governor_data_acquisition_artifact_task",
                 "source": "m10_event_risk_governor_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(alpaca)]},
                 "output_root": str(tmp / "task"),
@@ -127,7 +127,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"article_id": "g1", "seen_at": "2024-01-20T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/1", "title": "Fed rate story", "source_theme_tags": "ECON", "organizations": "Federal Reserve", "tone": "-1", "impact_scope": "market"})
                 writer.writerow({"article_id": "g2", "seen_at": "2024-01-20T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/2", "title": "Inflation story", "source_theme_tags": "ECON", "organizations": "BLS", "tone": "-2", "impact_scope": "market"})
             task_key = {
-                "task_id": "source_10_event_risk_governor_same_time_macro_task",
+                "task_id": "m10_event_risk_governor_data_acquisition_same_time_macro_task",
                 "source": "m10_event_risk_governor_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(gdelt)]},
                 "output_root": str(tmp / "task"),
@@ -150,7 +150,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"article_id": "g1", "seen_at": "2026-05-14T08:30:00-04:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/out", "title": "Out of window", "source_theme_tags": "ECON", "organizations": "Fed", "tone": "-1", "impact_scope": "market"})
                 writer.writerow({"article_id": "g2", "seen_at": "2024-01-05T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/in", "title": "In window", "source_theme_tags": "ECON", "organizations": "Fed", "tone": "-1", "impact_scope": "market"})
             task_key = {
-                "task_id": "source_10_event_risk_governor_artifact_task",
+                "task_id": "m10_event_risk_governor_data_acquisition_artifact_task",
                 "source": "m10_event_risk_governor_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(gdelt)]},
                 "output_root": str(tmp / "task"),

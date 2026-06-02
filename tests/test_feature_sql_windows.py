@@ -45,12 +45,12 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertEqual(params, ["2026-05-01T00:00:00Z"])
 
     def test_target_state_source_end_is_half_open(self):
-        module = importlib.import_module("data_feature.feature_03_target_state_vector.sql")
+        module = importlib.import_module("data_feature.m03_target_state_vector_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_source_rows(
             cursor,
             source_schema="trading_data",
-            source_table="source_03_target_state",
+            source_table="m03_target_state_vector_data_acquisition",
             source_start="2026-04-01T00:00:00Z",
             source_end="2026-05-01T00:00:00Z",
         )
@@ -61,7 +61,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
 
     def test_target_state_context_keeps_prior_point_in_time_rows(self):
-        module = importlib.import_module("data_feature.feature_03_target_state_vector.sql")
+        module = importlib.import_module("data_feature.m03_target_state_vector_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_context_rows(
             cursor,
@@ -78,7 +78,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertEqual(params, ["2026-04-01T16:00:00Z"])
 
     def test_event_risk_governor_source_end_is_half_open(self):
-        module = importlib.import_module("data_feature.feature_10_event_risk_governor.sql")
+        module = importlib.import_module("data_feature.m10_event_risk_governor_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_source_rows(
             cursor,

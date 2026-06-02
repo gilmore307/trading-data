@@ -110,7 +110,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_option_expression_source_writes_option_snapshot_sql_row(self):
-        module = import_module("data_source.source_05_option_expression.pipeline")
+        module = import_module("data_source.m09_option_expression_data_acquisition.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "m09_option_expression_data_acquisition_task_test",
@@ -150,7 +150,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertNotIn("created_at", row)
 
     def test_selected_contract_tracking_source_writes_option_timeseries(self):
-        module = import_module("data_source.source_06_position_execution.pipeline")
+        module = import_module("data_source.m09_option_expression_data_acquisition_contract_path.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "m09_option_expression_data_acquisition_contract_path_task_test",
@@ -189,7 +189,7 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_source_writes_one_row_per_event(self):
-        module = import_module("data_source.source_10_event_risk_governor.pipeline")
+        module = import_module("data_source.m10_event_risk_governor_data_acquisition.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
                 "task_id": "m10_event_risk_governor_data_acquisition_task_test",

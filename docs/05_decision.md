@@ -92,7 +92,7 @@ ETF holdings are not Layer 2 core behavior input, but the Layer 2 feature stage 
 
 `m02_sector_context_data_acquisition` supports anonymous target candidate preparation after Layer 2 sector/basket prioritization and is owned by the Layer 2 feature stage runtime path. It preserves point-in-time visibility: explicit `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
 
-`source_03_target_state` provides target-local observed bars/liquidity. `feature_03_target_state_vector` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
+`m03_target_state_vector_data_acquisition` provides target-local observed bars/liquidity. `m03_target_state_vector_feature_generation` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 
 ## D016 — Event overlay boundary
 
@@ -102,9 +102,9 @@ ETF holdings are not Layer 2 core behavior input, but the Layer 2 feature stage 
 
 ## D017 — Option-expression data boundary
 
-`source_05_option_expression` writes option-chain snapshot rows for `OptionExpressionModel`.
+`m09_option_expression_data_acquisition` writes option-chain snapshot rows for `OptionExpressionModel`.
 
-`source_06_position_execution` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
+`m09_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
 
 ## D018 — Downstream model layers without new acquisition
 
@@ -143,7 +143,7 @@ Accepted: 2026-05-15
 
 The active ten-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the Layer 10 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
 
-Layer 9 trading guidance / option-expression data uses the current option-expression inputs (`source_05_option_expression`, `feature_09_option_expression`, and `source_06_position_execution`). Layer 10 event-risk data uses the current event surfaces (`m10_event_risk_governor_data_acquisition`, `feature_10_event_risk_governor`, and event-feed artifacts).
+Layer 9 trading guidance / option-expression data uses the current option-expression inputs (`m09_option_expression_data_acquisition`, `m09_option_expression_feature_generation`, and `m09_option_expression_data_acquisition_contract_path`). Layer 10 event-risk data uses the current event surfaces (`m10_event_risk_governor_data_acquisition`, `m10_event_risk_governor_feature_generation`, and event-feed artifacts).
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 

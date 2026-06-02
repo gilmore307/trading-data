@@ -14,9 +14,9 @@ Layer 3 is target state-vector production. Action/variant simulation code is not
 
 ```text
 trading-manager request
-  -> feature_03_target_state_vector task key
+  -> m03_target_state_vector_feature_generation task key
   -> trading-data target state-vector feature runner
-  -> trading_data.feature_03_target_state_vector
+  -> trading_data.m03_target_state_vector_feature_generation
   -> trading-model TargetStateVectorModel training/evaluation/review
 ```
 
@@ -24,17 +24,17 @@ Active contracts use target-state names. `m02_sector_context_data_acquisition` i
 
 ```text
 m02_sector_context_data_acquisition
-source_03_target_state
-feature_03_target_state_vector
+m03_target_state_vector_data_acquisition
+m03_target_state_vector_feature_generation
 ```
 
 Current implementation:
 
 - Layer 3 consumes `m02_sector_context_data_acquisition` rows that were materialized by the Layer 2 feature stage from issuer holdings and selected/prioritized sector ETF context.
-- `src/data_source/source_03_target_state/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.source_03_target_state` rows keyed by `target_candidate_id + timeframe + timestamp`.
-- `src/data_feature/feature_03_target_state_vector/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
-- `src/data_feature/feature_03_target_state_vector/sql.py` reads `source_03_target_state` plus optional Layer 1/2 context rows and writes `trading_data.feature_03_target_state_vector` with JSONB blocks.
-- CLI entrypoints are registered for `trading-data-source-03-target-state` and `trading-data-feature-03-target-state-vector`; the `m02_sector_context_data_acquisition` CLI is part of the Layer 2 stage.
+- `src/data_source/m03_target_state_vector_data_acquisition/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.m03_target_state_vector_data_acquisition` rows keyed by `target_candidate_id + timeframe + timestamp`.
+- `src/data_feature/m03_target_state_vector_feature_generation/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
+- `src/data_feature/m03_target_state_vector_feature_generation/sql.py` reads `m03_target_state_vector_data_acquisition` plus optional Layer 1/2 context rows and writes `trading_data.m03_target_state_vector_feature_generation` with JSONB blocks.
+- CLI entrypoints are registered for `trading-data-m03-target-state-vector-data-acquisition` and `trading-data-m03-target-state-vector-feature-generation`; the `m02_sector_context_data_acquisition` CLI is part of the Layer 2 stage.
 
 ## Inputs
 
@@ -53,13 +53,13 @@ Expected inputs are point-in-time artifacts, not future-aware labels:
 Canonical feature key:
 
 ```text
-feature_03_target_state_vector
+m03_target_state_vector_feature_generation
 ```
 
 SQL table target when promoted:
 
 ```text
-trading_data.feature_03_target_state_vector
+trading_data.m03_target_state_vector_feature_generation
 ```
 
 The feature table should expose decomposable blocks:
@@ -76,7 +76,7 @@ The feature table should expose decomposable blocks:
 - feature-quality diagnostics
 - source/run references
 
-Real ticker/company identity must remain outside model-facing feature vectors. `source_03_target_state.symbol` is source/audit/routing metadata only; `feature_03_target_state_vector` feature blocks must use `target_candidate_id` and context refs rather than ticker/company identity.
+Real ticker/company identity must remain outside model-facing feature vectors. `m03_target_state_vector_data_acquisition.symbol` is source/audit/routing metadata only; `m03_target_state_vector_feature_generation` feature blocks must use `target_candidate_id` and context refs rather than ticker/company identity.
 
 ## Non-ownership
 

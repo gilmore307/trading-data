@@ -28,25 +28,18 @@ trading-data-10-feed-thetadata-option-primary-tracking = "data_feed.10_feed_thet
 trading-data-11-feed-thetadata-option-event-timeline = "data_feed.11_feed_thetadata_option_event_timeline.__main__:main"
 trading-data-m01-market-regime-data-acquisition = "data_source.m01_market_regime_data_acquisition.__main__:main"
 trading-data-m02-sector-context-data-acquisition = "data_source.m02_sector_context_data_acquisition.__main__:main"
-trading-data-m03-target-state-vector-data-acquisition = "data_source.source_03_target_state.__main__:main"
-trading-data-m09-option-expression-data-acquisition = "data_source.source_05_option_expression.__main__:main"
-trading-data-m09-option-expression-contract-path = "data_source.source_06_position_execution.__main__:main"
-trading-data-m10-event-risk-governor-data-acquisition = "data_source.source_10_event_risk_governor.__main__:main"
+trading-data-m03-target-state-vector-data-acquisition = "data_source.m03_target_state_vector_data_acquisition.__main__:main"
+trading-data-m09-option-expression-data-acquisition = "data_source.m09_option_expression_data_acquisition.__main__:main"
+trading-data-m09-option-expression-contract-path = "data_source.m09_option_expression_data_acquisition_contract_path.__main__:main"
+trading-data-m10-event-risk-governor-data-acquisition = "data_source.m10_event_risk_governor_data_acquisition.__main__:main"
 trading-data-m01-market-regime-feature-generation = "data_feature.m01_market_regime_feature_generation.__main__:main"
 trading-data-m02-sector-context-feature-generation = "data_feature.m02_sector_context_feature_generation.__main__:main"
-trading-data-m03-target-state-vector-feature-generation = "data_feature.feature_03_target_state_vector.__main__:main"
-trading-data-m09-option-expression-feature-generation = "data_feature.feature_09_option_expression.__main__:main"
-trading-data-m10-event-risk-governor-feature-generation = "data_feature.feature_10_event_risk_governor.__main__:main"
-trading-data-source-03-target-state = "data_source.source_03_target_state.__main__:main"
-trading-data-source-05-option-expression = "data_source.source_05_option_expression.__main__:main"
-trading-data-source-06-position-execution = "data_source.source_06_position_execution.__main__:main"
-trading-data-source-10-event-risk-governor = "data_source.source_10_event_risk_governor.__main__:main"
-trading-data-feature-03-target-state-vector = "data_feature.feature_03_target_state_vector.__main__:main"
-trading-data-feature-10-event-risk-governor = "data_feature.feature_10_event_risk_governor.__main__:main"
-trading-data-feature-09-option-expression = "data_feature.feature_09_option_expression.__main__:main"
+trading-data-m03-target-state-vector-feature-generation = "data_feature.m03_target_state_vector_feature_generation.__main__:main"
+trading-data-m09-option-expression-feature-generation = "data_feature.m09_option_expression_feature_generation.__main__:main"
+trading-data-m10-event-risk-governor-feature-generation = "data_feature.m10_event_risk_governor_feature_generation.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"data_source.source_10_event_risk_governor.equity_abnormal_activity" = ["config.json"]
+"data_source.m10_event_risk_governor_data_acquisition.equity_abnormal_activity" = ["config.json"]

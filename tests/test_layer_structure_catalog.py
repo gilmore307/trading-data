@@ -77,7 +77,7 @@ class LayerStructureCatalogTests(unittest.TestCase):
         self.assertIn("data_feature.m02_sector_context_feature_generation", layer_2.feature_packages)
         self.assertIn("trading-data-m02-sector-context-data-acquisition", layer_2.cli_commands)
         self.assertNotIn("data_source.m02_sector_context_data_acquisition", layer_3.source_packages)
-        self.assertIn("data_source.source_03_target_state", layer_3.source_packages)
+        self.assertIn("data_source.m03_target_state_vector_data_acquisition", layer_3.source_packages)
         self.assertNotIn("trading-data-m02-sector-context-data-acquisition", layer_3.cli_commands)
 
     def test_no_source_layers_are_explicit_and_do_not_have_symmetry_packages(self) -> None:

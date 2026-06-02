@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from data_feature.feature_09_option_expression.generator import generate_rows
+from data_feature.m09_option_expression_feature_generation.generator import generate_rows
 
 
 class OptionExpressionFeatureGeneratorTests(unittest.TestCase):
@@ -36,7 +36,7 @@ class OptionExpressionFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         row = rows[0]
         self.assertEqual(row["run_id"], "unit_run")
-        self.assertEqual(row["source_run_ref"], "source_05_option_expression")
+        self.assertEqual(row["source_run_ref"], "m09_option_expression_data_acquisition")
         self.assertEqual(row["underlying"], "AAPL")
         payload = row["feature_payload_json"]
         self.assertAlmostEqual(payload["mid"], 1.1)

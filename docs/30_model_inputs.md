@@ -108,9 +108,9 @@ Boundary:
 
 ### `equity_abnormal_activity_event`
 
-Source: `src/data_source/source_10_event_risk_governor/equity_abnormal_activity/`
+Source: `src/data_source/m10_event_risk_governor_data_acquisition/equity_abnormal_activity/`
 
-Config: `src/data_source/source_10_event_risk_governor/equity_abnormal_activity/config.json`
+Config: `src/data_source/m10_event_risk_governor_data_acquisition/equity_abnormal_activity/config.json`
 
 Purpose: residual/trigger evidence for abnormal stock/ETF board/tape behavior when the event-risk path needs a point-in-time evidence row that is not merely a duplicate of ordinary bar/liquidity features already consumed by the base model stack.
 

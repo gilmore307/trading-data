@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from data_feature.feature_10_event_risk_governor.generator import generate_rows
+from data_feature.m10_event_risk_governor_feature_generation.generator import generate_rows
 
 
 class EventOverlayFeatureGeneratorTests(unittest.TestCase):

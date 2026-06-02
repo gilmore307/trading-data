@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
-generator = importlib.import_module("data_feature.feature_03_target_state_vector.generator")
+generator = importlib.import_module("data_feature.m03_target_state_vector_feature_generation.generator")
 
 
 def _assert_nested_close(test_case: unittest.TestCase, left, right) -> None:

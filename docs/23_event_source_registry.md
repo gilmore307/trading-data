@@ -75,7 +75,7 @@ Future events may enter the global event observation pool when `available_time <
 | Earnings and issuer events | SEC EDGAR filings, company IR archives, accepted historical earnings calendars | company IR, SEC EDGAR submissions, Nasdaq/other calendars as tentative discovery | vendor calendars for tentative dates only | company/SEC official artifacts outrank calendars; result/guidance facts require visible official artifact |
 | Target-local company news | Alpaca News when the target is covered, plus SEC/company IR for official issuer facts | Alpaca News for target-scoped headline discovery; SEC/company IR for official issuer facts | GDELT only as corroborating broad-context evidence, not the primary ticker/company-news route | ticker-scoped news is target-local evidence; broad macro/geopolitical context should be represented by separate event/regime rows instead of substituting for company-news coverage |
 | Macro / political / war / geopolitical news regimes | GDELT raw point-in-time files plus official action archives where available | GDELT monitoring/API enrichment plus official government, sanctions, defense, diplomatic, and high-quality news sources where available | Reuters/AP/Bloomberg/WSJ/FT style sources and official refs as evidence; BigQuery diagnostics only | GDELT is a broad event-regime/news-topic source, not a single-stock headline source; promotion requires reviewed topic-frequency/regime evidence and decay rules |
-| Index reconstitution / rebalance | index provider announcements, methodology calendars, archived PDF/list files | FTSE Russell/LSEG, Nasdaq indexes, MSCI, S&P DJI official announcements/calendars | provider/member files where licensed and approved | calendar window can be known before constituent/result files; membership changes require official announcement visibility |
+| Index reconstitution / rebalance | index provider announcements, methodology calendars, archived PDF/list files | Nasdaq Global Indexes for Nasdaq-100; S&P DJI for S&P 500 and Dow Jones Industrial Average | provider/member files where licensed and approved; ETF issuer pages only as impact-chain corroboration, never source of truth | Nasdaq-100 methodology supports scheduled annual reconstitution and quarterly rebalance shells; S&P 500 supports quarterly maintenance/rebalance windows but constituent changes require S&P DJI announcement visibility; DJIA has no fixed constituent reconstitution calendar and relies on S&P DJI announcements |
 | Persistent event regimes | high-frequency reviewed news-topic timelines plus official action archives where available | high-frequency reviewed news-topic monitoring plus official action feeds/pages where available | Reuters/AP/Bloomberg/WSJ/FT style sources and official refs as evidence | same-day news is not required after regime is active; topic-frequency promotion must be agent-reviewed and decay-rule backed |
 
 ## Attribution Source Routing
@@ -96,6 +96,13 @@ Source responsibilities:
 - sector/theme/peer route: GDELT topic evidence, sector ETF/peer-basket context, official sector/regulatory sources, and source-entity evidence for external leader or peer events;
 - external leader/peer route: Alpaca News, SEC EDGAR, company IR, and official issuer materials for the leader or peer entity, plus a scope-support ref showing the target transmission channel;
 - target-local route: Alpaca News, SEC EDGAR, company IR, exchange/regulatory notices, official issuer artifacts, and accepted analyst/news refs for the target entity.
+
+Index rebalance routing is limited to the accepted U.S. headline index set:
+
+- Nasdaq-100: generate scheduled observation shells from Nasdaq Global Indexes methodology calendars; actual adds/deletes require Nasdaq official announcement evidence.
+- S&P 500: generate quarterly maintenance/rebalance-window shells from S&P DJI methodology/index-page facts; actual additions/deletions require S&P DJI announcement evidence.
+- Dow Jones Industrial Average: do not generate fixed constituent-reconstitution shells because the headline index changes as needed; monitor S&P DJI announcements and preserve announced effective dates when visible.
+- ETF issuers such as QQQ, SPY, and DIA can support impact-chain analysis, but they are not canonical index membership or rebalance sources.
 
 Examples:
 

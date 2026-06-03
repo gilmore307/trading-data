@@ -25,7 +25,7 @@ FEED = "08_feed_sec_company_financials"
 DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_DATA_KINDS = {"sec_submission", "sec_company_fact", "sec_company_concept", "sec_xbrl_frame", "sec_filing_document"}
 FIELD_ORDER = {
-    "sec_submission": ["cik", "company_name", "accession_number", "filing_date", "report_date", "form", "primary_document", "primary_doc_description"],
+    "sec_submission": ["cik", "company_name", "accession_number", "filing_date", "report_date", "acceptance_datetime", "form", "primary_document", "primary_doc_description"],
     "sec_company_fact": ["cik", "entity_name", "taxonomy", "tag", "label", "description", "unit", "fy", "fp", "form", "filed", "frame", "end", "value", "accession_number"],
     "sec_company_concept": ["cik", "entity_name", "taxonomy", "tag", "label", "description", "unit", "fy", "fp", "form", "filed", "frame", "end", "value", "accession_number"],
     "sec_xbrl_frame": ["taxonomy", "tag", "unit", "frame", "cik", "entity_name", "loc", "end", "value", "accession_number"],
@@ -204,7 +204,7 @@ def normalize_rows(fetched: FetchedSecPayload, *, params: Mapping[str, Any] | No
             def pick(key: str) -> Any:
                 values = recent.get(key, [])
                 return values[idx] if isinstance(values, list) and idx < len(values) else None
-            rows.append({"cik": fetched.cik, "company_name": payload.get("name"), "accession_number": accession, "filing_date": pick("filingDate"), "report_date": pick("reportDate"), "form": pick("form"), "primary_document": pick("primaryDocument"), "primary_doc_description": pick("primaryDocDescription")})
+            rows.append({"cik": fetched.cik, "company_name": payload.get("name"), "accession_number": accession, "filing_date": pick("filingDate"), "report_date": pick("reportDate"), "acceptance_datetime": pick("acceptanceDateTime"), "form": pick("form"), "primary_document": pick("primaryDocument"), "primary_doc_description": pick("primaryDocDescription")})
         return rows
     if data_kind == "sec_company_fact":
         rows: list[dict[str, Any]] = []

@@ -65,6 +65,7 @@ Installed entrypoints mirror package modules:
 | ThetaData option selection snapshot | `trading-data-09-feed-thetadata-option-selection-snapshot` / `python -m data_feed.09_feed_thetadata_option_selection_snapshot` | final option-chain snapshot artifact |
 | ThetaData option primary tracking | `trading-data-10-feed-thetadata-option-primary-tracking` / `python -m data_feed.10_feed_thetadata_option_primary_tracking` | final `option_bar.csv` for a supplied contract |
 | ThetaData option event timeline | `trading-data-11-feed-thetadata-option-event-timeline` / `python -m data_feed.11_feed_thetadata_option_event_timeline` | event CSV plus compact per-event detail JSON |
+| Official calendar discovery | `trading-data-12-feed-official-calendar-discovery` / `python -m data_feed.12_feed_official_calendar_discovery` | official calendar artifacts for `calendar_observation` |
 
 ## Browser-Scraped Web Feeds
 
@@ -123,6 +124,14 @@ Output files:
 Calendar observations are not Layer 10 event-pool rows. They preserve scheduling clocks, source priority, lifecycle class, certainty, and payload refs so Layer 10 can later promote only relevant observations into focused event acquisition or attribution. Nasdaq earnings-calendar rows remain tentative `earnings_calendar` shells with `result_fields_not_available`; Trading Economics rows remain macro calendar/value source observations; option-expiry and market-session rows are rule-backed market-structure observations until official sources or Layer 10 promotion add stronger evidence.
 
 Optional artifact inputs are `--official-exchange-calendar`, `--index-calendar`, `--release-calendar`, and `--trading-economics-calendar`. Exchange-calendar artifacts preserve official holiday and early-close rows; index-calendar artifacts preserve official methodology or announcement rows. Index-calendar expansion is limited to Nasdaq-100, S&P 500, and Dow Jones Industrial Average. Nasdaq-100 may use Nasdaq Global Indexes methodology calendars for scheduled shells and Nasdaq announcements for membership results. S&P 500 may use S&P DJI methodology/index facts for quarterly maintenance windows and S&P DJI announcements for additions/deletions. DJIA has no fixed constituent-reconstitution schedule, so only S&P DJI announcement artifacts should create constituent-change observations. ETF issuer pages are outside this source route.
+
+`12_feed_official_calendar_discovery` is the feed-level entrypoint for official or reviewed calendar artifacts:
+
+- Nasdaq earnings calendar rows become tentative `release_calendar.csv` shells;
+- Nasdaq Global Indexes and S&P DJI announcement rows become `index_calendar.csv`;
+- NYSE/Nasdaq official holiday and early-close rows become `official_exchange_calendar.csv`.
+
+These artifacts remain source-shell inputs. Scheduler registration and Layer 10 promotion are separate manager/model decisions.
 
 ## Implementation Rules
 

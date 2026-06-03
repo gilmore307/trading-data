@@ -158,6 +158,21 @@ INTERFACES: dict[str, DataKindInterface] = {
         None, "local/artifact", {"start_date": "2026-06-01", "end_date": "2026-07-01"},
         ("Unified source-shell layer for market sessions, option expiry, official exchange calendars, headline index methodology/announcement rows, TE macro rows, and calendar_discovery release_calendar artifacts; Layer 10 promotion is required before event-pool admission.",),
     ),
+    "nasdaq_earnings_calendar": DataKindInterface(
+        "nasdaq_earnings_calendar", "nasdaq", "12_feed_official_calendar_discovery", "GET Nasdaq calendar earnings endpoint or reviewed local artifact",
+        "https://www.nasdaq.com/market-activity/earnings", "web/file", {"date": "2026-06-05", "symbols": ["AAPL"]},
+        ("Tentative earnings discovery shell only; SEC/company official artifacts outrank calendar rows for result and guidance facts.",),
+    ),
+    "official_index_announcement": DataKindInterface(
+        "official_index_announcement", "nasdaq_global_indexes_or_sp_dow_jones_indices", "12_feed_official_calendar_discovery", "official index-provider announcement URL or reviewed text artifact",
+        None, "web/file", {"index_symbol": "NDX"},
+        ("Accepted only for Nasdaq-100, S&P 500, and DJIA provider announcements; ETF issuer pages are outside this route.",),
+    ),
+    "official_exchange_calendar": DataKindInterface(
+        "official_exchange_calendar", "nyse_or_nasdaq", "12_feed_official_calendar_discovery", "official exchange calendar URL or reviewed local artifact",
+        None, "web/file", {"venue": "NYSE"},
+        ("Official holiday and early-close source artifact for calendar_observation; no Layer 10 event admission by itself.",),
+    ),
     "etf_holding_snapshot": DataKindInterface(
         "etf_holding_snapshot", "etf_issuer_holdings", "06_feed_etf_holdings", "issuer-published holdings file/page", None, "web/file", {"etf_symbol": "VGT", "issuer": "vanguard"},
         ("Requires issuer-specific adapters and user-owned ETF-symbol-to-issuer mapping; no universal ETF holdings API assumed.",),

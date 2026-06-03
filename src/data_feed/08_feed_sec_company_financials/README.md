@@ -37,6 +37,7 @@ Rules:
 
 - Use official SEC endpoints only by default.
 - Automated requests must send an identifying SEC User-Agent.
+- `sec_submission` preserves SEC `acceptanceDateTime` when the submissions API provides it; this is the filing visibility clock for realtime issuer-event checks.
 - Full raw SEC JSON responses are not persisted by default because `companyfacts` can be large.
 - `sec_filing_document` is the explicit exception: the requested official document text is persisted as a reviewed artifact because downstream guidance/result interpretation needs source text and provenance.
 - This feed does not normalize GAAP facts into model-ready financial statements; that belongs to a reviewed model/financials transformation boundary.

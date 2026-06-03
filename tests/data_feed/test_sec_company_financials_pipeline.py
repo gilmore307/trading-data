@@ -76,13 +76,17 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
     def test_submission_rows_flatten_recent_filings(self):
         payload = {
             "name": "Apple Inc.",
-            "filings": {"recent": {"accessionNumber": ["a1"], "filingDate": ["2024-01-01"], "reportDate": ["2023-12-31"], "form": ["10-K"], "primaryDocument": ["a.htm"], "primaryDocDescription": ["10-K"]}},
+            "filings": {"recent": {"accessionNumber": ["a1"], "filingDate": ["2024-01-01"], "reportDate": ["2023-12-31"], "acceptanceDateTime": ["2024-01-01T16:02:03.000Z"], "form": ["10-K"], "primaryDocument": ["a.htm"], "primaryDocDescription": ["10-K"]}},
         }
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "08_feed_sec_company_financials_task_sub", "feed": "08_feed_sec_company_financials", "params": {"data_kind": "sec_submission", "cik": "320193"}, "output_root": str(Path(tmp) / "task")}
             result = run(task_key, run_id="run", client=FakeSecClient(payload), client_is_fixture=True, sec_user_agent="test")
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_submission"], 1)
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "sec_submission.csv"
+            with saved.open(newline="", encoding="utf-8") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["acceptance_datetime"], "2024-01-01T16:02:03.000Z")
 
     def test_filing_document_fetch_saves_metadata_and_text_artifact(self):
         payload = "<html><body>Company reports earnings and updates outlook.</body></html>"

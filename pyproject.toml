@@ -26,6 +26,7 @@ trading-data-06-feed-etf-holdings = "data_feed.06_feed_etf_holdings.__main__:mai
 trading-data-09-feed-thetadata-option-selection-snapshot = "data_feed.09_feed_thetadata_option_selection_snapshot.__main__:main"
 trading-data-10-feed-thetadata-option-primary-tracking = "data_feed.10_feed_thetadata_option_primary_tracking.__main__:main"
 trading-data-11-feed-thetadata-option-event-timeline = "data_feed.11_feed_thetadata_option_event_timeline.__main__:main"
+trading-data-12-feed-official-calendar-discovery = "data_feed.12_feed_official_calendar_discovery.__main__:main"
 trading-data-m01-market-regime-data-acquisition = "data_source.m01_market_regime_data_acquisition.__main__:main"
 trading-data-m02-sector-context-data-acquisition = "data_source.m02_sector_context_data_acquisition.__main__:main"
 trading-data-m03-target-state-vector-data-acquisition = "data_source.m03_target_state_vector_data_acquisition.__main__:main"

@@ -26,7 +26,7 @@ Accepted future index-calendar source routing:
 - Nasdaq-100 scheduled annual reconstitution and quarterly rebalance shells may be derived from Nasdaq Global Indexes methodology calendars; actual membership changes need Nasdaq official announcement artifacts.
 - S&P 500 quarterly maintenance/rebalance windows may be derived from S&P DJI methodology/index facts; actual additions and deletions need S&P DJI announcement artifacts.
 - Dow Jones Industrial Average constituent changes must not be synthesized from a fixed schedule because the headline index changes as needed; use S&P DJI announcement artifacts with their visible effective dates.
-- QQQ, SPY, DIA, and other ETF issuer pages are not canonical index-calendar sources. They may only corroborate forced-flow or impact-chain analysis after the index-provider source exists.
+- ETF issuer pages are outside the index-calendar source route.
 
 Current non-goals:
 

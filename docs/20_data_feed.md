@@ -104,6 +104,24 @@ Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-l
 
 The visible calendar request pins the page timezone to `America/New_York`; saved `event_time` values are New York local macro-release times with explicit offsets.
 
+## Calendar Observations
+
+`calendar_observation` is the unified source-shell layer for scheduled calendar facts. It can be built from accepted inputs such as deterministic market-session rows, deterministic option-expiry/OPEX windows, Trading Economics macro calendar rows, and `calendar_discovery` `release_calendar.csv` artifacts including Nasdaq earnings calendar rows.
+
+The builder is:
+
+```bash
+PYTHONPATH=src python3 scripts/data/build_calendar_observations.py --start-date 2026-06-01 --end-date 2026-07-01 --include-market-sessions --include-option-expiry --output-dir <output>
+```
+
+Output files:
+
+- `calendar_observation.csv`
+- `calendar_observation.jsonl`
+- `schema.json`
+
+Calendar observations are not Layer 10 event-pool rows. They preserve scheduling clocks, source priority, lifecycle class, certainty, and payload refs so Layer 10 can later promote only relevant observations into focused event acquisition or attribution. Nasdaq earnings-calendar rows remain tentative `earnings_calendar` shells with `result_fields_not_available`; Trading Economics rows remain macro calendar/value source observations; option-expiry and market-session rows are rule-backed market-structure observations until official sources or Layer 10 promotion add stronger evidence.
+
 ## Implementation Rules
 
 - A feed starts as one `pipeline.py` with clear fetch/clean/save/receipt steps; split only when complexity demands it.

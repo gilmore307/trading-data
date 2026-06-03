@@ -10,6 +10,23 @@
 | `trading_data.calendar_market_session` | Venue session state for NYSE, NASDAQ, and `CRYPTO_24_7`. |
 | `trading_data.chart_ohlcv_cache` | Compact visualization OHLCV cache for dashboard charts. |
 
+## Calendar Observation Layer
+
+`calendar_observation` is the source-shell artifact layer for scheduled calendar facts before Layer 10 event-pool promotion. It is built from accepted calendar inputs such as rule-generated market sessions, deterministic option-expiry windows, Trading Economics macro calendar rows, and `calendar_discovery` `release_calendar.csv` artifacts.
+
+Current implemented observation sources:
+
+- `market_session` from deterministic NYSE/NASDAQ/crypto session rows;
+- `weekly_option_expiry`, `monthly_option_expiry`, and `triple_witching` from deterministic Friday/third-Friday rules;
+- `macro_release_calendar` from retained Trading Economics calendar rows;
+- `earnings_calendar` and generic `release_calendar` from `calendar_discovery` artifacts, including Nasdaq earnings-calendar scheduled shells.
+
+Current non-goals:
+
+- do not infer official early closes without an accepted official exchange source;
+- do not synthesize company-action rows, index rebalance rows, or corporate-action rows without accepted source artifacts;
+- do not insert calendar observations directly into Layer 10 event tables.
+
 ## Timewheel Contract
 
 The dashboard Timewheel should consume this substrate through storage read models. It presents:
@@ -25,4 +42,4 @@ Market-state summary belongs on the dashboard Status page. The Timewheel only ne
 
 ## Current Limits
 
-The deterministic installer only upserts `calendar_day` and rule-generated session rows. Trading Economics monthly source rows remain storage source data and do not appear as Timewheel events until a later accepted Layer 10 route explicitly promotes macro events into the event-risk or attention pool. Early closes, official holiday-source refs, interpreted news artifacts, model event markers, replay state bodies, and chart bars require accepted source-specific producers before they appear as populated detail.
+The deterministic installer only upserts `calendar_day` and rule-generated session rows. Trading Economics monthly source rows and `calendar_observation` artifacts remain source data and do not appear as Timewheel events until a later accepted Layer 10 route explicitly promotes relevant observations into the event-risk or attention pool. Early closes, official holiday-source refs, interpreted news artifacts, model event markers, replay state bodies, and chart bars require accepted source-specific producers before they appear as populated detail.

@@ -78,6 +78,31 @@ Future events may enter the global event observation pool when `available_time <
 | Index reconstitution / rebalance | index provider announcements, methodology calendars, archived PDF/list files | FTSE Russell/LSEG, Nasdaq indexes, MSCI, S&P DJI official announcements/calendars | provider/member files where licensed and approved | calendar window can be known before constituent/result files; membership changes require official announcement visibility |
 | Persistent event regimes | high-frequency reviewed news-topic timelines plus official action archives where available | high-frequency reviewed news-topic monitoring plus official action feeds/pages where available | Reuters/AP/Bloomberg/WSJ/FT style sources and official refs as evidence | same-day news is not required after regime is active; topic-frequency promotion must be agent-reviewed and decay-rule backed |
 
+## Attribution Source Routing
+
+Layer 10 post-failure attribution uses source routing by impact layer rather than by ticker alone.
+
+```text
+market/global route
+-> sector / industry / theme / peer / external-leader route
+-> target-local route
+```
+
+The route selected first is the one supported by failure-scope triage, but lower layers remain in scope as residual, contributor, and confounder checks. A market-wide move still requires sector/theme and target-local checks. A sector/theme move still requires target-local checks. A target-local move still requires bounded market/sector confounder checks when timing overlaps or residual evidence is weak.
+
+Source responsibilities:
+
+- market/global route: GDELT raw PIT files and monitoring APIs for macro/geopolitical/news-regime evidence; official macro, policy, sanctions, defense, diplomatic, central-bank, regulator, and agency sources where available; Trading Economics storage rows for accepted macro calendar/value evidence;
+- sector/theme/peer route: GDELT topic evidence, sector ETF/peer-basket context, official sector/regulatory sources, and source-entity evidence for external leader or peer events;
+- external leader/peer route: Alpaca News, SEC EDGAR, company IR, and official issuer materials for the leader or peer entity, plus a scope-support ref showing the target transmission channel;
+- target-local route: Alpaca News, SEC EDGAR, company IR, exchange/regulatory notices, official issuer artifacts, and accepted analyst/news refs for the target entity.
+
+Examples:
+
+- `META` post-earnings failure: target-local earnings/guidance/tax-charge source evidence is primary; GDELT and market sources check AI-capex theme and market confounders.
+- `NVDA` semiconductor selloff: sector/theme evidence and market risk-off evidence may be primary when SMH/peers move with or more than NVDA; NVDA-specific export, legal, or valuation headlines remain target-local contributors.
+- `ORCL` move after an `NVDA` event: the native event source is NVDA, but the target attribution route must preserve AI/cloud/data-center, semiconductor, supplier/customer, index, or risk-appetite transmission evidence before the event can explain ORCL.
+
 ## Standardized Event Observation Requirements
 
 Every event family must preserve the source fields needed for downstream `event_interpretation` and standardized quantification. The shared minimum is:

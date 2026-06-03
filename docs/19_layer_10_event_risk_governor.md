@@ -40,6 +40,47 @@ Layer 10's post-failure attribution route adds one data requirement: event rows 
 
 Layer 10 is the qualitative event-impact and attribution layer, but qualitative decisions belong to `trading-model` and review. `trading-data` supports that route by preserving the evidence needed to test attribution, including co-event grouping and confounder controls when available.
 
+## Post-failure evidence route
+
+Layer 10 post-failure attribution starts with model-side failure-scope triage, not with an unrestricted news search. `trading-data` should acquire and preserve evidence for every layer that remains relevant after triage:
+
+```text
+failure window / residual context
+-> market/global evidence
+-> sector / industry / theme / peer / external-leader evidence
+-> target-local evidence
+-> co-event and confounder evidence refs
+-> model-side attribution packet
+```
+
+The triage result changes search order, budgets, and source weighting, but it does not by itself suppress lower-scope checks:
+
+- market/global abnormality: preserve market/global evidence first, then sector/theme/peer evidence, then target-local evidence for residual and concurrent-event checks;
+- sector/theme abnormality: preserve sector/theme/peer evidence first, then target-local evidence, with a bounded market/global confounder check;
+- target-local abnormality: preserve target-local evidence first, with narrow market/sector confounder checks when timing or residual evidence is ambiguous;
+- mixed/unknown: preserve all three layers until model-side review can rank dominant and contributing causes.
+
+Source routing must follow source ownership:
+
+- market/global events: macro calendar/value rows, official policy/agency sources, GDELT raw point-in-time evidence, persistent-regime status rows, and bounded web-search evidence refs when reviewed;
+- sector/theme/peer events: sector ETF/peer basket context, GDELT topic evidence, official sector or regulator sources, and external leader/peer events such as a large issuer earnings release whose expected impact can transmit through a theme, supply chain, index, or risk-appetite channel;
+- target-local events: Alpaca News, SEC EDGAR, company IR, exchange/regulatory notices, official filings, and accepted analyst/news evidence refs. GDELT may corroborate broad context but is not the primary target-local company-news source.
+
+External leader or peer events must remain represented as event rows for the source entity plus scope-support evidence for the affected target context. For example, an NVDA earnings or export-license event may be native-symbol `NVDA` but relevant to another target through AI infrastructure, semiconductor, cloud-capex, supplier/customer, index, or broad risk-appetite transmission. `trading-data` preserves the event refs and scope-support refs; `trading-model` decides whether the transmission explains the target failure.
+
+GDELT prefiltering must be recall-preserving and field-aware. It selects review candidates; it does not decide attribution. The accepted prefilter sequence is:
+
+1. point-in-time window and manifest coverage;
+2. broad event-family retrieval for macro, rates, FX, credit, war, sanctions, trade policy, regulation, supply chain, commodities, banking stress, elections, and geopolitical escalation;
+3. scope-aware expansion and scoring from market, sector, theme, country, commodity, supply-chain, peer, and target profile metadata without requiring target ticker or company mention;
+4. source-quality checks, canonical URL/title clustering, syndicated-coverage compression, and source-diversity retention;
+5. materiality scoring by novelty, intensity, timing proximity, source credibility, economic linkage, recurrence, and coverage acceleration;
+6. retained audit samples of excluded rows with rejection reasons.
+
+Field weighting matters. Article title, URL, source domain, publication time, and source language are primary prefilter evidence. GKG themes, organizations, locations, and tone are auxiliary evidence and must not be used as naive substring gates; for example, a ticker-like token embedded inside a theme name must not trigger a target candidate by itself. Repeated coverage should be compressed into clusters rather than dropped, because repetition may be either syndicated noise or early regime evidence.
+
+Web search is a bounded corroboration route, not a primary replay source. Search evidence must record query text, retrieval time, result URL, source name, and why the result was needed. Browser-based search may be used for low-volume manual or agent verification when API quotas are constrained, but the evidence ref must remain auditable and cannot replace PIT source artifacts when those are available.
+
 ## Input boundary
 
 Accepted event rows may include:

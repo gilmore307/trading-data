@@ -74,9 +74,10 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(row["consensus"], "200K")
             self.assertEqual(row["te_forecast"], "205K")
 
-    def test_recent_mode_uses_no_auth_cookie(self):
+    def test_recent_mode_uses_new_york_timezone_cookie_without_auth_cookie(self):
         params = {"date_range_mode": "recent", "use_authenticated_cookies": False, "start_date": "2026-05-18", "end_date": "2026-06-12"}
-        self.assertEqual(te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")), "")
+        cookie_header = te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file"))
+        self.assertEqual(cookie_header, "cal-timezone-offset=-240")
 
     def test_recent_monthly_backfill_bucketed_output_writes_event_month_dirs(self):
         html = """

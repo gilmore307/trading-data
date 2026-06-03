@@ -13,6 +13,7 @@ Boundary:
 - Do not populate Layer 10 SQL event rows from this feed without a later reviewed route.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 - Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported in receipt warnings/details.
+- Request the visible calendar page with the `America/New_York` timezone offset; saved `event_time` values are New York local macro-release times with explicit offsets.
 
 Run:
 

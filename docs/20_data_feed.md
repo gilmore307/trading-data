@@ -102,6 +102,8 @@ PYTHONPATH=src python3 scripts/data/run_trading_economics_recent_calendar_refres
 
 Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-live-fetch` it performs one bounded calendar-page request and appends rows into monthly storage buckets without persisting website URL fields. The checked-in systemd timer may schedule this refresh; it is not a Layer 10 event-admission route.
 
+The visible calendar request pins the page timezone to `America/New_York`; saved `event_time` values are New York local macro-release times with explicit offsets.
+
 ## Implementation Rules
 
 - A feed starts as one `pipeline.py` with clear fetch/clean/save/receipt steps; split only when complexity demands it.

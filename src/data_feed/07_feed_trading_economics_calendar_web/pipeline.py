@@ -141,13 +141,13 @@ def _cookie_header(params: Mapping[str, Any], cookie_jar: Path | None = None) ->
             parts = line.split("\t")
             if len(parts) >= 7:
                 cookie_by_name[parts[5]] = parts[6]
+    start, end = _window(params)
+    offset_minutes = int(datetime.combine(start, datetime.min.time(), ET).utcoffset().total_seconds() // 60)
+    cookie_by_name["cal-timezone-offset"] = str(offset_minutes)
     if _range_mode(params) == "custom":
-        start, end = _window(params)
         cookie_by_name["cal-custom-range"] = f"{start.isoformat()} 00:00|{end.isoformat()} 00:00"
         cookie_by_name["calendar-range"] = "0"
         cookie_by_name["calendar-importance"] = str(params.get("importance") or "3")
-        offset_minutes = int(datetime.combine(start, datetime.min.time(), ET).utcoffset().total_seconds() // 60)
-        cookie_by_name["cal-timezone-offset"] = str(offset_minutes)
     return "; ".join(f"{name}={value}" for name, value in cookie_by_name.items())
 
 

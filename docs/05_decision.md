@@ -64,9 +64,12 @@ Current provider/source surfaces:
 - OKX for accepted crypto market data.
 - SEC EDGAR for official company submissions/facts/concepts/frames.
 - ETF issuer pages/files for holdings.
+- GDELT for macro, political, war, geopolitical, sanctions, trade-policy, and other broad event-regime/news-topic evidence. GDELT is not the primary route for single-stock company news.
 - Trading Economics storage snapshot for macro calendar/value rows.
 - Official FOMC and macro release pages for calendar events.
 - FRED/Census/BEA/BLS/Treasury only through reviewed optional economic-data routes.
+
+Individual stock/company news should use Alpaca News as the primary provider route when the target is covered. GDELT may corroborate broad macro or geopolitical context that affects a target, but it should not replace Alpaca News for target-local headline coverage or ticker-scoped company-news discovery.
 
 ## D012 — ThetaData runtime
 

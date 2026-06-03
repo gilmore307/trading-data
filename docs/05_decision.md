@@ -71,6 +71,8 @@ Current provider/source surfaces:
 
 Individual stock/company news should use Alpaca News as the primary provider route when the target is covered. GDELT may corroborate broad macro or geopolitical context that affects a target, but it should not replace Alpaca News for target-local headline coverage or ticker-scoped company-news discovery.
 
+GDELT BigQuery is not an active production or replay acquisition route. It may be used only for bounded diagnostics, schema inspection, provider-parity checks, or one-off sampling when a reviewed task explicitly accepts the cost. The active GDELT direction is local point-in-time raw-file ingestion for historical replay, plus bounded API/enrichment routes for current discovery and human review.
+
 ## D012 — ThetaData runtime
 
 ThetaData runtime lives outside Git under `/root/tools/thetadata-terminal/` and serves Terminal v3 on `127.0.0.1:25503` when started. Connector integration is accepted; a closed local port is a runtime-not-started condition, not a missing connector.

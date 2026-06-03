@@ -132,6 +132,15 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                     "symbols": ["XLK"],
                     "holding_feed_payloads": {},
                 },
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["etf_issuer_holdings"],
+                    "allowed_endpoint_families": ["holdings_file"],
+                    "max_requests": 50,
+                    "max_symbols": 25,
+                    "max_time_window": "31d",
+                },
                 "output_root": str(Path(tmp) / "task"),
             }
             module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
@@ -139,6 +148,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
 
             def fake_fetch(context):
                 captured["params"] = context.task_key["params"]
+                captured["manager_controls"] = context.task_key["manager_controls"]
                 return module.StepResult("succeeded", [], {"feed_payloads": 1}), object()
 
             def fake_clean(context, payload):
@@ -163,6 +173,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(captured["params"]["etf_symbol"], "XLK")
             self.assertEqual(captured["params"]["issuer_name"], "State Street / SPDR")
+            self.assertTrue(captured["manager_controls"]["allow_live_provider_calls"])
             self.assertEqual(writer.calls[0]["rows"][0]["holding_symbol"], "MSFT")
 
     def test_missing_window_holdings_are_reported_as_partial_coverage_not_failure(self):
@@ -187,6 +198,27 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         self.assertEqual(result.details["missing_symbols"], ["ARKF"])
         self.assertIn("accepted_partial_coverage", result.details["missing_symbol_policy"])
         self.assertEqual(result.details["symbol_coverage"]["ARKF"]["outside_window"], 1)
+
+    def test_missing_as_of_date_holdings_are_not_backfilled_from_request_window(self):
+        module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
+        task_key = {"task_id": "m02_missing_as_of", "source": "m02_sector_context_data_acquisition", "params": {"start": "2016-01-01", "end": "2016-02-01"}, "output_root": "/tmp/m02_missing_as_of"}
+        context = module.build_context(task_key, "run")
+        payload = module.SourcePayload(
+            universe_rows=[
+                {"symbol": "CIBR", "issuer_name": "First Trust", "universe_type": "sector_observation_etf", "exposure_type": "cybersecurity"},
+            ],
+            selected_symbols=("CIBR",),
+            raw_rows=[
+                {"etf_symbol": "CIBR", "holding_symbol": "MSFT", "holding_name": "Microsoft Corp", "asset_class": "Equity", "as_of_date": ""},
+            ],
+        )
+
+        result, cleaned = module.clean(context, payload)
+
+        self.assertEqual(cleaned.rows, [])
+        self.assertEqual(result.details["skipped"]["missing_as_of_date"], 1)
+        self.assertEqual(result.details["symbol_coverage"]["CIBR"]["missing_as_of_date"], 1)
+        self.assertEqual(result.details["missing_symbols"], ["CIBR"])
 
 
 if __name__ == "__main__":

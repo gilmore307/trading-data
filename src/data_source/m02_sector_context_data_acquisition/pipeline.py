@@ -138,7 +138,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
             continue
         payload_params = dict(feed_payloads.get(symbol) or {})
         try:
-            raw_rows.extend(_fetch_one_holding_feed(context, row, payload_params, start=start, end=end, evidence=evidence))
+            raw_rows.extend(_fetch_one_holding_feed(context, row, payload_params, params=params, start=start, end=end, evidence=evidence))
         except Exception as exc:
             if not continue_on_error:
                 raise
@@ -176,12 +176,19 @@ def _selected_symbols(universe_rows: list[dict[str, str]], value: Any) -> set[st
     return selected
 
 
-def _fetch_one_holding_feed(context: SourceContext, universe_row: Mapping[str, str], payload_params: Mapping[str, Any], *, start: str, end: str, evidence: list[dict[str, Any]]) -> list[dict[str, str]]:
+def _fetch_one_holding_feed(context: SourceContext, universe_row: Mapping[str, str], payload_params: Mapping[str, Any], *, params: Mapping[str, Any], start: str, end: str, evidence: list[dict[str, Any]]) -> list[dict[str, str]]:
     symbol = str(universe_row["symbol"]).upper()
     issuer = str(universe_row["issuer_name"])
-    params = {**dict(payload_params), "etf_symbol": symbol, "issuer_name": issuer}
-    params.setdefault("as_of_date", start[:10])
-    feed_task = {"task_id": f"{context.task_key.get('task_id')}_{symbol}_holdings", "feed": "06_feed_etf_holdings", "params": params, "output_root": str(context.run_dir / "feed" / symbol)}
+    feed_params = {**dict(payload_params), "etf_symbol": symbol, "issuer_name": issuer}
+    if "allow_live_fetch" in params and "allow_live_fetch" not in feed_params:
+        feed_params["allow_live_fetch"] = params["allow_live_fetch"]
+    feed_task = {
+        "task_id": f"{context.task_key.get('task_id')}_{symbol}_holdings",
+        "feed": "06_feed_etf_holdings",
+        "params": feed_params,
+        "manager_controls": context.task_key.get("manager_controls") or {},
+        "output_root": str(context.run_dir / "feed" / symbol),
+    }
     feed_context = build_holding_context(feed_task, str(context.metadata["run_id"]))
     fetch_result, feed_payload = fetch_holding_feed(feed_context)
     clean_result = clean_holding_feed(feed_context, feed_payload)
@@ -197,15 +204,15 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
     universe_by_symbol = {row["symbol"].upper(): row for row in payload.universe_rows}
     selected_symbols = set(payload.selected_symbols or universe_by_symbol)
     rows: list[dict[str, Any]] = []
-    skipped = {"non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0}
+    skipped = {"non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0, "missing_as_of_date": 0}
     symbol_coverage: dict[str, dict[str, int]] = {
-        symbol: {"raw_rows": 0, "output_rows": 0, "non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0}
+        symbol: {"raw_rows": 0, "output_rows": 0, "non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0, "missing_as_of_date": 0}
         for symbol in selected_symbols
     }
     for raw in payload.raw_rows:
         symbol = str(raw.get("etf_symbol") or "").upper()
         if symbol and symbol not in symbol_coverage:
-            symbol_coverage[symbol] = {"raw_rows": 0, "output_rows": 0, "non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0}
+            symbol_coverage[symbol] = {"raw_rows": 0, "output_rows": 0, "non_us_or_non_equity": 0, "outside_window": 0, "missing_symbol": 0, "missing_as_of_date": 0}
         if symbol:
             symbol_coverage[symbol]["raw_rows"] += 1
         holding_symbol = str(raw.get("holding_symbol") or "").strip().upper()
@@ -214,6 +221,11 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
             skipped["missing_symbol"] += 1
             if symbol:
                 symbol_coverage[symbol]["missing_symbol"] += 1
+            continue
+        if not as_of_date:
+            skipped["missing_as_of_date"] += 1
+            if symbol:
+                symbol_coverage[symbol]["missing_as_of_date"] += 1
             continue
         if as_of_date and (as_of_date < start[:10] or as_of_date >= end[:10]):
             skipped["outside_window"] += 1

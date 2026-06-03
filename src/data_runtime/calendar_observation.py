@@ -214,6 +214,200 @@ def build_option_expiry_observations(start_date: date | str, end_date_exclusive:
     return observations
 
 
+def official_exchange_calendar_observations(paths: Sequence[Path | str]) -> list[CalendarObservation]:
+    """Parse reviewed official exchange calendar artifacts.
+
+    Expected CSV/JSONL fields are intentionally small and source-facing:
+    ``venue``, ``calendar_date``, ``session_status``, optional ``open_time``,
+    ``close_time``, ``holiday_name``, ``source_ref``, and ``retrieved_time``.
+    """
+
+    observations: list[CalendarObservation] = []
+    for path_value in paths:
+        path = Path(path_value)
+        rows: Iterable[Mapping[str, Any]] = _iter_csv(path) if path.suffix == ".csv" else _iter_jsonl(path)
+        for row in rows:
+            venue = str(row.get("venue") or "").upper()
+            calendar_date = str(row.get("calendar_date") or row.get("date") or "")[:10]
+            status = str(row.get("session_status") or row.get("session_type") or "").lower()
+            if venue not in {"NYSE", "NASDAQ"} or not calendar_date or status not in {"closed", "early_close", "regular"}:
+                continue
+            holiday_name = str(row.get("holiday_name") or row.get("event_name") or "").strip()
+            open_time = _parse_datetime(row.get("open_time"))
+            close_time = _parse_datetime(row.get("close_time"))
+            retrieved_time = _parse_datetime(row.get("retrieved_time") or row.get("source_published_time"))
+            observation_time = close_time or open_time or retrieved_time or datetime.combine(_coerce_date(calendar_date), time.min, ET)
+            event_name = holiday_name or f"{venue} official {status.replace('_', ' ')} session"
+            observations.append(
+                CalendarObservation(
+                    observation_id=_stable_id("official_exchange_calendar", venue, calendar_date, status, path),
+                    observation_type=f"official_exchange_{status}",
+                    calendar_source="official_exchange_calendar",
+                    event_name=event_name,
+                    calendar_date=calendar_date,
+                    observation_time=observation_time.isoformat(),
+                    timezone=str(row.get("timezone") or "America/New_York"),
+                    event_window_start=_iso(open_time),
+                    event_window_end=_iso(close_time),
+                    scope_type="market",
+                    venue=venue,
+                    event_phase="session_window",
+                    lifecycle_class="scheduled_market_structure",
+                    source_priority="official_exchange_calendar",
+                    certainty_status="confirmed",
+                    result_status="not_result_source",
+                    source_ref=str(row.get("source_ref") or row.get("source_url") or path),
+                    payload_json=_json(row),
+                )
+            )
+    return observations
+
+
+def build_headline_index_calendar_observations(start_date: date | str, end_date_exclusive: date | str) -> list[CalendarObservation]:
+    """Build accepted headline-index methodology schedule shells.
+
+    Nasdaq-100 has methodology-backed quarterly rebalance and annual
+    reconstitution shells. S&P 500 has quarterly maintenance/rebalance windows.
+    DJIA has no fixed constituent reconstitution schedule, so no DJIA schedule
+    shells are generated here.
+    """
+
+    start = _coerce_date(start_date)
+    end = _coerce_date(end_date_exclusive)
+    observations: list[CalendarObservation] = []
+    for year in range(start.year, end.year + 1):
+        for month in (3, 6, 9, 12):
+            day = _third_friday(year, month)
+            if not (start <= day < end):
+                continue
+            window_start = datetime.combine(day, time(16, 0), ET)
+            window_end = datetime.combine(day + timedelta(days=3), time(9, 30), ET)
+            observations.append(
+                CalendarObservation(
+                    observation_id=_stable_id("nasdaq_100_quarterly_rebalance", day.isoformat()),
+                    observation_type="index_rebalance_window",
+                    calendar_source="nasdaq_global_indexes_methodology",
+                    event_name="Nasdaq-100 quarterly rebalance window",
+                    calendar_date=day.isoformat(),
+                    observation_time=window_start.isoformat(),
+                    timezone="America/New_York",
+                    event_window_start=window_start.isoformat(),
+                    event_window_end=window_end.isoformat(),
+                    scope_type="index",
+                    symbol="NDX",
+                    event_phase="scheduled_shell",
+                    lifecycle_class="scheduled_market_structure",
+                    source_priority="official_index_methodology",
+                    certainty_status="scheduled",
+                    result_status="membership_result_requires_official_announcement",
+                    source_ref="https://indexes.nasdaqomx.com/docs/methodology_NDX.pdf",
+                    payload_json=_json({"index_provider": "Nasdaq Global Indexes", "index": "Nasdaq-100", "schedule_basis": "quarterly_rebalance_methodology"}),
+                )
+            )
+            observations.append(
+                CalendarObservation(
+                    observation_id=_stable_id("sp500_quarterly_maintenance", day.isoformat()),
+                    observation_type="index_rebalance_window",
+                    calendar_source="sp_dow_jones_indices_methodology",
+                    event_name="S&P 500 quarterly maintenance/rebalance window",
+                    calendar_date=day.isoformat(),
+                    observation_time=window_start.isoformat(),
+                    timezone="America/New_York",
+                    event_window_start=window_start.isoformat(),
+                    event_window_end=window_end.isoformat(),
+                    scope_type="index",
+                    symbol="SPX",
+                    event_phase="scheduled_shell",
+                    lifecycle_class="scheduled_market_structure",
+                    source_priority="official_index_methodology",
+                    certainty_status="scheduled",
+                    result_status="membership_result_requires_official_announcement",
+                    source_ref="https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf",
+                    payload_json=_json({"index_provider": "S&P Dow Jones Indices", "index": "S&P 500", "schedule_basis": "quarterly_maintenance_window"}),
+                )
+            )
+            if month == 12:
+                observations.append(
+                    CalendarObservation(
+                        observation_id=_stable_id("nasdaq_100_annual_reconstitution", day.isoformat()),
+                        observation_type="index_reconstitution_window",
+                        calendar_source="nasdaq_global_indexes_methodology",
+                        event_name="Nasdaq-100 annual reconstitution window",
+                        calendar_date=day.isoformat(),
+                        observation_time=window_start.isoformat(),
+                        timezone="America/New_York",
+                        event_window_start=window_start.isoformat(),
+                        event_window_end=window_end.isoformat(),
+                        scope_type="index",
+                        symbol="NDX",
+                        event_phase="scheduled_shell",
+                        lifecycle_class="scheduled_market_structure",
+                        source_priority="official_index_methodology",
+                        certainty_status="scheduled",
+                        result_status="membership_result_requires_official_announcement",
+                        source_ref="https://indexes.nasdaqomx.com/docs/methodology_NDX.pdf",
+                        payload_json=_json({"index_provider": "Nasdaq Global Indexes", "index": "Nasdaq-100", "schedule_basis": "annual_reconstitution_methodology"}),
+                    )
+                )
+    return observations
+
+
+def index_calendar_observations(paths: Sequence[Path | str]) -> list[CalendarObservation]:
+    """Parse reviewed Nasdaq/S&P DJI index methodology or announcement artifacts."""
+
+    accepted_sources = {
+        "nasdaq_global_indexes_methodology": ("NDX", "Nasdaq Global Indexes", "scheduled"),
+        "nasdaq_global_indexes_announcement": ("NDX", "Nasdaq Global Indexes", "confirmed"),
+        "sp_dow_jones_indices_methodology": ("SPX", "S&P Dow Jones Indices", "scheduled"),
+        "sp_dow_jones_indices_announcement": ("", "S&P Dow Jones Indices", "confirmed"),
+    }
+    observations: list[CalendarObservation] = []
+    for path_value in paths:
+        path = Path(path_value)
+        rows: Iterable[Mapping[str, Any]] = _iter_csv(path) if path.suffix == ".csv" else _iter_jsonl(path)
+        for row in rows:
+            calendar_source = str(row.get("calendar_source") or "").strip()
+            if calendar_source not in accepted_sources:
+                continue
+            default_symbol, provider, default_certainty = accepted_sources[calendar_source]
+            index_symbol = str(row.get("index_symbol") or default_symbol).upper()
+            if index_symbol not in {"NDX", "SPX", "DJIA", "DJI"}:
+                continue
+            if index_symbol in {"DJIA", "DJI"} and calendar_source.endswith("_methodology"):
+                continue
+            effective_time = _parse_datetime(row.get("effective_time") or row.get("event_time") or row.get("event_window_start"))
+            announcement_time = _parse_datetime(row.get("announcement_time") or row.get("source_published_time") or row.get("available_time"))
+            if effective_time is None and announcement_time is None:
+                continue
+            event_dt = effective_time or announcement_time
+            event_type = str(row.get("event_type") or "index_rebalance_window").strip() or "index_rebalance_window"
+            event_name = str(row.get("event_name") or f"{index_symbol} {event_type.replace('_', ' ')}").strip()
+            result_status = str(row.get("result_status") or ("membership_result_available" if "announcement" in calendar_source else "membership_result_requires_official_announcement"))
+            observations.append(
+                CalendarObservation(
+                    observation_id=_stable_id("index_calendar", calendar_source, index_symbol, event_type, event_dt.isoformat(), path),
+                    observation_type=event_type,
+                    calendar_source=calendar_source,
+                    event_name=event_name,
+                    calendar_date=event_dt.date().isoformat(),
+                    observation_time=event_dt.isoformat(),
+                    timezone=str(row.get("timezone") or "America/New_York"),
+                    event_window_start=_iso(_parse_datetime(row.get("event_window_start")) or effective_time),
+                    event_window_end=_iso(_parse_datetime(row.get("event_window_end")) or effective_time),
+                    scope_type="index",
+                    symbol="DJIA" if index_symbol == "DJI" else index_symbol,
+                    event_phase=str(row.get("event_phase") or ("announced_result" if "announcement" in calendar_source else "scheduled_shell")),
+                    lifecycle_class="scheduled_market_structure",
+                    source_priority="official_index_announcement" if "announcement" in calendar_source else "official_index_methodology",
+                    certainty_status=str(row.get("certainty_status") or default_certainty),
+                    result_status=result_status,
+                    source_ref=str(row.get("source_ref") or row.get("source_url") or path),
+                    payload_json=_json({"index_provider": provider, **dict(row)}),
+                )
+            )
+    return observations
+
+
 def release_calendar_observations(paths: Sequence[Path | str]) -> list[CalendarObservation]:
     observations: list[CalendarObservation] = []
     for path_value in paths:
@@ -324,8 +518,11 @@ def write_observations(observations: Sequence[CalendarObservation], output_dir: 
 __all__ = [
     "CALENDAR_OBSERVATION_FIELDS",
     "CalendarObservation",
+    "build_headline_index_calendar_observations",
     "build_market_session_observations",
     "build_option_expiry_observations",
+    "index_calendar_observations",
+    "official_exchange_calendar_observations",
     "release_calendar_observations",
     "trading_economics_observations",
     "sort_observations",

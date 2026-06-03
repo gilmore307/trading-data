@@ -156,7 +156,7 @@ INTERFACES: dict[str, DataKindInterface] = {
     "calendar_observation": DataKindInterface(
         "calendar_observation", "calendar_source_shells", "data_runtime.calendar_observation", "local source-shell builder from accepted calendar artifacts",
         None, "local/artifact", {"start_date": "2026-06-01", "end_date": "2026-07-01"},
-        ("Unified source-shell layer for market sessions, option expiry, TE macro rows, and calendar_discovery release_calendar artifacts; Layer 10 promotion is required before event-pool admission.",),
+        ("Unified source-shell layer for market sessions, option expiry, official exchange calendars, headline index methodology/announcement rows, TE macro rows, and calendar_discovery release_calendar artifacts; Layer 10 promotion is required before event-pool admission.",),
     ),
     "etf_holding_snapshot": DataKindInterface(
         "etf_holding_snapshot", "etf_issuer_holdings", "06_feed_etf_holdings", "issuer-published holdings file/page", None, "web/file", {"etf_symbol": "VGT", "issuer": "vanguard"},

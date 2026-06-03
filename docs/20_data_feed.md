@@ -106,12 +106,12 @@ The visible calendar request pins the page timezone to `America/New_York`; saved
 
 ## Calendar Observations
 
-`calendar_observation` is the unified source-shell layer for scheduled calendar facts. It can be built from accepted inputs such as deterministic market-session rows, deterministic option-expiry/OPEX windows, Trading Economics macro calendar rows, and `calendar_discovery` `release_calendar.csv` artifacts including Nasdaq earnings calendar rows.
+`calendar_observation` is the unified source-shell layer for scheduled calendar facts. It can be built from accepted inputs such as deterministic market-session rows, deterministic option-expiry/OPEX windows, official exchange calendar artifacts, headline index methodology/announcement artifacts, Trading Economics macro calendar rows, and `calendar_discovery` `release_calendar.csv` artifacts including Nasdaq earnings calendar rows.
 
 The builder is:
 
 ```bash
-PYTHONPATH=src python3 scripts/data/build_calendar_observations.py --start-date 2026-06-01 --end-date 2026-07-01 --include-market-sessions --include-option-expiry --output-dir <output>
+PYTHONPATH=src python3 scripts/data/build_calendar_observations.py --start-date 2026-06-01 --end-date 2026-07-01 --include-market-sessions --include-option-expiry --include-headline-index-calendar --output-dir <output>
 ```
 
 Output files:
@@ -122,7 +122,7 @@ Output files:
 
 Calendar observations are not Layer 10 event-pool rows. They preserve scheduling clocks, source priority, lifecycle class, certainty, and payload refs so Layer 10 can later promote only relevant observations into focused event acquisition or attribution. Nasdaq earnings-calendar rows remain tentative `earnings_calendar` shells with `result_fields_not_available`; Trading Economics rows remain macro calendar/value source observations; option-expiry and market-session rows are rule-backed market-structure observations until official sources or Layer 10 promotion add stronger evidence.
 
-Index-calendar expansion is limited to Nasdaq-100, S&P 500, and Dow Jones Industrial Average. Nasdaq-100 may use Nasdaq Global Indexes methodology calendars for scheduled shells and Nasdaq announcements for membership results. S&P 500 may use S&P DJI methodology/index facts for quarterly maintenance windows and S&P DJI announcements for additions/deletions. DJIA has no fixed constituent-reconstitution schedule, so only S&P DJI announcement artifacts should create constituent-change observations. ETF issuer pages are outside this source route.
+Optional artifact inputs are `--official-exchange-calendar`, `--index-calendar`, `--release-calendar`, and `--trading-economics-calendar`. Exchange-calendar artifacts preserve official holiday and early-close rows; index-calendar artifacts preserve official methodology or announcement rows. Index-calendar expansion is limited to Nasdaq-100, S&P 500, and Dow Jones Industrial Average. Nasdaq-100 may use Nasdaq Global Indexes methodology calendars for scheduled shells and Nasdaq announcements for membership results. S&P 500 may use S&P DJI methodology/index facts for quarterly maintenance windows and S&P DJI announcements for additions/deletions. DJIA has no fixed constituent-reconstitution schedule, so only S&P DJI announcement artifacts should create constituent-change observations. ETF issuer pages are outside this source route.
 
 ## Implementation Rules
 

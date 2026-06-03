@@ -5,8 +5,11 @@ import unittest
 from pathlib import Path
 
 from data_runtime.calendar_observation import (
+    build_headline_index_calendar_observations,
     build_market_session_observations,
     build_option_expiry_observations,
+    index_calendar_observations,
+    official_exchange_calendar_observations,
     release_calendar_observations,
     trading_economics_observations,
     write_observations,
@@ -27,6 +30,73 @@ class CalendarObservationTests(unittest.TestCase):
         self.assertEqual(rows[0].calendar_date, "2026-06-19")
         self.assertEqual(rows[0].observation_type, "triple_witching")
         self.assertEqual(rows[0].result_status, "not_result_source")
+
+    def test_maps_official_exchange_calendar_artifact(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            path = Path(raw_tmp) / "official_exchange_calendar.csv"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["venue", "calendar_date", "session_status", "open_time", "close_time", "holiday_name", "source_ref"])
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "venue": "NYSE",
+                        "calendar_date": "2026-11-27",
+                        "session_status": "early_close",
+                        "open_time": "2026-11-27T09:30:00-05:00",
+                        "close_time": "2026-11-27T13:00:00-05:00",
+                        "holiday_name": "Day after Thanksgiving",
+                        "source_ref": "https://www.nyse.com/markets/hours-calendars",
+                    }
+                )
+            rows = official_exchange_calendar_observations([path])
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0].observation_type, "official_exchange_early_close")
+            self.assertEqual(rows[0].certainty_status, "confirmed")
+            self.assertEqual(rows[0].venue, "NYSE")
+
+    def test_builds_headline_index_schedule_without_djia_shells(self):
+        rows = build_headline_index_calendar_observations("2026-12-01", "2026-12-31")
+        by_symbol = {row.symbol for row in rows}
+        by_type = {row.observation_type for row in rows}
+        self.assertIn("NDX", by_symbol)
+        self.assertIn("SPX", by_symbol)
+        self.assertNotIn("DJIA", by_symbol)
+        self.assertIn("index_reconstitution_window", by_type)
+        self.assertIn("index_rebalance_window", by_type)
+
+    def test_maps_index_calendar_announcements_and_rejects_etf_sources(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            path = Path(raw_tmp) / "index_calendar.csv"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["calendar_source", "index_symbol", "event_type", "event_name", "announcement_time", "effective_time", "source_ref"])
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "calendar_source": "sp_dow_jones_indices_announcement",
+                        "index_symbol": "DJIA",
+                        "event_type": "index_constituent_change",
+                        "event_name": "DJIA constituent change",
+                        "announcement_time": "2026-05-01T17:15:00-04:00",
+                        "effective_time": "2026-05-04T09:30:00-04:00",
+                        "source_ref": "https://www.spglobal.com/spdji/",
+                    }
+                )
+                writer.writerow(
+                    {
+                        "calendar_source": "etf_issuer_page",
+                        "index_symbol": "QQQ",
+                        "event_type": "index_constituent_change",
+                        "event_name": "ETF issuer row must not become index calendar",
+                        "announcement_time": "2026-05-01T17:15:00-04:00",
+                        "effective_time": "2026-05-04T09:30:00-04:00",
+                        "source_ref": "https://example.invalid/qqq",
+                    }
+                )
+            rows = index_calendar_observations([path])
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0].symbol, "DJIA")
+            self.assertEqual(rows[0].source_priority, "official_index_announcement")
+            self.assertEqual(rows[0].result_status, "membership_result_available")
 
     def test_maps_nasdaq_release_calendar_to_tentative_earnings_shell(self):
         with tempfile.TemporaryDirectory() as raw_tmp:

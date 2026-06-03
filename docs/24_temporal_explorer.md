@@ -18,6 +18,9 @@ Current implemented observation sources:
 
 - `market_session` from deterministic NYSE/NASDAQ/crypto session rows;
 - `weekly_option_expiry`, `monthly_option_expiry`, and `triple_witching` from deterministic Friday/third-Friday rules;
+- official NYSE/NASDAQ holiday, closure, and early-close rows from accepted official exchange calendar artifacts;
+- Nasdaq-100 and S&P 500 methodology-backed index schedule shells from the accepted headline-index route;
+- official Nasdaq/S&P DJI index announcement rows from accepted `index_calendar` artifacts;
 - `macro_release_calendar` from retained Trading Economics calendar rows;
 - `earnings_calendar` and generic `release_calendar` from `calendar_discovery` artifacts, including Nasdaq earnings-calendar scheduled shells.
 
@@ -32,6 +35,7 @@ Current non-goals:
 
 - do not infer official early closes without an accepted official exchange source;
 - do not synthesize company-action rows, index rebalance result rows, or corporate-action rows without accepted source artifacts;
+- do not synthesize Dow Jones Industrial Average fixed reconstitution windows;
 - do not insert calendar observations directly into Layer 10 event tables.
 
 ## Timewheel Contract

@@ -9,3 +9,8 @@ source maintenance:
 
 The service writes source rows/artifacts only. It must not persist Trading
 Economics website URLs or populate Layer 10 SQL event rows.
+
+Optional environment overrides belong in `/etc/default/trading-data-calendar-maintenance`.
+`TRADING_DATA_CALENDAR_SYMBOLS_FILE` may point to a comma- or newline-delimited
+stock-pool file; when unset, the Nasdaq earnings schedule refresh stores all
+returned rows for the bounded dates.

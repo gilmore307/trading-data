@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
+import tempfile
 import unittest
 
 from scripts.data.run_calendar_maintenance_refresh import (
@@ -75,7 +77,36 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         self.assertEqual(payload["provider_calls_performed"], 0)
         self.assertFalse(payload["storage_mutation_performed"])
 
+    def test_cli_reads_symbols_file_from_environment(self) -> None:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8") as handle:
+            handle.write("aapl,nvda\n")
+            handle.flush()
+            env = dict(os.environ)
+            env["TRADING_DATA_CALENDAR_SYMBOLS_FILE"] = handle.name
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/data/run_calendar_maintenance_refresh.py",
+                    "--te-start-date",
+                    "2026-06-01",
+                    "--te-end-date",
+                    "2026-06-05",
+                    "--nasdaq-earnings-start-date",
+                    "2026-06-01",
+                    "--nasdaq-earnings-forward-days",
+                    "0",
+                ],
+                check=True,
+                capture_output=True,
+                env=env,
+                text=True,
+            )
+        payload = json.loads(completed.stdout)
+        task_key = payload["components"]["official_calendar_discovery"]["task_keys"][0]
+
+        self.assertEqual(task_key["params"]["symbols"], ["AAPL", "NVDA"])
+        self.assertEqual(payload["provider_calls_performed"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
-

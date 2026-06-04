@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import UTC, date, datetime, timedelta
 from importlib import import_module
 from pathlib import Path
@@ -43,6 +44,11 @@ def _symbols_from_file(path: Path | None) -> list[str]:
         if symbol and symbol not in symbols:
             symbols.append(symbol)
     return symbols
+
+
+def _default_symbols_file() -> Path | None:
+    raw_path = os.environ.get("TRADING_DATA_CALENDAR_SYMBOLS_FILE")
+    return Path(raw_path) if raw_path else None
 
 
 def build_nasdaq_earnings_task_key(
@@ -190,7 +196,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--nasdaq-earnings-start-date", default=None)
     parser.add_argument("--nasdaq-earnings-forward-days", type=int, default=1)
     parser.add_argument("--official-output-root", default=DEFAULT_OFFICIAL_OUTPUT_ROOT)
-    parser.add_argument("--symbols-file", type=Path, default=None)
+    parser.add_argument("--symbols-file", type=Path, default=_default_symbols_file())
     parser.add_argument("--symbol", action="append", default=[])
     return parser.parse_args()
 
@@ -222,4 +228,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

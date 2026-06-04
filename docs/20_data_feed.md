@@ -101,7 +101,7 @@ The recent/future refresh wrapper is:
 PYTHONPATH=src python3 scripts/data/run_calendar_maintenance_refresh.py
 ```
 
-Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-live-fetch` it performs one bounded TE calendar-page request and a bounded Nasdaq earnings schedule refresh, writing source rows/artifacts without Layer 10 event admission. The checked-in `trading-data-calendar-maintenance.timer` may schedule this shared refresh.
+Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-live-fetch` it performs one bounded TE calendar-page request and a bounded Nasdaq earnings schedule refresh, writing source rows/artifacts without Layer 10 event admission. The checked-in `trading-data-calendar-maintenance.timer` may schedule this shared refresh. Set `TRADING_DATA_CALENDAR_SYMBOLS_FILE` in `/etc/default/trading-data-calendar-maintenance` to filter Nasdaq earnings rows to the reviewed stock pool.
 
 The visible calendar request pins the page timezone to `America/New_York`; saved `event_time` values are New York local macro-release times with explicit offsets.
 

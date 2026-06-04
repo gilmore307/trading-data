@@ -14,7 +14,7 @@ Environment=TRADING_DATA_TE_OUTPUT_ROOT=/root/projects/trading-storage/storage/0
 Environment=TRADING_DATA_NASDAQ_EARNINGS_FORWARD_DAYS=1
 Environment=TRADING_DATA_OFFICIAL_CALENDAR_OUTPUT_ROOT=/root/projects/trading-storage/storage/01_source_data/realtime/official_calendar_discovery
 EnvironmentFile=-/etc/default/trading-data-calendar-maintenance
-ExecStart=/usr/bin/python3 /root/projects/trading-data/scripts/data/run_calendar_maintenance_refresh.py \
+ExecStart=/root/projects/trading-manager/.venv/bin/python /root/projects/trading-data/scripts/data/run_calendar_maintenance_refresh.py \
   --te-trailing-days ${TRADING_DATA_TE_TRAILING_DAYS} \
   --te-forward-days ${TRADING_DATA_TE_FORWARD_DAYS} \
   --te-output-root ${TRADING_DATA_TE_OUTPUT_ROOT} \
@@ -26,4 +26,3 @@ PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
-

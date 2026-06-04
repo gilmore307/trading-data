@@ -1,6 +1,11 @@
 # systemd units
 
-`trading-data-te-calendar-refresh.service` and `.timer` run the bounded
-Trading Economics recent/future calendar refresh. The route writes canonical
-storage source rows only; it must not persist website URLs or populate Layer 10
-SQL event rows.
+`trading-data-calendar-maintenance.service` and `.timer` run bounded calendar
+source maintenance:
+
+- Trading Economics recent/future macro calendar refresh into canonical storage
+  source rows;
+- Nasdaq earnings schedule discovery into official calendar artifacts.
+
+The service writes source rows/artifacts only. It must not persist Trading
+Economics website URLs or populate Layer 10 SQL event rows.

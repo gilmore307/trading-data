@@ -98,10 +98,10 @@ storage/01_source_data/monthly_backfill/trading_economics_calendar_web
 The recent/future refresh wrapper is:
 
 ```bash
-PYTHONPATH=src python3 scripts/data/run_trading_economics_recent_calendar_refresh.py
+PYTHONPATH=src python3 scripts/data/run_calendar_maintenance_refresh.py
 ```
 
-Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-live-fetch` it performs one bounded calendar-page request and appends rows into monthly storage buckets without persisting website URL fields. The checked-in systemd timer may schedule this refresh; it is not a Layer 10 event-admission route.
+Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-live-fetch` it performs one bounded TE calendar-page request and a bounded Nasdaq earnings schedule refresh, writing source rows/artifacts without Layer 10 event admission. The checked-in `trading-data-calendar-maintenance.timer` may schedule this shared refresh.
 
 The visible calendar request pins the page timezone to `America/New_York`; saved `event_time` values are New York local macro-release times with explicit offsets.
 

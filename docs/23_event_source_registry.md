@@ -52,7 +52,7 @@ Realtime maintenance should run bounded refreshes:
 - daily or intraday for SEC/company filings, company IR/news, sanctions/trade actions, and persistent-regime status updates when active;
 - event-window refreshes around known expiry, rebalance, macro, or earnings windows.
 
-Official calendar-discovery feed entrypoints are implemented as source-artifact producers, not event-pool writers. `12_feed_official_calendar_discovery` writes Nasdaq earnings calendar, official index announcement, and official exchange calendar artifacts. `08_feed_sec_company_financials` writes SEC submissions and preserves `acceptanceDateTime` as the filing visibility clock.
+Official calendar-discovery feed entrypoints are implemented as source-artifact producers, not event-pool writers. `12_feed_official_calendar_discovery` writes Nasdaq earnings calendar, official index announcement, and official exchange calendar artifacts. `08_feed_sec_company_financials` writes SEC submissions and preserves `acceptanceDateTime` as the filing visibility clock. The shared `trading-data-calendar-maintenance` systemd timer may refresh TE macro rows and Nasdaq earnings schedule artifacts together; index announcements and exchange calendars remain reviewed artifact inputs unless a stable official adapter is accepted.
 
 Realtime rows need certainty flags:
 

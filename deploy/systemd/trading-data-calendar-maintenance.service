@@ -1,0 +1,29 @@
+[Unit]
+Description=Refresh trading calendar source data
+Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/projects/trading-data
+Environment=PYTHONPATH=/root/projects/trading-data/src:/root/projects/trading-data
+Environment=TRADING_DATA_TE_TRAILING_DAYS=7
+Environment=TRADING_DATA_TE_FORWARD_DAYS=35
+Environment=TRADING_DATA_TE_OUTPUT_ROOT=/root/projects/trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web
+Environment=TRADING_DATA_NASDAQ_EARNINGS_FORWARD_DAYS=1
+Environment=TRADING_DATA_OFFICIAL_CALENDAR_OUTPUT_ROOT=/root/projects/trading-storage/storage/01_source_data/realtime/official_calendar_discovery
+EnvironmentFile=-/etc/default/trading-data-calendar-maintenance
+ExecStart=/usr/bin/python3 /root/projects/trading-data/scripts/data/run_calendar_maintenance_refresh.py \
+  --te-trailing-days ${TRADING_DATA_TE_TRAILING_DAYS} \
+  --te-forward-days ${TRADING_DATA_TE_FORWARD_DAYS} \
+  --te-output-root ${TRADING_DATA_TE_OUTPUT_ROOT} \
+  --nasdaq-earnings-forward-days ${TRADING_DATA_NASDAQ_EARNINGS_FORWARD_DAYS} \
+  --official-output-root ${TRADING_DATA_OFFICIAL_CALENDAR_OUTPUT_ROOT} \
+  --execute-live-fetch
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

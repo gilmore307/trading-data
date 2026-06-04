@@ -1,5 +1,6 @@
 # data acquisition scripts
 
+- `run_calendar_maintenance_refresh.py` plans or runs the shared bounded calendar maintenance refresh. It combines Trading Economics recent/future macro calendar maintenance with Nasdaq earnings schedule source-artifact discovery; neither route populates Layer 10 SQL rows.
 - `run_trading_economics_recent_calendar_refresh.py` plans or runs the bounded Trading Economics recent/future calendar refresh. It appends canonical storage source rows only and must not persist website URLs or populate Layer 10 SQL rows.
 - `build_calendar_observations.py` builds unified `calendar_observation` source-shell artifacts from accepted calendar inputs such as market-session rules, option-expiry rules, official exchange calendar artifacts, headline index methodology/announcement artifacts, Trading Economics calendar rows, and `calendar_discovery` `release_calendar.csv` files. These artifacts are scheduling/source observations only; Layer 10 must explicitly promote relevant rows before they become event-pool entries.
 - `install_temporal_explorer_tables.py` installs the provider-neutral Temporal Explorer SQL substrate, upserts deterministic day/session spine rows, and can populate scheduled-event/result/news-index substrate rows from accepted `m10_event_risk_governor_data_acquisition` evidence. It does not call providers or populate chart bars.

@@ -11,7 +11,7 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
         task_key = build_recent_calendar_task_key(start_date="2026-05-18", end_date="2026-06-12")
 
         self.assertEqual(task_key["feed"], "07_feed_trading_economics_calendar_web")
-        self.assertEqual(task_key["output_root"], "storage/monthly_backfill/trading_economics_calendar_web")
+        self.assertEqual(task_key["output_root"], "/root/projects/trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web")
         self.assertEqual(task_key["params"]["date_range_mode"], "recent")
         self.assertTrue(task_key["params"]["monthly_backfill_bucketed_output"])
         self.assertFalse(task_key["params"]["use_authenticated_cookies"])

@@ -1,5 +1,5 @@
 [Unit]
-Description=Periodic Trading Economics recent calendar refresh
+Description=Periodic trading calendar source maintenance
 Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
 
 [Timer]
@@ -7,7 +7,7 @@ OnBootSec=5min
 OnUnitActiveSec=1h
 AccuracySec=30s
 Persistent=true
-Unit=trading-data-te-calendar-refresh.service
+Unit=trading-data-calendar-maintenance.service
 
 [Install]
 WantedBy=timers.target

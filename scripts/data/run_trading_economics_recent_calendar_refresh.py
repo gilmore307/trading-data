@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 FEED = "07_feed_trading_economics_calendar_web"
-DEFAULT_OUTPUT_ROOT = "storage/monthly_backfill/trading_economics_calendar_web"
+DEFAULT_OUTPUT_ROOT = "/root/projects/trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web"
 
 
 def _today_utc() -> datetime:

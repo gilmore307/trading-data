@@ -149,7 +149,7 @@ def build_pool(
             row = rows_by_symbol.setdefault(symbol, PoolRow(symbol=symbol, as_of_date=as_of_date))
             row.name = row.name or _field(raw, NAME_FIELDS)
             row.sector = row.sector or _field(raw, SECTOR_FIELDS)
-            row.source_refs.add(f"tradingview_manual_export:{path}")
+            row.source_refs.add(f"tradingview_screener_snapshot:{path}")
             metrics.setdefault(symbol, {})["volume"] = _number(_field(raw, VOLUME_FIELDS))
             metrics.setdefault(symbol, {})["market_cap"] = _number(_field(raw, MARKET_CAP_FIELDS))
 
@@ -187,14 +187,14 @@ def build_pool(
     receipt = {
         "contract_type": "equity_total_symbol_pool_build_receipt",
         "as_of_date": as_of_date,
-        "tradingview_manual_export_inputs": [str(path) for path in tradingview_csvs],
+        "tradingview_screener_inputs": [str(path) for path in tradingview_csvs],
         "layer2_holdings_inputs": [str(path) for path in layer2_holdings_csvs],
         "optionable_symbols_file": str(optionable_symbols_file) if optionable_symbols_file else None,
         "allow_unknown_optionability": allow_unknown_optionability,
         "input_symbol_count": len(rows_by_symbol),
         "selected_symbol_count": len(selected),
         "excluded_non_optionable_or_unverified_count": len(rows_by_symbol) - len(selected),
-        "boundary_note": "TradingView rows are accepted only as manually exported reviewed CSV inputs, not as automated browser/API collection.",
+        "boundary_note": "TradingView rows are accepted as bounded screener snapshot inputs for calendar/event-monitoring symbol-pool construction.",
     }
     return selected, receipt
 
@@ -207,12 +207,14 @@ def _rank_symbols(metrics: dict[str, dict[str, float | None]], field: str) -> li
 
 
 def write_outputs(rows: list[PoolRow], *, output_csv: Path, symbols_txt: Path, receipt_path: Path, receipt: dict[str, Any]) -> None:
+    symbol_statuses = set(receipt.get("symbols_txt_optionability_statuses") or ["accepted_optionable"])
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     with output_csv.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=OUTPUT_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=OUTPUT_FIELDS, lineterminator="\n")
         writer.writeheader()
         writer.writerows(row.to_csv_row() for row in rows)
-    symbols_txt.write_text("\n".join(row.symbol for row in rows if row.optionable_underlying_status == "accepted_optionable") + ("\n" if rows else ""), encoding="utf-8")
+    symbols = [row.symbol for row in rows if row.optionable_underlying_status in symbol_statuses]
+    symbols_txt.write_text("\n".join(symbols) + ("\n" if symbols else ""), encoding="utf-8")
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
@@ -223,6 +225,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--optionable-symbols-file", type=Path, default=None)
     parser.add_argument("--as-of-date", default=date.today().isoformat())
     parser.add_argument("--allow-unknown-optionability", action="store_true")
+    parser.add_argument("--symbols-include-unknown-optionability", action="store_true")
     parser.add_argument("--output-csv", type=Path, default=DEFAULT_OUTPUT_CSV)
     parser.add_argument("--symbols-txt", type=Path, default=DEFAULT_SYMBOLS_TXT)
     parser.add_argument("--receipt", type=Path, default=DEFAULT_RECEIPT)
@@ -238,7 +241,16 @@ def main() -> int:
         as_of_date=args.as_of_date,
         allow_unknown_optionability=args.allow_unknown_optionability,
     )
-    receipt.update({"output_csv": str(args.output_csv), "symbols_txt": str(args.symbols_txt)})
+    symbol_statuses = ["accepted_optionable"]
+    if args.symbols_include_unknown_optionability:
+        symbol_statuses.append("uncertain_verify_before_use")
+    receipt.update(
+        {
+            "output_csv": str(args.output_csv),
+            "symbols_txt": str(args.symbols_txt),
+            "symbols_txt_optionability_statuses": symbol_statuses,
+        }
+    )
     write_outputs(rows, output_csv=args.output_csv, symbols_txt=args.symbols_txt, receipt_path=args.receipt, receipt=receipt)
     print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0

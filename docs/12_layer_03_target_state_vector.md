@@ -29,7 +29,7 @@ m03_target_state_vector_feature_generation
 
 Current implementation:
 
-- Live Layer 3 receives candidate symbols from the reviewed realtime total-symbol pool and target metadata; historical replay receives them from its frozen point-in-time candidate universe. ETF holdings do not define the ordinary candidate universe.
+- Live Layer 3 receives candidate symbols from the reviewed realtime total-symbol pool and target metadata; historical replay receives them from the fixed historical candidate-universe table seeded from the current realtime pool. ETF holdings do not define the ordinary candidate universe.
 - `src/data_source/m03_target_state_vector_data_acquisition/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.m03_target_state_vector_data_acquisition` rows keyed by `target_candidate_id + timeframe + timestamp`.
 - `src/data_feature/m03_target_state_vector_feature_generation/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
 - `src/data_feature/m03_target_state_vector_feature_generation/sql.py` reads `m03_target_state_vector_data_acquisition` plus optional Layer 1/2 context rows and writes `trading_data.m03_target_state_vector_feature_generation` with JSONB blocks.
@@ -40,7 +40,7 @@ Current implementation:
 Expected inputs are point-in-time artifacts, not future-aware labels:
 
 - manager-issued request parameters: `start`, `end`, candidate universe reference, Layer 1/2 state references, output target, and run metadata;
-- reviewed live realtime-pool candidate rows or frozen historical point-in-time candidate rows, plus target metadata;
+- reviewed live realtime-pool candidate rows or fixed historical replay candidate rows, plus target metadata;
 - target-local 1-minute bars;
 - target liquidity, quote/trade, spread, and dollar-volume evidence when available;
 - `market_context_state` reference from Layer 1;

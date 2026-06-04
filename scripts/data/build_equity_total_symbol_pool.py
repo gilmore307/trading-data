@@ -204,7 +204,7 @@ def build_pool(
         "inactive_symbol_count": len(rows_by_symbol) - len(selected),
         "selected_symbol_count": len(selected),
         "excluded_non_optionable_or_unverified_count": len(rows_by_symbol) - len(selected),
-        "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView volume and market-cap snapshots; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its own point-in-time candidate universe.",
+        "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView volume and market-cap snapshots; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
     }
     return rows, receipt
 

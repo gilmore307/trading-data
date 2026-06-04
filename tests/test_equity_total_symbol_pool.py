@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from pathlib import Path
 
 from scripts.data.build_equity_total_symbol_pool import build_pool
+from scripts.data.build_historical_equity_candidate_universe import build_universe
 from scripts.data.fetch_etf_universe_holdings import collect_holdings
 from scripts.data.fetch_tradingview_equity_screener import fetch_rows
 
@@ -245,6 +246,40 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         self.assertEqual(by_symbol["MSFT"].pool_membership_status, "inactive")
         self.assertEqual(receipt["input_symbol_count"], 2)
         self.assertEqual(receipt["rank_limit"], 1)
+
+    def test_build_historical_candidate_universe_freezes_current_active_pool(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pool = root / "equity_total_symbol_pool.csv"
+            _write_csv(
+                pool,
+                [
+                    "symbol",
+                    "name",
+                    "sector",
+                    "optionable_underlying_status",
+                    "pool_membership_status",
+                    "pool_membership_reason",
+                    "in_recent_week_volume_top300",
+                    "in_market_cap_top300",
+                    "volume_rank",
+                    "market_cap_rank",
+                    "source_refs",
+                    "as_of_date",
+                ],
+                [
+                    {"symbol": "NVDA", "name": "NVIDIA", "sector": "Technology", "optionable_underlying_status": "uncertain_verify_before_use", "pool_membership_status": "active", "pool_membership_reason": "active", "in_recent_week_volume_top300": "true", "in_market_cap_top300": "true", "volume_rank": "8", "market_cap_rank": "1", "source_refs": "fixture", "as_of_date": "2026-06-04"},
+                    {"symbol": "XYZ", "name": "Inactive", "sector": "", "optionable_underlying_status": "no_listed_options_or_unverified", "pool_membership_status": "inactive", "pool_membership_reason": "inactive", "in_recent_week_volume_top300": "false", "in_market_cap_top300": "false", "volume_rank": "", "market_cap_rank": "", "source_refs": "fixture", "as_of_date": "2026-06-04"},
+                ],
+            )
+
+            rows, receipt = build_universe(source_pool_csv=pool, freeze_as_of_date="2026-06-04")
+
+        self.assertEqual([row.symbol for row in rows], ["NVDA"])
+        self.assertEqual(rows[0].replay_candidate_status, "active")
+        self.assertEqual(rows[0].source_pool_as_of_date, "2026-06-04")
+        self.assertEqual(receipt["active_candidate_count"], 1)
+        self.assertIn("not point-in-time historical", receipt["boundary_note"])
 
 
 def _write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> None:

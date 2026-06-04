@@ -15,7 +15,7 @@ class FakeSqlWriter:
         return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
 
 
-class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
+class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
     def test_holdings_window_is_half_open(self):
         module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
         task_key = {"task_id": "m02_window", "source": "m02_sector_context_data_acquisition", "params": {"start": "2026-04-24", "end": "2026-04-25"}, "output_root": "/tmp/m02_window"}
@@ -54,7 +54,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         row = {"available_time": "", "as_of_date": "2026-04-24"}
         self.assertEqual(module._available_time({}, row, "2026-04-24"), "2026-04-27T09:30:00-04:00")
 
-    def test_candidate_builder_holdings_source_writes_filtered_us_equity_holdings(self):
+    def test_etf_holdings_evidence_source_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
             universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
             universe.write_text(
@@ -123,7 +123,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                 encoding="utf-8",
             )
             task_key = {
-                "task_id": "m02_target_candidate_default_feed_test",
+                "task_id": "m02_etf_holdings_default_feed_test",
                 "source": "m02_sector_context_data_acquisition",
                 "params": {
                     "start": "2026-04-24",

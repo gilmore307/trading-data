@@ -21,7 +21,7 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 | Layer | Owns | Examples |
 |---|---|---|
 | Data feeds | Smallest-unit provider/API/web/file access and feed-level normalization. | Alpaca bars/news/liquidity, ThetaData option endpoints, SEC EDGAR, ETF issuer files, official calendar pages. |
-| Data sources | Manager-facing orchestration for accepted model-input or acquisition routes. | `m01_market_regime_data_acquisition`, `m02_sector_context_data_acquisition`, `m03_target_state_vector_data_acquisition`, `m10_event_risk_governor_data_acquisition`, `m09_option_expression_data_acquisition`, `m09_option_expression_data_acquisition_contract_path`. |
+| Data sources | Manager-facing orchestration for accepted model-input or acquisition routes. | `m01_market_regime_data_acquisition`, `m03_target_state_vector_data_acquisition`, `m10_event_risk_governor_data_acquisition`, `m09_option_expression_data_acquisition`, `m09_option_expression_data_acquisition_contract_path`. Retired standalone evidence packages such as `m02_sector_context_data_acquisition` do not define the current candidate route. |
 | Data features | Deterministic layer-ready feature blocks from accepted source outputs. | `m01_market_regime_feature_generation`, `m02_sector_context_feature_generation`, `m03_target_state_vector_feature_generation`, `m10_event_risk_governor_feature_generation`, `m09_option_expression_feature_generation`. |
 | Layer catalog | Maintained Layer 1-9 ownership map for docs/src/CLI/tests. | `src/data_layers/catalog.py`. |
 | Storage helpers | Low-level persistence helpers for reviewed outputs. | SQL writers and receipt-safe metadata helpers. |

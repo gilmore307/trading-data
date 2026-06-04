@@ -62,7 +62,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn('%s::jsonb', insert_calls[0][0])
         self.assertIn('"target_candidate_id"', insert_calls[0][0])
 
-    def test_candidate_rows_bind_direct_sector_or_holdings_sector_symbol(self) -> None:
+    def test_candidate_rows_bind_direct_sector_or_null_sector_symbol(self) -> None:
         cursor = FakeCursor()
 
         sql.fetch_candidate_rows(
@@ -71,37 +71,17 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             source_table="m03_target_state_vector_data_acquisition",
             sector_context_schema="trading_model",
             sector_context_table="m02_sector_context_model_generation",
-            holdings_schema="trading_data",
-            holdings_table="m02_sector_context_data_acquisition",
             source_start="2016-01-01",
             source_end="2016-02-01",
             target_context_mapping_path=None,
         )
 
         statements = "\n".join(statement for statement, _ in cursor.calls)
-        self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", NULL::text, NULL::text)', statements)
+        self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", NULL::text)', statements)
         self.assertIn('l2."sector_or_industry_symbol" = s."symbol"', statements)
         self.assertIn('s."available_time" >= %s', statements)
 
-        cursor = FakeCursor()
-        cursor._one = {"table_ref": "trading_data.m02_sector_context_data_acquisition"}
-        sql.fetch_candidate_rows(
-            cursor,
-            source_schema="trading_data",
-            source_table="m03_target_state_vector_data_acquisition",
-            sector_context_schema="trading_model",
-            sector_context_table="m02_sector_context_model_generation",
-            holdings_schema="custom_data",
-            holdings_table="custom_holdings",
-            target_context_mapping_path=None,
-        )
-
-        statements = "\n".join(statement for statement, _ in cursor.calls)
-        self.assertIn('"custom_data"."custom_holdings"', statements)
-        self.assertIn('h."holding_symbol" = s."symbol"', statements)
-        self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", NULL::text, h."etf_symbol")', statements)
-
-    def test_candidate_rows_use_accepted_target_context_mapping_before_holdings(self) -> None:
+    def test_candidate_rows_use_accepted_target_context_mapping(self) -> None:
         with TemporaryDirectory() as tmp:
             mapping_path = Path(tmp) / "layer_02_target_context_mapping.csv"
             mapping_path.write_text(
@@ -121,8 +101,6 @@ class TargetStateVectorSqlTests(unittest.TestCase):
                 source_table="m03_target_state_vector_data_acquisition",
                 sector_context_schema="trading_model",
                 sector_context_table="m02_sector_context_model_generation",
-                holdings_schema="custom_data",
-                holdings_table="custom_holdings",
                 target_context_mapping_path=mapping_path,
             )
 
@@ -130,7 +108,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         params = [param for _, call_params in cursor.calls for param in call_params]
         self.assertIn("WITH target_context_mapping", statements)
         self.assertIn("mapping_l2.layer2_context_symbol", statements)
-        self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", mapping_l2.layer2_context_symbol, h."etf_symbol")', statements)
+        self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", mapping_l2.layer2_context_symbol)', statements)
         self.assertIn("AAPL", params)
         self.assertIn("XLK", params)
         self.assertNotIn("MSFT", params)

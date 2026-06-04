@@ -1,0 +1,19 @@
+[Unit]
+Description=Refresh realtime equity total-symbol pool
+Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/projects/trading-data
+Environment=PYTHONPATH=/root/projects/trading-data/src:/root/projects/trading-data
+Environment=TRADING_DATA_EQUITY_POOL_PER_RANK_LIMIT=300
+EnvironmentFile=-/etc/default/trading-data-equity-total-symbol-pool-refresh
+ExecStart=/root/projects/trading-manager/.venv/bin/python /root/projects/trading-data/scripts/data/refresh_equity_total_symbol_pool_from_tradingview.py \
+  --per-rank-limit ${TRADING_DATA_EQUITY_POOL_PER_RANK_LIMIT}
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

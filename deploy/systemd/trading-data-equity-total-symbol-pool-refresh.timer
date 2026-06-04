@@ -1,0 +1,13 @@
+[Unit]
+Description=Periodic realtime equity total-symbol pool refresh
+Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+AccuracySec=30s
+Persistent=true
+Unit=trading-data-equity-total-symbol-pool-refresh.service
+
+[Install]
+WantedBy=timers.target

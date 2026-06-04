@@ -32,11 +32,11 @@ These items are intentionally outside the current promote-first historical-train
 - Production hardening policy: provider-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/40_production_hardening.md`.
 - Storage-owned V1 handoff contracts are the production handoff vocabulary; file artifacts and runtime evidence belong under `trading-storage/storage/01_source_data/`.
 - ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.
-- `m02_sector_context_data_acquisition` preserves point-in-time visibility with a conservative next-session-open default when no explicit availability timestamp exists.
+- `m02_sector_context_data_acquisition` is retired from the current ordinary candidate route. ETF holdings may remain standalone source evidence, but they do not define the realtime total pool, Layer 2 feature generation, or historical replay candidates.
 - `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative` with `conservative_fixture_default_not_production_calibrated` until reviewed calibration exists.
 - `price_action` is accepted as a Layer 10 event-risk category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
 - `m03_target_state_vector_data_acquisition` and `m03_target_state_vector_feature_generation` implement deterministic target-local observed-input and feature-block surfaces.
-- Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 materializes `m02_sector_context_data_acquisition` after sector/basket context, while Layer 3 consumes those candidate inputs without owning holdings acquisition.
+- Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 emits sector/context features only; Layer 3 consumes target-local candidate evidence and accepted target-context mappings without relying on ETF holdings acquisition.
 - Event overlay sources are accepted through `m10_event_risk_governor_data_acquisition`, including equity abnormal activity evidence.
 - Option-expression inputs are accepted through `m09_option_expression_data_acquisition` and selected-contract tracking through `m09_option_expression_data_acquisition_contract_path`.
 - Final saved source outputs are CSV or explicitly reviewed compact artifacts; JSONL may exist only as transient run-local evidence.

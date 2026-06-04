@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the reviewed equity total symbol pool from local input artifacts."""
+"""Build the reviewed realtime equity total-symbol pool from TradingView inputs."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from typing import Any, Iterable
 DEFAULT_OUTPUT_CSV = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool.csv")
 DEFAULT_SYMBOLS_TXT = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt")
 DEFAULT_RECEIPT = Path("/root/projects/trading-storage/storage/02_control_plane/runtime/equity_total_symbol_pool/build_receipt.json")
+DEFAULT_RANK_LIMIT = 300
 
 OUTPUT_FIELDS = [
     "symbol",
@@ -23,9 +24,8 @@ OUTPUT_FIELDS = [
     "optionable_underlying_status",
     "pool_membership_status",
     "pool_membership_reason",
-    "in_layer2_etf_holdings",
-    "in_recent_week_volume_top100",
-    "in_market_cap_top100",
+    "in_recent_week_volume_top300",
+    "in_market_cap_top300",
     "volume_rank",
     "market_cap_rank",
     "source_refs",
@@ -37,7 +37,6 @@ NAME_FIELDS = ("name", "Name", "description", "Description", "Company Name")
 SECTOR_FIELDS = ("sector", "Sector")
 VOLUME_FIELDS = ("volume", "Volume", "relative_volume_10d_calc", "Average Volume", "Avg Volume")
 MARKET_CAP_FIELDS = ("market_cap", "marketCap", "Market Cap", "Market capitalization")
-HOLDING_SYMBOL_FIELDS = ("holding_symbol", "Holding Symbol", "symbol", "Symbol", "Ticker")
 
 
 @dataclass
@@ -48,9 +47,8 @@ class PoolRow:
     optionable_underlying_status: str = "uncertain_verify_before_use"
     pool_membership_status: str = "inactive"
     pool_membership_reason: str = "not_evaluated"
-    in_layer2_etf_holdings: bool = False
-    in_recent_week_volume_top100: bool = False
-    in_market_cap_top100: bool = False
+    in_recent_week_volume_top300: bool = False
+    in_market_cap_top300: bool = False
     volume_rank: int | None = None
     market_cap_rank: int | None = None
     source_refs: set[str] = field(default_factory=set)
@@ -64,9 +62,8 @@ class PoolRow:
             "optionable_underlying_status": self.optionable_underlying_status,
             "pool_membership_status": self.pool_membership_status,
             "pool_membership_reason": self.pool_membership_reason,
-            "in_layer2_etf_holdings": str(self.in_layer2_etf_holdings).lower(),
-            "in_recent_week_volume_top100": str(self.in_recent_week_volume_top100).lower(),
-            "in_market_cap_top100": str(self.in_market_cap_top100).lower(),
+            "in_recent_week_volume_top300": str(self.in_recent_week_volume_top300).lower(),
+            "in_market_cap_top300": str(self.in_market_cap_top300).lower(),
             "volume_rank": "" if self.volume_rank is None else str(self.volume_rank),
             "market_cap_rank": "" if self.market_cap_rank is None else str(self.market_cap_rank),
             "source_refs": ";".join(sorted(self.source_refs)),
@@ -130,22 +127,13 @@ def _read_symbols(path: Path | None) -> set[str]:
 def build_pool(
     *,
     tradingview_csvs: list[Path],
-    layer2_holdings_csvs: list[Path],
     optionable_symbols_file: Path | None,
     as_of_date: str,
+    rank_limit: int = DEFAULT_RANK_LIMIT,
     allow_unknown_optionability: bool = False,
 ) -> tuple[list[PoolRow], dict[str, Any]]:
     rows_by_symbol: dict[str, PoolRow] = {}
     metrics: dict[str, dict[str, float | None]] = {}
-
-    for path in layer2_holdings_csvs:
-        for raw in _read_csv(path):
-            symbol = _clean_symbol(_field(raw, HOLDING_SYMBOL_FIELDS))
-            if not symbol:
-                continue
-            row = rows_by_symbol.setdefault(symbol, PoolRow(symbol=symbol, as_of_date=as_of_date))
-            row.in_layer2_etf_holdings = True
-            row.source_refs.add(f"layer2_etf_holdings:{path}")
 
     for path in tradingview_csvs:
         for raw in _read_csv(path):
@@ -161,13 +149,13 @@ def build_pool(
 
     for rank, symbol in enumerate(_rank_symbols(metrics, "volume"), start=1):
         row = rows_by_symbol[symbol]
-        if rank <= 100:
-            row.in_recent_week_volume_top100 = True
+        if rank <= rank_limit:
+            row.in_recent_week_volume_top300 = True
             row.volume_rank = rank
     for rank, symbol in enumerate(_rank_symbols(metrics, "market_cap"), start=1):
         row = rows_by_symbol[symbol]
-        if rank <= 100:
-            row.in_market_cap_top100 = True
+        if rank <= rank_limit:
+            row.in_market_cap_top300 = True
             row.market_cap_rank = rank
 
     optionable = _read_symbols(optionable_symbols_file)
@@ -181,9 +169,8 @@ def build_pool(
 
     for row in rows_by_symbol.values():
         has_current_pool_source = (
-            row.in_layer2_etf_holdings
-            or row.in_recent_week_volume_top100
-            or row.in_market_cap_top100
+            row.in_recent_week_volume_top300
+            or row.in_market_cap_top300
         )
         if not has_current_pool_source:
             row.pool_membership_status = "inactive"
@@ -209,7 +196,7 @@ def build_pool(
         "contract_type": "equity_total_symbol_pool_build_receipt",
         "as_of_date": as_of_date,
         "tradingview_screener_inputs": [str(path) for path in tradingview_csvs],
-        "layer2_holdings_inputs": [str(path) for path in layer2_holdings_csvs],
+        "rank_limit": rank_limit,
         "optionable_symbols_file": str(optionable_symbols_file) if optionable_symbols_file else None,
         "allow_unknown_optionability": allow_unknown_optionability,
         "input_symbol_count": len(rows_by_symbol),
@@ -217,7 +204,7 @@ def build_pool(
         "inactive_symbol_count": len(rows_by_symbol) - len(selected),
         "selected_symbol_count": len(selected),
         "excluded_non_optionable_or_unverified_count": len(rows_by_symbol) - len(selected),
-        "boundary_note": "The CSV is the full observed equity total-symbol pool ledger; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols.",
+        "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView volume and market-cap snapshots; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its own point-in-time candidate universe.",
     }
     return rows, receipt
 
@@ -248,9 +235,9 @@ def write_outputs(rows: list[PoolRow], *, output_csv: Path, symbols_txt: Path, r
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tradingview-csv", action="append", type=Path, default=[])
-    parser.add_argument("--layer2-holdings-csv", action="append", type=Path, default=[])
     parser.add_argument("--optionable-symbols-file", type=Path, default=None)
     parser.add_argument("--as-of-date", default=date.today().isoformat())
+    parser.add_argument("--rank-limit", type=int, default=DEFAULT_RANK_LIMIT)
     parser.add_argument("--allow-unknown-optionability", action="store_true")
     parser.add_argument("--symbols-include-unknown-optionability", action="store_true")
     parser.add_argument("--output-csv", type=Path, default=DEFAULT_OUTPUT_CSV)
@@ -263,9 +250,9 @@ def main() -> int:
     args = parse_args()
     rows, receipt = build_pool(
         tradingview_csvs=args.tradingview_csv,
-        layer2_holdings_csvs=args.layer2_holdings_csv,
         optionable_symbols_file=args.optionable_symbols_file,
         as_of_date=args.as_of_date,
+        rank_limit=args.rank_limit,
         allow_unknown_optionability=args.allow_unknown_optionability,
     )
     symbol_statuses = ["accepted_optionable"]

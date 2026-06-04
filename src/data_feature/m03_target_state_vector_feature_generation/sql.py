@@ -195,8 +195,6 @@ def fetch_candidate_rows(
     source_table: str,
     sector_context_schema: str,
     sector_context_table: str,
-    holdings_schema: str,
-    holdings_table: str,
     source_start: str | None = None,
     source_end: str | None = None,
     target_context_mapping_path: str | Path | None = DEFAULT_TARGET_CONTEXT_MAPPING_PATH,
@@ -210,27 +208,6 @@ def fetch_candidate_rows(
         where.append('s."available_time" < %s')
         params.append(source_end)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
-    holdings_table_ref = f"{holdings_schema}.{holdings_table}"
-    cursor.execute("SELECT to_regclass(%s) AS table_ref", (holdings_table_ref,))
-    exists = cursor.fetchone()
-    if isinstance(exists, Mapping):
-        holdings_exists = exists.get("table_ref") is not None
-    else:
-        holdings_exists = bool(exists and exists[0] is not None)
-    holdings_join = ""
-    holdings_select = "NULL::text"
-    if holdings_exists:
-        holdings_join = f"""
-        LEFT JOIN LATERAL (
-          SELECT h."etf_symbol"
-          FROM {_qualified(holdings_schema, holdings_table)} AS h
-          WHERE h."holding_symbol" = s."symbol"
-            AND h."available_time" <= s."available_time"
-          ORDER BY h."available_time" DESC, h."weight" DESC NULLS LAST, h."etf_symbol" ASC
-          LIMIT 1
-        ) AS h ON TRUE
-        """
-        holdings_select = 'h."etf_symbol"'
     mapping_rows = load_accepted_target_context_mappings(target_context_mapping_path)
     mapping_cte = ""
     mapping_join = ""
@@ -261,7 +238,7 @@ def fetch_candidate_rows(
         SELECT DISTINCT
           s."target_candidate_id",
           s."symbol",
-          COALESCE(direct_l2."sector_or_industry_symbol", {mapping_select}, {holdings_select}) AS "sector_context_symbol"
+          COALESCE(direct_l2."sector_or_industry_symbol", {mapping_select}) AS "sector_context_symbol"
         FROM {_qualified(source_schema, source_table)} AS s
         LEFT JOIN LATERAL (
           SELECT l2."sector_or_industry_symbol"
@@ -270,7 +247,6 @@ def fetch_candidate_rows(
           LIMIT 1
         ) AS direct_l2 ON TRUE
         {mapping_join}
-        {holdings_join}
         {where_sql}
         ORDER BY s."target_candidate_id" ASC, s."symbol" ASC
         """,
@@ -349,8 +325,6 @@ def generate_sql(
     market_context_table: str,
     sector_context_schema: str,
     sector_context_table: str,
-    holdings_schema: str,
-    holdings_table: str,
     target_context_mapping_path: str | Path | None,
     run_id: str,
     target_context_state_version: str,
@@ -368,8 +342,6 @@ def generate_sql(
                 source_table=source_table,
                 sector_context_schema=sector_context_schema,
                 sector_context_table=sector_context_table,
-                holdings_schema=holdings_schema,
-                holdings_table=holdings_table,
                 source_start=source_start,
                 source_end=source_end,
                 target_context_mapping_path=target_context_mapping_path,
@@ -391,8 +363,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--market-context-table", default="m01_market_regime_model_generation")
     parser.add_argument("--sector-context-schema", default="trading_model")
     parser.add_argument("--sector-context-table", default="m02_sector_context_model_generation")
-    parser.add_argument("--holdings-schema", default="trading_data")
-    parser.add_argument("--holdings-table", default="m02_sector_context_data_acquisition")
     parser.add_argument("--target-context-mapping-path", type=Path, default=DEFAULT_TARGET_CONTEXT_MAPPING_PATH)
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
@@ -416,8 +386,6 @@ def main(argv: list[str] | None = None) -> int:
         market_context_table=args.market_context_table,
         sector_context_schema=args.sector_context_schema,
         sector_context_table=args.sector_context_table,
-        holdings_schema=args.holdings_schema,
-        holdings_table=args.holdings_table,
         target_context_mapping_path=args.target_context_mapping_path,
         run_id=args.run_id,
         target_context_state_version=args.target_context_state_version,

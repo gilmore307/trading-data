@@ -54,12 +54,10 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         model_name="SectorContextModel",
         doc_path="docs/11_layer_02_sector_context.md",
         owns_dedicated_data_surface=True,
-        source_packages=("data_source.m02_sector_context_data_acquisition",),
         feature_packages=("data_feature.m02_sector_context_feature_generation",),
-        cli_commands=("trading-data-m02-sector-context-feature-generation", "trading-data-m02-sector-context-data-acquisition"),
+        cli_commands=("trading-data-m02-sector-context-feature-generation",),
         test_paths=(
             "tests/test_sector_context_feature_generator.py",
-            "tests/data_source/test_target_candidate_holdings_pipeline.py",
         ),
     ),
     LayerDataContract(

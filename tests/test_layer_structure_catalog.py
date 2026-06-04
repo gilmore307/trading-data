@@ -70,12 +70,12 @@ class LayerStructureCatalogTests(unittest.TestCase):
                 with self.subTest(layer=contract.layer, script=script.name):
                     self.assertFalse(script.exists(), script)
 
-    def test_target_candidate_source_is_materialized_by_layer_two_stage(self) -> None:
+    def test_layer_two_current_surface_excludes_candidate_holdings_source(self) -> None:
         layer_2 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 2)
         layer_3 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 3)
-        self.assertIn("data_source.m02_sector_context_data_acquisition", layer_2.source_packages)
+        self.assertNotIn("data_source.m02_sector_context_data_acquisition", layer_2.source_packages)
         self.assertIn("data_feature.m02_sector_context_feature_generation", layer_2.feature_packages)
-        self.assertIn("trading-data-m02-sector-context-data-acquisition", layer_2.cli_commands)
+        self.assertNotIn("trading-data-m02-sector-context-data-acquisition", layer_2.cli_commands)
         self.assertNotIn("data_source.m02_sector_context_data_acquisition", layer_3.source_packages)
         self.assertIn("data_source.m03_target_state_vector_data_acquisition", layer_3.source_packages)
         self.assertNotIn("trading-data-m02-sector-context-data-acquisition", layer_3.cli_commands)

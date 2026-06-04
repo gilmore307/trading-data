@@ -14,7 +14,7 @@ This module owns deterministic evidence for Layer 2 conditional ETF-context beha
 
 The model contract uses this feature surface to build per-ETF `context_etf_state` rows and a possible global/group `cross_etf_summary`. Per-ETF cross-section calculations are construction evidence and should not become a separate downstream `context_etf_cross_section_row` when the same values are embedded in `context_etf_state`.
 
-ETF holdings and `stock_etf_exposure` are intentionally outside this feature table, but the Layer 2 feature stage materializes `m02_sector_context_data_acquisition` as the downstream candidate-builder handoff after ETF context is available. That holdings handoff is seed/fallback evidence for ordinary targets; the accepted modeling direction is dynamic `target_context_profile` weighting based on correlation, lead-lag, influence direction, and confidence.
+ETF holdings and `stock_etf_exposure` are intentionally outside this feature table and outside the current Layer 2 feature stage. They do not define ordinary candidates, the realtime total pool, or historical replay candidates. Target-specific context attachment should use accepted target-context mappings now, with the future direction being dynamic `target_context_profile` weighting based on correlation, lead-lag, influence direction, and confidence.
 
 ## Execution
 

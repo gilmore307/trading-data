@@ -12,7 +12,7 @@ equity_activity_pipeline = importlib.import_module("data_source.m10_event_risk_g
 
 
 class DataStackAcceptanceTests(unittest.TestCase):
-    def test_target_candidate_holdings_default_available_time_is_next_session_open(self) -> None:
+    def test_etf_holdings_evidence_default_available_time_is_next_session_open(self) -> None:
         self.assertEqual(
             holdings_pipeline._available_time({}, {}, "2026-05-07"),
             "2026-05-08T09:30:00-04:00",
@@ -22,7 +22,7 @@ class DataStackAcceptanceTests(unittest.TestCase):
             "2026-05-11T09:30:00-04:00",
         )
 
-    def test_target_candidate_holdings_explicit_available_time_wins(self) -> None:
+    def test_etf_holdings_evidence_explicit_available_time_wins(self) -> None:
         self.assertEqual(
             holdings_pipeline._available_time({"available_time": "2026-05-07T12:00:00-04:00"}, {}, "2026-05-07"),
             "2026-05-07T12:00:00-04:00",

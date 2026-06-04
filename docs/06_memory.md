@@ -29,7 +29,7 @@
 - Alpaca raw trades/quotes are transient by default; `02_feed_alpaca_liquidity` persists ET-aligned aggregate `equity_liquidity_bar` rows.
 - ThetaData option feeds are split by use case: selection snapshot, specified-contract primary tracking, and event timeline.
 - `m09_option_expression_data_acquisition_contract_path` is selected-contract option market-data tracking for `OptionExpressionModel` replay/evaluation; it is not a separate execution model.
-- `m02_sector_context_data_acquisition` preserves point-in-time visibility; absent explicit evidence, holdings become available at the next regular US session open after `as_of_date`.
+- `m02_sector_context_data_acquisition` is retired from the current ordinary candidate route; ETF holdings do not define the realtime total pool, Layer 2 feature generation, or historical replay candidates.
 - `equity_abnormal_activity_event` default standard is conservative and not production calibrated; production labels/gates require reviewed historical calibration.
 
 ## Runtime JSON Rules

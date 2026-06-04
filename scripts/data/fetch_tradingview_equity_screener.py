@@ -139,7 +139,7 @@ def fetch_rows(*, per_rank_limit: int, timeout_seconds: float, as_of_date: str) 
         "per_rank_limit": per_rank_limit,
         "scan_receipts": scan_receipts,
         "selected_symbol_count": len(rows),
-        "boundary_note": "Bounded no-login TradingView screener snapshot for equity-total-pool input; it performs no broker/account/model activation.",
+        "boundary_note": "Bounded no-login TradingView screener snapshot for realtime equity-total-pool input; it performs no broker/account/model activation and must not be used as historical replay candidate evidence.",
     }
     return rows, receipt
 
@@ -156,7 +156,7 @@ def write_outputs(rows: list[dict[str, str]], *, output_csv: Path, receipt_path:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--per-rank-limit", type=int, default=100)
+    parser.add_argument("--per-rank-limit", type=int, default=300)
     parser.add_argument("--timeout-seconds", type=float, default=20.0)
     parser.add_argument("--as-of-date", default=date.today().isoformat())
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)

@@ -56,7 +56,7 @@ Layer 1 accepts `params.start` and `params.end`, reads the reviewed `layer_01_02
 
 Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `trading_data.m02_sector_context_feature_generation`. It owns deterministic point-in-time evidence for broad sector-anchor behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. The reviewed Layer 2 ETF universe is restricted to the 11 Select Sector SPDR anchors plus the `BKCH` crypto context-anchor exception; focused industry-chain and theme ETFs are outside the current Layer 2 contract.
 
-ETF holdings do not define the ordinary equity candidate universe. Layer 3 target-state inputs should use reviewed candidate symbols from the total-symbol pool and target metadata, then attach the relevant broad sector-anchor context. Historical replay must not borrow current ETF holdings as point-in-time candidate evidence.
+ETF holdings do not define the ordinary equity candidate universe. Live Layer 3 target-state inputs use reviewed candidate symbols from the realtime total-symbol pool and target metadata, then attach the relevant broad sector-anchor context. Historical replay uses its frozen point-in-time candidate universe and must not borrow current realtime-pool rows or current ETF holdings as candidate evidence.
 
 Layer 3 has two target-state surfaces with different maturity.
 
@@ -78,9 +78,9 @@ Historical and realtime/future event acquisition source priority is governed by 
 
 Integrated step: `src/data_source/m02_sector_context_data_acquisition/pipeline.py`
 
-Status: retired from the current ordinary candidate route.
+Status: retired from the current ordinary candidate and replay route.
 
-Purpose: historical source-backed stock-to-ETF exposure evidence only. It must not define the ordinary equity candidate universe or manufacture historical replay candidates from current ETF holdings. If revived, it needs a separately reviewed proxy/theme or exposure-evidence contract.
+Purpose: historical source-backed stock-to-ETF exposure evidence only. It must not define the ordinary equity candidate universe, the realtime total-symbol pool, Layer 2 feature generation, or historical replay candidates. If revived, it needs a separately reviewed proxy/theme or exposure-evidence contract.
 
 Important fields:
 

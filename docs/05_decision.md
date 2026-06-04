@@ -95,7 +95,7 @@ ETF holdings are not Layer 2 core behavior input and do not define the ordinary 
 
 ## D015 — Target candidate and Layer 3 boundaries
 
-Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than Layer 2 ETF holdings. Historical replay must not use current ETF holdings as point-in-time candidate evidence.
+Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than Layer 2 ETF holdings. Live routing uses the realtime total-symbol pool; historical replay uses its frozen point-in-time candidate universe and must not borrow current realtime-pool rows or current ETF holdings as candidate evidence.
 
 `m03_target_state_vector_data_acquisition` provides target-local observed bars/liquidity. `m03_target_state_vector_feature_generation` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 

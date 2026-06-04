@@ -13,7 +13,7 @@ Current numbered data sources are cataloged in `src/data_layers/catalog.py` and 
 Note: Layers 5-7 currently do not need new `trading-data` sources because they consume upstream SQL outputs, model outputs, labels, position/risk/control-plane context, and reviewed evaluation artifacts without new source acquisition.
 
 - `m01_market_regime_data_acquisition` — MarketRegimeModel ETF bar SQL long table over the manager-supplied time range; ETF universe and grains come from `layer_01_02_market_context_etf_universe.csv`.
-- `m02_sector_context_data_acquisition` — SQL-only filtered US-listed equity ETF holdings table materialized by the Layer 2 feature stage for anonymous target candidate preparation; ETF universe comes from `layer_01_02_market_context_etf_universe.csv`.
+- `m02_sector_context_data_acquisition` — retired ordinary-candidate route for SQL-only filtered US-listed equity ETF holdings evidence. It is not materialized by the current Layer 2 feature stage and does not define the realtime total pool or historical replay candidate universe.
 - `m03_target_state_vector_data_acquisition` — SQL-only target-local bar/liquidity input table for anonymous target state-vector construction.
 - `m10_event_risk_governor_data_acquisition` — SQL-only EventRiskGovernor overview table; one row per event, with details behind references.
 - `m10_event_risk_governor_data_acquisition/equity_abnormal_activity` — nested event-risk detector package for equity/ETF abnormal activity evidence rows.

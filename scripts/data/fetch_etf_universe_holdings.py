@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch reviewed ETF-universe holdings and combine them for equity pool input."""
+"""Fetch reviewed ETF-universe holdings as standalone evidence."""
 
 from __future__ import annotations
 
@@ -121,7 +121,7 @@ def collect_holdings(
         run_id = f"{run_id_prefix}_{as_of_date}_{spec.symbol.lower()}".replace("-", "")
         task_output_root = output_root / as_of_date / "feed_runs" / spec.symbol
         task_key = {
-            "task_id": f"equity_total_symbol_pool_etf_holdings_{spec.symbol.lower()}",
+            "task_id": f"etf_holdings_evidence_{spec.symbol.lower()}",
             "feed": "06_feed_etf_holdings",
             "params": {
                 "etf_symbol": spec.symbol,
@@ -164,7 +164,7 @@ def collect_holdings(
         "selected_holding_row_count": len(rows),
         "allow_partial": allow_partial,
         "etf_results": results,
-        "boundary_note": "Official issuer ETF holdings are collected for equity-total-pool source input only; this performs no broker/account/model activation.",
+        "boundary_note": "Official issuer ETF holdings are collected as standalone evidence only. They do not define the realtime total pool, Layer 2 features, Layer 3 ordinary candidates, or historical replay candidates; this performs no broker/account/model activation.",
     }
     return rows, receipt
 

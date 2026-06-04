@@ -19,7 +19,6 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             tradingview = root / "tradingview.csv"
-            holdings = root / "holdings.csv"
             optionable = root / "optionable.txt"
             _write_csv(
                 tradingview,
@@ -30,30 +29,28 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
                     {"Symbol": "AACBU", "Name": "Example Units", "Sector": "Finance", "Volume": "1B", "Market Cap": "0"},
                 ],
             )
-            _write_csv(holdings, ["holding_symbol"], [{"holding_symbol": "AAPL"}, {"holding_symbol": "BRK.A"}])
-            optionable.write_text("AAPL\nNVDA\n", encoding="utf-8")
+            optionable.write_text("NVDA\n", encoding="utf-8")
 
             rows, receipt = build_pool(
                 tradingview_csvs=[tradingview],
-                layer2_holdings_csvs=[holdings],
                 optionable_symbols_file=optionable,
                 as_of_date="2026-06-04",
             )
 
         by_symbol = {row.symbol: row for row in rows}
-        self.assertEqual(set(by_symbol), {"AAPL", "BRK.A", "NVDA"})
-        self.assertTrue(by_symbol["AAPL"].in_layer2_etf_holdings)
-        self.assertTrue(by_symbol["NVDA"].in_market_cap_top100)
-        self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top100)
+        self.assertEqual(set(by_symbol), {"BRK.A", "NVDA"})
+        self.assertTrue(by_symbol["NVDA"].in_market_cap_top300)
+        self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top300)
         self.assertEqual(by_symbol["BRK.A"].pool_membership_status, "inactive")
         self.assertEqual(by_symbol["BRK.A"].pool_membership_reason, "inactive_no_listed_options_or_unverified")
         self.assertEqual(
             {row.symbol for row in rows if row.pool_membership_status == "active"},
-            {"AAPL", "NVDA"},
+            {"NVDA"},
         )
-        self.assertEqual(receipt["active_symbol_count"], 2)
+        self.assertEqual(receipt["active_symbol_count"], 1)
         self.assertEqual(receipt["inactive_symbol_count"], 1)
         self.assertEqual(receipt["excluded_non_optionable_or_unverified_count"], 1)
+        self.assertEqual(receipt["rank_limit"], 300)
 
     def test_cli_writes_pool_and_symbols_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -166,7 +163,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
 
         try:
             sys.modules["scripts.data.fetch_tradingview_equity_screener"]._post_scan = fake_post_scan
-            rows, receipt = fetch_rows(per_rank_limit=100, timeout_seconds=1, as_of_date="2026-06-04")
+            rows, receipt = fetch_rows(per_rank_limit=300, timeout_seconds=1, as_of_date="2026-06-04")
         finally:
             sys.modules["scripts.data.fetch_tradingview_equity_screener"]._post_scan = original
 
@@ -175,6 +172,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         self.assertEqual(by_symbol["AAPL"]["Included By"], "market_cap_top;recent_week_volume_top")
         self.assertEqual(by_symbol["MSFT"]["Included By"], "market_cap_top")
         self.assertEqual(receipt["selected_symbol_count"], 2)
+        self.assertEqual(receipt["per_rank_limit"], 300)
 
     def test_etf_universe_holdings_collects_layer2_and_dedupes_etf_symbols(self) -> None:
         import scripts.data.fetch_etf_universe_holdings as holdings_module
@@ -219,31 +217,34 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         self.assertEqual(receipt["requested_etf_count"], 1)
         self.assertEqual(receipt["selected_holding_row_count"], 1)
 
-    def test_build_pool_merges_tradingview_and_etf_holding_reason_for_same_symbol(self) -> None:
+    def test_build_pool_uses_configured_realtime_rank_limit(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             tradingview = root / "tradingview.csv"
-            holdings = root / "holdings.csv"
             _write_csv(
                 tradingview,
                 ["Ticker", "Name", "Sector", "Volume", "Market Cap"],
-                [{"Ticker": "NVDA", "Name": "NVIDIA", "Sector": "Technology", "Volume": "100M", "Market Cap": "4T"}],
+                [
+                    {"Ticker": "NVDA", "Name": "NVIDIA", "Sector": "Technology", "Volume": "100M", "Market Cap": "4T"},
+                    {"Ticker": "MSFT", "Name": "Microsoft", "Sector": "Technology", "Volume": "90M", "Market Cap": "3T"},
+                ],
             )
-            _write_csv(holdings, ["holding_symbol"], [{"holding_symbol": "NVDA"}, {"holding_symbol": "AAPL"}])
 
             rows, receipt = build_pool(
                 tradingview_csvs=[tradingview],
-                layer2_holdings_csvs=[holdings],
                 optionable_symbols_file=None,
                 as_of_date="2026-06-04",
+                rank_limit=1,
                 allow_unknown_optionability=True,
             )
 
         by_symbol = {row.symbol: row for row in rows}
-        self.assertEqual(set(by_symbol), {"AAPL", "NVDA"})
-        self.assertTrue(by_symbol["NVDA"].in_layer2_etf_holdings)
-        self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top100)
+        self.assertEqual(set(by_symbol), {"MSFT", "NVDA"})
+        self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top300)
+        self.assertFalse(by_symbol["MSFT"].in_recent_week_volume_top300)
+        self.assertEqual(by_symbol["MSFT"].pool_membership_status, "inactive")
         self.assertEqual(receipt["input_symbol_count"], 2)
+        self.assertEqual(receipt["rank_limit"], 1)
 
 
 def _write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> None:

@@ -1,9 +1,10 @@
-"""ETF holdings source for downstream target-candidate preparation.
+"""Standalone ETF holdings evidence source.
 
 ``m02_sector_context_data_acquisition`` is the accepted source/table identifier,
 but holdings are not a core Layer 2 behavior-model input. They support the
-anonymous target candidate builder / Layer 3 input-preparation boundary after
-Layer 2 selects or prioritizes sector/industry baskets.
+separate historical holdings-evidence surface only when a reviewed exposure
+contract explicitly asks for them. They do not define the realtime total pool,
+Layer 2 features, Layer 3 ordinary candidates, or historical replay candidates.
 """
 from __future__ import annotations
 
@@ -81,7 +82,7 @@ class CleanedPayload:
 
 
 class TargetCandidateHoldingsInputsError(ValueError):
-    """Raised for invalid ETF-holdings candidate-preparation tasks."""
+    """Raised for invalid ETF-holdings evidence tasks."""
 
 
 def _now_utc() -> str:

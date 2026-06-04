@@ -13,6 +13,7 @@ Environment=TRADING_DATA_TE_FORWARD_DAYS=35
 Environment=TRADING_DATA_TE_OUTPUT_ROOT=/root/projects/trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web
 Environment=TRADING_DATA_NASDAQ_EARNINGS_FORWARD_DAYS=1
 Environment=TRADING_DATA_OFFICIAL_CALENDAR_OUTPUT_ROOT=/root/projects/trading-storage/storage/01_source_data/realtime/official_calendar_discovery
+Environment=TRADING_DATA_CALENDAR_SYMBOLS_FILE=/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt
 EnvironmentFile=-/etc/default/trading-data-calendar-maintenance
 ExecStart=/root/projects/trading-manager/.venv/bin/python /root/projects/trading-data/scripts/data/run_calendar_maintenance_refresh.py \
   --te-trailing-days ${TRADING_DATA_TE_TRAILING_DAYS} \

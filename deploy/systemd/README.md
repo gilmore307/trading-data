@@ -14,3 +14,8 @@ Optional environment overrides belong in `/etc/default/trading-data-calendar-mai
 `TRADING_DATA_CALENDAR_SYMBOLS_FILE` may point to a comma- or newline-delimited
 stock-pool file; when unset, the Nasdaq earnings schedule refresh stores all
 returned rows for the bounded dates.
+
+The checked-in service defaults `TRADING_DATA_CALENDAR_SYMBOLS_FILE` to
+`/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt`.
+If that file is absent, calendar maintenance continues with an empty symbol
+filter rather than failing the Trading Economics refresh.

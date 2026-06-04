@@ -6,11 +6,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
-from scripts.data.run_calendar_maintenance_refresh import (
-    build_nasdaq_earnings_task_key,
-    run_calendar_maintenance,
-)
+from scripts.data.run_calendar_maintenance_refresh import build_nasdaq_earnings_task_key, run_calendar_maintenance
 
 
 class CalendarMaintenanceRefreshTests(unittest.TestCase):
@@ -105,6 +103,34 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         task_key = payload["components"]["official_calendar_discovery"]["task_keys"][0]
 
         self.assertEqual(task_key["params"]["symbols"], ["AAPL", "NVDA"])
+        self.assertEqual(payload["provider_calls_performed"], 0)
+
+    def test_cli_configured_missing_symbols_file_is_safe(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ)
+            env["TRADING_DATA_CALENDAR_SYMBOLS_FILE"] = str(Path(tmp) / "missing.symbols.txt")
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/data/run_calendar_maintenance_refresh.py",
+                    "--te-start-date",
+                    "2026-06-01",
+                    "--te-end-date",
+                    "2026-06-05",
+                    "--nasdaq-earnings-start-date",
+                    "2026-06-01",
+                    "--nasdaq-earnings-forward-days",
+                    "0",
+                ],
+                check=True,
+                capture_output=True,
+                env=env,
+                text=True,
+            )
+        payload = json.loads(completed.stdout)
+        task_key = payload["components"]["official_calendar_discovery"]["task_keys"][0]
+
+        self.assertEqual(task_key["params"]["symbols"], [])
         self.assertEqual(payload["provider_calls_performed"], 0)
 
 

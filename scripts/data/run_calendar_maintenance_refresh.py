@@ -19,6 +19,7 @@ from scripts.data.run_trading_economics_recent_calendar_refresh import (
 
 OFFICIAL_FEED = "12_feed_official_calendar_discovery"
 DEFAULT_OFFICIAL_OUTPUT_ROOT = "/root/projects/trading-storage/storage/01_source_data/realtime/official_calendar_discovery"
+DEFAULT_CALENDAR_SYMBOLS_FILE = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt")
 
 
 def _now_utc() -> datetime:
@@ -37,6 +38,8 @@ def _dates(start: date, forward_days: int) -> Iterable[date]:
 def _symbols_from_file(path: Path | None) -> list[str]:
     if path is None:
         return []
+    if not path.exists():
+        return []
     text = path.read_text(encoding="utf-8")
     symbols: list[str] = []
     for raw in text.replace("\r", "\n").replace(",", "\n").replace(";", "\n").splitlines():
@@ -48,7 +51,7 @@ def _symbols_from_file(path: Path | None) -> list[str]:
 
 def _default_symbols_file() -> Path | None:
     raw_path = os.environ.get("TRADING_DATA_CALENDAR_SYMBOLS_FILE")
-    return Path(raw_path) if raw_path else None
+    return Path(raw_path) if raw_path else DEFAULT_CALENDAR_SYMBOLS_FILE
 
 
 def build_nasdaq_earnings_task_key(

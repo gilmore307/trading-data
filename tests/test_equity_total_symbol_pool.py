@@ -41,11 +41,18 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             )
 
         by_symbol = {row.symbol: row for row in rows}
-        self.assertEqual(set(by_symbol), {"AAPL", "NVDA"})
+        self.assertEqual(set(by_symbol), {"AAPL", "BRK.A", "NVDA"})
         self.assertTrue(by_symbol["AAPL"].in_layer2_etf_holdings)
         self.assertTrue(by_symbol["NVDA"].in_market_cap_top100)
         self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top100)
-        self.assertNotIn("BRK.A", by_symbol)
+        self.assertEqual(by_symbol["BRK.A"].pool_membership_status, "inactive")
+        self.assertEqual(by_symbol["BRK.A"].pool_membership_reason, "inactive_no_listed_options_or_unverified")
+        self.assertEqual(
+            {row.symbol for row in rows if row.pool_membership_status == "active"},
+            {"AAPL", "NVDA"},
+        )
+        self.assertEqual(receipt["active_symbol_count"], 2)
+        self.assertEqual(receipt["inactive_symbol_count"], 1)
         self.assertEqual(receipt["excluded_non_optionable_or_unverified_count"], 1)
 
     def test_cli_writes_pool_and_symbols_outputs(self) -> None:
@@ -94,6 +101,9 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
                 rows = list(csv.DictReader(handle))
             self.assertEqual(rows[0]["symbol"], "META")
             self.assertEqual(rows[0]["sector"], "Communication Services")
+            self.assertEqual(rows[0]["pool_membership_status"], "active")
+            self.assertEqual(rows[1]["symbol"], "BRK.A")
+            self.assertEqual(rows[1]["pool_membership_status"], "inactive")
             self.assertTrue(receipt.exists())
 
     def test_cli_can_include_unknown_optionability_in_symbols_output(self) -> None:

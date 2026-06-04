@@ -21,6 +21,8 @@ OUTPUT_FIELDS = [
     "name",
     "sector",
     "optionable_underlying_status",
+    "pool_membership_status",
+    "pool_membership_reason",
     "in_layer2_etf_holdings",
     "in_recent_week_volume_top100",
     "in_market_cap_top100",
@@ -44,6 +46,8 @@ class PoolRow:
     name: str = ""
     sector: str = ""
     optionable_underlying_status: str = "uncertain_verify_before_use"
+    pool_membership_status: str = "inactive"
+    pool_membership_reason: str = "not_evaluated"
     in_layer2_etf_holdings: bool = False
     in_recent_week_volume_top100: bool = False
     in_market_cap_top100: bool = False
@@ -58,6 +62,8 @@ class PoolRow:
             "name": self.name,
             "sector": self.sector,
             "optionable_underlying_status": self.optionable_underlying_status,
+            "pool_membership_status": self.pool_membership_status,
+            "pool_membership_reason": self.pool_membership_reason,
             "in_layer2_etf_holdings": str(self.in_layer2_etf_holdings).lower(),
             "in_recent_week_volume_top100": str(self.in_recent_week_volume_top100).lower(),
             "in_market_cap_top100": str(self.in_market_cap_top100).lower(),
@@ -173,17 +179,32 @@ def build_pool(
         else:
             row.optionable_underlying_status = "no_listed_options_or_unverified"
 
-    selected = [
-        row
-        for row in rows_by_symbol.values()
-        if (
+    for row in rows_by_symbol.values():
+        has_current_pool_source = (
             row.in_layer2_etf_holdings
             or row.in_recent_week_volume_top100
             or row.in_market_cap_top100
         )
-        and row.optionable_underlying_status in {"accepted_optionable", "uncertain_verify_before_use"}
-    ]
-    selected.sort(key=lambda row: (row.market_cap_rank or 10_000, row.volume_rank or 10_000, row.symbol))
+        if not has_current_pool_source:
+            row.pool_membership_status = "inactive"
+            row.pool_membership_reason = "inactive_no_current_pool_source_condition"
+        elif row.optionable_underlying_status not in {"accepted_optionable", "uncertain_verify_before_use"}:
+            row.pool_membership_status = "inactive"
+            row.pool_membership_reason = "inactive_no_listed_options_or_unverified"
+        else:
+            row.pool_membership_status = "active"
+            row.pool_membership_reason = "active_current_pool_source_and_optionability_accepted"
+
+    rows = sorted(
+        rows_by_symbol.values(),
+        key=lambda row: (
+            0 if row.pool_membership_status == "active" else 1,
+            row.market_cap_rank or 10_000,
+            row.volume_rank or 10_000,
+            row.symbol,
+        ),
+    )
+    selected = [row for row in rows if row.pool_membership_status == "active"]
     receipt = {
         "contract_type": "equity_total_symbol_pool_build_receipt",
         "as_of_date": as_of_date,
@@ -192,11 +213,13 @@ def build_pool(
         "optionable_symbols_file": str(optionable_symbols_file) if optionable_symbols_file else None,
         "allow_unknown_optionability": allow_unknown_optionability,
         "input_symbol_count": len(rows_by_symbol),
+        "active_symbol_count": len(selected),
+        "inactive_symbol_count": len(rows_by_symbol) - len(selected),
         "selected_symbol_count": len(selected),
         "excluded_non_optionable_or_unverified_count": len(rows_by_symbol) - len(selected),
-        "boundary_note": "TradingView rows are accepted as bounded screener snapshot inputs for calendar/event-monitoring symbol-pool construction.",
+        "boundary_note": "The CSV is the full observed equity total-symbol pool ledger; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols.",
     }
-    return selected, receipt
+    return rows, receipt
 
 
 def _rank_symbols(metrics: dict[str, dict[str, float | None]], field: str) -> list[str]:
@@ -213,7 +236,11 @@ def write_outputs(rows: list[PoolRow], *, output_csv: Path, symbols_txt: Path, r
         writer = csv.DictWriter(handle, fieldnames=OUTPUT_FIELDS, lineterminator="\n")
         writer.writeheader()
         writer.writerows(row.to_csv_row() for row in rows)
-    symbols = [row.symbol for row in rows if row.optionable_underlying_status in symbol_statuses]
+    symbols = [
+        row.symbol
+        for row in rows
+        if row.pool_membership_status == "active" and row.optionable_underlying_status in symbol_statuses
+    ]
     symbols_txt.write_text("\n".join(symbols) + ("\n" if symbols else ""), encoding="utf-8")
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 

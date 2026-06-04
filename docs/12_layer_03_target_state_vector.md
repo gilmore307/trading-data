@@ -20,28 +20,27 @@ trading-manager request
   -> trading-model TargetStateVectorModel training/evaluation/review
 ```
 
-Active contracts use target-state names. `m02_sector_context_data_acquisition` is materialized by the Layer 2 feature stage and consumed by Layer 3 as candidate-input evidence:
+Active contracts use target-state names. Layer 3 consumes reviewed candidate-symbol evidence plus Layer 1/2 context references:
 
 ```text
-m02_sector_context_data_acquisition
 m03_target_state_vector_data_acquisition
 m03_target_state_vector_feature_generation
 ```
 
 Current implementation:
 
-- Layer 3 consumes `m02_sector_context_data_acquisition` rows that were materialized by the Layer 2 feature stage from issuer holdings and selected/prioritized sector ETF context.
+- Layer 3 receives candidate symbols from the reviewed total-symbol pool and target metadata; ETF holdings do not define the ordinary candidate universe.
 - `src/data_source/m03_target_state_vector_data_acquisition/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.m03_target_state_vector_data_acquisition` rows keyed by `target_candidate_id + timeframe + timestamp`.
 - `src/data_feature/m03_target_state_vector_feature_generation/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
 - `src/data_feature/m03_target_state_vector_feature_generation/sql.py` reads `m03_target_state_vector_data_acquisition` plus optional Layer 1/2 context rows and writes `trading_data.m03_target_state_vector_feature_generation` with JSONB blocks.
-- CLI entrypoints are registered for `trading-data-m03-target-state-vector-data-acquisition` and `trading-data-m03-target-state-vector-feature-generation`; the `m02_sector_context_data_acquisition` CLI is part of the Layer 2 stage.
+- CLI entrypoints are registered for `trading-data-m03-target-state-vector-data-acquisition` and `trading-data-m03-target-state-vector-feature-generation`.
 
 ## Inputs
 
 Expected inputs are point-in-time artifacts, not future-aware labels:
 
 - manager-issued request parameters: `start`, `end`, candidate universe reference, Layer 1/2 state references, output target, and run metadata;
-- anonymous target candidate rows from the Layer 3 candidate-preparation boundary;
+- reviewed candidate-symbol rows from the total-symbol pool and target metadata;
 - target-local 1-minute bars;
 - target liquidity, quote/trade, spread, and dollar-volume evidence when available;
 - `market_context_state` reference from Layer 1;

@@ -38,9 +38,8 @@ Old `source_NN_*`, `feature_NN_*`, and `model_NN_*` names are migration debt, no
 | Model layer | Input source | Core data products | Notes |
 |---|---|---|---|
 | `MarketRegimeModel` | `trading_data.m01_market_regime_data_acquisition` | ETF/broad-market bars | Alpaca is the primary source for ETF bars. ETF holdings are not required for the first regime model except as explanatory metadata. Layer 1 source/features must preserve input-frame identity so `trading-model` can pair `1min`, `10min`, `1h`, and `1D` market contexts with the canonical `10min`, `1h`, `1D`, and `1W` prediction horizons. |
-| `SectorContextModel` | `trading_data.m02_sector_context_feature_generation` | sector/industry rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; ETF holdings are not a core Layer 2 behavior-model input. |
-| Anonymous target candidate builder / Layer 3 input preparation | `trading_data.m02_sector_context_data_acquisition` | filtered US-listed ETF holdings for Layer 2 selected/prioritized sector baskets | Materialized by the Layer 2 feature stage; consumed by downstream target-candidate preparation, not by the core SectorContextModel. |
-| `TargetStateVectorModel` | `trading_data.m03_target_state_vector_data_acquisition` | candidate-symbol bars, liquidity, and point-in-time target-local evidence | Candidate symbols should be produced from Layer 2 selected baskets by the anonymous target candidate builder, then anonymized for target state-vector construction. |
+| `SectorContextModel` | `trading_data.m02_sector_context_feature_generation` | broad sector-anchor rotation, trend, volatility, correlation, breadth, and dispersion evidence | Feeds Layer 2 `sector_context_state`; focused industry/theme ETFs and ETF holdings are not core Layer 2 behavior-model inputs. |
+| `TargetStateVectorModel` | `trading_data.m03_target_state_vector_data_acquisition` | candidate-symbol bars, liquidity, point-in-time target-local evidence, and attached broad sector context | Candidate symbols come from the reviewed total-symbol pool and target metadata, not from Layer 2 ETF holdings. |
 | `EventFailureRiskModel` | _(no dedicated trading-data source/feature)_ | reviewed event/strategy-failure evidence refs and `event_failure_risk_vector` conditioning | Layer 4 consumes reviewed governance/model evidence; raw event acquisition does not become a symmetric trading-data source by default. |
 | `AlphaConfidenceModel` | _(no trading-data source/feature)_ | `target_context_state`, `event_failure_risk_vector`, upstream context, realized outcomes/labels | Does not require new source acquisition, feature package, SQL view, or manifest contract in `trading-data`; labels belong outside inference features and are materialized only through reviewed deterministic evaluation contracts. |
 | `PositionProjectionModel` | _(no trading-data source/feature)_ | final adjusted `alpha_confidence_vector`, costs, risk budget, current/pending position state | Projects target holding state and abstract target exposure outside `trading-data`; it does not produce buy/sell/hold or execution instructions. |
@@ -55,11 +54,9 @@ Each accepted model layer that needs new `trading-data` acquisition has a contro
 
 Layer 1 accepts `params.start` and `params.end`, reads the reviewed `layer_01_02_market_context_etf_universe.csv` for ETF scope and bar grains, fetches Alpaca bars, and writes one combined SQL long table, `trading_data.m01_market_regime_data_acquisition`. Its feature construction writes `trading_data.m01_market_regime_feature_generation` and must keep market-context input frames separate. The accepted training/evaluation pairing is `1min -> 10min`, `10min -> 1h`, `1h -> 1D`, and `1D -> 1W`. Future outcomes for those horizons are labels/evaluation indicators, not inference features.
 
-Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `trading_data.m02_sector_context_feature_generation`. It owns deterministic point-in-time evidence for sector/industry behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. The same Layer 2 stage also materializes `trading_data.m02_sector_context_data_acquisition` after sector/basket context is available; those holdings rows are downstream candidate-preparation inputs, not core behavior-model inputs.
+Layer 2 feature construction reads cleaned Layer 1 bar rows plus reviewed relative-strength combinations and writes `trading_data.m02_sector_context_feature_generation`. It owns deterministic point-in-time evidence for broad sector-anchor behavior under market context: relative strength, normalized trend distance/slope/spread/alignment, volatility ratio, correlation, breadth, and dispersion. The reviewed Layer 2 ETF universe is restricted to the 11 Select Sector SPDR anchors; focused industry-chain, theme, and special-beta ETFs are outside the current Layer 2 contract.
 
-`trading_data.m02_sector_context_data_acquisition` accepts `params.start` and `params.end`, reads the reviewed `layer_01_02_market_context_etf_universe.csv` for ETF scope/issuer/exposure labels, keeps only `universe_type = sector_observation_etf` for holdings analysis, collects ETF holdings snapshots, filters them to US-listed equity constituents only, and writes the candidate-pool acquisition rows. Its runtime owner is the Layer 2 stage so candidate inputs are ready before Layer 3 target-state construction.
-
-ETF holdings coverage is allowed to be partial. When an official issuer route is known but has no rows inside the point-in-time window, or a bounded issuer fetch fails under `continue_on_error`, the source records per-symbol coverage diagnostics and `missing_symbols` instead of fabricating holdings rows or failing the entire Layer 2 handoff. Downstream models must tolerate a missing subset of ETF holdings evidence; missing coverage is evidence quality, not a synthetic constituent signal.
+ETF holdings do not define the ordinary equity candidate universe. Layer 3 target-state inputs should use reviewed candidate symbols from the total-symbol pool and target metadata, then attach the relevant broad sector-anchor context. Historical replay must not borrow current ETF holdings as point-in-time candidate evidence.
 
 Layer 3 has two target-state surfaces with different maturity.
 
@@ -81,9 +78,9 @@ Historical and realtime/future event acquisition source priority is governed by 
 
 Integrated step: `src/data_source/m02_sector_context_data_acquisition/pipeline.py`
 
-Purpose: point-in-time stock-to-ETF exposure evidence for the anonymous target candidate builder / Layer 3 input-preparation boundary.
+Status: retired from the current ordinary candidate route.
 
-It derives from issuer-published `etf_holding_snapshot` rows and reviewed upstream basket context. It lets downstream candidate construction transmit Layer 2 selected/prioritized ETF/sector/industry baskets into a stock candidate universe before Layer 3 target-state construction anonymizes model-facing target vectors.
+Purpose: historical source-backed stock-to-ETF exposure evidence only. It must not define the ordinary equity candidate universe or manufacture historical replay candidates from current ETF holdings. If revived, it needs a separately reviewed proxy/theme or exposure-evidence contract.
 
 Important fields:
 

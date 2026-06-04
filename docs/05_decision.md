@@ -89,13 +89,13 @@ ThetaData runtime lives outside Git under `/root/tools/thetadata-terminal/` and 
 
 Layer 1 market-regime data is broad-market/ETF bar evidence and must not use sector leadership, selected securities, strategy labels, option outcomes, portfolio PnL, or future-return labels.
 
-Layer 2 sector-context features derive deterministic sector/industry/theme ETF behavior evidence from accepted Layer 1 source outputs and reviewed relative-strength combinations. These features support per-ETF `context_etf_state` construction and global/group `cross_etf_summary`; per-ETF cross-section calculations are construction evidence, not a separate downstream output when embedded in the ETF state.
+Layer 2 sector-context features derive deterministic broad sector-anchor ETF behavior evidence from accepted Layer 1 source outputs and reviewed relative-strength combinations. These features support per-sector-anchor `context_etf_state` construction and global/group `cross_etf_summary`; per-ETF cross-section calculations are construction evidence, not a separate downstream output when embedded in the ETF state.
 
-ETF holdings are not Layer 2 core behavior input, but the Layer 2 feature stage materializes the candidate-holdings handoff after ETF context exists. Holdings/manual mappings are seed or fallback evidence for ordinary targets; the accepted direction is dynamic `target_context_profile` weighting from point-in-time correlation, lead-lag, influence direction, and confidence.
+ETF holdings are not Layer 2 core behavior input and do not define the ordinary equity candidate universe. Ordinary candidate symbols come from the reviewed total-symbol pool and target metadata; Layer 2 supplies broad sector-anchor context attached to those candidates.
 
 ## D015 — Target candidate and Layer 3 boundaries
 
-`m02_sector_context_data_acquisition` supports anonymous target candidate preparation after Layer 2 sector/basket prioritization and is owned by the Layer 2 feature stage runtime path. It preserves point-in-time visibility: explicit `available_time` wins; otherwise holdings become visible at the next regular US session open after `as_of_date`.
+Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than Layer 2 ETF holdings. Historical replay must not use current ETF holdings as point-in-time candidate evidence.
 
 `m03_target_state_vector_data_acquisition` provides target-local observed bars/liquidity. `m03_target_state_vector_feature_generation` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 

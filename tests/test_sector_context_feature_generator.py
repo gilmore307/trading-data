@@ -296,14 +296,14 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         rows = generator.generate_rows(inputs, [datetime(2026, 1, 2, 16, 0, tzinfo=ET)])
 
         self.assertTrue(all(combo.model_layer == "layer_02_sector_context" for combo in generator.rotation_combinations(inputs)))
-        self.assertEqual(len(rows), 18)
+        self.assertEqual(len(rows), 19)
         self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation_summary", "sector_rotation"})
         self.assertIn("sector_observation_breadth", {row["rotation_pair_id"] for row in rows})
         pair_ids = {row["rotation_pair_id"] for row in rows}
         self.assertIn("xlk_spy", pair_ids)
         self.assertNotIn("smh_xlk", pair_ids)
-        self.assertNotIn("bkch_bitw", pair_ids)
-        self.assertEqual(sum(1 for row in rows if row["rotation_pair_type"] == "sector_rotation"), 17)
+        self.assertIn("bkch_bitw", pair_ids)
+        self.assertEqual(sum(1 for row in rows if row["rotation_pair_type"] == "sector_rotation"), 18)
 
 
 if __name__ == "__main__":

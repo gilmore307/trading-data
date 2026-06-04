@@ -48,6 +48,9 @@ CRYPTO_NAMES = {
     "ETH": "Ethereum",
     "SOL": "Solana",
 }
+SYMBOL_LAYER2_CONTEXT_OVERRIDES = {
+    "HUT": ("BKCH", "crypto_related_equity_context_override"),
+}
 
 OUTPUT_FIELDS = [
     "symbol",
@@ -62,9 +65,9 @@ OUTPUT_FIELDS = [
     "replay_candidate_status",
     "replay_candidate_reason",
     "source_pool_as_of_date",
-    "in_recent_week_volume_top300",
+    "in_dollar_volume_top300",
     "in_market_cap_top300",
-    "volume_rank",
+    "dollar_volume_rank",
     "market_cap_rank",
     "source_refs",
     "freeze_as_of_date",
@@ -86,9 +89,9 @@ class HistoricalCandidateRow:
     replay_candidate_status: str
     replay_candidate_reason: str
     source_pool_as_of_date: str
-    in_recent_week_volume_top300: str
+    in_dollar_volume_top300: str
     in_market_cap_top300: str
-    volume_rank: str
+    dollar_volume_rank: str
     market_cap_rank: str
     source_refs: str
     freeze_as_of_date: str
@@ -111,11 +114,14 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
         return [{str(key): str(value or "").strip() for key, value in row.items()} for row in csv.DictReader(handle)]
 
 
-def _layer2_context_for_tradingview_sector(sector: str) -> str:
+def _layer2_context_for_equity(symbol: str, sector: str) -> tuple[str, str]:
+    override = SYMBOL_LAYER2_CONTEXT_OVERRIDES.get(symbol)
+    if override:
+        return override
     context = TRADINGVIEW_SECTOR_TO_LAYER2_CONTEXT.get(str(sector or "").strip())
     if not context:
         raise ValueError(f"unmapped TradingView sector for historical candidate universe: {sector!r}")
-    return context
+    return context, "tradingview_sector_to_spdr_anchor"
 
 
 def _equity_rows(*, source_pool_csv: Path, freeze_as_of_date: str, universe_policy_ref: str) -> tuple[list[HistoricalCandidateRow], int]:
@@ -129,7 +135,7 @@ def _equity_rows(*, source_pool_csv: Path, freeze_as_of_date: str, universe_poli
         if str(raw.get("pool_membership_status") or "").strip().lower() != "active":
             continue
         tradingview_sector = str(raw.get("sector") or "")
-        layer2_context_symbol = _layer2_context_for_tradingview_sector(tradingview_sector)
+        layer2_context_symbol, layer2_context_method = _layer2_context_for_equity(symbol, tradingview_sector)
         rows.append(
             HistoricalCandidateRow(
                 symbol=symbol,
@@ -139,14 +145,14 @@ def _equity_rows(*, source_pool_csv: Path, freeze_as_of_date: str, universe_poli
                 name=str(raw.get("name") or ""),
                 tradingview_sector=tradingview_sector,
                 layer2_context_symbol=layer2_context_symbol,
-                layer2_context_method="tradingview_sector_to_spdr_anchor",
+                layer2_context_method=layer2_context_method,
                 optionable_underlying_status=str(raw.get("optionable_underlying_status") or ""),
                 replay_candidate_status="active",
                 replay_candidate_reason="active_fixed_current_realtime_pool_snapshot",
                 source_pool_as_of_date=str(raw.get("as_of_date") or ""),
-                in_recent_week_volume_top300=str(raw.get("in_recent_week_volume_top300") or "false").lower(),
+                in_dollar_volume_top300=str(raw.get("in_dollar_volume_top300") or "false").lower(),
                 in_market_cap_top300=str(raw.get("in_market_cap_top300") or "false").lower(),
-                volume_rank=str(raw.get("volume_rank") or ""),
+                dollar_volume_rank=str(raw.get("dollar_volume_rank") or ""),
                 market_cap_rank=str(raw.get("market_cap_rank") or ""),
                 source_refs=str(raw.get("source_refs") or ""),
                 freeze_as_of_date=freeze_as_of_date,
@@ -174,9 +180,9 @@ def _crypto_rows(*, freeze_as_of_date: str, universe_policy_ref: str, crypto_tar
                 replay_candidate_status="active",
                 replay_candidate_reason="active_core_crypto_target",
                 source_pool_as_of_date="",
-                in_recent_week_volume_top300="false",
+                in_dollar_volume_top300="false",
                 in_market_cap_top300="false",
-                volume_rank="",
+                dollar_volume_rank="",
                 market_cap_rank="",
                 source_refs="fixed_core_crypto_target",
                 freeze_as_of_date=freeze_as_of_date,
@@ -209,7 +215,7 @@ def build_universe(
         key=lambda row: (
             0 if row.asset_class == "us_equity" else 1,
             int(row.market_cap_rank or "10000"),
-            int(row.volume_rank or "10000"),
+            int(row.dollar_volume_rank or "10000"),
             row.symbol,
         )
     )

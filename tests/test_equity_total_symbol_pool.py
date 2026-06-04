@@ -23,11 +23,11 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             optionable = root / "optionable.txt"
             _write_csv(
                 tradingview,
-                ["Symbol", "Name", "Sector", "Volume", "Market Cap"],
+                ["Symbol", "Name", "Sector", "Volume", "Dollar Volume", "Market Cap"],
                 [
-                    {"Symbol": "NVDA", "Name": "NVIDIA Corporation", "Sector": "Technology", "Volume": "90M", "Market Cap": "4T"},
-                    {"Symbol": "BRK.A", "Name": "Berkshire Hathaway Inc.", "Sector": "Finance", "Volume": "500K", "Market Cap": "800B"},
-                    {"Symbol": "AACBU", "Name": "Example Units", "Sector": "Finance", "Volume": "1B", "Market Cap": "0"},
+                    {"Symbol": "NVDA", "Name": "NVIDIA Corporation", "Sector": "Technology", "Volume": "90M", "Dollar Volume": "13B", "Market Cap": "4T"},
+                    {"Symbol": "BRK.A", "Name": "Berkshire Hathaway Inc.", "Sector": "Finance", "Volume": "500K", "Dollar Volume": "350B", "Market Cap": "800B"},
+                    {"Symbol": "AACBU", "Name": "Example Units", "Sector": "Finance", "Volume": "1B", "Dollar Volume": "10B", "Market Cap": "0"},
                 ],
             )
             optionable.write_text("NVDA\n", encoding="utf-8")
@@ -41,7 +41,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         by_symbol = {row.symbol: row for row in rows}
         self.assertEqual(set(by_symbol), {"BRK.A", "NVDA"})
         self.assertTrue(by_symbol["NVDA"].in_market_cap_top300)
-        self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top300)
+        self.assertTrue(by_symbol["NVDA"].in_dollar_volume_top300)
         self.assertEqual(by_symbol["BRK.A"].pool_membership_status, "inactive")
         self.assertEqual(by_symbol["BRK.A"].pool_membership_reason, "inactive_no_listed_options_or_unverified")
         self.assertEqual(
@@ -63,10 +63,10 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             receipt = root / "pool.receipt.json"
             _write_csv(
                 tradingview,
-                ["Ticker", "Name", "Sector", "Volume", "Market Cap"],
+                ["Ticker", "Name", "Sector", "Volume", "Dollar Volume", "Market Cap"],
                 [
-                    {"Ticker": "META", "Name": "Meta Platforms", "Sector": "Communication Services", "Volume": "12,000,000", "Market Cap": "1.8T"},
-                    {"Ticker": "BRK.A", "Name": "Berkshire Hathaway", "Sector": "Finance", "Volume": "1,000", "Market Cap": "800B"},
+                    {"Ticker": "META", "Name": "Meta Platforms", "Sector": "Communication Services", "Volume": "12,000,000", "Dollar Volume": "8B", "Market Cap": "1.8T"},
+                    {"Ticker": "BRK.A", "Name": "Berkshire Hathaway", "Sector": "Finance", "Volume": "1,000", "Dollar Volume": "715M", "Market Cap": "800B"},
                 ],
             )
             optionable.write_text("META\n", encoding="utf-8")
@@ -113,8 +113,8 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             receipt = root / "pool.receipt.json"
             _write_csv(
                 tradingview,
-                ["Ticker", "Name", "Sector", "Volume", "Market Cap"],
-                [{"Ticker": "MSFT", "Name": "Microsoft", "Sector": "Technology", "Volume": "10M", "Market Cap": "4T"}],
+                ["Ticker", "Name", "Sector", "Volume", "Dollar Volume", "Market Cap"],
+                [{"Ticker": "MSFT", "Name": "Microsoft", "Sector": "Technology", "Volume": "10M", "Dollar Volume": "5B", "Market Cap": "4T"}],
             )
             completed = subprocess.run(
                 [
@@ -142,23 +142,23 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             self.assertEqual(stdout["symbols_txt_optionability_statuses"], ["accepted_optionable", "uncertain_verify_before_use"])
             self.assertEqual(symbols_txt.read_text(encoding="utf-8"), "MSFT\n")
 
-    def test_tradingview_fetch_rows_merges_volume_and_market_cap_scans(self) -> None:
+    def test_tradingview_fetch_rows_merges_dollar_volume_and_market_cap_scans(self) -> None:
         original = sys.modules["scripts.data.fetch_tradingview_equity_screener"]._post_scan
 
         def fake_post_scan(payload: dict, *, timeout_seconds: float) -> dict:
             sort_by = payload["sort"]["sortBy"]
-            if sort_by == "volume":
+            if sort_by == "Value.Traded":
                 return {
                     "totalCount": 2,
                     "data": [
-                        {"s": "NASDAQ:AAPL", "d": ["AAPL", "Apple Inc.", "stock", "common", "NASDAQ", "Technology", 1000, 3000]},
+                        {"s": "NASDAQ:AAPL", "d": ["AAPL", "Apple Inc.", "stock", "common", "NASDAQ", "Technology", 200, 1000, 200000, 3000]},
                     ],
                 }
             return {
                 "totalCount": 2,
                 "data": [
-                    {"s": "NASDAQ:MSFT", "d": ["MSFT", "Microsoft Corporation", "stock", "common", "NASDAQ", "Technology", 800, 4000]},
-                    {"s": "NASDAQ:AAPL", "d": ["AAPL", "Apple Inc.", "stock", "common", "NASDAQ", "Technology", 1000, 3000]},
+                    {"s": "NASDAQ:MSFT", "d": ["MSFT", "Microsoft Corporation", "stock", "common", "NASDAQ", "Technology", 500, 800, 400000, 4000]},
+                    {"s": "NASDAQ:AAPL", "d": ["AAPL", "Apple Inc.", "stock", "common", "NASDAQ", "Technology", 200, 1000, 200000, 3000]},
                 ],
             }
 
@@ -170,7 +170,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
 
         by_symbol = {row["Symbol"]: row for row in rows}
         self.assertEqual(set(by_symbol), {"AAPL", "MSFT"})
-        self.assertEqual(by_symbol["AAPL"]["Included By"], "market_cap_top;recent_week_volume_top")
+        self.assertEqual(by_symbol["AAPL"]["Included By"], "dollar_volume_top;market_cap_top")
         self.assertEqual(by_symbol["MSFT"]["Included By"], "market_cap_top")
         self.assertEqual(receipt["selected_symbol_count"], 2)
         self.assertEqual(receipt["per_rank_limit"], 300)
@@ -224,10 +224,10 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             tradingview = root / "tradingview.csv"
             _write_csv(
                 tradingview,
-                ["Ticker", "Name", "Sector", "Volume", "Market Cap"],
+                ["Ticker", "Name", "Sector", "Volume", "Dollar Volume", "Market Cap"],
                 [
-                    {"Ticker": "NVDA", "Name": "NVIDIA", "Sector": "Technology", "Volume": "100M", "Market Cap": "4T"},
-                    {"Ticker": "MSFT", "Name": "Microsoft", "Sector": "Technology", "Volume": "90M", "Market Cap": "3T"},
+                    {"Ticker": "NVDA", "Name": "NVIDIA", "Sector": "Technology", "Volume": "100M", "Dollar Volume": "13B", "Market Cap": "4T"},
+                    {"Ticker": "MSFT", "Name": "Microsoft", "Sector": "Technology", "Volume": "90M", "Dollar Volume": "9B", "Market Cap": "3T"},
                 ],
             )
 
@@ -241,8 +241,8 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
 
         by_symbol = {row.symbol: row for row in rows}
         self.assertEqual(set(by_symbol), {"MSFT", "NVDA"})
-        self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top300)
-        self.assertFalse(by_symbol["MSFT"].in_recent_week_volume_top300)
+        self.assertTrue(by_symbol["NVDA"].in_dollar_volume_top300)
+        self.assertFalse(by_symbol["MSFT"].in_dollar_volume_top300)
         self.assertEqual(by_symbol["MSFT"].pool_membership_status, "inactive")
         self.assertEqual(receipt["input_symbol_count"], 2)
         self.assertEqual(receipt["rank_limit"], 1)
@@ -260,16 +260,16 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
                     "optionable_underlying_status",
                     "pool_membership_status",
                     "pool_membership_reason",
-                    "in_recent_week_volume_top300",
+                    "in_dollar_volume_top300",
                     "in_market_cap_top300",
-                    "volume_rank",
+                    "dollar_volume_rank",
                     "market_cap_rank",
                     "source_refs",
                     "as_of_date",
                 ],
                 [
-                    {"symbol": "NVDA", "name": "NVIDIA", "sector": "Technology", "optionable_underlying_status": "uncertain_verify_before_use", "pool_membership_status": "active", "pool_membership_reason": "active", "in_recent_week_volume_top300": "true", "in_market_cap_top300": "true", "volume_rank": "8", "market_cap_rank": "1", "source_refs": "fixture", "as_of_date": "2026-06-04"},
-                    {"symbol": "XYZ", "name": "Inactive", "sector": "", "optionable_underlying_status": "no_listed_options_or_unverified", "pool_membership_status": "inactive", "pool_membership_reason": "inactive", "in_recent_week_volume_top300": "false", "in_market_cap_top300": "false", "volume_rank": "", "market_cap_rank": "", "source_refs": "fixture", "as_of_date": "2026-06-04"},
+                    {"symbol": "NVDA", "name": "NVIDIA", "sector": "Technology", "optionable_underlying_status": "uncertain_verify_before_use", "pool_membership_status": "active", "pool_membership_reason": "active", "in_dollar_volume_top300": "true", "in_market_cap_top300": "true", "dollar_volume_rank": "8", "market_cap_rank": "1", "source_refs": "fixture", "as_of_date": "2026-06-04"},
+                    {"symbol": "XYZ", "name": "Inactive", "sector": "", "optionable_underlying_status": "no_listed_options_or_unverified", "pool_membership_status": "inactive", "pool_membership_reason": "inactive", "in_dollar_volume_top300": "false", "in_market_cap_top300": "false", "dollar_volume_rank": "", "market_cap_rank": "", "source_refs": "fixture", "as_of_date": "2026-06-04"},
                 ],
             )
 

@@ -22,14 +22,18 @@ SCANNER_COLUMNS = [
     "subtype",
     "exchange",
     "sector",
+    "close",
     "volume",
+    "Value.Traded",
     "market_cap_basic",
 ]
 OUTPUT_FIELDS = [
     "Symbol",
     "Name",
     "Sector",
+    "Last Price",
     "Volume",
+    "Dollar Volume",
     "Market Cap",
     "Exchange",
     "TradingView Symbol",
@@ -84,7 +88,7 @@ def fetch_rows(*, per_rank_limit: int, timeout_seconds: float, as_of_date: str) 
     merged: dict[str, dict[str, str]] = {}
     scan_receipts: list[dict[str, Any]] = []
     rank_specs = {
-        "recent_week_volume_top": "volume",
+        "dollar_volume_top": "Value.Traded",
         "market_cap_top": "market_cap_basic",
     }
 
@@ -115,7 +119,9 @@ def fetch_rows(*, per_rank_limit: int, timeout_seconds: float, as_of_date: str) 
                     "Symbol": symbol,
                     "Name": str(raw.get("description") or ""),
                     "Sector": str(raw.get("sector") or ""),
+                    "Last Price": "",
                     "Volume": "",
+                    "Dollar Volume": "",
                     "Market Cap": "",
                     "Exchange": str(raw.get("exchange") or ""),
                     "TradingView Symbol": str(item.get("s") or ""),
@@ -125,7 +131,9 @@ def fetch_rows(*, per_rank_limit: int, timeout_seconds: float, as_of_date: str) 
                     "As Of Date": as_of_date,
                 },
             )
+            row["Last Price"] = str(raw.get("close") or row["Last Price"] or "")
             row["Volume"] = str(raw.get("volume") or row["Volume"] or "")
+            row["Dollar Volume"] = str(raw.get("Value.Traded") or row["Dollar Volume"] or "")
             row["Market Cap"] = str(raw.get("market_cap_basic") or row["Market Cap"] or "")
             included_by = {part for part in row["Included By"].split(";") if part}
             included_by.add(source_reason)
@@ -139,7 +147,7 @@ def fetch_rows(*, per_rank_limit: int, timeout_seconds: float, as_of_date: str) 
         "per_rank_limit": per_rank_limit,
         "scan_receipts": scan_receipts,
         "selected_symbol_count": len(rows),
-        "boundary_note": "Bounded no-login TradingView screener snapshot for realtime equity-total-pool input; it performs no broker/account/model activation and must not be used as historical replay candidate evidence.",
+        "boundary_note": "Bounded no-login TradingView screener snapshot for realtime equity-total-pool input, ranked by traded dollar value and market cap; it performs no broker/account/model activation and must not be used as historical replay candidate evidence.",
     }
     return rows, receipt
 

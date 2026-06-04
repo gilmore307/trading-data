@@ -24,9 +24,9 @@ OUTPUT_FIELDS = [
     "optionable_underlying_status",
     "pool_membership_status",
     "pool_membership_reason",
-    "in_recent_week_volume_top300",
+    "in_dollar_volume_top300",
     "in_market_cap_top300",
-    "volume_rank",
+    "dollar_volume_rank",
     "market_cap_rank",
     "source_refs",
     "as_of_date",
@@ -35,7 +35,7 @@ OUTPUT_FIELDS = [
 SYMBOL_FIELDS = ("symbol", "ticker", "Symbol", "Ticker", "Ticker symbol")
 NAME_FIELDS = ("name", "Name", "description", "Description", "Company Name")
 SECTOR_FIELDS = ("sector", "Sector")
-VOLUME_FIELDS = ("volume", "Volume", "relative_volume_10d_calc", "Average Volume", "Avg Volume")
+DOLLAR_VOLUME_FIELDS = ("dollar_volume", "Dollar Volume", "Value Traded", "Value.Traded")
 MARKET_CAP_FIELDS = ("market_cap", "marketCap", "Market Cap", "Market capitalization")
 
 
@@ -47,9 +47,9 @@ class PoolRow:
     optionable_underlying_status: str = "uncertain_verify_before_use"
     pool_membership_status: str = "inactive"
     pool_membership_reason: str = "not_evaluated"
-    in_recent_week_volume_top300: bool = False
+    in_dollar_volume_top300: bool = False
     in_market_cap_top300: bool = False
-    volume_rank: int | None = None
+    dollar_volume_rank: int | None = None
     market_cap_rank: int | None = None
     source_refs: set[str] = field(default_factory=set)
     as_of_date: str = ""
@@ -62,9 +62,9 @@ class PoolRow:
             "optionable_underlying_status": self.optionable_underlying_status,
             "pool_membership_status": self.pool_membership_status,
             "pool_membership_reason": self.pool_membership_reason,
-            "in_recent_week_volume_top300": str(self.in_recent_week_volume_top300).lower(),
+            "in_dollar_volume_top300": str(self.in_dollar_volume_top300).lower(),
             "in_market_cap_top300": str(self.in_market_cap_top300).lower(),
-            "volume_rank": "" if self.volume_rank is None else str(self.volume_rank),
+            "dollar_volume_rank": "" if self.dollar_volume_rank is None else str(self.dollar_volume_rank),
             "market_cap_rank": "" if self.market_cap_rank is None else str(self.market_cap_rank),
             "source_refs": ";".join(sorted(self.source_refs)),
             "as_of_date": self.as_of_date,
@@ -144,14 +144,14 @@ def build_pool(
             row.name = row.name or _field(raw, NAME_FIELDS)
             row.sector = row.sector or _field(raw, SECTOR_FIELDS)
             row.source_refs.add(f"tradingview_screener_snapshot:{path}")
-            metrics.setdefault(symbol, {})["volume"] = _number(_field(raw, VOLUME_FIELDS))
+            metrics.setdefault(symbol, {})["dollar_volume"] = _number(_field(raw, DOLLAR_VOLUME_FIELDS))
             metrics.setdefault(symbol, {})["market_cap"] = _number(_field(raw, MARKET_CAP_FIELDS))
 
-    for rank, symbol in enumerate(_rank_symbols(metrics, "volume"), start=1):
+    for rank, symbol in enumerate(_rank_symbols(metrics, "dollar_volume"), start=1):
         row = rows_by_symbol[symbol]
         if rank <= rank_limit:
-            row.in_recent_week_volume_top300 = True
-            row.volume_rank = rank
+            row.in_dollar_volume_top300 = True
+            row.dollar_volume_rank = rank
     for rank, symbol in enumerate(_rank_symbols(metrics, "market_cap"), start=1):
         row = rows_by_symbol[symbol]
         if rank <= rank_limit:
@@ -169,7 +169,7 @@ def build_pool(
 
     for row in rows_by_symbol.values():
         has_current_pool_source = (
-            row.in_recent_week_volume_top300
+            row.in_dollar_volume_top300
             or row.in_market_cap_top300
         )
         if not has_current_pool_source:
@@ -187,7 +187,7 @@ def build_pool(
         key=lambda row: (
             0 if row.pool_membership_status == "active" else 1,
             row.market_cap_rank or 10_000,
-            row.volume_rank or 10_000,
+            row.dollar_volume_rank or 10_000,
             row.symbol,
         ),
     )
@@ -204,7 +204,7 @@ def build_pool(
         "inactive_symbol_count": len(rows_by_symbol) - len(selected),
         "selected_symbol_count": len(selected),
         "excluded_non_optionable_or_unverified_count": len(rows_by_symbol) - len(selected),
-        "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView volume and market-cap snapshots; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
+        "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView traded-dollar-value and market-cap snapshots; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
     }
     return rows, receipt
 

@@ -69,7 +69,7 @@ def main() -> int:
         "snapshot_receipt": snapshot_receipt,
         "build_receipt": build_receipt,
         "optionability_mode": "allow_unknown" if args.allow_unknown_optionability else "strict_optionable_list",
-        "boundary_note": "This refresh performs a bounded TradingView realtime screener snapshot for volume and market-cap ranked equity candidates, then rebuilds the shared calendar symbol pool. It performs no ETF holdings fetches and no broker/account/model activation. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
+        "boundary_note": "This refresh performs a bounded TradingView realtime screener snapshot for traded-dollar-value and market-cap ranked equity candidates, then rebuilds the shared calendar symbol pool. It performs no ETF holdings fetches and no broker/account/model activation. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
     }
     args.receipt.parent.mkdir(parents=True, exist_ok=True)
     args.receipt.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")

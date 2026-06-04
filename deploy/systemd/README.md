@@ -2,8 +2,8 @@
 
 `trading-data-equity-total-symbol-pool-refresh.service` and `.timer` refresh the
 realtime equity total-symbol pool every 30 minutes from the TradingView top-300
-volume and top-300 market-cap screener snapshot. The refresh does not fetch ETF
-holdings and is not historical replay candidate evidence. Optional environment
+traded-dollar-value and top-300 market-cap screener snapshot. The refresh does
+not fetch ETF holdings and is not historical replay candidate evidence. Optional environment
 overrides belong in `/etc/default/trading-data-equity-total-symbol-pool-refresh`;
 `TRADING_DATA_EQUITY_POOL_PER_RANK_LIMIT` defaults to `300`.
 

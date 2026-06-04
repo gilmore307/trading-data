@@ -1,6 +1,7 @@
 import csv
 import json
 import tempfile
+import urllib.error
 import unittest
 import zipfile
 from io import BytesIO
@@ -8,7 +9,8 @@ from pathlib import Path
 
 from importlib import import_module
 
-run = import_module("data_feed.06_feed_etf_holdings.pipeline").run
+pipeline = import_module("data_feed.06_feed_etf_holdings.pipeline")
+run = pipeline.run
 
 
 class EtfHoldingsPipelineTests(unittest.TestCase):
@@ -79,6 +81,47 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
 
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.details["error"]["type"], "ProviderPolicyError")
+
+    def test_global_x_live_fetch_falls_back_to_recent_dated_csv(self):
+        original = pipeline._fetch_source_url
+        calls = []
+
+        def fake_fetch_source_url(source_url: str):
+            calls.append(source_url)
+            if source_url.endswith("20260604.csv"):
+                raise urllib.error.HTTPError(source_url, 404, "Not Found", hdrs=None, fp=None)
+            return pipeline.FeedPayload(
+                "csv",
+                "Ticker,Name,Weight (%)\nNVDA,NVIDIA Corp,18.53%\n",
+                source_url,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "06_feed_etf_holdings_global_x_fallback_test",
+                "feed": "06_feed_etf_holdings",
+                "params": {"etf_symbol": "AIQ", "issuer_name": "Global X", "as_of_date": "2026-06-04"},
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "realtime_provider_maintenance": True,
+                    "allowed_providers": ["etf_issuer_holdings"],
+                    "allowed_endpoint_families": ["holdings_file"],
+                    "max_requests": 10,
+                    "max_symbols": 1,
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+
+            try:
+                pipeline._fetch_source_url = fake_fetch_source_url
+                result = run(task_key, run_id="run")
+            finally:
+                pipeline._fetch_source_url = original
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(len(calls), 2)
+            self.assertTrue(calls[0].endswith("20260604.csv"))
+            self.assertTrue(calls[1].endswith("20260603.csv"))
 
     def test_parse_html_holdings_table(self):
         html = """

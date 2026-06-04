@@ -12,9 +12,10 @@ import csv
 import html
 import json
 import re
+import urllib.error
 import zipfile
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from http.cookiejar import CookieJar
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -140,16 +141,26 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
             payload = FeedPayload(kind, str(params[kind]), source_url)
             break
     if payload is None:
-        source_url = source_url or _default_source_url(etf_symbol, issuer, params)
-        if source_url:
+        candidate_urls = [source_url] if source_url else _default_source_urls(etf_symbol, issuer, params)
+        last_error: Exception | None = None
+        for candidate_url in candidate_urls:
             require_provider_execution_allowed(
                 context.task_key,
                 provider="etf_issuer_holdings",
                 endpoint_family="holdings_file",
                 requested_symbols=1,
-                requested_requests=2 if "vaneck.com" in source_url.lower() else 1,
+                requested_requests=2 if "vaneck.com" in candidate_url.lower() else 1,
             )
-            payload = _fetch_source_url(source_url)
+            try:
+                payload = _fetch_source_url(candidate_url)
+                source_url = candidate_url
+                break
+            except urllib.error.HTTPError as exc:
+                last_error = exc
+                if issuer != "global_x" or exc.code != 404:
+                    raise
+        if payload is None and last_error is not None:
+            raise last_error
     if payload is None:
         raise EtfHoldingsError("provide one of params.csv_path/csv_text/html_path/html/json_path/json_text/xlsx_path or params.source_url")
     context.run_dir.mkdir(parents=True, exist_ok=True)
@@ -169,6 +180,11 @@ def fetch(context: FeedContext) -> tuple[StepResult, FeedPayload]:
 
 
 def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any]) -> str:
+    urls = _default_source_urls(etf_symbol, issuer, params)
+    return urls[0] if urls else ""
+
+
+def _default_source_urls(etf_symbol: str, issuer: str, params: Mapping[str, Any]) -> list[str]:
     as_of = str(params.get("as_of_date") or _now_utc()[:10])[:10].replace("-", "")
     if issuer in {"ishares", "blackrock", "blackrock_ishares", "blackrock_/_ishares"}:
         product_ids = {
@@ -177,7 +193,7 @@ def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any])
         }
         product_id = str(params.get("blackrock_product_id") or product_ids.get(etf_symbol.upper()) or "").strip()
         if not product_id:
-            return ""
+            return []
         query = urlencode(
             {
                 "appSubType": "ISHARES",
@@ -192,11 +208,18 @@ def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any])
                 "includeConfig": "true",
             }
         )
-        return "https://www.blackrock.com/varnish-api/blk-one01-product-data/product-data/api/v2/get-product-data?" + query
+        return ["https://www.blackrock.com/varnish-api/blk-one01-product-data/product-data/api/v2/get-product-data?" + query]
     if issuer in {"state_street", "spdr", "sector_spdr", "state_street_spdr", "state_street_/_spdr"}:
-        return f"https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-{etf_symbol.lower()}.xlsx"
+        return [f"https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-{etf_symbol.lower()}.xlsx"]
     if issuer == "global_x":
-        return f"https://assets.globalxetfs.com/funds/holdings/{etf_symbol.lower()}_full-holdings_{as_of}.csv"
+        try:
+            as_of_date = datetime.strptime(as_of, "%Y%m%d").date()
+        except ValueError:
+            as_of_date = datetime.now(UTC).date()
+        return [
+            f"https://assets.globalxetfs.com/funds/holdings/{etf_symbol.lower()}_full-holdings_{(as_of_date - timedelta(days=offset)).strftime('%Y%m%d')}.csv"
+            for offset in range(0, 10)
+        ]
     if issuer == "ark_invest":
         ark_urls = {
             "ARKF": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_FINTECH_INNOVATION_ETF_ARKF_HOLDINGS.csv",
@@ -204,15 +227,15 @@ def _default_source_url(etf_symbol: str, issuer: str, params: Mapping[str, Any])
             "ARKW": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_NEXT_GENERATION_INTERNET_ETF_ARKW_HOLDINGS.csv",
             "ARKX": "https://assets.ark-funds.com/fund-documents/funds-etf-csv/ARK_SPACE_EXPLORATION_&_INNOVATION_ETF_ARKX_HOLDINGS.csv",
         }
-        return ark_urls.get(etf_symbol.upper(), "")
+        return [ark_urls[etf_symbol.upper()]] if etf_symbol.upper() in ark_urls else []
     if issuer == "first_trust":
-        return f"https://www.ftportfolios.com/Retail/Etf/EtfHoldings.aspx?Ticker={etf_symbol.upper()}"
+        return [f"https://www.ftportfolios.com/Retail/Etf/EtfHoldings.aspx?Ticker={etf_symbol.upper()}"]
     if issuer == "vaneck":
         vaneck_urls = {
             "SMH": "https://www.vaneck.com/us/en/etf/equity/smh/holdings/download/xlsx/",
         }
-        return vaneck_urls.get(etf_symbol.upper(), "")
-    return ""
+        return [vaneck_urls[etf_symbol.upper()]] if etf_symbol.upper() in vaneck_urls else []
+    return []
 
 
 def _fetch_source_url(source_url: str) -> FeedPayload:

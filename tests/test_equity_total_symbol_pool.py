@@ -6,9 +6,11 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 
 from scripts.data.build_equity_total_symbol_pool import build_pool
+from scripts.data.fetch_etf_universe_holdings import collect_holdings
 from scripts.data.fetch_tradingview_equity_screener import fetch_rows
 
 
@@ -164,10 +166,80 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         self.assertEqual(by_symbol["MSFT"]["Included By"], "market_cap_top")
         self.assertEqual(receipt["selected_symbol_count"], 2)
 
+    def test_etf_universe_holdings_collects_layer2_and_dedupes_etf_symbols(self) -> None:
+        import scripts.data.fetch_etf_universe_holdings as holdings_module
+
+        original = holdings_module._run_feed
+
+        def fake_run_feed(task_key: dict, *, run_id: str) -> SimpleNamespace:
+            saved = Path(task_key["output_root"]) / "runs" / run_id / "saved" / "etf_holding_snapshot.csv"
+            rows = [
+                {"etf_symbol": task_key["params"]["etf_symbol"], "issuer_name": "test", "as_of_date": "2026-06-04", "holding_symbol": "NVDA", "holding_name": "NVIDIA", "weight": "10", "shares": "", "market_value": "", "cusip": "", "sedol": "", "asset_class": "Equity", "sector_type": "", "source_url": "fixture"},
+                {"etf_symbol": task_key["params"]["etf_symbol"], "issuer_name": "test", "as_of_date": "2026-06-04", "holding_symbol": "NVDA", "holding_name": "NVIDIA", "weight": "10", "shares": "", "market_value": "", "cusip": "", "sedol": "", "asset_class": "Equity", "sector_type": "", "source_url": "fixture"},
+                {"etf_symbol": task_key["params"]["etf_symbol"], "issuer_name": "test", "as_of_date": "2026-06-04", "holding_symbol": "USD", "holding_name": "Cash", "weight": "1", "shares": "", "market_value": "", "cusip": "", "sedol": "", "asset_class": "Cash", "sector_type": "", "source_url": "fixture"},
+            ]
+            _write_csv(saved, list(rows[0]), rows)
+            return SimpleNamespace(status="succeeded", references=[str(saved)], row_counts={"etf_holding_snapshot": len(rows)}, details={"run_id": run_id})
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            universe = root / "etfs.csv"
+            _write_csv(
+                universe,
+                ["symbol", "issuer_name", "model_layer", "universe_type"],
+                [
+                    {"symbol": "XLK", "issuer_name": "State Street / SPDR", "model_layer": "layer_02_sector_context", "universe_type": "sector_observation_etf"},
+                    {"symbol": "SPY", "issuer_name": "State Street / SPDR", "model_layer": "layer_01_market_regime", "universe_type": "market_state_etf"},
+                ],
+            )
+
+            try:
+                holdings_module._run_feed = fake_run_feed
+                rows, receipt = collect_holdings(
+                    universe_csv=universe,
+                    output_root=root / "out",
+                    as_of_date="2026-06-04",
+                    model_layers={"layer_02_sector_context"},
+                    allow_partial=True,
+                )
+            finally:
+                holdings_module._run_feed = original
+
+        self.assertEqual([(row["etf_symbol"], row["holding_symbol"]) for row in rows], [("XLK", "NVDA")])
+        self.assertEqual(receipt["requested_etf_count"], 1)
+        self.assertEqual(receipt["selected_holding_row_count"], 1)
+
+    def test_build_pool_merges_tradingview_and_etf_holding_reason_for_same_symbol(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tradingview = root / "tradingview.csv"
+            holdings = root / "holdings.csv"
+            _write_csv(
+                tradingview,
+                ["Ticker", "Name", "Sector", "Volume", "Market Cap"],
+                [{"Ticker": "NVDA", "Name": "NVIDIA", "Sector": "Technology", "Volume": "100M", "Market Cap": "4T"}],
+            )
+            _write_csv(holdings, ["holding_symbol"], [{"holding_symbol": "NVDA"}, {"holding_symbol": "AAPL"}])
+
+            rows, receipt = build_pool(
+                tradingview_csvs=[tradingview],
+                layer2_holdings_csvs=[holdings],
+                optionable_symbols_file=None,
+                as_of_date="2026-06-04",
+                allow_unknown_optionability=True,
+            )
+
+        by_symbol = {row.symbol: row for row in rows}
+        self.assertEqual(set(by_symbol), {"AAPL", "NVDA"})
+        self.assertTrue(by_symbol["NVDA"].in_layer2_etf_holdings)
+        self.assertTrue(by_symbol["NVDA"].in_recent_week_volume_top100)
+        self.assertEqual(receipt["input_symbol_count"], 2)
+
 
 def _write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

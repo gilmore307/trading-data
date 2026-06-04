@@ -77,7 +77,7 @@ def generate_row(inputs: MarketRegimeInputs, combo: Combination, snapshot_time: 
     row: dict[str, Any] = {
         "snapshot_time": snapshot_time.isoformat(),
         "candidate_symbol": combo.numerator_symbol,
-        "candidate_type": "sector_industry_etf",
+        "candidate_type": "sector_context_etf",
         "comparison_symbol": combo.denominator_symbol,
         "rotation_pair_id": combo.combination_id,
         "rotation_pair_type": combo.combination_type,

@@ -20,13 +20,13 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
         task_key = {"task_id": "m02_window", "source": "m02_sector_context_data_acquisition", "params": {"start": "2026-04-24", "end": "2026-04-25"}, "output_root": "/tmp/m02_window"}
         context = module.build_context(task_key, "run")
-        universe = [{"symbol": "SMH", "issuer_name": "VanEck", "universe_type": "sector_observation_etf", "exposure_type": "industry_chain"}]
+        universe = [{"symbol": "XLK", "issuer_name": "State Street / SPDR", "universe_type": "sector_observation_etf", "exposure_type": "sp500_sector"}]
         payload = module.SourcePayload(
             universe_rows=universe,
-            selected_symbols=("SMH",),
+            selected_symbols=("XLK",),
             raw_rows=[
-                {"etf_symbol": "SMH", "holding_symbol": "NVDA", "holding_name": "NVIDIA Corp", "asset_class": "Equity", "as_of_date": "2026-04-24"},
-                {"etf_symbol": "SMH", "holding_symbol": "AMD", "holding_name": "Advanced Micro Devices", "asset_class": "Equity", "as_of_date": "2026-04-25"},
+                {"etf_symbol": "XLK", "holding_symbol": "NVDA", "holding_name": "NVIDIA Corp", "asset_class": "Equity", "as_of_date": "2026-04-24"},
+                {"etf_symbol": "XLK", "holding_symbol": "AMD", "holding_name": "Advanced Micro Devices", "asset_class": "Equity", "as_of_date": "2026-04-25"},
             ],
         )
         result, cleaned = module.clean(context, payload)
@@ -39,9 +39,9 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         task_key = {"task_id": "m02_us_date", "source": "m02_sector_context_data_acquisition", "params": {"start": "2026-05-18", "end": "2026-05-19"}, "output_root": "/tmp/m02_us_date"}
         context = module.build_context(task_key, "run")
         payload = module.SourcePayload(
-            universe_rows=[{"symbol": "ARKG", "issuer_name": "ARK Invest", "universe_type": "sector_observation_etf", "exposure_type": "thematic_growth"}],
-            selected_symbols=("ARKG",),
-            raw_rows=[{"etf_symbol": "ARKG", "holding_symbol": "TDOC", "holding_name": "Teladoc Health", "asset_class": "Equity", "as_of_date": "05/18/2026"}],
+            universe_rows=[{"symbol": "XLV", "issuer_name": "State Street / SPDR", "universe_type": "sector_observation_etf", "exposure_type": "sp500_sector"}],
+            selected_symbols=("XLV",),
+            raw_rows=[{"etf_symbol": "XLV", "holding_symbol": "UNH", "holding_name": "UnitedHealth Group", "asset_class": "Equity", "as_of_date": "05/18/2026"}],
         )
 
         result, cleaned = module.clean(context, payload)
@@ -60,10 +60,10 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             universe.write_text(
                 "symbol,universe_type,model_layer,exposure_type,feature_grain,fund_name,issuer_name\n"
                 "SPY,market_state_etf,layer_01_market_regime,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"
-                "SMH,sector_observation_etf,layer_02_sector_context,industry_chain,1d,VanEck Semiconductor ETF,VanEck\n",
+                "XLK,sector_observation_etf,layer_02_sector_context,sp500_sector,1d,Technology Select Sector SPDR Fund,State Street / SPDR\n",
                 encoding="utf-8",
             )
-            holdings = Path(tmp) / "smh_holdings.csv"
+            holdings = Path(tmp) / "xlk_holdings.csv"
             with holdings.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(handle, fieldnames=["Ticker", "Name", "Weight", "Shares", "Market Value", "Asset Class", "Sector"])
                 writer.writeheader()
@@ -80,7 +80,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
                     "end": "2026-04-25",
                     "market_regime_etf_universe_path": str(universe),
                     "available_time": "2026-04-25T09:30:00-04:00",
-                    "holding_feed_payloads": {"SMH": {"csv_path": str(holdings), "as_of_date": "2026-04-24"}},
+                    "holding_feed_payloads": {"XLK": {"csv_path": str(holdings), "as_of_date": "2026-04-24"}},
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
@@ -92,7 +92,7 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             manifest = json.loads((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["model_layer_filter"], "layer_02_sector_context")
             self.assertEqual(manifest["universe_type_filter"], "sector_observation_etf")
-            self.assertEqual(manifest["symbols"], ["SMH"])
+            self.assertEqual(manifest["symbols"], ["XLK"])
             self.assertEqual(len(sql_writer.calls), 1)
             call = sql_writer.calls[0]
             self.assertEqual(call["table"], "m02_sector_context_data_acquisition")
@@ -100,9 +100,9 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
             self.assertEqual(call["columns"], ["etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
             rows = call["rows"]
             self.assertEqual(rows[0]["holding_symbol"], "NVDA")
-            self.assertEqual(rows[0]["etf_symbol"], "SMH")
+            self.assertEqual(rows[0]["etf_symbol"], "XLK")
             self.assertEqual(rows[0]["universe_type"], "sector_observation_etf")
-            self.assertEqual(rows[0]["exposure_type"], "industry_chain")
+            self.assertEqual(rows[0]["exposure_type"], "sp500_sector")
             self.assertEqual(rows[0]["available_time"], "2026-04-25T09:30:00-04:00")
             self.assertNotIn("run_id", rows[0])
             self.assertNotIn("task_id", rows[0])
@@ -182,11 +182,11 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         context = module.build_context(task_key, "run")
         payload = module.SourcePayload(
             universe_rows=[
-                {"symbol": "ARKF", "issuer_name": "ARK Invest", "universe_type": "sector_observation_etf", "exposure_type": "thematic_growth"},
+                {"symbol": "XLF", "issuer_name": "State Street / SPDR", "universe_type": "sector_observation_etf", "exposure_type": "sp500_sector"},
             ],
-            selected_symbols=("ARKF",),
+            selected_symbols=("XLF",),
             raw_rows=[
-                {"etf_symbol": "ARKF", "holding_symbol": "SHOP", "holding_name": "Shopify Inc", "asset_class": "Equity", "as_of_date": "2026-01-02"},
+                {"etf_symbol": "XLF", "holding_symbol": "JPM", "holding_name": "JPMorgan Chase & Co", "asset_class": "Equity", "as_of_date": "2026-01-02"},
             ],
         )
 
@@ -195,9 +195,9 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         self.assertEqual(result.status, "succeeded")
         self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 0)
         self.assertEqual(cleaned.rows, [])
-        self.assertEqual(result.details["missing_symbols"], ["ARKF"])
+        self.assertEqual(result.details["missing_symbols"], ["XLF"])
         self.assertIn("accepted_partial_coverage", result.details["missing_symbol_policy"])
-        self.assertEqual(result.details["symbol_coverage"]["ARKF"]["outside_window"], 1)
+        self.assertEqual(result.details["symbol_coverage"]["XLF"]["outside_window"], 1)
 
     def test_missing_as_of_date_holdings_are_not_backfilled_from_request_window(self):
         module = import_module("data_source.m02_sector_context_data_acquisition.pipeline")
@@ -205,11 +205,11 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
         context = module.build_context(task_key, "run")
         payload = module.SourcePayload(
             universe_rows=[
-                {"symbol": "CIBR", "issuer_name": "First Trust", "universe_type": "sector_observation_etf", "exposure_type": "cybersecurity"},
+                {"symbol": "XLU", "issuer_name": "State Street / SPDR", "universe_type": "sector_observation_etf", "exposure_type": "sp500_sector"},
             ],
-            selected_symbols=("CIBR",),
+            selected_symbols=("XLU",),
             raw_rows=[
-                {"etf_symbol": "CIBR", "holding_symbol": "MSFT", "holding_name": "Microsoft Corp", "asset_class": "Equity", "as_of_date": ""},
+                {"etf_symbol": "XLU", "holding_symbol": "NEE", "holding_name": "NextEra Energy Inc", "asset_class": "Equity", "as_of_date": ""},
             ],
         )
 
@@ -217,8 +217,8 @@ class CandidateBuilderEtfHoldingsPipelineTests(unittest.TestCase):
 
         self.assertEqual(cleaned.rows, [])
         self.assertEqual(result.details["skipped"]["missing_as_of_date"], 1)
-        self.assertEqual(result.details["symbol_coverage"]["CIBR"]["missing_as_of_date"], 1)
-        self.assertEqual(result.details["missing_symbols"], ["CIBR"])
+        self.assertEqual(result.details["symbol_coverage"]["XLU"]["missing_as_of_date"], 1)
+        self.assertEqual(result.details["missing_symbols"], ["XLU"])
 
 
 if __name__ == "__main__":

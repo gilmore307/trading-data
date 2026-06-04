@@ -109,7 +109,7 @@ Index rebalance routing is limited to the accepted U.S. headline index set:
 Examples:
 
 - `META` post-earnings failure: target-local earnings/guidance/tax-charge source evidence is primary; GDELT and market sources check AI-capex theme and market confounders.
-- `NVDA` semiconductor selloff: sector/theme evidence and market risk-off evidence may be primary when SMH/peers move with or more than NVDA; NVDA-specific export, legal, or valuation headlines remain target-local contributors.
+- `NVDA` semiconductor selloff: broad technology-sector, reviewed peer/basket, and market risk-off evidence may be primary when the context moves with or more than NVDA; NVDA-specific export, legal, or valuation headlines remain target-local contributors.
 - `ORCL` move after an `NVDA` event: the native event source is NVDA, but the target attribution route must preserve AI/cloud/data-center, semiconductor, supplier/customer, index, or risk-appetite transmission evidence before the event can explain ORCL.
 
 ## Standardized Event Observation Requirements

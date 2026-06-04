@@ -40,10 +40,8 @@ INSERT_BATCH_SIZE = 1000
 DEFAULT_TARGET_CONTEXT_MAPPING_PATH = Path("/root/projects/trading-storage/main/shared/layer_02_target_context_mapping.csv")
 MAPPING_METHOD_RANK = {
     "crypto_business_context": 10,
-    "primary_business_context": 10,
     "primary_sector_context": 20,
     "secondary_sector_context": 30,
-    "industry_chain_context": 40,
     "weak_demand_side_context": 90,
 }
 

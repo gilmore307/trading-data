@@ -32,9 +32,9 @@ input_frame = 1D     -> prediction_horizon = 1W
 
 Layer 1 data may use broad and cross-asset market evidence such as market ETF bars, rates/duration proxies, dollar/commodity proxies, volatility, correlation, breadth, concentration, credit, liquidity, and risk-appetite sensors.
 
-Layer 1 data must not use sector/industry ETF leadership, sector rotation, ETF holdings, selected securities, strategy labels, option-contract outcomes, portfolio PnL, or future-return labels as construction inputs.
+Layer 1 data must not use broad-sector or focused ETF leadership, sector rotation, ETF holdings, selected securities, strategy labels, option-contract outcomes, portfolio PnL, or future-return labels as construction inputs.
 
-The shared storage CSVs carry `model_layer` as the authoritative scope discriminator. Layer 1 feature construction consumes only `layer_01_market_regime` rows. `sector_observation_etf` / `layer_02_sector_context` evidence is not Layer 1 input; sector/industry behavior evidence routes to `m02_sector_context_feature_generation`.
+The shared storage CSVs carry `model_layer` as the authoritative scope discriminator. Layer 1 feature construction consumes only `layer_01_market_regime` rows. `sector_observation_etf` / `layer_02_sector_context` evidence is not Layer 1 input; broad-sector and crypto-context behavior evidence routes to `m02_sector_context_feature_generation`.
 
 ## Field naming
 

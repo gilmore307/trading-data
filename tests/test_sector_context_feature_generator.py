@@ -50,7 +50,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             {"symbol": "QQQ", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
             {"symbol": "XLK", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
             {"symbol": "XLP", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
-            {"symbol": "SMH", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
+            {"symbol": "XLE", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
         ]
         combinations = [
             {
@@ -70,11 +70,11 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 "feature_bar_grain": "1m",
             },
             {
-                "combination_id": "smh_xlk",
-                "combination_type": "context_rotation",
+                "combination_id": "xle_xlp",
+                "combination_type": "sector_rotation",
                 "model_layer": "layer_02_sector_context",
-                "numerator_symbol": "SMH",
-                "denominator_symbol": "XLK",
+                "numerator_symbol": "XLE",
+                "denominator_symbol": "XLP",
                 "feature_bar_grain": "1m",
             },
         ]
@@ -86,8 +86,8 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             qqq_close = 200 + index * 1.2 + math.sin(index / 3)
             xlk_close = 90 + index * 0.8 + math.sin(index / 5)
             xlp_close = 80 + index * 0.3 + math.cos(index / 7)
-            smh_close = 110 + index * 1.4 + math.sin(index / 6)
-            for symbol, close in {"SPY": spy_close, "QQQ": qqq_close, "XLK": xlk_close, "XLP": xlp_close, "SMH": smh_close}.items():
+            xle_close = 110 + index * 1.4 + math.sin(index / 6)
+            for symbol, close in {"SPY": spy_close, "QQQ": qqq_close, "XLK": xlk_close, "XLP": xlp_close, "XLE": xle_close}.items():
                 bars.append(_bar(symbol, day, close))
         snapshot = datetime.combine(start + timedelta(days=269), datetime.min.time(), tzinfo=ET).replace(hour=16)
         bars.extend(
@@ -96,8 +96,10 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 _intraday_bar("SPY", snapshot, 370.0),
                 _intraday_bar("XLK", snapshot - timedelta(minutes=1), 94.0),
                 _intraday_bar("XLK", snapshot, 95.0),
-                _intraday_bar("SMH", snapshot - timedelta(minutes=1), 124.0),
-                _intraday_bar("SMH", snapshot, 125.0),
+                _intraday_bar("XLP", snapshot - timedelta(minutes=1), 79.0),
+                _intraday_bar("XLP", snapshot, 80.0),
+                _intraday_bar("XLE", snapshot - timedelta(minutes=1), 124.0),
+                _intraday_bar("XLE", snapshot, 125.0),
             ]
         )
         return generator.build_inputs(bar_rows=bars, universe_rows=universe, combination_rows=combinations), snapshot
@@ -143,7 +145,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
         self.assertEqual(len(rows), 3)
         pair_ids = {row["rotation_pair_id"] for row in rows}
-        self.assertEqual(pair_ids, {"sector_observation_breadth", "xlk_spy", "smh_xlk"})
+        self.assertEqual(pair_ids, {"sector_observation_breadth", "xlk_spy", "xle_xlp"})
         self.assertNotIn("qqq_spy", pair_ids)
 
         summary_row = next(row for row in rows if row["rotation_pair_id"] == "sector_observation_breadth")
@@ -154,7 +156,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
         xlk_row = next(row for row in rows if row["rotation_pair_id"] == "xlk_spy")
         self.assertEqual(xlk_row["candidate_symbol"], "XLK")
-        self.assertEqual(xlk_row["candidate_type"], "sector_industry_etf")
+        self.assertEqual(xlk_row["candidate_type"], "sector_context_etf")
         self.assertEqual(xlk_row["comparison_symbol"], "SPY")
         self.assertEqual(xlk_row["rotation_pair_type"], "sector_rotation")
         self.assertAlmostEqual(xlk_row["relative_strength_return_1m"], math.log((95.0 / 370.0) / (94.0 / 369.0)))
@@ -162,11 +164,11 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertNotIn("relative_strength_ma20", xlk_row)
         self.assertIn("relative_strength_return_corr_20d", xlk_row)
 
-        smh_row = next(row for row in rows if row["rotation_pair_id"] == "smh_xlk")
-        self.assertEqual(smh_row["candidate_symbol"], "SMH")
-        self.assertEqual(smh_row["comparison_symbol"], "XLK")
-        self.assertEqual(smh_row["rotation_pair_type"], "context_rotation")
-        self.assertAlmostEqual(smh_row["relative_strength_return_1m"], math.log((125.0 / 95.0) / (124.0 / 94.0)))
+        xle_row = next(row for row in rows if row["rotation_pair_id"] == "xle_xlp")
+        self.assertEqual(xle_row["candidate_symbol"], "XLE")
+        self.assertEqual(xle_row["comparison_symbol"], "XLP")
+        self.assertEqual(xle_row["rotation_pair_type"], "sector_rotation")
+        self.assertAlmostEqual(xle_row["relative_strength_return_1m"], math.log((125.0 / 80.0) / (124.0 / 79.0)))
 
     def test_sql_fetch_reads_one_minute_source_bars_for_local_frame_generation(self) -> None:
         class FakeCursor:
@@ -202,7 +204,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             {
                 "snapshot_time": "2026-01-02T16:00:00-05:00",
                 "candidate_symbol": "XLK",
-                "candidate_type": "sector_industry_etf",
+                "candidate_type": "sector_context_etf",
                 "comparison_symbol": "SPY",
                 "rotation_pair_id": "xlk_spy",
                 "rotation_pair_type": "sector_rotation",
@@ -219,7 +221,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertIn('ON CONFLICT ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]
         self.assertIsNotNone(insert_params)
-        self.assertEqual(insert_params[:7], ["2026-01-02T16:00:00-05:00", "XLK", "sector_industry_etf", "SPY", "xlk_spy", "sector_rotation", "1m"])
+        self.assertEqual(insert_params[:7], ["2026-01-02T16:00:00-05:00", "XLK", "sector_context_etf", "SPY", "xlk_spy", "sector_rotation", "1m"])
         payload = json.loads(insert_params[7])  # type: ignore[index]
         self.assertEqual(payload, {"relative_strength_return": 0.01})
 

@@ -3,10 +3,12 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from importlib import import_module
 
-run = import_module("data_feed.09_feed_thetadata_option_selection_snapshot.pipeline").run
+pipeline = import_module("data_feed.09_feed_thetadata_option_selection_snapshot.pipeline")
+run = pipeline.run
 from feed_availability.http import HttpResult
 
 
@@ -92,6 +94,15 @@ class FakeThetaDataClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
+class CapturingThetaDataClient(FakeThetaDataClient):
+    instances = []
+
+    def __init__(self, *, timeout_seconds, retry_policy):
+        self.timeout_seconds = timeout_seconds
+        self.retry_policy = retry_policy
+        self.instances.append(self)
+
+
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_only_with_snapshot_clock(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -160,6 +171,34 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             result = run(task_key, run_id="run_missing_time", client=FakeThetaDataClient(), client_is_fixture=True)
             self.assertEqual(result.status, "failed")
             self.assertIn("snapshot_time is required", result.details["error"]["message"])
+
+    def test_default_client_uses_bounded_retry_policy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            CapturingThetaDataClient.instances = []
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2026-04-24T09:30:02.500000-04:00",
+                    "historical_mode": False,
+                    "thetadata_base_url": "http://127.0.0.1:25503",
+                },
+                "output_root": str(output_root),
+            }
+            with patch.object(pipeline, "HttpClient", CapturingThetaDataClient):
+                result = run(task_key, run_id="run_default_retry", client_is_fixture=True)
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(len(CapturingThetaDataClient.instances), 1)
+            client = CapturingThetaDataClient.instances[0]
+            self.assertEqual(client.timeout_seconds, 30)
+            self.assertEqual(client.retry_policy.max_attempts, 3)
+            self.assertEqual(client.retry_policy.backoff_seconds, 1.0)
+            manifest = json.loads((output_root / "runs" / "run_default_retry" / "request_manifest.json").read_text())
+            self.assertEqual(manifest["params"]["retry_attempts"], 3)
+            self.assertEqual(manifest["params"]["retry_backoff_seconds"], 1.0)
 
 
 if __name__ == "__main__":

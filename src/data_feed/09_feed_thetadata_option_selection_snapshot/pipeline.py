@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from feed_availability.http import HttpClient, HttpResult
+from feed_availability.http import HttpClient, HttpResult, RetryPolicy
 from feed_availability.sanitize import sanitize_url, sanitize_value
 from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
@@ -30,6 +30,8 @@ FEED = "09_feed_thetadata_option_selection_snapshot"
 DEFAULT_MAX_DTE = 45
 DEFAULT_STRIKE_RANGE = 5
 DEFAULT_OPTION_BUCKET_POLICY_REF = "LAYER_09_OPTION_BUCKET_STRIKE_POLICY"
+DEFAULT_PROVIDER_RETRY_ATTEMPTS = 3
+DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS = 1.0
 
 
 @dataclass(frozen=True)
@@ -344,6 +346,9 @@ def _fetch_endpoint(
     return rows, {
         "endpoint": sanitize_url(result.url),
         "http_status": result.status,
+        "attempt_count": result.attempt_count,
+        "retry_policy": result.retry_policy,
+        "attempts": result.attempts,
         "row_count": len(rows),
     }
 
@@ -354,6 +359,8 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     snapshot_time = _parse_snapshot_time(_required(params, "snapshot_time"))
     base_url = str(params.get("thetadata_base_url") or "http://127.0.0.1:25503").rstrip("/")
     timeout = int(params.get("timeout_seconds", 30))
+    retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
+    retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
     if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
@@ -364,7 +371,13 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             requested_start=snapshot_time.isoformat(),
             requested_end=snapshot_time.isoformat(),
         )
-    client = client or HttpClient(timeout_seconds=timeout)
+    client = client or HttpClient(
+        timeout_seconds=timeout,
+        retry_policy=RetryPolicy(
+            max_attempts=retry_attempts,
+            backoff_seconds=retry_backoff_seconds,
+        ),
+    )
 
     secret_summary = None
     try:
@@ -448,6 +461,8 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
                         "max_dte": max_dte,
                         "strike_range": strike_range,
                         "option_bucket_policy_ref": option_bucket_policy_ref,
+                        "retry_attempts": retry_attempts,
+                        "retry_backoff_seconds": retry_backoff_seconds,
                     }
                 ),
                 "requests": evidence,

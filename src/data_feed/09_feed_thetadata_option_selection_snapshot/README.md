@@ -20,17 +20,20 @@ No implicit latest/current mode exists. The caller must supply `snapshot_time`.
 - `timeout_seconds` — request timeout; defaults to `30`.
 - `registry_csv` — optional registry snapshot for retained registered-field validation; when missing, fixture/local runs use code-local field names without reading an external repository path.
 - `historical_mode` — defaults to `true` for past dates. Historical replay uses ThetaData history endpoints instead of realtime snapshot endpoints.
+- `window_start` / `window_end` — optional explicit ET window for historical replay. When omitted, the feed uses the minute containing `snapshot_time`.
 - `max_dte` — maximum days to expiration for historical full-chain requests; defaults to `45`.
 - `strike_range` — ThetaData strike range bound for historical full-chain requests; defaults to `5`, the current Layer 9 closed-loop bucket runtime default.
+- `option_prefilter_enabled` — defaults to `true`; filters structurally invalid option quotes before final normalization.
+- `option_prefilter_min_mid` — minimum quote mid retained by the structural prefilter; defaults to `0.01`.
 
 ## Source endpoints
 
 ThetaData Terminal v3:
 
-- Historical replay: `/v3/option/history/quote` and `/v3/option/history/greeks/eod`.
+- Historical replay: `/v3/option/history/quote`, `/v3/option/history/trade`, and `/v3/option/history/greeks/eod`.
 - Realtime/current snapshot mode: `/v3/option/snapshot/quote`, `/v3/option/snapshot/greeks/implied_volatility`, and `/v3/option/snapshot/greeks/first_order`.
 
-Historical requests pass underlying, wildcard expiration, snapshot date, a bounded one-minute ET time window, `max_dte`, and `strike_range`. The final artifact uses `snapshot_time` as the point-in-time clock.
+Historical requests pass underlying, wildcard expiration, snapshot date, a bounded ET time window, `max_dte`, and `strike_range`. The final artifact uses contract-level minute clocks for historical windows while keeping the top-level `snapshot_time` as the request clock.
 
 ## Outputs
 
@@ -44,7 +47,7 @@ Historical requests pass underlying, wildcard expiration, snapshot date, a bound
 
 Only the normalized final CSV is saved. Raw provider responses are normalized in memory and discarded by default.
 
-Key row fields include underlying, snapshot time, contract identity, quote, IV, first-order Greeks, and derived/context fields where provider data is available.
+Key row fields include underlying, snapshot time, contract identity, quote, IV, first-order Greeks, trade summary, and derived/context fields where provider data is available.
 
 ## Failure and retry
 

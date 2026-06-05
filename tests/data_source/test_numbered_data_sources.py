@@ -1,8 +1,11 @@
 import json
+import contextlib
+import io
 import tempfile
 import unittest
 from importlib import import_module
 from pathlib import Path
+from unittest.mock import patch
 
 from feed_availability.http import HttpResult
 
@@ -148,6 +151,50 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(manifest["params"]["strike_range"], 5)
             self.assertEqual(manifest["params"]["option_bucket_policy_ref"], "LAYER_09_OPTION_BUCKET_STRIKE_POLICY")
             self.assertNotIn("created_at", row)
+
+    def test_option_expression_cli_accepts_task_key_manifest_batch(self):
+        module = import_module("data_source.m09_option_expression_data_acquisition.__main__")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            task_key_paths = []
+            for index in range(2):
+                path = root / f"task_{index}.json"
+                path.write_text(
+                    json.dumps(
+                        {
+                            "task_id": f"m09_option_expression_data_acquisition_task_{index}",
+                            "source": "m09_option_expression_data_acquisition",
+                            "params": {"underlying": "AAPL", "snapshot_time": "2026-04-24T09:30:02.500000-04:00"},
+                            "output_root": str(root / f"task_{index}"),
+                        }
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                task_key_paths.append(str(path))
+            manifest = root / "batch.json"
+            manifest.write_text(json.dumps({"task_key_paths": task_key_paths}) + "\n", encoding="utf-8")
+            captured = {}
+
+            def fake_run_many(task_keys, **kwargs):
+                captured["task_count"] = len(task_keys)
+                captured["kwargs"] = kwargs
+                return {
+                    "contract_type": "m09_option_expression_data_acquisition_batch_result",
+                    "batch_run_id": kwargs["batch_run_id"],
+                    "task_count": len(task_keys),
+                    "succeeded_count": len(task_keys),
+                    "failed_count": 0,
+                    "items": [{"task_id": task_key["task_id"], "status": "succeeded"} for task_key in task_keys],
+                }
+
+            with patch.object(module, "run_many", side_effect=fake_run_many):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = module.main(["--task-key-manifest", str(manifest), "--batch-run-id", "batch_run"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(captured["task_count"], 2)
+        self.assertEqual(captured["kwargs"]["batch_run_id"], "batch_run")
 
     def test_selected_contract_tracking_source_writes_option_timeseries(self):
         module = import_module("data_source.m09_option_expression_data_acquisition_contract_path.pipeline")

@@ -12,7 +12,7 @@ _snapshot_feed = import_module("data_feed.09_feed_thetadata_option_selection_sna
 build_snapshot_context = _snapshot_feed.build_context
 clean_snapshot = _snapshot_feed.clean
 fetch_snapshot = _snapshot_feed.fetch
-from feed_availability.http import HttpClient
+from feed_availability.http import HttpClient, RetryPolicy
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
@@ -275,3 +275,61 @@ def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = No
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)
+
+
+def _batch_run_id(task_key: Mapping[str, Any], *, batch_run_id: str, index: int) -> str:
+    task_id = str(task_key.get("task_id") or f"{SOURCE}_task_{index:05d}")
+    return f"{task_id}_{batch_run_id}"
+
+
+def _batch_http_client(task_key: Mapping[str, Any]) -> HttpClient:
+    params = dict(task_key.get("params") or {})
+    timeout = int(params.get("timeout_seconds", 30))
+    retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
+    retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
+    return HttpClient(
+        timeout_seconds=timeout,
+        retry_policy=RetryPolicy(max_attempts=retry_attempts, backoff_seconds=retry_backoff_seconds),
+    )
+
+
+def run_many(
+    task_keys: list[dict[str, Any]],
+    *,
+    batch_run_id: str,
+    continue_on_error: bool = False,
+    client: HttpClient | None = None,
+    sql_writer: SqlTableWriter | None = None,
+    client_is_fixture: bool = False,
+) -> dict[str, Any]:
+    writer = sql_writer or PostgresSqlTableWriter.from_config({})
+    shared_client = client or (_batch_http_client(task_keys[0]) if task_keys else None)
+    items: list[dict[str, Any]] = []
+    for index, task_key in enumerate(task_keys, start=1):
+        result = run(
+            task_key,
+            run_id=_batch_run_id(task_key, batch_run_id=batch_run_id, index=index),
+            client=shared_client,
+            sql_writer=writer,
+            client_is_fixture=client_is_fixture,
+        )
+        items.append(
+            {
+                "task_id": task_key.get("task_id"),
+                "status": result.status,
+                "row_counts": result.row_counts,
+                "references": result.references,
+                "details": result.details,
+            }
+        )
+        if result.status != "succeeded" and not continue_on_error:
+            break
+    failed_count = sum(1 for item in items if item["status"] != "succeeded")
+    return {
+        "contract_type": "m09_option_expression_data_acquisition_batch_result",
+        "batch_run_id": batch_run_id,
+        "task_count": len(items),
+        "succeeded_count": len(items) - failed_count,
+        "failed_count": failed_count,
+        "items": items,
+    }

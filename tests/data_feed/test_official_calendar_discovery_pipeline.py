@@ -50,6 +50,32 @@ class OfficialCalendarDiscoveryPipelineTests(unittest.TestCase):
             self.assertEqual(row["event_name"], "AAPL earnings")
             self.assertIn("T16:05:00", row["release_time"])
 
+    def test_nasdaq_earnings_calendar_allows_empty_filtered_result(self):
+        payload = {
+            "data": {
+                "rows": [
+                    {"symbol": "MSFT", "name": "Microsoft Corporation", "reportDate": "06/05/2026", "time": "Before Market Open"},
+                ]
+            }
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "12_feed_official_calendar_discovery_task_empty_earnings",
+                "feed": "12_feed_official_calendar_discovery",
+                "params": {"data_kind": "nasdaq_earnings_calendar", "date": "2026-06-05", "symbols": ["AAPL"]},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = pipeline.run(task_key, run_id="run", client=FakeCalendarClient(payload), client_is_fixture=True)
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["release_calendar"], 0)
+            receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
+            warnings = receipt["runs"][0]["steps"]["clean"]["warnings"]
+            self.assertIn("no normalized rows", warnings[0])
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "release_calendar.csv"
+            with saved.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(rows, [])
+
     def test_official_index_announcement_outputs_index_calendar_artifact(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
@@ -102,4 +128,3 @@ class OfficialCalendarDiscoveryPipelineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

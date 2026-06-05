@@ -447,7 +447,20 @@ def clean(context: FeedContext, fetched: FetchedCalendarPayload) -> StepResult:
     output_kind = OUTPUT_BY_KIND[fetched.data_kind]
     rows = normalize_rows(fetched, params=params)
     if not rows:
-        raise OfficialCalendarDiscoveryError(f"{fetched.data_kind} response produced zero normalized rows")
+        if fetched.data_kind != "nasdaq_earnings_calendar":
+            raise OfficialCalendarDiscoveryError(f"{fetched.data_kind} response produced zero normalized rows")
+        context.cleaned_dir.mkdir(parents=True, exist_ok=True)
+        jsonl_path = context.cleaned_dir / f"{output_kind}.jsonl"
+        jsonl_path.write_text("", encoding="utf-8")
+        schema_path = context.cleaned_dir / "schema.json"
+        schema_path.write_text(json.dumps({output_kind: FIELD_ORDER[output_kind], "row_count": 0}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return StepResult(
+            "succeeded",
+            [str(jsonl_path), str(schema_path)],
+            {output_kind: 0},
+            warnings=["nasdaq_earnings_calendar returned no normalized rows for the requested date and symbol filter"],
+            details={"columns": FIELD_ORDER[output_kind], "format": "jsonl", "empty_result": True},
+        )
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     if fetched.data_kind == "official_index_announcement":
         text = fetched.payload if isinstance(fetched.payload, str) else json.dumps(fetched.payload, sort_keys=True, default=str)

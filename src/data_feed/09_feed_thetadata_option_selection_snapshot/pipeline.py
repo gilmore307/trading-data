@@ -32,6 +32,7 @@ DEFAULT_STRIKE_RANGE = 5
 DEFAULT_OPTION_BUCKET_POLICY_REF = "LAYER_09_OPTION_BUCKET_STRIKE_POLICY"
 DEFAULT_PROVIDER_RETRY_ATTEMPTS = 3
 DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS = 1.0
+DEFAULT_OPTION_PREFILTER_MIN_MID = 0.01
 
 
 @dataclass(frozen=True)
@@ -162,9 +163,12 @@ class RegistryRef:
 class FetchedSnapshot:
     underlying: str
     snapshot_time: datetime
+    window_start: datetime
+    window_end: datetime
     quote_rows: list[dict[str, Any]]
     iv_rows: list[dict[str, Any]]
     greeks_rows: list[dict[str, Any]]
+    trade_rows: list[dict[str, Any]]
     request_evidence: list[dict[str, Any]]
     secret_alias: dict[str, Any] | None
 
@@ -288,9 +292,34 @@ def _ms_since_midnight_et(value: datetime) -> str:
     return str(int(delta.total_seconds() * 1000))
 
 
-def _history_time_window(value: datetime) -> tuple[str, str]:
+def _history_time_window(value: datetime) -> tuple[datetime, datetime]:
     minute_start = value.replace(second=0, microsecond=0)
-    return minute_start.strftime("%H:%M:%S.000"), value.strftime("%H:%M:%S.999")
+    return minute_start, value.replace(microsecond=999000)
+
+
+def _parse_optional_window_time(params: Mapping[str, Any], key: str) -> datetime | None:
+    value = params.get(key)
+    if value in (None, ""):
+        return None
+    return _parse_snapshot_time(value)
+
+
+def _window_from_params(params: Mapping[str, Any], snapshot_time: datetime) -> tuple[datetime, datetime]:
+    start = _parse_optional_window_time(params, "window_start")
+    end = _parse_optional_window_time(params, "window_end")
+    if start is None and end is None:
+        return _history_time_window(snapshot_time)
+    if start is None or end is None:
+        raise ThetaDataOptionSelectionSnapshotError("params.window_start and params.window_end must be supplied together")
+    if start.date() != end.date():
+        raise ThetaDataOptionSelectionSnapshotError("params.window_start and params.window_end must be on the same ET date")
+    if end <= start:
+        raise ThetaDataOptionSelectionSnapshotError("params.window_end must be after params.window_start")
+    return start.replace(second=0, microsecond=0), end.replace(microsecond=999000)
+
+
+def _history_time_params(window_start: datetime, window_end: datetime) -> tuple[str, str]:
+    return window_start.strftime("%H:%M:%S.000"), window_end.strftime("%H:%M:%S.%f")[:12]
 
 
 def _json_response(result: HttpResult) -> Any:
@@ -361,6 +390,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     timeout = int(params.get("timeout_seconds", 30))
     retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
     retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
+    window_start, window_end = _window_from_params(params, snapshot_time)
     if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
@@ -368,8 +398,8 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             endpoint_family="option_selection_snapshot",
             requested_symbols=1,
             requested_requests=4,
-            requested_start=snapshot_time.isoformat(),
-            requested_end=snapshot_time.isoformat(),
+            requested_start=window_start.isoformat(),
+            requested_end=window_end.isoformat(),
         )
     client = client or HttpClient(
         timeout_seconds=timeout,
@@ -395,10 +425,10 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     strike_range = str(params.get("strike_range") or DEFAULT_STRIKE_RANGE)
     option_bucket_policy_ref = str(params.get("option_bucket_policy_ref") or DEFAULT_OPTION_BUCKET_POLICY_REF)
     if historical_mode:
-        start_time, end_time = _history_time_window(snapshot_time)
+        start_time, end_time = _history_time_params(window_start, window_end)
         quote_params = {
             **request_params,
-            "date": snapshot_time.date().isoformat(),
+            "date": window_start.date().isoformat(),
             "interval": str(params.get("interval") or "1m"),
             "start_time": start_time,
             "end_time": end_time,
@@ -407,8 +437,8 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         }
         greeks_params = {
             **request_params,
-            "start_date": snapshot_time.date().isoformat(),
-            "end_date": snapshot_time.date().isoformat(),
+            "start_date": window_start.date().isoformat(),
+            "end_date": window_start.date().isoformat(),
             "max_dte": max_dte,
             "strike_range": strike_range,
         }
@@ -417,6 +447,17 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         )
         greeks_rows, greeks_evidence = _fetch_endpoint(
             client, base_url, "/v3/option/history/greeks/eod", greeks_params, "historical EOD Greeks snapshot"
+        )
+        trade_params = {
+            **request_params,
+            "date": window_start.date().isoformat(),
+            "start_time": start_time,
+            "end_time": end_time,
+            "max_dte": max_dte,
+            "strike_range": strike_range,
+        }
+        trade_rows, trade_evidence = _fetch_endpoint(
+            client, base_url, "/v3/option/history/trade", trade_params, "historical trade window"
         )
         iv_rows = greeks_rows
         iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}
@@ -444,16 +485,20 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             snapshot_params,
             "first-order Greeks snapshot",
         )
+        trade_rows = []
+        trade_evidence = {"name": "trade window", "row_count": 0, "skipped": "not_available_for_realtime_snapshot_mode"}
 
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    evidence = [quote_evidence, iv_evidence, greeks_evidence]
+    evidence = [quote_evidence, iv_evidence, greeks_evidence, trade_evidence]
     manifest.write_text(
         json.dumps(
             {
                 "feed": FEED,
                 "underlying": underlying,
                 "snapshot_time": snapshot_time.isoformat(),
+                "window_start": window_start.isoformat(),
+                "window_end": window_end.isoformat(),
                 "params": sanitize_value(
                     {
                         **request_params,
@@ -483,14 +528,23 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             "quote_snapshot_rows_transient": len(quote_rows),
             "iv_snapshot_rows_transient": len(iv_rows),
             "greeks_snapshot_rows_transient": len(greeks_rows),
+            "trade_rows_transient": len(trade_rows),
         },
-        details={"underlying": underlying, "snapshot_time": snapshot_time.isoformat()},
+        details={
+            "underlying": underlying,
+            "snapshot_time": snapshot_time.isoformat(),
+            "window_start": window_start.isoformat(),
+            "window_end": window_end.isoformat(),
+        },
     ), FetchedSnapshot(
         underlying=underlying,
         snapshot_time=snapshot_time,
+        window_start=window_start,
+        window_end=window_end,
         quote_rows=quote_rows,
         iv_rows=iv_rows,
         greeks_rows=greeks_rows,
+        trade_rows=trade_rows,
         request_evidence=evidence,
         secret_alias=secret_summary,
     )
@@ -509,12 +563,16 @@ def _contract_key(row: Mapping[str, Any]) -> tuple[str, str, float, str] | None:
     return symbol, expiration, float(strike), right
 
 
-def _first_data(row: Mapping[str, Any]) -> dict[str, Any]:
+def _data_points(row: Mapping[str, Any]) -> list[dict[str, Any]]:
     data = row.get("data")
-    if isinstance(data, Sequence) and not isinstance(data, (str, bytes)) and data:
-        first = data[0]
-        return dict(first) if isinstance(first, Mapping) else {}
-    return {}
+    if isinstance(data, Sequence) and not isinstance(data, (str, bytes)):
+        return [dict(item) for item in data if isinstance(item, Mapping)]
+    return []
+
+
+def _first_data(row: Mapping[str, Any]) -> dict[str, Any]:
+    points = _data_points(row)
+    return points[0] if points else {}
 
 
 def _index_rows(rows: Sequence[Mapping[str, Any]]) -> dict[tuple[str, str, float, str], dict[str, Any]]:
@@ -525,6 +583,86 @@ def _index_rows(rows: Sequence[Mapping[str, Any]]) -> dict[tuple[str, str, float
             continue
         indexed[key] = _first_data(row)
     return indexed
+
+
+def _minute_timestamp(value: Any, *, fallback: datetime) -> str:
+    parsed_text = _parse_thetadata_timestamp(value)
+    if parsed_text is None:
+        parsed = fallback
+    else:
+        parsed = datetime.fromisoformat(parsed_text)
+    return parsed.astimezone(ET).replace(second=0, microsecond=0).isoformat()
+
+
+def _index_rows_by_minute(
+    rows: Sequence[Mapping[str, Any]], *, fallback_time: datetime
+) -> dict[tuple[str, str, float, str, str], dict[str, Any]]:
+    indexed: dict[tuple[str, str, float, str, str], dict[str, Any]] = {}
+    for row in rows:
+        key = _contract_key(row)
+        if key is None:
+            continue
+        for point in _data_points(row):
+            minute = _minute_timestamp(point.get("timestamp"), fallback=fallback_time)
+            indexed[(*key, minute)] = point
+    return indexed
+
+
+def _trade_price(point: Mapping[str, Any]) -> float | None:
+    for key in ("price", "trade_price", "last", "close"):
+        value = _float(point.get(key))
+        if value is not None:
+            return value
+    return None
+
+
+def _trade_size(point: Mapping[str, Any]) -> int:
+    for key in ("size", "trade_size", "volume"):
+        value = _number(point.get(key))
+        if isinstance(value, (int, float)) and value > 0:
+            return int(value)
+    return 0
+
+
+def _summarize_trade_points(points: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    prices: list[float] = []
+    volume = 0
+    notional = 0.0
+    for point in points:
+        price = _trade_price(point)
+        if price is None:
+            continue
+        size = _trade_size(point)
+        prices.append(price)
+        volume += size
+        notional += price * size
+    if not prices:
+        return {}
+    return _compact(
+        {
+            "bar_open": prices[0],
+            "bar_high": max(prices),
+            "bar_low": min(prices),
+            "bar_close": prices[-1],
+            "bar_volume": volume,
+            "bar_trade_count": len(prices),
+            "bar_vwap": notional / volume if volume else None,
+        }
+    )
+
+
+def _index_trade_summary_by_minute(
+    rows: Sequence[Mapping[str, Any]], *, fallback_time: datetime
+) -> dict[tuple[str, str, float, str, str], dict[str, Any]]:
+    grouped: dict[tuple[str, str, float, str, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        key = _contract_key(row)
+        if key is None:
+            continue
+        for point in _data_points(row):
+            minute = _minute_timestamp(point.get("timestamp"), fallback=fallback_time)
+            grouped.setdefault((*key, minute), []).append(point)
+    return {key: _summarize_trade_points(points) for key, points in grouped.items()}
 
 
 def _number(value: Any) -> float | int | None:
@@ -552,6 +690,39 @@ def _compact(mapping: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in mapping.items() if value is not None}
 
 
+def _bool_param(params: Mapping[str, Any], key: str, *, default: bool) -> bool:
+    value = params.get(key)
+    if value in (None, ""):
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _passes_contract_prefilter(
+    *,
+    quote: Mapping[str, Any],
+    spread_pct: float | None,
+    mid: float | None,
+    params: Mapping[str, Any],
+) -> tuple[bool, str | None]:
+    if not _bool_param(params, "option_prefilter_enabled", default=True):
+        return True, None
+    bid = _float(quote.get("bid"))
+    ask = _float(quote.get("ask"))
+    if bid is None or ask is None or bid < 0 or ask <= 0 or ask < bid:
+        return False, "invalid_two_sided_quote"
+    min_mid = _float(params.get("option_prefilter_min_mid"))
+    if min_mid is None:
+        min_mid = DEFAULT_OPTION_PREFILTER_MIN_MID
+    if mid is None or mid < min_mid:
+        return False, "mid_below_minimum"
+    max_spread_pct = _float(params.get("option_prefilter_max_spread_pct"))
+    if max_spread_pct is not None and spread_pct is not None and spread_pct > max_spread_pct:
+        return False, "spread_pct_above_maximum"
+    return True, None
+
+
 def _days_to_expiration(expiration: str, snapshot_date: date) -> int | None:
     try:
         expiration_date = date.fromisoformat(expiration)
@@ -565,34 +736,52 @@ def _right_sort_value(right: str) -> int:
 
 
 def clean(context: FeedContext, fetched: FetchedSnapshot) -> tuple[StepResult, dict[str, Any]]:
+    params = dict(context.task_key.get("params") or {})
+    historical_mode = bool(params.get("historical_mode", True)) and fetched.snapshot_time.date() < datetime.now(ET).date()
     names = RegistryNames(context.registry_csv)
     f = names.field_name
-    quote_index = _index_rows(fetched.quote_rows)
+    if historical_mode:
+        quote_index = _index_rows_by_minute(fetched.quote_rows, fallback_time=fetched.snapshot_time)
+    else:
+        quote_index = {
+            (*key, fetched.snapshot_time.isoformat()): value
+            for key, value in _index_rows(fetched.quote_rows).items()
+        }
     iv_index = _index_rows(fetched.iv_rows)
     greeks_index = _index_rows(fetched.greeks_rows)
+    trade_index = _index_trade_summary_by_minute(fetched.trade_rows, fallback_time=fetched.snapshot_time) if historical_mode else {}
+    quote_contract_keys = {(symbol, expiration, strike, right) for symbol, expiration, strike, right, _minute in quote_index}
     keys = sorted(
-        set(quote_index) | set(iv_index) | set(greeks_index),
-        key=lambda key: (key[1], key[2], _right_sort_value(key[3]), key[0]),
+        set(quote_index),
+        key=lambda key: (key[4], key[1], key[2], _right_sort_value(key[3]), key[0]),
     )
 
     contracts: list[dict[str, Any]] = []
     warnings: list[str] = []
-    for symbol, expiration, strike, right in keys:
-        days_to_expiration = _days_to_expiration(expiration, fetched.snapshot_time.date())
+    rejected_by_reason: dict[str, int] = {}
+    for symbol, expiration, strike, right, minute in keys:
+        minute_time = _parse_snapshot_time(minute)
+        days_to_expiration = _days_to_expiration(expiration, minute_time.date())
         if days_to_expiration is not None and days_to_expiration < 0:
             continue
-        quote = quote_index.get((symbol, expiration, strike, right), {})
+        quote = quote_index.get((symbol, expiration, strike, right, minute), {})
         iv = iv_index.get((symbol, expiration, strike, right), {})
         greeks = greeks_index.get((symbol, expiration, strike, right), {})
+        trade_summary = trade_index.get((symbol, expiration, strike, right, minute), {})
 
         bid = _float(quote.get("bid"))
         ask = _float(quote.get("ask"))
         mid = (bid + ask) / 2 if bid is not None and ask is not None else None
         spread = ask - bid if bid is not None and ask is not None else None
         spread_pct = spread / mid if spread is not None and mid not in (None, 0) else None
+        passes, reject_reason = _passes_contract_prefilter(quote=quote, spread_pct=spread_pct, mid=mid, params=params)
+        if not passes:
+            rejected_by_reason[reject_reason or "prefilter_rejected"] = rejected_by_reason.get(reject_reason or "prefilter_rejected", 0) + 1
+            continue
 
         source_for_underlying = greeks or iv
         contract = {
+            f(SNAPSHOT_TIME): minute,
             f(OPTION_EXPIRATION): expiration,
             f(OPTION_RIGHT_TYPE): right,
             f(OPTION_STRIKE): strike,
@@ -637,9 +826,11 @@ def clean(context: FeedContext, fetched: FetchedSnapshot) -> tuple[StepResult, d
                 }
             ),
         }
+        if trade_summary:
+            contract["trade_summary"] = trade_summary
         contracts.append(contract)
 
-    if len(quote_index) != len(keys):
+    if quote_contract_keys != set(iv_index) | set(greeks_index):
         warnings.append("some contracts were present only in IV/Greeks snapshots and have empty quote context")
     if not contracts:
         raise ThetaDataOptionSelectionSnapshotError("ThetaData snapshot returned no contracts after normalization")
@@ -653,9 +844,19 @@ def clean(context: FeedContext, fetched: FetchedSnapshot) -> tuple[StepResult, d
     return StepResult(
         "succeeded",
         [],
-        {"option_chain_snapshot": 1, "option_chain_snapshot_contracts": len(contracts)},
+        {
+            "option_chain_snapshot": 1,
+            "option_chain_snapshot_contracts": len(contracts),
+            "option_chain_snapshot_candidates": len(keys),
+            "option_chain_snapshot_prefilter_rejected": sum(rejected_by_reason.values()),
+        },
         warnings=warnings,
-        details={"contract_count": len(contracts), "format": "csv"},
+        details={
+            "contract_count": len(contracts),
+            "candidate_count": len(keys),
+            "prefilter_rejected": rejected_by_reason,
+            "format": "csv",
+        },
     ), snapshot
 
 

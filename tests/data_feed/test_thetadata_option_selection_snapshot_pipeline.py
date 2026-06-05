@@ -94,6 +94,88 @@ class FakeThetaDataClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
+class FakeHistoricalThetaDataClient:
+    def get(self, url, *, params=None, headers=None):
+        if url.endswith("/history/quote"):
+            payload = {
+                "response": [
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": "2016-01-15",
+                            "right": "CALL",
+                            "strike": 100.0,
+                        },
+                        "data": [
+                            {
+                                "timestamp": "2016-01-05T09:30:00",
+                                "bid": 1.0,
+                                "ask": 1.2,
+                                "bid_size": 10,
+                                "ask_size": 11,
+                            },
+                            {
+                                "timestamp": "2016-01-05T09:31:00",
+                                "bid": 1.1,
+                                "ask": 1.3,
+                                "bid_size": 12,
+                                "ask_size": 13,
+                            },
+                        ],
+                    }
+                ]
+            }
+        elif url.endswith("/history/greeks/eod"):
+            payload = {
+                "response": [
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": "2016-01-15",
+                            "right": "CALL",
+                            "strike": 100.0,
+                        },
+                        "data": [
+                            {
+                                "timestamp": "2016-01-05T16:00:00",
+                                "implied_vol": 0.32,
+                                "iv_error": 0.0,
+                                "delta": 0.51,
+                                "theta": -0.03,
+                                "vega": 0.11,
+                                "rho": 0.02,
+                                "epsilon": -0.1,
+                                "lambda": 4.0,
+                                "underlying_price": 101.0,
+                                "underlying_timestamp": "2016-01-05T21:00:00",
+                            }
+                        ],
+                    }
+                ]
+            }
+        elif url.endswith("/history/trade"):
+            payload = {
+                "response": [
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": "2016-01-15",
+                            "right": "CALL",
+                            "strike": 100.0,
+                        },
+                        "data": [
+                            {"timestamp": "2016-01-05T09:30:10", "price": 1.1, "size": 2},
+                            {"timestamp": "2016-01-05T09:30:40", "price": 1.2, "size": 3},
+                            {"timestamp": "2016-01-05T09:31:15", "price": 1.25, "size": 4},
+                        ],
+                    }
+                ]
+            }
+        else:
+            payload = {"response": []}
+        return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+
+
 class CapturingThetaDataClient(FakeThetaDataClient):
     instances = []
 
@@ -199,6 +281,49 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             manifest = json.loads((output_root / "runs" / "run_default_retry" / "request_manifest.json").read_text())
             self.assertEqual(manifest["params"]["retry_attempts"], 3)
             self.assertEqual(manifest["params"]["retry_backoff_seconds"], 1.0)
+
+    def test_historical_window_keeps_each_minute_and_trade_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2016-01-05T09:30:00-05:00",
+                    "window_start": "2016-01-05T09:30:00-05:00",
+                    "window_end": "2016-01-05T09:31:59.999000-05:00",
+                    "historical_mode": True,
+                    "thetadata_base_url": "http://127.0.0.1:25503",
+                },
+                "output_root": str(output_root),
+            }
+            result = run(
+                task_key,
+                run_id="09_feed_thetadata_option_selection_snapshot_window_test",
+                client=FakeHistoricalThetaDataClient(),
+                client_is_fixture=True,
+            )
+
+            self.assertEqual(result.status, "succeeded")
+            saved_path = output_root / "runs" / "09_feed_thetadata_option_selection_snapshot_window_test" / "saved" / "option_chain_snapshot.csv"
+            with saved_path.open(newline="") as handle:
+                snapshot = next(csv.DictReader(handle))
+            contracts = json.loads(snapshot["contracts"])
+
+            self.assertEqual(snapshot["contract_count"], "2")
+            self.assertEqual([contract["snapshot_time"] for contract in contracts], [
+                "2016-01-05T09:30:00-05:00",
+                "2016-01-05T09:31:00-05:00",
+            ])
+            self.assertEqual(contracts[0]["quote"]["mid"], 1.1)
+            self.assertEqual(contracts[0]["trade_summary"]["bar_trade_count"], 2)
+            self.assertEqual(contracts[0]["trade_summary"]["bar_volume"], 5)
+            self.assertEqual(contracts[1]["trade_summary"]["bar_close"], 1.25)
+
+            manifest = json.loads((output_root / "runs" / "09_feed_thetadata_option_selection_snapshot_window_test" / "request_manifest.json").read_text())
+            self.assertEqual(manifest["window_start"], "2016-01-05T09:30:00-05:00")
+            self.assertEqual(manifest["window_end"], "2016-01-05T09:31:59.999000-05:00")
 
 
 if __name__ == "__main__":

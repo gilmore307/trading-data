@@ -186,6 +186,7 @@ def _context(contract: Mapping[str, Any], key: str) -> Mapping[str, Any]:
 
 
 def _flatten_contract(underlying: str, snapshot_time: str, snapshot_type: str, contract: Mapping[str, Any]) -> dict[str, Any]:
+    contract_snapshot_time = str(contract.get("snapshot_time") or snapshot_time)
     quote = _context(contract, "quote")
     iv = _context(contract, "iv")
     greeks = _context(contract, "greeks")
@@ -196,7 +197,7 @@ def _flatten_contract(underlying: str, snapshot_time: str, snapshot_type: str, c
     strike = _num(contract.get("strike"))
     return {
         "underlying": underlying,
-        "snapshot_time": snapshot_time,
+        "snapshot_time": contract_snapshot_time,
         "snapshot_type": snapshot_type,
         "option_symbol": _option_symbol(underlying, expiration, right, strike if strike is not None else contract.get("strike")),
         "expiration": expiration,

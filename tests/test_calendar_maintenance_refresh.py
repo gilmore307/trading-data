@@ -8,7 +8,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.data.run_calendar_maintenance_refresh import build_nasdaq_earnings_task_key, run_calendar_maintenance
+from scripts.data.run_calendar_maintenance_refresh import (
+    build_nasdaq_earnings_task_key,
+    build_official_exchange_calendar_task_key,
+    run_calendar_maintenance,
+)
 
 
 class CalendarMaintenanceRefreshTests(unittest.TestCase):
@@ -27,6 +31,14 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
 
         self.assertTrue(task_key["manager_controls"]["allow_live_provider_calls"])
         self.assertTrue(task_key["manager_controls"]["realtime_provider_maintenance"])
+
+    def test_official_exchange_calendar_task_key_uses_nyse_source(self) -> None:
+        task_key = build_official_exchange_calendar_task_key(allow_live_fetch=True)
+
+        self.assertEqual(task_key["params"]["data_kind"], "official_exchange_calendar")
+        self.assertEqual(task_key["params"]["source_url"], "https://www.nyse.com/trade/hours-calendars")
+        self.assertEqual(task_key["manager_controls"]["allowed_providers"], ["official_exchange"])
+        self.assertTrue(task_key["manager_controls"]["allow_live_provider_calls"])
 
     def test_calendar_maintenance_plan_runs_no_provider_calls(self) -> None:
         receipt = run_calendar_maintenance(
@@ -48,6 +60,9 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         self.assertFalse(receipt["storage_mutation_performed"])
         official = receipt["components"]["official_calendar_discovery"]
         self.assertEqual(len(official["task_keys"]), 2)
+        exchange = receipt["components"]["official_exchange_calendar"]
+        self.assertEqual(exchange["task_key"]["params"]["data_kind"], "official_exchange_calendar")
+        self.assertIsNone(receipt["components"]["temporal_explorer_session_overlay"])
 
     def test_cli_plan_is_side_effect_safe(self) -> None:
         completed = subprocess.run(

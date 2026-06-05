@@ -167,13 +167,15 @@ def _local_payload(params: Mapping[str, Any]) -> tuple[Any, str, str] | None:
         path = Path(str(params["text_path"]))
         return path.read_text(encoding="utf-8"), str(path), "text"
     if params.get("source_text"):
-        return str(params["source_text"]), "inline_source_text", "text"
+        return str(params["source_text"]), str(params.get("source_url") or "inline_source_text"), "text"
     return None
 
 
 def _default_url(data_kind: str, params: Mapping[str, Any]) -> str:
     if data_kind == "nasdaq_earnings_calendar":
         return str(params.get("source_url") or "https://api.nasdaq.com/api/calendar/earnings")
+    if data_kind == "official_exchange_calendar":
+        return str(params.get("source_url") or "https://www.nyse.com/trade/hours-calendars")
     return str(_required(params, "source_url"))
 
 
@@ -406,6 +408,8 @@ def _normalize_index_announcement(fetched: FetchedCalendarPayload, params: Mappi
 
 
 def _normalize_exchange_calendar(fetched: FetchedCalendarPayload, params: Mapping[str, Any]) -> list[dict[str, Any]]:
+    if isinstance(fetched.payload, str) and "nyse.com" in fetched.source_url:
+        return _normalize_nyse_exchange_calendar_text(fetched, params)
     rows = _extract_rows(fetched.payload)
     if not rows:
         rows = [params]
@@ -429,6 +433,169 @@ def _normalize_exchange_calendar(fetched: FetchedCalendarPayload, params: Mappin
             }
         )
     return output
+
+
+def _normalize_nyse_exchange_calendar_text(fetched: FetchedCalendarPayload, params: Mapping[str, Any]) -> list[dict[str, Any]]:
+    raw_text = str(fetched.payload or "")
+    text = _strip_html(raw_text)
+    if "All NYSE markets observe" not in text or "Holidays & Trading Hours" not in text:
+        return []
+    holiday_names = [
+        "New Year’s Day",
+        "Martin Luther King, Jr. Day",
+        "Washington's Birthday",
+        "Good Friday",
+        "Memorial Day",
+        "Juneteenth National Independence Day",
+        "Independence Day",
+        "Labor Day",
+        "Thanksgiving Day",
+        "Christmas Day",
+    ]
+    table_years, table_rows = _nyse_holiday_table(raw_text, holiday_names)
+    if table_years:
+        listed_years = table_years[:3]
+    else:
+        years = [int(year) for year in re.findall(r"\b20\d{2}\b", text)]
+        listed_years = []
+        for year in years:
+            if year not in listed_years:
+                listed_years.append(year)
+        listed_years = [year for year in listed_years if 2020 <= year <= 2100][:3]
+    output: list[dict[str, Any]] = []
+    holiday_cells: dict[str, list[str]] = {}
+    if table_rows:
+        holiday_cells = table_rows
+    else:
+        line_segments = _nyse_holiday_line_segments(fetched.payload, holiday_names)
+        holiday_cells = {holiday_name: [segment] for holiday_name, segment in line_segments.items()}
+    for holiday_name, cells in holiday_cells.items():
+        if table_rows:
+            for year, cell in zip(listed_years, cells):
+                match = re.search(r"(?:Monday|Tuesday|Wednesday|Thursday|Friday),\s+([A-Z][a-z]+)\s+(\d{1,2})", cell)
+                if not match:
+                    continue
+                month_name, day_text = match.groups()
+                calendar_date = datetime.strptime(f"{month_name} {day_text} {year}", "%B %d %Y").date()
+                output.extend(_exchange_rows_for_session(fetched, calendar_date, "closed", holiday_name))
+            continue
+        dates = re.findall(r"(?:Monday|Tuesday|Wednesday|Thursday|Friday),\s+([A-Z][a-z]+)\s+(\d{1,2})", " ".join(cells))
+        for year, (month_name, day_text) in zip(listed_years, dates):
+            calendar_date = datetime.strptime(f"{month_name} {day_text} {year}", "%B %d %Y").date()
+            output.extend(_exchange_rows_for_session(fetched, calendar_date, "closed", holiday_name))
+    early_close_segments = [
+        text[match.start() : match.start() + 360]
+        for match in re.finditer(r"close early", text, flags=re.IGNORECASE)
+    ]
+    for sentence in early_close_segments:
+        dates = re.findall(
+            r"(?:Monday|Tuesday|Wednesday|Thursday|Friday),\s+([A-Z][a-z]+)\s+(\d{1,2}),\s+(20\d{2})",
+            sentence,
+        )
+        for month_name, day_text, year_text in dates:
+            calendar_date = datetime.strptime(f"{month_name} {day_text} {year_text}", "%B %d %Y").date()
+            if calendar_date.month == 11:
+                holiday_name = "Day after Thanksgiving"
+            elif calendar_date.month == 12 and calendar_date.day == 24:
+                holiday_name = "Christmas Eve"
+            elif calendar_date.month == 7:
+                holiday_name = "Independence Day early close"
+            else:
+                holiday_name = "NYSE official early close"
+            output.extend(_exchange_rows_for_session(fetched, calendar_date, "early_close", holiday_name))
+    return _dedupe_exchange_rows(output)
+
+
+def _nyse_holiday_table(payload: str, holiday_names: list[str]) -> tuple[list[int], dict[str, list[str]]]:
+    years: list[int] = []
+    rows: dict[str, list[str]] = {}
+    for table_match in re.finditer(r"<table\b[^>]*>(.*?)</table>", payload, flags=re.IGNORECASE | re.DOTALL):
+        table_html = table_match.group(1)
+        if "Holiday" not in table_html or "New Year" not in table_html:
+            continue
+        for tr_html in re.findall(r"<tr\b[^>]*>(.*?)</tr>", table_html, flags=re.IGNORECASE | re.DOTALL):
+            cells = [
+                _strip_html(cell)
+                for cell in re.findall(r"<t[hd]\b[^>]*>(.*?)</t[hd]>", tr_html, flags=re.IGNORECASE | re.DOTALL)
+            ]
+            cells = [cell for cell in cells if cell]
+            if not cells:
+                continue
+            if cells[0] == "Holiday":
+                years = [int(cell) for cell in cells[1:] if re.fullmatch(r"20\d{2}", cell)]
+                continue
+            holiday_name = cells[0]
+            if holiday_name in holiday_names:
+                rows[holiday_name] = cells[1:]
+        if years and rows:
+            return years, rows
+    return years, rows
+
+
+def _nyse_holiday_line_segments(payload: str, holiday_names: list[str]) -> dict[str, str]:
+    segments: dict[str, str] = {}
+    weekdays = "Monday|Tuesday|Wednesday|Thursday|Friday"
+    for raw_line in payload.splitlines():
+        line = _strip_html(raw_line)
+        if not line:
+            continue
+        candidates: list[tuple[int, str, str]] = []
+        for holiday_name in holiday_names:
+            match = re.search(rf"{re.escape(holiday_name)}\s*(?:{weekdays}),", line)
+            if match:
+                candidates.append((match.start(), holiday_name, line[match.start() :]))
+        if candidates:
+            _start, holiday_name, segment = min(candidates)
+            segments[holiday_name] = segment
+    if segments:
+        return segments
+    text = _strip_html(payload)
+    cursor = 0
+    for index, holiday_name in enumerate(holiday_names):
+        start = text.find(holiday_name, cursor)
+        if start < 0:
+            continue
+        following = [text.find(next_name, start + len(holiday_name)) for next_name in holiday_names[index + 1 :]]
+        following = [position for position in following if position >= 0]
+        end = min(following) if following else len(text)
+        cursor = end
+        segments[holiday_name] = text[start:end]
+    return segments
+
+
+def _exchange_rows_for_session(
+    fetched: FetchedCalendarPayload,
+    calendar_date: date,
+    session_status: str,
+    holiday_name: str,
+) -> list[dict[str, Any]]:
+    open_time = ""
+    close_time = ""
+    if session_status == "early_close":
+        open_time = datetime.combine(calendar_date, time(9, 30), ET).isoformat()
+        close_time = datetime.combine(calendar_date, time(13, 0), ET).isoformat()
+    return [
+        {
+            "venue": venue,
+            "calendar_date": calendar_date.isoformat(),
+            "session_status": session_status,
+            "open_time": open_time,
+            "close_time": close_time,
+            "holiday_name": holiday_name,
+            "timezone": "America/New_York",
+            "source_ref": fetched.source_url,
+            "retrieved_time": fetched.retrieved_time,
+        }
+        for venue in ("NYSE", "NASDAQ")
+    ]
+
+
+def _dedupe_exchange_rows(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_key: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for row in rows:
+        key = (str(row["venue"]), str(row["calendar_date"]), str(row["session_status"]))
+        by_key[key] = row
+    return [by_key[key] for key in sorted(by_key)]
 
 
 def normalize_rows(fetched: FetchedCalendarPayload, *, params: Mapping[str, Any] | None = None) -> list[dict[str, Any]]:

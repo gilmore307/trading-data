@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
 import sys
@@ -10,6 +11,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -80,6 +82,13 @@ def _coerce_datetime(value: datetime | str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
     return parsed.astimezone(UTC)
+
+
+def _coerce_optional_datetime(value: Any) -> datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    return _coerce_datetime(text)
 
 
 def _iso(value: datetime) -> str:
@@ -195,6 +204,34 @@ def build_market_session_rows(
     return rows
 
 
+def official_exchange_market_session_rows(paths: Sequence[Path | str]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for path_value in paths:
+        path = Path(path_value)
+        with path.open(newline="", encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                venue = str(row.get("venue") or "").upper()
+                calendar_date_raw = str(row.get("calendar_date") or row.get("date") or "")[:10]
+                session_status = str(row.get("session_status") or row.get("session_type") or "").lower()
+                if venue not in {"NYSE", "NASDAQ"} or not calendar_date_raw or session_status not in {"closed", "early_close", "regular"}:
+                    continue
+                rows.append(
+                    {
+                        "venue": venue,
+                        "calendar_date": _coerce_date(calendar_date_raw),
+                        "timezone": str(row.get("timezone") or "America/New_York"),
+                        "is_trading_day": session_status != "closed",
+                        "session_type": session_status,
+                        "open_time": _coerce_optional_datetime(row.get("open_time")),
+                        "close_time": _coerce_optional_datetime(row.get("close_time")),
+                        "holiday_name": str(row.get("holiday_name") or "").strip() or None,
+                        "source_priority": "official_exchange_calendar",
+                        "source_ref": str(row.get("source_ref") or row.get("source_url") or path),
+                    }
+                )
+    return rows
+
+
 def aggregate_ohlcv_rows(rows: Iterable[OhlcvInputRow | Mapping[str, Any]], timeframe: str) -> list[dict[str, Any]]:
     """Aggregate minimal OHLCV rows into chart-cache buckets."""
 
@@ -236,6 +273,7 @@ def install_temporal_tables(
     schema: str = "trading_data",
     start_date: date | str = "2016-01-01",
     end_date_exclusive: date | str | None = None,
+    official_exchange_calendar_paths: Sequence[Path | str] = (),
 ) -> dict[str, Any]:
     """Create temporal tables and upsert the deterministic day/session spine."""
 
@@ -248,6 +286,7 @@ def install_temporal_tables(
     end_date_exclusive = end_date_exclusive or (datetime.now(UTC).date() + timedelta(days=46))
     day_rows = build_calendar_day_rows(start_date, end_date_exclusive)
     session_rows = build_market_session_rows(start_date, end_date_exclusive)
+    official_session_rows = official_exchange_market_session_rows(official_exchange_calendar_paths)
     with psycopg.connect(dsn) as connection:
         with connection.cursor() as cursor:
             cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {_ident(schema)}")
@@ -291,6 +330,25 @@ def install_temporal_tables(
                 key_columns=("venue", "calendar_date"),
                 rows=session_rows,
             )
+            _upsert_rows(
+                cursor,
+                schema=schema,
+                table=CALENDAR_MARKET_SESSION_TABLE,
+                columns=(
+                    "venue",
+                    "calendar_date",
+                    "timezone",
+                    "is_trading_day",
+                    "session_type",
+                    "open_time",
+                    "close_time",
+                    "holiday_name",
+                    "source_priority",
+                    "source_ref",
+                ),
+                key_columns=("venue", "calendar_date"),
+                rows=official_session_rows,
+            )
         connection.commit()
     return {
         "contract_type": "temporal_explorer_table_install_receipt",
@@ -298,6 +356,7 @@ def install_temporal_tables(
         "tables": list(TEMPORAL_TABLES),
         "calendar_day_rows": len(day_rows),
         "market_session_rows": len(session_rows),
+        "official_exchange_market_session_rows": len(official_session_rows),
         "start_date": str(_coerce_date(start_date)),
         "end_date_exclusive": str(_coerce_date(end_date_exclusive)),
     }
@@ -494,6 +553,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--schema", default="trading_data")
     parser.add_argument("--start-date", default="2016-01-01")
     parser.add_argument("--end-date-exclusive")
+    parser.add_argument("--official-exchange-calendar", type=Path, action="append", default=[])
     parser.add_argument("--dsn")
     args = parser.parse_args(argv)
     receipt = install_temporal_tables(
@@ -501,6 +561,7 @@ def main(argv: list[str] | None = None) -> int:
         schema=args.schema,
         start_date=args.start_date,
         end_date_exclusive=args.end_date_exclusive,
+        official_exchange_calendar_paths=args.official_exchange_calendar,
     )
     json.dump(receipt, sys.stdout, indent=2, sort_keys=True)
     sys.stdout.write("\n")
@@ -519,5 +580,6 @@ __all__ = [
     "build_market_session_rows",
     "install_temporal_tables",
     "main",
+    "official_exchange_market_session_rows",
     "temporal_table_ddls",
 ]

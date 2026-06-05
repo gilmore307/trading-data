@@ -76,6 +76,97 @@ class OfficialCalendarDiscoveryPipelineTests(unittest.TestCase):
                 rows = list(csv.DictReader(handle))
             self.assertEqual(rows, [])
 
+    def test_official_exchange_calendar_parses_nyse_holiday_page(self):
+        payload = """
+        Holidays & Trading Hours
+        All NYSE markets observe U.S. holidays as listed below for 2026, 2027, and 2028.
+        Holiday 2026 2027 2028
+        New Year’s Day Thursday, January 1 Friday, January 1 —*
+        Martin Luther King, Jr. Day Monday, January 19 Monday, January 18 Monday, January 17
+        Washington's Birthday Monday, February 16 Monday, February 15 Monday, February 21
+        Good Friday Friday, April 3 Friday, March 26 Friday, April 14
+        Memorial Day Monday, May 25 Monday, May 31 Monday, May 29
+        Juneteenth National Independence Day Friday, June 19 Friday, June 18 Monday, June 19
+        Independence Day Friday, July 3 Monday, July 5 Tuesday, July 4
+        Labor Day Monday, September 7 Monday, September 6 Monday, September 4
+        Thanksgiving Day Thursday, November 26 Thursday, November 25 Thursday, November 23
+        Christmas Day Friday, December 25 Friday, December 24 Monday, December 25
+        Each market will close early at 1:00 p.m. on Friday, November 27, 2026, Friday, November 26, 2027, and Friday, November 24, 2028.
+        Each market will close early at 1:00 p.m. on Thursday, December 24, 2026.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "12_feed_official_calendar_discovery_task_exchange",
+                "feed": "12_feed_official_calendar_discovery",
+                "params": {
+                    "data_kind": "official_exchange_calendar",
+                    "source_text": payload,
+                    "source_url": "https://www.nyse.com/trade/hours-calendars",
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = pipeline.run(task_key, run_id="run", client_is_fixture=True)
+            self.assertEqual(result.status, "succeeded")
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "official_exchange_calendar.csv"
+            with saved.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            row_by_key = {(row["venue"], row["calendar_date"], row["session_status"]): row for row in rows}
+            self.assertEqual(row_by_key[("NYSE", "2026-01-01", "closed")]["holiday_name"], "New Year’s Day")
+            self.assertEqual(row_by_key[("NYSE", "2026-06-19", "closed")]["holiday_name"], "Juneteenth National Independence Day")
+            self.assertEqual(row_by_key[("NYSE", "2026-07-03", "closed")]["holiday_name"], "Independence Day")
+            self.assertEqual(row_by_key[("NASDAQ", "2026-11-27", "early_close")]["close_time"], "2026-11-27T13:00:00-05:00")
+            self.assertEqual(row_by_key[("NYSE", "2026-12-24", "early_close")]["holiday_name"], "Christmas Eve")
+
+    def test_official_exchange_calendar_ignores_observed_suffix_line_prefixes(self):
+        payload = """
+        Holidays & Trading Hours
+        All NYSE markets observe U.S. holidays as listed below for 2026, 2027, and 2028.
+        Juneteenth National Independence DayFriday, June 19Friday, June 18 (Juneteenth National
+        Independence Day observed)Monday, June 19Independence DayFriday, July 3 (Independence Day observed) Monday, July 5 (Independence Day observed) Tuesday, July 4**
+        """
+        fetched = pipeline.FetchedCalendarPayload(
+            "official_exchange_calendar",
+            payload,
+            "https://www.nyse.com/trade/hours-calendars",
+            200,
+            "2026-06-05T00:00:00Z",
+            "text",
+            {},
+        )
+        rows = pipeline.normalize_rows(fetched, params={})
+        row_by_key = {(row["venue"], row["calendar_date"], row["session_status"]): row for row in rows}
+        self.assertEqual(row_by_key[("NYSE", "2026-06-19", "closed")]["holiday_name"], "Juneteenth National Independence Day")
+        self.assertEqual(row_by_key[("NYSE", "2026-07-03", "closed")]["holiday_name"], "Independence Day")
+
+    def test_official_exchange_calendar_parses_nyse_html_table_cells(self):
+        payload = """
+        <title>Holidays &amp; Trading Hours</title>
+        <h4>All NYSE markets observe U.S. holidays as listed below for 2026, 2027, and 2028.</h4>
+        <table>
+          <thead><tr><th>Holiday</th><th>2026</th><th>2027</th><th>2028</th></tr></thead>
+          <tbody>
+            <tr><th>New Year’s Day</th><td>Thursday, January 1</td><td>Friday, January 1</td><td>—*</td></tr>
+            <tr><th>Martin Luther King, Jr. Day</th><td>Monday, January 19</td><td>Monday, January 18</td><td>Monday, January 17</td></tr>
+            <tr><th>Juneteenth National Independence Day</th><td>Friday, June 19</td><td>Friday, June 18 (Juneteenth National Independence Day observed)</td><td>Monday, June 19</td></tr>
+            <tr><th>Independence Day</th><td>Friday, July 3 (Independence Day observed)</td><td>Monday, July 5 (Independence Day observed)</td><td>Tuesday, July 4**</td></tr>
+          </tbody>
+        </table>
+        """
+        fetched = pipeline.FetchedCalendarPayload(
+            "official_exchange_calendar",
+            payload,
+            "https://www.nyse.com/trade/hours-calendars",
+            200,
+            "2026-06-05T00:00:00Z",
+            "text",
+            {},
+        )
+        rows = pipeline.normalize_rows(fetched, params={})
+        row_by_key = {(row["venue"], row["calendar_date"], row["session_status"]): row for row in rows}
+        self.assertEqual(row_by_key[("NYSE", "2026-06-19", "closed")]["holiday_name"], "Juneteenth National Independence Day")
+        self.assertEqual(row_by_key[("NYSE", "2026-07-03", "closed")]["holiday_name"], "Independence Day")
+        self.assertNotIn(("NYSE", "2028-01-01", "closed"), row_by_key)
+
     def test_official_index_announcement_outputs_index_calendar_artifact(self):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {

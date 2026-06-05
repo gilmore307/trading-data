@@ -1,5 +1,8 @@
+import csv
+import tempfile
 import unittest
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 from data_runtime.temporal_explorer import (
     CHART_OHLCV_CACHE_TABLE,
@@ -7,6 +10,7 @@ from data_runtime.temporal_explorer import (
     aggregate_ohlcv_rows,
     build_calendar_day_rows,
     build_market_session_rows,
+    official_exchange_market_session_rows,
     temporal_table_ddls,
 )
 
@@ -27,6 +31,28 @@ class TemporalExplorerTests(unittest.TestCase):
         self.assertEqual(by_key[("NYSE", date(2026, 1, 1))]["holiday_name"], "New Year's Day")
         self.assertEqual(by_key[("NYSE", date(2026, 1, 2))]["session_type"], "regular")
         self.assertEqual(by_key[("CRYPTO_24_7", date(2026, 1, 1))]["session_type"], "crypto_continuous")
+
+    def test_official_exchange_rows_override_with_early_close(self):
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            path = Path(raw_tmp) / "official_exchange_calendar.csv"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["venue", "calendar_date", "session_status", "open_time", "close_time", "holiday_name", "source_ref"])
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "venue": "NYSE",
+                        "calendar_date": "2026-11-27",
+                        "session_status": "early_close",
+                        "open_time": "2026-11-27T09:30:00-05:00",
+                        "close_time": "2026-11-27T13:00:00-05:00",
+                        "holiday_name": "Day after Thanksgiving",
+                        "source_ref": "https://www.nyse.com/trade/hours-calendars",
+                    }
+                )
+            rows = official_exchange_market_session_rows([path])
+        self.assertEqual(rows[0]["session_type"], "early_close")
+        self.assertEqual(rows[0]["source_priority"], "official_exchange_calendar")
+        self.assertEqual(rows[0]["close_time"], datetime(2026, 11, 27, 18, 0, tzinfo=UTC))
 
     def test_chart_cache_ddl_is_registered(self):
         ddl = "\n".join(temporal_table_ddls())

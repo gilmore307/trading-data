@@ -4,18 +4,20 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 from datetime import UTC, date, datetime, timedelta
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from scripts.data.run_trading_economics_recent_calendar_refresh import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_TE_OUTPUT_ROOT,
     build_recent_calendar_task_key,
     run_refresh as run_te_refresh,
 )
+from data_runtime.temporal_explorer import install_temporal_tables
 
 OFFICIAL_FEED = "12_feed_official_calendar_discovery"
 DEFAULT_OFFICIAL_OUTPUT_ROOT = "/root/projects/trading-storage/storage/01_source_data/realtime/official_calendar_discovery"
@@ -85,6 +87,34 @@ def build_nasdaq_earnings_task_key(
     }
 
 
+def build_official_exchange_calendar_task_key(
+    *,
+    output_root: str = DEFAULT_OFFICIAL_OUTPUT_ROOT,
+    allow_live_fetch: bool = False,
+) -> dict[str, Any]:
+    return {
+        "task_id": "official_calendar_discovery_exchange_calendar",
+        "feed": OFFICIAL_FEED,
+        "output_root": str(Path(output_root) / "official_exchange_calendar" / "nyse_hours_calendars"),
+        "params": {
+            "data_kind": "official_exchange_calendar",
+            "source_url": "https://www.nyse.com/trade/hours-calendars",
+        },
+        "manager_controls": {
+            "allow_live_provider_calls": bool(allow_live_fetch),
+            "realtime_provider_maintenance": bool(allow_live_fetch),
+            "allowed_providers": ["official_exchange"],
+            "allowed_endpoint_families": ["calendar_discovery"],
+            "max_requests": 1,
+            "max_rows": 500,
+            "max_time_window": "P31D",
+            "timeout_seconds": 30,
+            "retry_policy_ref": "trading-data://provider-policy/calendar-maintenance-single-request",
+            "rate_limit_policy_ref": "trading-data://provider-policy/official-exchange-calendar-maintenance",
+        },
+    }
+
+
 def run_nasdaq_earnings_refresh(
     *,
     run_id: str,
@@ -134,6 +164,67 @@ def run_nasdaq_earnings_refresh(
     }
 
 
+def run_official_exchange_calendar_refresh(
+    *,
+    run_id: str,
+    output_root: str,
+    execute_live_fetch: bool,
+) -> dict[str, Any]:
+    task_key = build_official_exchange_calendar_task_key(
+        output_root=output_root,
+        allow_live_fetch=execute_live_fetch,
+    )
+    if not execute_live_fetch:
+        return {
+            "contract_type": "official_exchange_calendar_refresh_receipt",
+            "refresh_status": "planned_requires_execute_live_fetch",
+            "run_id": run_id,
+            "provider_calls_performed": 0,
+            "storage_mutation_performed": False,
+            "task_key": task_key,
+            "boundary_note": "Plan-only receipt. Add --execute-live-fetch to refresh official exchange calendar artifacts.",
+        }
+    pipeline = import_module("data_feed.12_feed_official_calendar_discovery.pipeline")
+    result = pipeline.run(task_key, run_id=f"{run_id}_official_exchange_calendar")
+    return {
+        "contract_type": "official_exchange_calendar_refresh_receipt",
+        "refresh_status": "succeeded" if result.status == "succeeded" else "failed",
+        "run_id": run_id,
+        "provider_calls_performed": 1,
+        "storage_mutation_performed": True,
+        "runs": [{"status": result.status, "row_counts": result.row_counts, "references": result.references, "details": result.details}],
+        "task_key": task_key,
+        "boundary_note": "Official exchange calendar writes NYSE source-backed holiday and early-close artifacts for calendar_market_session overlays.",
+    }
+
+
+def _official_exchange_calendar_paths(receipt: Mapping[str, Any]) -> list[Path]:
+    paths: list[Path] = []
+    for run in receipt.get("runs") or []:
+        if not isinstance(run, Mapping):
+            continue
+        for reference in run.get("references") or []:
+            path = Path(str(reference))
+            if path.name == "official_exchange_calendar.csv":
+                paths.append(path)
+    return paths
+
+
+def _temporal_end_date_for(paths: list[Path]) -> str | None:
+    latest: date | None = None
+    for path in paths:
+        with path.open(newline="", encoding="utf-8") as handle:
+            for row in csv.DictReader(handle):
+                value = str(row.get("calendar_date") or "")[:10]
+                if not value:
+                    continue
+                day = date.fromisoformat(value)
+                latest = day if latest is None or day > latest else latest
+    if latest is None:
+        return None
+    return date(latest.year + 1, 1, 1).isoformat()
+
+
 def run_calendar_maintenance(
     *,
     run_id: str,
@@ -166,7 +257,20 @@ def run_calendar_maintenance(
         symbols=symbols,
         execute_live_fetch=execute_live_fetch,
     )
-    statuses = [te["refresh_status"], official["refresh_status"]]
+    exchange = run_official_exchange_calendar_refresh(
+        run_id=run_id,
+        output_root=official_output_root,
+        execute_live_fetch=execute_live_fetch,
+    )
+    exchange_paths = _official_exchange_calendar_paths(exchange)
+    temporal_install: dict[str, Any] | None = None
+    if execute_live_fetch and exchange["refresh_status"] == "succeeded" and exchange_paths:
+        temporal_install = install_temporal_tables(
+            start_date="2016-01-01",
+            end_date_exclusive=_temporal_end_date_for(exchange_paths),
+            official_exchange_calendar_paths=exchange_paths,
+        )
+    statuses = [te["refresh_status"], official["refresh_status"], exchange["refresh_status"]]
     if all(status == "planned_requires_execute_live_fetch" for status in statuses):
         status = "planned_requires_execute_live_fetch"
     elif all(status == "succeeded" for status in statuses):
@@ -180,9 +284,11 @@ def run_calendar_maintenance(
         "components": {
             "trading_economics_recent_calendar": te,
             "official_calendar_discovery": official,
+            "official_exchange_calendar": exchange,
+            "temporal_explorer_session_overlay": temporal_install,
         },
-        "provider_calls_performed": int(te.get("provider_calls_performed") or 0) + int(official.get("provider_calls_performed") or 0),
-        "storage_mutation_performed": bool(te.get("storage_mutation_performed") or official.get("storage_mutation_performed")),
+        "provider_calls_performed": int(te.get("provider_calls_performed") or 0) + int(official.get("provider_calls_performed") or 0) + int(exchange.get("provider_calls_performed") or 0),
+        "storage_mutation_performed": bool(te.get("storage_mutation_performed") or official.get("storage_mutation_performed") or exchange.get("storage_mutation_performed") or temporal_install),
         "boundary_note": "Shared calendar maintenance service; source rows/artifacts only, no Layer 10 event-pool admission.",
     }
 

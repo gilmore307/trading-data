@@ -50,6 +50,7 @@ CRYPTO_NAMES = {
 }
 SYMBOL_LAYER2_CONTEXT_OVERRIDES = {
     "HUT": ("BKCH", "crypto_related_equity_context_override"),
+    "FDXF": ("XLI", "transportation_equity_context_override"),
 }
 
 OUTPUT_FIELDS = [

@@ -269,6 +269,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
                 ],
                 [
                     {"symbol": "NVDA", "name": "NVIDIA", "sector": "Technology", "optionable_underlying_status": "uncertain_verify_before_use", "pool_membership_status": "active", "pool_membership_reason": "active", "in_dollar_volume_top300": "true", "in_market_cap_top300": "true", "dollar_volume_rank": "8", "market_cap_rank": "1", "source_refs": "fixture", "as_of_date": "2026-06-04"},
+                    {"symbol": "FDXF", "name": "FedEx Freight", "sector": "Miscellaneous", "optionable_underlying_status": "uncertain_verify_before_use", "pool_membership_status": "active", "pool_membership_reason": "active", "in_dollar_volume_top300": "true", "in_market_cap_top300": "false", "dollar_volume_rank": "99", "market_cap_rank": "", "source_refs": "fixture", "as_of_date": "2026-06-04"},
                     {"symbol": "XYZ", "name": "Inactive", "sector": "", "optionable_underlying_status": "no_listed_options_or_unverified", "pool_membership_status": "inactive", "pool_membership_reason": "inactive", "in_dollar_volume_top300": "false", "in_market_cap_top300": "false", "dollar_volume_rank": "", "market_cap_rank": "", "source_refs": "fixture", "as_of_date": "2026-06-04"},
                 ],
             )
@@ -276,15 +277,17 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             rows, receipt = build_universe(source_pool_csv=pool, freeze_as_of_date="2026-06-04")
 
         by_symbol = {row.symbol: row for row in rows}
-        self.assertEqual(set(by_symbol), {"BTC", "ETH", "NVDA", "SOL"})
+        self.assertEqual(set(by_symbol), {"BTC", "ETH", "FDXF", "NVDA", "SOL"})
         self.assertEqual(by_symbol["NVDA"].replay_candidate_status, "active")
         self.assertEqual(by_symbol["NVDA"].source_pool_as_of_date, "2026-06-04")
         self.assertEqual(by_symbol["NVDA"].asset_class, "us_equity")
         self.assertEqual(by_symbol["NVDA"].layer2_context_symbol, "XLK")
+        self.assertEqual(by_symbol["FDXF"].layer2_context_symbol, "XLI")
+        self.assertEqual(by_symbol["FDXF"].layer2_context_method, "transportation_equity_context_override")
         self.assertEqual(by_symbol["BTC"].asset_class, "crypto_spot")
         self.assertEqual(by_symbol["BTC"].layer2_context_symbol, "BKCH")
-        self.assertEqual(receipt["active_candidate_count"], 4)
-        self.assertEqual(receipt["asset_class_counts"], {"us_equity": 1, "crypto_spot": 3})
+        self.assertEqual(receipt["active_candidate_count"], 5)
+        self.assertEqual(receipt["asset_class_counts"], {"us_equity": 2, "crypto_spot": 3})
         self.assertIn("not point-in-time historical", receipt["boundary_note"])
 
 

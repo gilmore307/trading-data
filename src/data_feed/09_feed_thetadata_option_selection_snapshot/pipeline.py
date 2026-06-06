@@ -465,22 +465,56 @@ def _is_no_data_found_error(exc: Exception) -> bool:
     return exc.__class__.__name__ == "NoDataFoundError" or str(exc).startswith("No data found for:")
 
 
-def _fetch_python_call(name: str, call: Any, *, missing_ok: bool = False) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def _is_retryable_python_client_error(exc: Exception) -> bool:
+    text = str(exc)
+    if "HTTP Status 500" in text or "Internal Server Error" in text:
+        return True
+    retryable_names = {
+        "ConnectionError",
+        "ConnectTimeout",
+        "HTTPError",
+        "ReadTimeout",
+        "Timeout",
+        "TimeoutError",
+    }
+    return exc.__class__.__name__ in retryable_names
+
+
+def _fetch_python_call(
+    name: str,
+    call: Any,
+    *,
+    missing_ok: bool = False,
+    retry_attempts: int = DEFAULT_PROVIDER_RETRY_ATTEMPTS,
+    retry_backoff_seconds: float = DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     started = time.perf_counter()
-    try:
-        frame = call()
-    except Exception as exc:
-        elapsed = time.perf_counter() - started
-        if missing_ok and _is_no_data_found_error(exc):
-            return [], {
-                "endpoint": f"thetadata_python_library:{name}",
-                "transport": "python_library",
-                "row_count": 0,
-                "data_row_count": 0,
-                "elapsed_seconds": round(elapsed, 3),
-                "skipped": "no_data_found",
-            }
-        raise
+    attempts: list[dict[str, Any]] = []
+    max_attempts = max(1, retry_attempts)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            frame = call()
+            break
+        except Exception as exc:
+            elapsed = time.perf_counter() - started
+            if missing_ok and _is_no_data_found_error(exc):
+                return [], {
+                    "endpoint": f"thetadata_python_library:{name}",
+                    "transport": "python_library",
+                    "row_count": 0,
+                    "data_row_count": 0,
+                    "elapsed_seconds": round(elapsed, 3),
+                    "skipped": "no_data_found",
+                    "attempt_count": attempt,
+                    "attempts": attempts
+                    + [{"attempt": attempt, "error_type": type(exc).__name__, "retryable": False}],
+                }
+            retryable = _is_retryable_python_client_error(exc)
+            attempts.append({"attempt": attempt, "error_type": type(exc).__name__, "retryable": retryable})
+            if attempt >= max_attempts or not retryable:
+                raise
+            if retry_backoff_seconds:
+                time.sleep(retry_backoff_seconds)
     elapsed = time.perf_counter() - started
     flat_rows = _frame_rows(frame)
     rows = _flat_rows_to_response_rows(flat_rows, name)
@@ -490,6 +524,8 @@ def _fetch_python_call(name: str, call: Any, *, missing_ok: bool = False) -> tup
         "row_count": len(rows),
         "data_row_count": len(flat_rows),
         "elapsed_seconds": round(elapsed, 3),
+        "attempt_count": len(attempts) + 1,
+        "attempts": attempts + [{"attempt": len(attempts) + 1, "error_type": None, "retryable": False}],
     }
 
 
@@ -516,6 +552,8 @@ def _fetch_with_python_library(
 ]:
     start_time, end_time = _history_time_params(window_start, window_end)
     interval = str(params.get("interval") or "1m")
+    retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
+    retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
     if historical_mode:
         quote_rows, quote_evidence = _fetch_python_call(
             "option_history_quote",
@@ -529,6 +567,8 @@ def _fetch_with_python_library(
                 max_dte=max_dte,
                 strike_range=strike_range,
             ),
+            retry_attempts=retry_attempts,
+            retry_backoff_seconds=retry_backoff_seconds,
         )
         greeks_rows, greeks_evidence = _fetch_python_call(
             "option_history_greeks_eod",
@@ -540,6 +580,8 @@ def _fetch_with_python_library(
                 max_dte=max_dte,
                 strike_range=strike_range,
             ),
+            retry_attempts=retry_attempts,
+            retry_backoff_seconds=retry_backoff_seconds,
         )
         trade_rows, trade_evidence = _fetch_python_call(
             "option_history_trade",
@@ -553,6 +595,8 @@ def _fetch_with_python_library(
                 strike_range=strike_range,
             ),
             missing_ok=True,
+            retry_attempts=retry_attempts,
+            retry_backoff_seconds=retry_backoff_seconds,
         )
         iv_rows = greeks_rows
         iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}
@@ -568,6 +612,8 @@ def _fetch_with_python_library(
             strike_range=strike_range,
             min_time=min_time,
         ),
+        retry_attempts=retry_attempts,
+        retry_backoff_seconds=retry_backoff_seconds,
     )
     iv_rows, iv_evidence = _fetch_python_call(
         "option_snapshot_greeks_implied_volatility",
@@ -578,6 +624,8 @@ def _fetch_with_python_library(
             strike_range=strike_range,
             min_time=min_time,
         ),
+        retry_attempts=retry_attempts,
+        retry_backoff_seconds=retry_backoff_seconds,
     )
     greeks_rows, greeks_evidence = _fetch_python_call(
         "option_snapshot_greeks_first_order",
@@ -588,6 +636,8 @@ def _fetch_with_python_library(
             strike_range=strike_range,
             min_time=min_time,
         ),
+        retry_attempts=retry_attempts,
+        retry_backoff_seconds=retry_backoff_seconds,
     )
     trade_rows: list[dict[str, Any]] = []
     trade_evidence = {"name": "trade window", "row_count": 0, "skipped": "not_available_for_realtime_snapshot_mode"}

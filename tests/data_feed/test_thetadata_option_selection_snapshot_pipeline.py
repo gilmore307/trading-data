@@ -287,6 +287,33 @@ class NoTradeThetaDataPythonClient(FakeThetaDataPythonClient):
         raise type("NoDataFoundError", (Exception,), {})("No data found for: option_history_trade(AAPL)")
 
 
+class FlakyThetaDataPythonClient(FakeThetaDataPythonClient):
+    def __init__(self):
+        super().__init__()
+        self.quote_attempts = 0
+
+    def option_history_quote(self, **kwargs):
+        self.quote_attempts += 1
+        self.calls.append(("option_history_quote", kwargs))
+        if self.quote_attempts == 1:
+            raise type("AuthenticationError", (Exception,), {})("<html><body><h1>HTTP Status 500 - Internal Server Error</h1></body></html>")
+        return FakeThetaDataFrame(
+            [
+                {
+                    "symbol": "AAPL",
+                    "expiration": "2016-01-15",
+                    "strike": 100.0,
+                    "right": "CALL",
+                    "timestamp": "2016-01-05T09:30:00",
+                    "bid": 1.0,
+                    "ask": 1.2,
+                    "bid_size": 10,
+                    "ask_size": 11,
+                }
+            ]
+        )
+
+
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_only_with_snapshot_clock(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -485,6 +512,45 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             manifest = json.loads((output_root / "runs" / "run_python_library_no_trade" / "request_manifest.json").read_text())
             trade_request = [request for request in manifest["requests"] if request["endpoint"].endswith("option_history_trade")][0]
             self.assertEqual(trade_request["skipped"], "no_data_found")
+
+    def test_historical_python_client_retries_provider_server_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2016-01-05T09:30:00-05:00",
+                    "window_start": "2016-01-05T09:30:00-05:00",
+                    "window_end": "2016-01-05T09:31:59.999000-05:00",
+                    "historical_mode": True,
+                    "retry_attempts": 2,
+                    "retry_backoff_seconds": 0,
+                },
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["thetadata"],
+                    "allowed_endpoint_families": ["option_selection_snapshot"],
+                    "max_requests": 4,
+                    "max_symbols": 1,
+                    "max_time_window": "1d",
+                },
+                "output_root": str(output_root),
+            }
+            writer = FakeSqlWriter()
+            client = FlakyThetaDataPythonClient()
+
+            result = run(task_key, run_id="run_python_library_retry", theta_client=client, sql_writer=writer)
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(client.quote_attempts, 2)
+            manifest = json.loads((output_root / "runs" / "run_python_library_retry" / "request_manifest.json").read_text())
+            quote_request = [request for request in manifest["requests"] if request["endpoint"].endswith("option_history_quote")][0]
+            self.assertEqual(quote_request["attempt_count"], 2)
+            self.assertEqual(quote_request["attempts"][0]["error_type"], "AuthenticationError")
+            self.assertTrue(quote_request["attempts"][0]["retryable"])
 
     def test_historical_window_keeps_each_minute_and_trade_summary(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -25,7 +25,7 @@ PYTHONPATH=src python3 -m data_feature.m02_sector_context_feature_generation.fro
   --month 2016-01
 ```
 
-This reads existing `01_feed_alpaca_bars` completion receipts/artifacts from local storage, upserts their saved `equity_bar.csv` rows into `trading_data.m01_market_regime_data_acquisition`, then generates `m02_sector_context_feature_generation`. It performs zero provider calls.
+This reads existing `01_feed_alpaca_bars` completion receipts from local storage, confirms bars are already retained in `trading_data.m01_market_regime_data_acquisition`, then generates `m02_sector_context_feature_generation`. It performs zero provider calls and does not require saved `equity_bar.csv` or `equity_bar.jsonl` payloads.
 
 Direct SQL generation remains available when the source table is already materialized:
 

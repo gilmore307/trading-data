@@ -1,10 +1,10 @@
 """Materialize Layer 2 feed artifacts and generate sector-context features.
 
-This command is intentionally offline: it reads already-acquired Alpaca bar CSV
-artifacts from the local trading-data storage tree, upserts them into the shared
-``trading_data.m01_market_regime_data_acquisition`` bar table used by the market/sector
-feature stack, and then runs the deterministic ``m02_sector_context_feature_generation`` SQL
-generator. It does not call providers.
+This command is intentionally offline: it reads already-acquired Alpaca bar
+completion receipts from the local trading-data storage tree, confirms bars are
+retained in the shared ``trading_data.m01_market_regime_data_acquisition`` bar
+table used by the market/sector feature stack, and then runs the deterministic
+``m02_sector_context_feature_generation`` SQL generator. It does not call providers.
 """
 
 from __future__ import annotations
@@ -19,8 +19,7 @@ from data_feature.m01_market_regime_feature_generation.from_feed_artifacts impor
     DEFAULT_STORAGE_ROOT,
     _month_bounds,
     discover_feed_artifacts,
-    materialize_source_rows,
-    read_equity_bar_rows,
+    read_equity_bar_row_count,
 )
 from data_source.m01_market_regime_data_acquisition.pipeline import OUTPUT_TABLE
 
@@ -58,8 +57,8 @@ def run_from_feed_artifacts(
     """Materialize existing Alpaca artifacts and optionally generate Layer 2 features."""
 
     artifacts = discover_feed_artifacts(storage_root=storage_root, month=month, symbols=symbols)
-    rows = read_equity_bar_rows(artifacts)
-    source_rows_written = 0 if dry_run else materialize_source_rows(rows)
+    source_rows_found = read_equity_bar_row_count(artifacts)
+    source_rows_written = 0
     feature_rows_written = 0
     if not materialize_only and not dry_run:
         source_start, source_end = _month_bounds(month)
@@ -80,7 +79,7 @@ def run_from_feed_artifacts(
         month=month,
         receipt_count=len(artifacts),
         artifact_count=len(artifacts),
-        source_rows_found=len(rows),
+        source_rows_found=source_rows_found,
         source_rows_written=source_rows_written,
         feature_rows_written=feature_rows_written,
     )

@@ -2,12 +2,13 @@
 
 Derived event detector inside the `m10_event_risk_governor_data_acquisition` Layer 10 EventRiskGovernor surface. This is not a standalone manager-facing numbered data source.
 
-It converts saved equity/ETF bars, optional reference bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the Layer 10 event-risk evidence surface. Layer 4 may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
+It converts SQL-retained equity/ETF bars, optional reference bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the Layer 10 event-risk evidence surface. Layer 4 may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
 
 ## Inputs
 
-- `params.bar_path` — required saved `equity_bar.csv` path.
-- `params.reference_bars_csv_path` — optional reference/sector ETF `equity_bar.csv` path.
+- `params.bars_sql_source` — preferred production input, pointing at `trading_data.m01_market_regime_data_acquisition` with `source_symbol`, `timeframe`, `start`, and `end`.
+- `params.bars_csv_path` — local fixture/debug input only; production Alpaca bars are retained in SQL and do not require saved `equity_bar.csv`.
+- `params.reference_bars_csv_path` — optional reference/sector ETF bar CSV path for controlled detector experiments.
 - `params.liquidity_path` — optional `equity_liquidity_bar.csv` path.
 - `params.config_path` — reviewed one-off config override path; normal runs use this folder's `config.json`.
 

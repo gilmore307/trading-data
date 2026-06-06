@@ -20,8 +20,22 @@ from data_source.config import load_source_config
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from storage.sql import PostgresSqlTableReader, SqlTableReader
 
 SOURCE = "m10_event_risk_governor_data_acquisition.equity_abnormal_activity"
+BAR_SQL_SOURCE_TABLE = "m01_market_regime_data_acquisition"
+BAR_SQL_SOURCE_COLUMNS = [
+    "symbol",
+    "timeframe",
+    "timestamp",
+    "bar_open",
+    "bar_high",
+    "bar_low",
+    "bar_close",
+    "bar_volume",
+    "bar_vwap",
+    "bar_trade_count",
+]
 FIELDS = [
     "event_id",
     "symbol",
@@ -97,33 +111,68 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
         return [{str(k): str(v or "") for k, v in row.items()} for row in csv.DictReader(handle)]
 
 
-def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
+def fetch(context: SourceContext, *, sql_reader: SqlTableReader | None = None) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
-    bars_path = Path(str(_require(params, "bars_csv_path")))
+    bars_path = Path(str(params["bars_csv_path"])) if params.get("bars_csv_path") else None
     reference_path = Path(str(params["reference_bars_csv_path"])) if params.get("reference_bars_csv_path") else None
     liquidity_path = Path(str(params["liquidity_csv_path"])) if params.get("liquidity_csv_path") else None
-    bars = _read_csv(bars_path)
+    if bars_path is not None:
+        bars = _read_csv(bars_path)
+    elif params.get("bars_sql_source"):
+        bars = _read_sql_bars(params["bars_sql_source"], params=params, sql_reader=sql_reader)
+    else:
+        _require(params, "bars_csv_path")
+        bars = []
     reference_bars = _read_csv(reference_path) if reference_path else []
     liquidity_rows = _read_csv(liquidity_path) if liquidity_path else []
     if not bars:
-        raise EquityAbnormalActivityError("bars_csv_path produced zero rows")
+        raise EquityAbnormalActivityError("bar input produced zero rows")
     context.run_dir.mkdir(parents=True, exist_ok=True)
     config_path = str(params.get("config_path") or Path(__file__).with_name("config.json"))
     manifest = {
         "source": SOURCE,
         "config": config_path or "source-local config.json",
-        "bars_csv_path": str(bars_path),
+        "bars_csv_path": str(bars_path) if bars_path else None,
+        "bars_sql_source": sanitize_value(params.get("bars_sql_source")),
         "reference_bars_csv_path": str(reference_path) if reference_path else None,
         "liquidity_csv_path": str(liquidity_path) if liquidity_path else None,
         "bar_rows": len(bars),
         "reference_bar_rows": len(reference_bars),
         "liquidity_rows": len(liquidity_rows),
-        "raw_persistence": "not_applicable; derived from saved equity_bar/equity_liquidity_bar CSV inputs",
+        "raw_persistence": "sql_retained_bar_input_preferred; no Alpaca bar JSONL/CSV payload copy is required",
         "fetched_at_utc": _now_utc(),
     }
     path = context.run_dir / "request_manifest.json"
     path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(path)], {"equity_bar_input": len(bars)}, details=manifest), SourcePayload(bars, reference_bars, liquidity_rows)
+
+
+def _read_sql_bars(value: Any, *, params: Mapping[str, Any], sql_reader: SqlTableReader | None) -> list[dict[str, Any]]:
+    if not isinstance(value, Mapping):
+        raise EquityAbnormalActivityError("bars_sql_source must be a mapping")
+    reader = sql_reader or PostgresSqlTableReader.from_config(params)
+    source_symbol = str(value.get("source_symbol") or value.get("symbol") or "").strip().upper()
+    if not source_symbol:
+        raise EquityAbnormalActivityError("bars_sql_source.source_symbol is required")
+    target_symbol = str(value.get("target_symbol") or source_symbol).strip().upper()
+    timeframe = str(value.get("timeframe") or params.get("timeframe") or "30Min")
+    rows = reader.read_rows(
+        table=str(value.get("table") or BAR_SQL_SOURCE_TABLE),
+        columns=BAR_SQL_SOURCE_COLUMNS,
+        where_equals={"symbol": source_symbol, "timeframe": timeframe},
+        time_column="timestamp",
+        start=value.get("start") or params.get("start"),
+        end=value.get("end") or params.get("end"),
+        order_by=("symbol", "timeframe", "timestamp"),
+    )
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        normalized = dict(row)
+        normalized["symbol"] = target_symbol
+        if source_symbol != target_symbol:
+            normalized.setdefault("source_evidence_symbol", source_symbol)
+        out.append(normalized)
+    return out
 
 
 def _float(value: Any) -> float | None:
@@ -376,11 +425,11 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, sql_reader: SqlTableReader | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, payload = fetch(context)
+        fetch_result, payload = fetch(context, sql_reader=sql_reader)
         clean_result = clean(context, payload)
         save_result = save(context, clean_result)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

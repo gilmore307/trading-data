@@ -15,20 +15,34 @@ class FakeNewsClient:
         return HttpResult(url=url,status=200,headers={},body=json.dumps({'news':[{'id':1,'headline':'h','source':'benzinga','author':'a','created_at':'2024-01-09T19:46:19Z','updated_at':'2024-01-09T19:46:19Z','symbols':['AAPL'],'summary':'s','content':'','url':'https://example.test','images':[{}]}]}).encode())
 class Secret:
     alias='alpaca'; path=Path('/root/secrets/alpaca.json'); present=True; keys_present=('api_key','secret_key'); values={'api_key':'k','secret_key':'s','data_endpoint':'https://data.alpaca.markets'}
+class FakeSqlWriter:
+    def __init__(self):
+        self.calls=[]
+    def write_rows(self,*,table,columns,rows,key_columns):
+        self.calls.append({'table':table,'columns':tuple(columns),'rows':list(rows),'key_columns':tuple(key_columns)})
+        return {'qualified_table':f'trading_data.{table}','table':table,'rows_written':len(rows),'driver':'fake'}
 
 class AlpacaBarsNewsPipelineTests(unittest.TestCase):
-    def test_bars_pipeline_et_timestamp(self):
+    def test_bars_pipeline_writes_sql_without_jsonl_or_csv_payload(self):
         p = import_module("data_feed.01_feed_alpaca_bars.pipeline")
         old=p.load_secret_alias; p.load_secret_alias=lambda alias: Secret()
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 tk={'task_id':'01_feed_alpaca_bars_task_test','feed':'01_feed_alpaca_bars','params':{'symbol':'AAPL','timeframe':'1Day','start':'2024-01-02T00:00:00Z','end':'2024-01-03T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
-                r=p.run(tk,run_id='01_feed_alpaca_bars_run_test',client=FakeBarsClient(), client_is_fixture=True)
+                writer=FakeSqlWriter()
+                r=p.run(tk,run_id='01_feed_alpaca_bars_run_test',client=FakeBarsClient(), sql_writer=writer, client_is_fixture=True)
                 self.assertEqual(r.status,'succeeded')
-                with (Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test/saved/equity_bar.csv').open(newline='') as handle:
-                    row=next(csv.DictReader(handle))
-                self.assertEqual(row['timestamp'],'2024-01-02T00:00:00-05:00')
-                self.assertFalse((Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test/saved/equity_bar.jsonl').exists())
+                self.assertEqual(len(writer.calls),1)
+                self.assertEqual(writer.calls[0]['table'],'m01_market_regime_data_acquisition')
+                self.assertEqual(writer.calls[0]['rows'][0]['timestamp'],'2024-01-02T00:00:00-05:00')
+                run_dir=Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test'
+                self.assertFalse((run_dir/'saved/equity_bar.csv').exists())
+                self.assertFalse((run_dir/'cleaned/equity_bar.jsonl').exists())
+                self.assertTrue((run_dir/'schema.json').exists())
+                receipt=json.loads((Path(tk['output_root'])/'completion_receipt.json').read_text())
+                run=receipt['runs'][0]
+                self.assertEqual(run['outputs'],['trading_data.m01_market_regime_data_acquisition'])
+                self.assertEqual(run['steps']['save']['details']['format'],'sql_table')
         finally: p.load_secret_alias=old
 
     def test_bars_live_client_requires_manager_controls(self):
@@ -52,18 +66,19 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 tk={'task_id':'01_feed_alpaca_bars_empty_test','feed':'01_feed_alpaca_bars','params':{'symbol':'BITW','timeframe':'1Day','start':'2016-01-01T00:00:00Z','end':'2016-02-01T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
-                r=p.run(tk,run_id='01_feed_alpaca_bars_empty_run_test',client=FakeEmptyBarsClient(), client_is_fixture=True)
+                writer=FakeSqlWriter()
+                r=p.run(tk,run_id='01_feed_alpaca_bars_empty_run_test',client=FakeEmptyBarsClient(), sql_writer=writer, client_is_fixture=True)
                 self.assertEqual(r.status,'succeeded')
-                csv_path=Path(tk['output_root'])/'runs/01_feed_alpaca_bars_empty_run_test/saved/equity_bar.csv'
-                with csv_path.open(newline='') as handle:
-                    reader=csv.DictReader(handle)
-                    self.assertEqual(reader.fieldnames,p.EQUITY_BAR_FIELDS)
-                    self.assertEqual(list(reader),[])
+                run_dir=Path(tk['output_root'])/'runs/01_feed_alpaca_bars_empty_run_test'
+                self.assertFalse((run_dir/'saved/equity_bar.csv').exists())
+                self.assertFalse((run_dir/'cleaned/equity_bar.jsonl').exists())
+                self.assertEqual(writer.calls,[])
                 receipt=json.loads((Path(tk['output_root'])/'completion_receipt.json').read_text())
                 run_receipt=json.loads((Path(tk['output_root'])/'runs/01_feed_alpaca_bars_empty_run_test/completion_receipt.json').read_text())
                 self.assertEqual(run_receipt, receipt)
                 run=receipt['runs'][0]
                 self.assertEqual(run['row_counts'],{'equity_bar':0})
+                self.assertEqual(run['outputs'],['m01_market_regime_data_acquisition'])
                 self.assertTrue(run['steps']['fetch']['references'])
                 manifest=json.loads(Path(run['steps']['fetch']['references'][0]).read_text())
                 self.assertEqual(manifest['raw_count'],0)

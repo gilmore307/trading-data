@@ -12,6 +12,16 @@ detect_events = pipeline.detect_events
 run = pipeline.run
 
 
+class FakeReader:
+    def __init__(self, rows) -> None:
+        self.rows = rows
+        self.calls = []
+
+    def read_rows(self, **kwargs):
+        self.calls.append(kwargs)
+        return list(self.rows)
+
+
 def _bar(symbol: str, idx: int, close: float, volume: int, open_: float | None = None) -> dict[str, str]:
     return {
         "symbol": symbol,
@@ -100,6 +110,39 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
             self.assertIn("01_feed_alpaca_bars:NVDA", row["source_references"])
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
+
+    def test_pipeline_reads_bar_input_from_sql_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = [_bar("XLF", i, 100 + i * 0.1, 1000 + i) for i in range(10)] + [_bar("XLF", 10, 120, 10000, open_=118)]
+            reader = FakeReader(rows)
+            task_key = {
+                "task_id": "equity_abnormal_activity_task_test",
+                "source": "m10_event_risk_governor_data_acquisition.equity_abnormal_activity",
+                "params": {
+                    "bars_sql_source": {
+                        "table": "m01_market_regime_data_acquisition",
+                        "source_symbol": "XLF",
+                        "target_symbol": "XLF",
+                        "start": "2026-04-01T00:00:00-04:00",
+                        "end": "2026-05-01T00:00:00-04:00",
+                        "timeframe": "1Min",
+                    },
+                    "lookback_intervals": 5,
+                    "min_abs_return_zscore": 3.0,
+                    "min_volume_zscore": 3.0,
+                    "min_abs_gap_pct": 0.04,
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = run(task_key, run_id="run", sql_reader=reader)
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["equity_abnormal_activity_event"], 1)
+            self.assertEqual(reader.calls[0]["where_equals"], {"symbol": "XLF", "timeframe": "1Min"})
+            receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
+            fetch_details = receipt["runs"][0]["steps"]["fetch"]["details"]
+            self.assertIsNone(fetch_details["bars_csv_path"])
+            self.assertEqual(fetch_details["bars_sql_source"]["source_symbol"], "XLF")
 
 
 if __name__ == "__main__":

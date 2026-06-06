@@ -232,24 +232,19 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             from_feed_artifacts._feature_source_bounds("2026-04", lookback_days=-1)
 
-    def test_feed_artifact_materializer_discovers_successful_outputs(self) -> None:
+    def test_feed_artifact_materializer_discovers_successful_receipts(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             root = Path(raw_tmp)
-            saved = root / "monthly_backfill" / "alpaca_bars" / "SPY" / "2016-01" / "runs" / "run_1" / "saved"
-            saved.mkdir(parents=True)
-            csv_path = saved / "equity_bar.csv"
-            with csv_path.open("w", newline="", encoding="utf-8") as handle:
-                writer = csv.writer(handle)
-                writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
-                writer.writerow(["SPY", "1Min", "2016-01-04T09:30:00-05:00", "200", "201", "199", "200.5", "1000", "200.25", "12"])
             receipt = root / "monthly_backfill" / "alpaca_bars" / "SPY" / "2016-01" / "completion_receipt.json"
+            receipt.parent.mkdir(parents=True)
             receipt.write_text(
                 json.dumps(
                     {
                         "runs": [
                             {
                                 "status": "succeeded",
-                                "outputs": [str(csv_path)],
+                                "outputs": ["trading_data.m01_market_regime_data_acquisition"],
+                                "row_counts": {"equity_bar": 1},
                             }
                         ]
                     }
@@ -259,12 +254,10 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
             )
 
             artifacts = from_feed_artifacts.discover_feed_artifacts(storage_root=root, month="2016-01")
-            rows = from_feed_artifacts.read_equity_bar_rows(artifacts)
+            row_count = from_feed_artifacts.read_equity_bar_row_count(artifacts)
 
-        self.assertEqual(artifacts, [csv_path])
-        self.assertEqual(rows[0]["symbol"], "SPY")
-        self.assertEqual(rows[0]["bar_close"], 200.5)
-        self.assertEqual(rows[0]["bar_volume"], 1000)
+        self.assertEqual(artifacts, [receipt])
+        self.assertEqual(row_count, 1)
 
     def test_materializer_writes_source_rows_with_market_regime_key(self) -> None:
         class FakeWriter:

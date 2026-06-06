@@ -1,8 +1,9 @@
 """Materialize Layer 1 feed artifacts and generate market-regime features.
 
-This command is intentionally offline: it reads already-acquired Alpaca bar CSV
-artifacts from the local trading-data storage tree, upserts them into
-``trading_data.m01_market_regime_data_acquisition``, and then runs the deterministic
+This command is intentionally offline: it reads already-acquired Alpaca bar
+completion receipts from the local trading-data storage tree, confirms that
+bars were retained in ``trading_data.m01_market_regime_data_acquisition``, and
+then runs the deterministic
 ``m01_market_regime_feature_generation`` SQL generator. It does not call providers.
 """
 
@@ -65,19 +66,19 @@ def _feature_source_bounds(month: str, *, lookback_days: int = DEFAULT_FEATURE_L
     return source_start, target_start, target_end
 
 
-def _latest_successful_output(receipt: Mapping[str, Any]) -> str | None:
+def _latest_successful_run(receipt: Mapping[str, Any]) -> Mapping[str, Any] | None:
     runs = [run for run in receipt.get("runs") or [] if isinstance(run, Mapping) and str(run.get("status") or "").lower() == "succeeded"]
     if not runs:
         return None
-    latest = runs[-1]
-    for output in latest.get("outputs") or []:
-        if str(output).endswith("equity_bar.csv"):
-            return str(output)
-    return None
+    return runs[-1]
 
 
 def discover_feed_artifacts(*, storage_root: Path, month: str, symbols: Sequence[str] = ()) -> list[Path]:
-    """Return saved equity_bar.csv artifacts from successful monthly feed receipts."""
+    """Return successful monthly Alpaca bar receipt paths.
+
+    Bar payload files are no longer retained. Successful receipts are the compact
+    provenance boundary; the bars themselves are retained in SQL.
+    """
 
     symbol_filter = {symbol.upper() for symbol in symbols}
     receipt_paths = sorted((storage_root / "monthly_backfill" / "alpaca_bars").glob(f"*/{month}/completion_receipt.json"))
@@ -90,15 +91,28 @@ def discover_feed_artifacts(*, storage_root: Path, month: str, symbols: Sequence
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
-        output = _latest_successful_output(receipt)
-        if not output:
-            continue
-        artifact_path = Path(output)
-        if not artifact_path.is_absolute():
-            artifact_path = repo_root() / artifact_path
-        if artifact_path.exists():
-            artifacts.append(artifact_path)
+        if _latest_successful_run(receipt) is not None:
+            artifacts.append(receipt_path)
     return artifacts
+
+
+def read_equity_bar_row_count(paths: Iterable[Path]) -> int:
+    """Return SQL-retained bar row count recorded in successful receipts."""
+
+    count = 0
+    for path in paths:
+        if path.name != "completion_receipt.json":
+            continue
+        try:
+            receipt = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        run = _latest_successful_run(receipt)
+        if run is None:
+            continue
+        row_counts = run.get("row_counts") if isinstance(run.get("row_counts"), Mapping) else {}
+        count += int(row_counts.get("equity_bar") or row_counts.get(OUTPUT_TABLE) or 0)
+    return count
 
 
 def _coerce_number(value: str) -> float | int | None:
@@ -148,8 +162,8 @@ def run_from_feed_artifacts(
     feature_lookback_days: int = DEFAULT_FEATURE_LOOKBACK_DAYS,
 ) -> FeedArtifactMaterializationSummary:
     artifacts = discover_feed_artifacts(storage_root=storage_root, month=month, symbols=symbols)
-    rows = read_equity_bar_rows(artifacts)
-    source_rows_written = 0 if dry_run else materialize_source_rows(rows)
+    source_rows_found = read_equity_bar_row_count(artifacts)
+    source_rows_written = 0
     feature_rows_written = 0
     if not materialize_only and not dry_run:
         source_start, snapshot_start, snapshot_end = _feature_source_bounds(month, lookback_days=feature_lookback_days)
@@ -172,7 +186,7 @@ def run_from_feed_artifacts(
         month=month,
         receipt_count=len(artifacts),
         artifact_count=len(artifacts),
-        source_rows_found=len(rows),
+        source_rows_found=source_rows_found,
         source_rows_written=source_rows_written,
         feature_rows_written=feature_rows_written,
     )
@@ -209,6 +223,7 @@ __all__ = [
     "FeedArtifactMaterializationSummary",
     "discover_feed_artifacts",
     "materialize_source_rows",
+    "read_equity_bar_row_count",
     "read_equity_bar_rows",
     "run_from_feed_artifacts",
 ]

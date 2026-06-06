@@ -18,6 +18,16 @@ class FakeWriter:
         return {"qualified_table": f"trading_data.{table}", "rows_written": len(rows)}
 
 
+class FakeReader:
+    def __init__(self, rows) -> None:
+        self.rows = rows
+        self.calls = []
+
+    def read_rows(self, **kwargs):
+        self.calls.append(kwargs)
+        return list(self.rows)
+
+
 class Source03TargetStateTests(unittest.TestCase):
     def test_target_state_window_is_half_open(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
@@ -54,6 +64,51 @@ class Source03TargetStateTests(unittest.TestCase):
         self.assertAlmostEqual(row["dollar_volume"], 100500.0)
         self.assertAlmostEqual(row["spread_bps"], 0.10 / 100.5 * 10000)
         self.assertIn("source/audit/routing metadata", clean_result.details["identity_boundary"])
+
+    def test_fetch_reads_bars_from_sql_source_without_payload_file(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET).isoformat()
+        reader = FakeReader(
+            [
+                {
+                    "symbol": "XLF",
+                    "timeframe": "30Min",
+                    "timestamp": start,
+                    "bar_open": 100,
+                    "bar_high": 101,
+                    "bar_low": 99,
+                    "bar_close": 100.5,
+                    "bar_volume": 1000,
+                }
+            ]
+        )
+        task_key = {
+            "task_id": "source03_unit",
+            "source": "m03_target_state_vector_data_acquisition",
+            "params": {
+                "start": "2026-01-01T00:00:00-05:00",
+                "end": "2026-02-01T00:00:00-05:00",
+                "timeframe": "30Min",
+                "target_candidates": [{"target_candidate_id": "tcand_001", "routing_symbol_ref": "AAPL"}],
+                "bar_sql_sources": [
+                    {
+                        "table": "m01_market_regime_data_acquisition",
+                        "source_symbol": "XLF",
+                        "target_symbol": "AAPL",
+                        "month": "2026-01",
+                    }
+                ],
+            },
+            "output_root": "/tmp/source03_unit",
+        }
+        context = pipeline.build_context(task_key, "run_001")
+        _, payload = pipeline.fetch(context, sql_reader=reader)
+        clean_result, cleaned = pipeline.clean(context, payload)
+
+        self.assertEqual(len(payload.bar_rows), 1)
+        self.assertEqual(reader.calls[0]["table"], "m01_market_regime_data_acquisition")
+        self.assertEqual(reader.calls[0]["where_equals"], {"symbol": "XLF", "timeframe": "30Min"})
+        self.assertEqual(clean_result.row_counts["m03_target_state_vector_data_acquisition"], 1)
+        self.assertEqual(cleaned.rows[0]["symbol"], "AAPL")
 
     def test_save_uses_accepted_table_and_candidate_key(self) -> None:
         writer = FakeWriter()

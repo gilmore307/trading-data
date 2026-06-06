@@ -36,6 +36,24 @@ class SqlTableWriter(Protocol):
         """Write rows to a SQL table and return receipt-safe metadata."""
 
 
+class SqlTableReader(Protocol):
+    """Minimal SQL reader contract used by data sources."""
+
+    def read_rows(
+        self,
+        *,
+        table: str,
+        columns: Sequence[str],
+        where_equals: Mapping[str, Any] | None = None,
+        where_in: Mapping[str, Sequence[Any]] | None = None,
+        time_column: str | None = None,
+        start: Any | None = None,
+        end: Any | None = None,
+        order_by: Sequence[str] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Read rows from a SQL table and return plain dictionaries."""
+
+
 def _ident(name: str) -> str:
     if not _IDENTIFIER.match(name):
         raise SqlStorageError(f"invalid SQL identifier: {name!r}")
@@ -143,6 +161,91 @@ class PostgresSqlTableWriter:
             "rows_written": len(values),
             "secret_alias": self.secret_summary,
         }
+
+
+@dataclass(frozen=True)
+class PostgresSqlTableReader:
+    """PostgreSQL reader for accepted durable SQL table contracts."""
+
+    target_id: str
+    dsn: str
+    schema: str | None = None
+    batch_size: int = 5000
+    secret_summary: dict[str, Any] | None = None
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> "PostgresSqlTableReader":
+        target = {**DEFAULT_POSTGRES_STORAGE_TARGET, **dict(config.get("storage_target") or {})}
+        if target.get("driver") != "postgresql":
+            raise SqlStorageError("storage_target.driver must be 'postgresql' for formal SQL input")
+        secret_alias = str(target.get("secret_alias") or "").strip()
+        if not secret_alias:
+            raise SqlStorageError("storage_target.secret_alias is required")
+        secret = load_secret_alias(secret_alias)
+        dsn = str(secret.values.get("dsn") or target.get("dsn") or "").strip()
+        if not dsn:
+            host = secret.values.get("host") or target.get("host")
+            database = secret.values.get("database") or target.get("database") or secret.values.get("dbname")
+            user = secret.values.get("user") or secret.values.get("username") or target.get("user")
+            password = secret.values.get("password") or target.get("password")
+            port = secret.values.get("port") or target.get("port") or 5432
+            if not (host and database and user and password):
+                raise SqlStorageError("PostgreSQL storage secret must provide dsn or host/database/user/password")
+            dsn = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+        return cls(
+            target_id=str(target.get("id") or secret_alias),
+            dsn=dsn,
+            schema=str(target.get("schema") or "").strip() or None,
+            batch_size=int(target.get("batch_size", 5000)),
+            secret_summary=public_secret_summary(secret),
+        )
+
+    def read_rows(
+        self,
+        *,
+        table: str,
+        columns: Sequence[str],
+        where_equals: Mapping[str, Any] | None = None,
+        where_in: Mapping[str, Sequence[Any]] | None = None,
+        time_column: str | None = None,
+        start: Any | None = None,
+        end: Any | None = None,
+        order_by: Sequence[str] | None = None,
+    ) -> list[dict[str, Any]]:
+        if not columns:
+            raise SqlStorageError("columns are required")
+        qualified = _qualified_table(self.schema, table)
+        selected = ", ".join(_ident(column) for column in columns)
+        clauses: list[str] = []
+        values: list[Any] = []
+        for column, value in (where_equals or {}).items():
+            clauses.append(f"{_ident(column)} = %s")
+            values.append(value)
+        for column, raw_values in (where_in or {}).items():
+            items = list(raw_values)
+            if not items:
+                clauses.append("FALSE")
+                continue
+            clauses.append(f"{_ident(column)} IN ({', '.join(['%s'] * len(items))})")
+            values.extend(items)
+        if time_column and start is not None:
+            clauses.append(f"{_ident(time_column)} >= %s")
+            values.append(start)
+        if time_column and end is not None:
+            clauses.append(f"{_ident(time_column)} < %s")
+            values.append(end)
+        where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+        order = f" ORDER BY {', '.join(_ident(column) for column in order_by)}" if order_by else ""
+        statement = f"SELECT {selected} FROM {qualified}{where}{order}"
+        try:
+            import psycopg  # type: ignore[import-not-found]
+            from psycopg.rows import dict_row  # type: ignore[import-not-found]
+        except ImportError as exc:  # pragma: no cover
+            raise SqlStorageError("PostgreSQL SQL input requires psycopg; install psycopg[binary]") from exc
+        with psycopg.connect(self.dsn, row_factory=dict_row) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(statement, values)
+                return [dict(row) for row in cursor.fetchall()]
 
 
 def _table_ddl(table: str, qualified_table: str) -> str | None:

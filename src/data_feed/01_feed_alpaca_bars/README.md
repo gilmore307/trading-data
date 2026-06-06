@@ -1,3 +1,5 @@
 # 01_feed_alpaca_bars feed
 
-Fetches Alpaca stock/ETF bars and saves cleaned final outputs with America/New_York timestamps. Full raw provider payloads are not saved by default.
+Fetches Alpaca stock/ETF bars, normalizes timestamps to America/New_York, and writes the durable bar rows to SQL table `trading_data.m01_market_regime_data_acquisition`.
+
+Runtime storage keeps only compact provenance files such as `request_manifest.json`, `schema.json`, and `completion_receipt.json`. It does not retain `equity_bar.jsonl` or `equity_bar.csv` payload copies after SQL storage succeeds.

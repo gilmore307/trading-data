@@ -16,7 +16,8 @@ Required task key fields:
 
 - `source`: `m03_target_state_vector_data_acquisition`
 - `task_id`: stable task identifier
-- either `params.bar_rows` / `params.bars` / local bars path, or `params.liquidity_rows` / `params.liquidity_bars` / local liquidity path
+- either `params.bar_sql_sources`, inline bar rows, or local fixture bar paths
+- or `params.liquidity_rows` / `params.liquidity_bars` / local liquidity path
 
 Recommended parameters:
 
@@ -25,7 +26,9 @@ Recommended parameters:
 - `params.timeframe`: default timeframe for rows missing their own `timeframe`; default `1Min`
 - `output_root`: local manifest/receipt root
 
-Path variants accepted by the local normalizer include `bars_path`, `bars_csv_path`, `bars_json_path`, `liquidity_rows_path`, `liquidity_csv_path`, `liquidity_json_path`, `target_candidates_path`, and `candidate_rows_path`.
+Production manager runs use `params.bar_sql_sources` to read SQL-retained Alpaca bars from `trading_data.m01_market_regime_data_acquisition`. The source does not require `equity_bar.jsonl` or `equity_bar.csv` payload files.
+
+Local path variants remain accepted for fixtures and controlled debug tasks: `bars_path`, `bars_csv_path`, `bars_json_path`, `liquidity_rows_path`, `liquidity_csv_path`, `liquidity_json_path`, `target_candidates_path`, and `candidate_rows_path`.
 
 ## Output
 

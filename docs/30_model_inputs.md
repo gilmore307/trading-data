@@ -136,7 +136,7 @@ Boundary:
 - Source-backed event-style aggregation, not raw trades/quotes.
 - Should be created only from observable market data at/after the event effective time.
 - Must not duplicate ordinary `equity_bar`, `equity_liquidity_bar`, volatility, gap, volume, spread, trend, or target-state features that already feed Layer 1-3 or the base trading-guidance path.
-- Implemented first as a conservative detector over saved `equity_bar.csv`, optional reference bars, and optional `equity_liquidity_bar.csv` inputs. Those inputs are provenance for a compact event token/residual evidence row, not permission to re-emit the same bar-derived fields as independent event alpha.
+- Implemented first as a conservative detector over reviewed equity bar/liquidity evidence. Ordinary Alpaca bars are retained in SQL, not saved `equity_bar.csv`/`equity_bar.jsonl` payload files. Those inputs are provenance for a compact event token/residual evidence row, not permission to re-emit the same bar-derived fields as independent event alpha.
 - Price-action tokens are detector evidence for Layer 10 event-risk governance; they are not a separate model layer, trading action, or production-calibrated label without reviewed historical evidence.
 - If this becomes a generated signal, candidate decision, or label rather than source evidence, move that behavior out of `trading-data` and into the owning model/evaluation boundary.
 

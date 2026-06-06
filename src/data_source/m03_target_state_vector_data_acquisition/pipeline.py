@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
-from storage.sql import PostgresSqlTableWriter, SqlTableWriter
+from storage.sql import PostgresSqlTableReader, PostgresSqlTableWriter, SqlTableReader, SqlTableWriter
 
 SOURCE = "m03_target_state_vector_data_acquisition"
 MODEL_ID = "target_state_vector_model"
@@ -96,11 +96,30 @@ def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
-def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
+BAR_SQL_SOURCE_TABLE = "m01_market_regime_data_acquisition"
+BAR_SQL_SOURCE_COLUMNS = [
+    "symbol",
+    "timeframe",
+    "timestamp",
+    "bar_open",
+    "bar_high",
+    "bar_low",
+    "bar_close",
+    "bar_volume",
+    "bar_vwap",
+    "bar_trade_count",
+]
+
+
+def fetch(context: SourceContext, *, sql_reader: SqlTableReader | None = None) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     candidate_rows = _load_rows(params, inline_keys=("target_candidates", "target_candidate_rows", "candidate_rows"), path_keys=("target_candidates_path", "candidate_rows_path"))
     bar_rows = _load_rows(params, inline_keys=("bar_rows", "bars"), path_keys=("bar_rows_path", "bars_path", "bars_csv_path", "bars_json_path"))
     liquidity_rows = _load_rows(params, inline_keys=("liquidity_rows", "liquidity_bars"), path_keys=("liquidity_rows_path", "liquidity_bars_path", "liquidity_csv_path", "liquidity_json_path"))
+    sql_source_count = 0
+    if not bar_rows and params.get("bar_sql_sources"):
+        bar_rows = _read_sql_bar_sources(params["bar_sql_sources"], params=params, sql_reader=sql_reader)
+        sql_source_count = len(_coerce_sql_source_list(params["bar_sql_sources"]))
     if not bar_rows and not liquidity_rows:
         raise TargetStateSourceError("params.bar_rows/bars or params.liquidity_rows/liquidity_bars are required")
 
@@ -110,15 +129,58 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
         "model_id": MODEL_ID,
         "task_id": context.task_key.get("task_id"),
         "run_id": context.metadata.get("run_id"),
-        "input_counts": {"candidate_rows": len(candidate_rows), "bar_rows": len(bar_rows), "liquidity_rows": len(liquidity_rows)},
+        "input_counts": {"candidate_rows": len(candidate_rows), "bar_rows": len(bar_rows), "liquidity_rows": len(liquidity_rows), "bar_sql_sources": sql_source_count},
         "output_table": OUTPUT_TABLE,
         "output_columns": SQL_FIELDS,
-        "raw_persistence": "not_persisted_by_default; m03_target_state_vector_data_acquisition normalizes caller-supplied local/SQL-safe rows only",
+        "raw_persistence": "sql_retained_bars_only; no JSONL/CSV bar payload copy is required",
         "fetched_at_utc": _now_utc(),
     }
     path = context.run_dir / "request_manifest.json"
     path.write_text(json.dumps(sanitize_value(manifest), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return StepResult("succeeded", [str(path)], {"input_rows_transient": len(candidate_rows) + len(bar_rows) + len(liquidity_rows)}, details=manifest), SourcePayload(candidate_rows, bar_rows, liquidity_rows)
+
+
+def _coerce_sql_source_list(value: Any) -> list[Mapping[str, Any]]:
+    if isinstance(value, str):
+        return _coerce_sql_source_list(json.loads(value))
+    if isinstance(value, Mapping):
+        return [value]
+    if isinstance(value, Iterable):
+        return [dict(item) for item in value]
+    raise TargetStateSourceError("bar_sql_sources must be a mapping or list of mappings")
+
+
+def _read_sql_bar_sources(value: Any, *, params: Mapping[str, Any], sql_reader: SqlTableReader | None) -> list[dict[str, Any]]:
+    reader = sql_reader or PostgresSqlTableReader.from_config(params)
+    rows: list[dict[str, Any]] = []
+    default_start = params.get("start")
+    default_end = params.get("end")
+    default_timeframe = _normalize_timeframe(str(params.get("timeframe") or "30Min"))
+    for source in _coerce_sql_source_list(value):
+        table = str(source.get("table") or BAR_SQL_SOURCE_TABLE)
+        source_symbol = str(source.get("source_symbol") or source.get("symbol") or "").strip().upper()
+        target_symbol = str(source.get("target_symbol") or source_symbol).strip().upper()
+        if not source_symbol:
+            raise TargetStateSourceError("bar_sql_sources.source_symbol is required")
+        timeframe = _normalize_timeframe(str(source.get("timeframe") or default_timeframe))
+        source_rows = reader.read_rows(
+            table=table,
+            columns=BAR_SQL_SOURCE_COLUMNS,
+            where_equals={"symbol": source_symbol, "timeframe": timeframe},
+            time_column="timestamp",
+            start=source.get("start") or default_start,
+            end=source.get("end") or default_end,
+            order_by=("symbol", "timeframe", "timestamp"),
+        )
+        for row in source_rows:
+            normalized = dict(row)
+            normalized["symbol"] = target_symbol
+            if source_symbol != target_symbol:
+                normalized.setdefault("source_evidence_symbol", source_symbol)
+            if source.get("month"):
+                normalized.setdefault("fold_month", source.get("month"))
+            rows.append(normalized)
+    return rows
 
 
 def _load_rows(params: Mapping[str, Any], *, inline_keys: tuple[str, ...], path_keys: tuple[str, ...]) -> list[dict[str, Any]]:
@@ -380,11 +442,11 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None, sql_reader: SqlTableReader | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, source_payload = fetch(context)
+        fetch_result, source_payload = fetch(context, sql_reader=sql_reader)
         clean_result, cleaned_payload = clean(context, source_payload)
         save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

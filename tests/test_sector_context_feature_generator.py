@@ -228,15 +228,9 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
     def test_feed_artifact_materializer_reads_existing_layer_two_outputs_without_provider_calls(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             root = Path(raw_tmp)
-            saved = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "runs" / "run_1" / "saved"
-            saved.mkdir(parents=True)
-            csv_path = saved / "equity_bar.csv"
-            with csv_path.open("w", newline="", encoding="utf-8") as handle:
-                writer = csv.writer(handle)
-                writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
-                writer.writerow(["XLK", "1Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
             receipt = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
-            receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": [str(csv_path)]}]}) + "\n", encoding="utf-8")
+            receipt.parent.mkdir(parents=True)
+            receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": ["trading_data.m01_market_regime_data_acquisition"], "row_counts": {"equity_bar": 1}}]}) + "\n", encoding="utf-8")
 
             summary = from_feed_artifacts.run_from_feed_artifacts(storage_root=root, month="2016-01", dry_run=True)
 
@@ -251,11 +245,8 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
     def test_feed_artifact_materializer_generates_from_market_regime_source_table(self) -> None:
         calls: list[dict[str, object]] = []
-        original_materialize = from_feed_artifacts.materialize_source_rows
         original_generate_sql = from_feed_artifacts.generate_sql
         try:
-            from_feed_artifacts.materialize_source_rows = lambda rows: len(rows)  # type: ignore[method-assign]
-
             def fake_generate_sql(**kwargs: object) -> int:
                 calls.append(kwargs)
                 return 7
@@ -263,22 +254,15 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             from_feed_artifacts.generate_sql = fake_generate_sql  # type: ignore[method-assign]
             with tempfile.TemporaryDirectory() as raw_tmp:
                 root = Path(raw_tmp)
-                saved = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "runs" / "run_1" / "saved"
-                saved.mkdir(parents=True)
-                csv_path = saved / "equity_bar.csv"
-                with csv_path.open("w", newline="", encoding="utf-8") as handle:
-                    writer = csv.writer(handle)
-                    writer.writerow(["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"])
-                    writer.writerow(["XLK", "1Min", "2016-01-04T09:30:00-05:00", "40", "41", "39", "40.5", "1000", "40.25", "12"])
                 receipt = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
-                receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": [str(csv_path)]}]}) + "\n", encoding="utf-8")
+                receipt.parent.mkdir(parents=True)
+                receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": ["trading_data.m01_market_regime_data_acquisition"], "row_counts": {"equity_bar": 1}}]}) + "\n", encoding="utf-8")
 
                 summary = from_feed_artifacts.run_from_feed_artifacts(storage_root=root, month="2016-01")
         finally:
-            from_feed_artifacts.materialize_source_rows = original_materialize  # type: ignore[method-assign]
             from_feed_artifacts.generate_sql = original_generate_sql  # type: ignore[method-assign]
 
-        self.assertEqual(summary.source_rows_written, 1)
+        self.assertEqual(summary.source_rows_written, 0)
         self.assertEqual(summary.feature_rows_written, 7)
         self.assertEqual(calls[0]["source_table"], "m01_market_regime_data_acquisition")
         self.assertEqual(calls[0]["target_table"], "m02_sector_context_feature_generation")

@@ -1,6 +1,6 @@
 """Alpaca bars acquisition feed."""
 from __future__ import annotations
-import csv,json
+import json
 from dataclasses import asdict,dataclass,field
 from datetime import datetime,timezone
 from pathlib import Path
@@ -12,14 +12,18 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_source.m01_market_regime_data_acquisition.pipeline import FIELDS as EQUITY_BAR_FIELDS
+from data_source.m01_market_regime_data_acquisition.pipeline import OUTPUT_TABLE
+from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
-EQUITY_BAR_FIELDS=['symbol','timeframe','timestamp','bar_open','bar_high','bar_low','bar_close','bar_volume','bar_vwap','bar_trade_count']
 @dataclass(frozen=True)
-class FeedContext: task_key:dict[str,Any]; run_dir:Path; cleaned_dir:Path; saved_dir:Path; receipt_path:Path; metadata:dict[str,Any]=field(default_factory=dict)
+class FeedContext: task_key:dict[str,Any]; run_dir:Path; receipt_path:Path; metadata:dict[str,Any]=field(default_factory=dict)
 @dataclass(frozen=True)
 class StepResult: status:str; references:list[str]=field(default_factory=list); row_counts:dict[str,int]=field(default_factory=dict); warnings:list[str]=field(default_factory=list); details:dict[str,Any]=field(default_factory=dict)
 @dataclass(frozen=True)
 class FetchedPayload: symbol:str; bars:list[dict[str,Any]]; secret_alias:dict[str,Any]|None=None
+@dataclass(frozen=True)
+class CleanedPayload: rows:list[dict[str,Any]]
 class AlpacaBarsError(ValueError): pass
 def _now_utc(): return datetime.now(UTC).replace(microsecond=0).isoformat().replace('+00:00','Z')
 def _required(m,k):
@@ -34,7 +38,7 @@ def _json_response(r:HttpResult):
 def build_context(task_key,run_id):
     if task_key.get('feed')!='01_feed_alpaca_bars': raise AlpacaBarsError('task_key.feed must be 01_feed_alpaca_bars')
     root=resolve_output_root(task_key, default_task_id="01_feed_alpaca_bars_task"); run=root/'runs'/run_id
-    return FeedContext(task_key,run,run/'cleaned',run/'saved',root/'completion_receipt.json',{'run_id':run_id,'started_at':_now_utc()})
+    return FeedContext(task_key,run,root/'completion_receipt.json',{'run_id':run_id,'started_at':_now_utc()})
 def _fetch_paginated(client,url,row_key,params,headers,max_pages):
     rows=[]; evidence=[]; token=None
     for _ in range(max_pages):
@@ -69,17 +73,17 @@ def clean(context,fetched):
     timeframe=str((context.task_key.get('params') or {}).get('timeframe','1Day')); rows=[]
     for b in fetched.bars:
         rows.append({'symbol':fetched.symbol,'timeframe':timeframe,'timestamp':_et_iso(b['t']),'bar_open':b.get('o'),'bar_high':b.get('h'),'bar_low':b.get('l'),'bar_close':b.get('c'),'bar_volume':b.get('v'),'bar_vwap':b.get('vw'),'bar_trade_count':b.get('n')})
-    context.cleaned_dir.mkdir(parents=True,exist_ok=True); path=context.cleaned_dir/'equity_bar.jsonl'
-    with path.open('w') as h:
-        for r in rows: h.write(json.dumps(r,sort_keys=True)+'\n')
-    (context.cleaned_dir/'schema.json').write_text(json.dumps({'equity_bar':EQUITY_BAR_FIELDS},indent=2,sort_keys=True)+'\n')
-    return StepResult('succeeded',[str(path),str(context.cleaned_dir/'schema.json')],{'equity_bar':len(rows)},details={'timezone':'America/New_York'})
-def save(context,clean_result):
-    context.saved_dir.mkdir(parents=True,exist_ok=True); refs=[]; src=context.cleaned_dir/'equity_bar.jsonl'
-    rows=[json.loads(l) for l in src.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_bar.csv'; cols=EQUITY_BAR_FIELDS
-    with csvp.open('w',newline='') as h:
-        w=csv.DictWriter(h,fieldnames=cols); w.writeheader(); w.writerows(rows)
-    refs.append(str(csvp)); return StepResult('succeeded',refs,dict(clean_result.row_counts),details={'format':'csv'})
+    context.run_dir.mkdir(parents=True,exist_ok=True); schema_path=context.run_dir/'schema.json'
+    schema_path.write_text(json.dumps({'equity_bar':EQUITY_BAR_FIELDS,'retention':'sql_only_no_jsonl_or_csv_payload'},indent=2,sort_keys=True)+'\n')
+    return StepResult('succeeded',[str(schema_path)],{'equity_bar':len(rows)},details={'timezone':'America/New_York','retention':'sql_only_no_jsonl_or_csv_payload'}), CleanedPayload(rows)
+def save(context,clean_result,payload,*,sql_writer:SqlTableWriter|None=None):
+    writer=sql_writer or PostgresSqlTableWriter.from_config({})
+    if payload.rows:
+        metadata=writer.write_rows(table=OUTPUT_TABLE,columns=EQUITY_BAR_FIELDS,rows=payload.rows,key_columns=['symbol','timeframe','timestamp'])
+    else:
+        metadata={'table':OUTPUT_TABLE,'qualified_table':OUTPUT_TABLE,'rows_written':0,'driver':'postgresql','storage_target_id':'trading_data_postgres'}
+    reference=str(metadata.get('qualified_table') or metadata.get('table') or OUTPUT_TABLE)
+    return StepResult('succeeded',[reference],dict(clean_result.row_counts),details={'format':'sql_table','table':OUTPUT_TABLE,'columns':EQUITY_BAR_FIELDS,'storage':metadata,'file_payload_deleted':True})
 def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_result=None,error=None):
     context.receipt_path.parent.mkdir(parents=True,exist_ok=True); existing={'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars','runs':[]}
     if context.receipt_path.exists():
@@ -88,8 +92,8 @@ def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_resu
     entry={'run_id':context.metadata['run_id'],'status':status,'started_at':context.metadata.get('started_at'),'completed_at':_now_utc(),'output_dir':str(context.run_dir),'outputs':save_result.references if save_result else [],'row_counts':save_result.row_counts if save_result else clean_result.row_counts if clean_result else {},'steps':{'fetch':asdict(fetch_result) if fetch_result else None,'clean':asdict(clean_result) if clean_result else None,'save':asdict(save_result) if save_result else None},'error':None if error is None else {'type':type(error).__name__,'message':str(error)}}
     existing['runs']=[r for r in existing.get('runs',[]) if r.get('run_id')!=context.metadata['run_id']]+[entry]; existing.update({'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars'})
     write_receipt_bundle(context.receipt_path, context.run_dir, existing); return StepResult(status,[str(context.receipt_path),*entry['outputs']],entry['row_counts'],details={'run_id':context.metadata['run_id'],'error':entry['error']})
-def run(task_key,*,run_id,client=None,client_is_fixture=False):
-    c=build_context(task_key,run_id); c.cleaned_dir.mkdir(parents=True,exist_ok=True); c.saved_dir.mkdir(parents=True,exist_ok=True); fr=cr=sr=None
+def run(task_key,*,run_id,client=None,sql_writer:SqlTableWriter|None=None,client_is_fixture=False):
+    c=build_context(task_key,run_id); fr=cr=sr=None
     try:
-        fr,f=fetch(c,client=client,client_is_fixture=client_is_fixture); cr=clean(c,f); sr=save(c,cr); return write_receipt(c,status='succeeded',fetch_result=fr,clean_result=cr,save_result=sr)
+        fr,f=fetch(c,client=client,client_is_fixture=client_is_fixture); cr,payload=clean(c,f); sr=save(c,cr,payload,sql_writer=sql_writer); return write_receipt(c,status='succeeded',fetch_result=fr,clean_result=cr,save_result=sr)
     except Exception as exc: return write_receipt(c,status='failed',fetch_result=fr,clean_result=cr,save_result=sr,error=exc)

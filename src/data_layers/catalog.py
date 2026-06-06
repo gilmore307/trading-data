@@ -146,14 +146,12 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         source_packages=("data_source.m09_option_expression_data_acquisition_contract_path",),
         feature_packages=("data_feature.m09_option_expression_feature_generation",),
         feed_packages=(
-            "data_feed.09_feed_thetadata_option_selection_snapshot",
             "data_feed.10_feed_thetadata_option_primary_tracking",
             "data_feed.11_feed_thetadata_option_event_timeline",
         ),
         cli_commands=(
             "trading-data-m09-option-expression-contract-path",
             "trading-data-m09-option-expression-feature-generation",
-            "trading-data-09-feed-thetadata-option-selection-snapshot",
             "trading-data-10-feed-thetadata-option-primary-tracking",
             "trading-data-11-feed-thetadata-option-event-timeline",
         ),

@@ -80,6 +80,14 @@ class LayerStructureCatalogTests(unittest.TestCase):
         self.assertIn("data_source.m03_target_state_vector_data_acquisition", layer_3.source_packages)
         self.assertNotIn("trading-data-m02-sector-context-data-acquisition", layer_3.cli_commands)
 
+    def test_layer_nine_catalog_does_not_own_option_chain_snapshot_acquisition(self) -> None:
+        layer_9 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 9)
+
+        self.assertNotIn("data_feed.09_feed_thetadata_option_selection_snapshot", layer_9.feed_packages)
+        self.assertNotIn("trading-data-09-feed-thetadata-option-selection-snapshot", layer_9.cli_commands)
+        self.assertIn("data_feature.m09_option_expression_feature_generation", layer_9.feature_packages)
+        self.assertIn("data_source.m09_option_expression_data_acquisition_contract_path", layer_9.source_packages)
+
     def test_no_source_layers_are_explicit_and_do_not_have_symmetry_packages(self) -> None:
         for contract in LAYER_CONTRACTS:
             if contract.owns_dedicated_data_surface:

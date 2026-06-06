@@ -90,7 +90,7 @@ def _quality(row: Mapping[str, Any]) -> dict[str, Any]:
         "has_iv": row.get("implied_vol") is not None,
         "has_first_order_greeks": any(row.get(field) is not None for field in ("delta", "theta", "vega", "rho")),
         "point_in_time_clock": "snapshot_time",
-        "source_table": "m09_option_expression_data_acquisition",
+        "source_table": "option_chain_state_source",
     }
 
 
@@ -105,7 +105,7 @@ def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "m09_optio
         output.append(
             {
                 "run_id": run_id,
-                "source_run_ref": row.get("source_run_ref") or row.get("run_id") or "m09_option_expression_data_acquisition",
+                "source_run_ref": row.get("source_run_ref") or row.get("run_id") or "option_chain_state_source",
                 "underlying": str(row.get("underlying")),
                 "snapshot_time": row.get("snapshot_time"),
                 "snapshot_type": str(row.get("snapshot_type")),

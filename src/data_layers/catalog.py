@@ -143,7 +143,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         model_name="TradingGuidanceModel / OptionExpressionModel",
         doc_path="docs/18_layer_09_trading_guidance.md",
         owns_dedicated_data_surface=True,
-        source_packages=("data_source.option_chain_state_source", "data_source.m09_option_expression_data_acquisition", "data_source.m09_option_expression_data_acquisition_contract_path"),
+        source_packages=("data_source.m09_option_expression_data_acquisition_contract_path",),
         feature_packages=("data_feature.m09_option_expression_feature_generation",),
         feed_packages=(
             "data_feed.09_feed_thetadata_option_selection_snapshot",
@@ -151,7 +151,6 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
             "data_feed.11_feed_thetadata_option_event_timeline",
         ),
         cli_commands=(
-            "trading-data-m09-option-expression-data-acquisition",
             "trading-data-m09-option-expression-contract-path",
             "trading-data-m09-option-expression-feature-generation",
             "trading-data-09-feed-thetadata-option-selection-snapshot",

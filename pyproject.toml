@@ -30,7 +30,6 @@ trading-data-12-feed-official-calendar-discovery = "data_feed.12_feed_official_c
 trading-data-m01-market-regime-data-acquisition = "data_source.m01_market_regime_data_acquisition.__main__:main"
 trading-data-m02-sector-context-data-acquisition = "data_source.m02_sector_context_data_acquisition.__main__:main"
 trading-data-m03-target-state-vector-data-acquisition = "data_source.m03_target_state_vector_data_acquisition.__main__:main"
-trading-data-m09-option-expression-data-acquisition = "data_source.m09_option_expression_data_acquisition.__main__:main"
 trading-data-m09-option-expression-contract-path = "data_source.m09_option_expression_data_acquisition_contract_path.__main__:main"
 trading-data-m10-event-risk-governor-data-acquisition = "data_source.m10_event_risk_governor_data_acquisition.__main__:main"
 trading-data-m01-market-regime-feature-generation = "data_feature.m01_market_regime_feature_generation.__main__:main"

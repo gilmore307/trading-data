@@ -36,7 +36,7 @@ class OptionExpressionFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         row = rows[0]
         self.assertEqual(row["run_id"], "unit_run")
-        self.assertEqual(row["source_run_ref"], "m09_option_expression_data_acquisition")
+        self.assertEqual(row["source_run_ref"], "option_chain_state_source")
         self.assertEqual(row["underlying"], "AAPL")
         payload = row["feature_payload_json"]
         self.assertAlmostEqual(payload["mid"], 1.1)

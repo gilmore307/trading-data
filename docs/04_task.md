@@ -38,7 +38,7 @@ These items are intentionally outside the current promote-first historical-train
 - `m03_target_state_vector_data_acquisition` and `m03_target_state_vector_feature_generation` implement deterministic target-local observed-input and feature-block surfaces.
 - Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 emits sector/context features only; Layer 3 consumes target-local candidate evidence and accepted target-context mappings without relying on ETF holdings acquisition.
 - Event overlay sources are accepted through `m10_event_risk_governor_data_acquisition`, including equity abnormal activity evidence.
-- Option-expression inputs are accepted through `m09_option_expression_data_acquisition` and selected-contract tracking through `m09_option_expression_data_acquisition_contract_path`.
+- Option-expression inputs are accepted through shared `option_chain_state_source` plus `m09_option_expression_feature_generation`; selected-contract tracking remains `m09_option_expression_data_acquisition_contract_path`.
 - Final non-TE feed outputs are SQL rows plus concise receipts/schema evidence; no JSONL/CSV mirror is written by default. Trading Economics calendar source rows remain the protected source-data exception.
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.
 - ThetaData option feeds are implemented for selection snapshot, specified-contract primary tracking, and event timeline.

@@ -59,9 +59,13 @@ def fetch_source_rows(cursor: Any, *, source_schema: str, source_table: str, sou
         where.append("snapshot_time <= %s")
         params.append(source_end)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
+    snapshot_type_expr = "'source_cache'::text" if source_table == "option_chain_state_source" else "snapshot_type::text"
     cursor.execute(
         f"""
-        SELECT underlying, snapshot_time, snapshot_type, option_symbol, expiration, option_right_type, strike,
+        SELECT underlying,
+               snapshot_time,
+               {snapshot_type_expr} AS snapshot_type,
+               option_symbol, expiration, option_right_type, strike,
                bid, ask, mid, spread, spread_pct, bid_size, ask_size, implied_vol, delta, theta, vega, rho,
                underlying_price, underlying_timestamp, days_to_expiration
         FROM {_qualified(source_schema, source_table)}
@@ -122,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url")
     parser.add_argument("--source-schema", default="trading_data")
-    parser.add_argument("--source-table", default="m09_option_expression_data_acquisition")
+    parser.add_argument("--source-table", default="option_chain_state_source")
     parser.add_argument("--target-schema", default="trading_data")
     parser.add_argument("--target-table", default="m09_option_expression_feature_generation")
     parser.add_argument("--source-start")

@@ -107,7 +107,7 @@ Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target
 
 ## D017 — Option-expression data boundary
 
-`option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; Layer 9 derives `m09_option_expression_data_acquisition` rows from the same source for `OptionExpressionModel`.
+`option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; Layer 9 derives `m09_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
 
 `m09_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
 
@@ -148,7 +148,7 @@ Accepted: 2026-05-15
 
 The active ten-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the Layer 10 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
 
-Layer 9 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`option_chain_state_source`, `m09_option_expression_data_acquisition`, `m09_option_expression_feature_generation`, and `m09_option_expression_data_acquisition_contract_path`). Layer 10 event-risk data uses the current event surfaces (`m10_event_risk_governor_data_acquisition`, `m10_event_risk_governor_feature_generation`, and event-feed artifacts).
+Layer 9 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`option_chain_state_source`, `m09_option_expression_feature_generation`, and `m09_option_expression_data_acquisition_contract_path`). Layer 10 event-risk data uses the current event surfaces (`m10_event_risk_governor_data_acquisition`, `m10_event_risk_governor_feature_generation`, and event-feed artifacts).
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 

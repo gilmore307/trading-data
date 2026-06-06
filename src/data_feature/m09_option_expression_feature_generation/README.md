@@ -4,8 +4,8 @@ Deterministic option-expression feature builder for the Layer 9 trading-guidance
 
 ## Boundary
 
-Input is accepted `m09_option_expression_data_acquisition` option-chain snapshot rows. Output
-is a compact per-contract feature surface for the `TradingGuidanceModel /
+Input is accepted shared `option_chain_state_source` option-chain snapshot rows.
+Output is a compact per-contract feature surface for the `TradingGuidanceModel /
 OptionExpressionModel` input boundary. The package name is the accepted physical
 feature package for this boundary.
 

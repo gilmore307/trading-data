@@ -1,10 +1,10 @@
-import csv
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from importlib import import_module
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 run = import_module("data_feed.11_feed_thetadata_option_event_timeline.pipeline").run
 from feed_availability.http import HttpResult
@@ -228,16 +228,16 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="11_feed_thetadata_option_event_timeline_run_test", client=FakeThetaDataClient(), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="11_feed_thetadata_option_event_timeline_run_test", client=FakeThetaDataClient(), client_is_fixture=True, sql_writer=writer)
 
             self.assertEqual(result.status, "succeeded")
             saved_dir = output_root / "runs" / "11_feed_thetadata_option_event_timeline_run_test" / "saved"
             csv_path = saved_dir / "option_activity_event.csv"
-            self.assertTrue(csv_path.exists())
+            self.assertFalse(csv_path.exists())
             self.assertFalse((saved_dir / "option_activity_event.csv.tmp").exists())
 
-            with csv_path.open(newline="") as handle:
-                rows = list(csv.DictReader(handle))
+            rows = writer.rows_for("feed_11_option_activity_event")
             self.assertEqual(len(rows), 1)
             event_id = rows[0]["id"]
             self.assertTrue(event_id.startswith("opt_evt_"))
@@ -247,13 +247,12 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             self.assertEqual(rows[0]["updated_at"], "2026-04-24T09:30:02.500000-04:00")
             self.assertEqual(rows[0]["symbols"], "AAPL;AAPL 2026-05-15 270C")
             self.assertEqual(rows[0]["summary"], "trade_at_ask;opening_activity")
-            self.assertEqual(rows[0]["event_link_url"], f"{event_id}.csv")
+            self.assertEqual(rows[0]["event_link_url"], f"sql://trading_data/feed_11_option_activity_event_detail/{event_id}")
 
             detail_path = saved_dir / f"{event_id}.csv"
-            self.assertTrue(detail_path.exists())
+            self.assertFalse(detail_path.exists())
             self.assertFalse((saved_dir / f"{event_id}.csv.tmp").exists())
-            with detail_path.open(newline="") as handle:
-                detail = next(csv.DictReader(handle))
+            detail = writer.rows_for("feed_11_option_activity_event_detail")[0]
             self.assertNotIn("data_kind", detail)
             self.assertEqual(detail["event_id"], event_id)
             self.assertEqual(detail["contract_symbol"], "AAPL 2026-05-15 270C")
@@ -280,7 +279,7 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
             self.assertEqual(json.loads(detail["abnormality_evidence_coverage"])["coverage_status"], "complete")
             self.assertEqual(json.loads(detail["source_references"])["raw_persistence"], "not_persisted_by_default")
 
-            self.assertTrue((output_root / "runs" / "11_feed_thetadata_option_event_timeline_run_test" / "cleaned" / "option_activity_event.jsonl").exists())
+            self.assertFalse((output_root / "runs" / "11_feed_thetadata_option_event_timeline_run_test" / "cleaned" / "option_activity_event.jsonl").exists())
             self.assertFalse((saved_dir / "option_activity_event.jsonl").exists())
             receipt = json.loads((output_root / "completion_receipt.json").read_text())
             self.assertEqual(receipt["feed"], "11_feed_thetadata_option_event_timeline")
@@ -316,15 +315,13 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="bid_run", client=FakeThetaDataBidClient(), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="bid_run", client=FakeThetaDataBidClient(), client_is_fixture=True, sql_writer=writer)
 
             self.assertEqual(result.status, "succeeded")
-            saved_dir = output_root / "runs" / "bid_run" / "saved"
-            with (saved_dir / "option_activity_event.csv").open(newline="") as handle:
-                event = next(csv.DictReader(handle))
+            event = writer.rows_for("feed_11_option_activity_event")[0]
             self.assertEqual(event["summary"], "trade_at_bid")
-            with (saved_dir / event["event_link_url"]).open(newline="") as handle:
-                detail = next(csv.DictReader(handle))
+            detail = writer.rows_for("feed_11_option_activity_event_detail")[0]
             trigger = json.loads(detail["triggering_trade"])
             self.assertEqual(trigger["trade_side_type"], "bid_side")
             self.assertEqual(trigger["bid_touch_ratio"], 1.0)
@@ -372,14 +369,11 @@ class ThetaDataOptionEventTimelinePipelineTests(unittest.TestCase):
                 "output_root": str(output_root),
             }
 
-            result = run(task_key, run_id="auto_context_run", client=FakeThetaDataAutoContextClient(), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="auto_context_run", client=FakeThetaDataAutoContextClient(), client_is_fixture=True, sql_writer=writer)
 
             self.assertEqual(result.status, "succeeded")
-            saved_dir = output_root / "runs" / "auto_context_run" / "saved"
-            with (saved_dir / "option_activity_event.csv").open(newline="") as handle:
-                event = next(csv.DictReader(handle))
-            with (saved_dir / event["event_link_url"]).open(newline="") as handle:
-                detail = next(csv.DictReader(handle))
+            detail = writer.rows_for("feed_11_option_activity_event_detail")[0]
             self.assertEqual(json.loads(detail["open_interest_context"])["open_interest_change"], 20.0)
             self.assertAlmostEqual(float(detail["iv_change"]), 0.02)
             self.assertEqual(detail["skew_direction"], "put_skew_richening")

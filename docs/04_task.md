@@ -39,7 +39,7 @@ These items are intentionally outside the current promote-first historical-train
 - Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 emits sector/context features only; Layer 3 consumes target-local candidate evidence and accepted target-context mappings without relying on ETF holdings acquisition.
 - Event overlay sources are accepted through `m10_event_risk_governor_data_acquisition`, including equity abnormal activity evidence.
 - Option-expression inputs are accepted through `m09_option_expression_data_acquisition` and selected-contract tracking through `m09_option_expression_data_acquisition_contract_path`.
-- Final saved source outputs are CSV or explicitly reviewed compact artifacts; JSONL may exist only as transient run-local evidence.
+- Final non-TE feed outputs are SQL rows plus concise receipts/schema evidence; no JSONL/CSV mirror is written by default. Trading Economics calendar source rows remain the protected source-data exception.
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.
 - ThetaData option feeds are implemented for selection snapshot, specified-contract primary tracking, and event timeline.
 - `feed_availability` and `feed_interfaces` provide bounded provider/data-kind inventory and smoke support.

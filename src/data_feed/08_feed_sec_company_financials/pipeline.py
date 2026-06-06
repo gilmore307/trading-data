@@ -1,12 +1,11 @@
 """SEC EDGAR company financials acquisition feed.
 
-Fetches official SEC EDGAR JSON APIs and persists compact normalized CSV rows.
+Fetches official SEC EDGAR APIs and persists compact normalized SQL rows.
 Raw SEC responses are not persisted by default because companyfacts can be large.
 """
 
 from __future__ import annotations
 
-import csv
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
@@ -20,6 +19,8 @@ from feed_availability.sanitize import sanitize_url, sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, with_row_id, write_schema, write_table
+from storage.sql import SqlTableWriter
 
 FEED = "08_feed_sec_company_financials"
 DEFAULT_TIMEOUT_SECONDS = 20
@@ -30,6 +31,13 @@ FIELD_ORDER = {
     "sec_company_concept": ["cik", "entity_name", "taxonomy", "tag", "label", "description", "unit", "fy", "fp", "form", "filed", "frame", "end", "value", "accession_number"],
     "sec_xbrl_frame": ["taxonomy", "tag", "unit", "frame", "cik", "entity_name", "loc", "end", "value", "accession_number"],
     "sec_filing_document": ["cik", "accession_number", "document_name", "document_url", "content_type", "http_status", "fetched_at_utc", "text_length", "text_sha256", "text_excerpt", "document_text_path"],
+}
+TABLE_BY_KIND = {
+    "sec_submission": "feed_08_sec_submission",
+    "sec_company_fact": "feed_08_sec_company_fact",
+    "sec_company_concept": "feed_08_sec_company_concept",
+    "sec_xbrl_frame": "feed_08_sec_xbrl_frame",
+    "sec_filing_document": "feed_08_sec_filing_document",
 }
 
 
@@ -60,6 +68,12 @@ class FetchedSecPayload:
     payload: Any
     http_status: int | None
     request: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    data_kind: str
+    rows: list[dict[str, Any]]
 
 
 class SecCompanyFinancialsError(ValueError):
@@ -257,46 +271,33 @@ def normalize_rows(fetched: FetchedSecPayload, *, params: Mapping[str, Any] | No
     raise AssertionError(data_kind)
 
 
-def clean(context: FeedContext, fetched: FetchedSecPayload) -> StepResult:
+def clean(context: FeedContext, fetched: FetchedSecPayload) -> tuple[StepResult, CleanedPayload]:
     params = dict(context.task_key.get("params") or {})
     rows = normalize_rows(fetched, params=params)
     if not rows:
         raise SecCompanyFinancialsError(f"{fetched.data_kind} response produced zero normalized rows")
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     if fetched.data_kind == "sec_filing_document":
         for index, row in enumerate(rows, start=1):
             text = str(row.pop("document_text", ""))
-            text_path = context.cleaned_dir / ("sec_filing_document_text.txt" if len(rows) == 1 else f"sec_filing_document_text_{index}.txt")
+            context.run_dir.mkdir(parents=True, exist_ok=True)
+            text_path = context.run_dir / ("sec_filing_document_text.txt" if len(rows) == 1 else f"sec_filing_document_text_{index}.txt")
             text_path.write_text(text, encoding="utf-8")
             row["document_text_path"] = str(text_path)
-    jsonl_path = context.cleaned_dir / f"{fetched.data_kind}.jsonl"
-    with jsonl_path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
-    schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({fetched.data_kind: FIELD_ORDER[fetched.data_kind], "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(jsonl_path), str(schema_path)], {fetched.data_kind: len(rows)}, details={"columns": FIELD_ORDER[fetched.data_kind], "format": "jsonl"})
+    schema_path = write_schema(context.run_dir, fetched.data_kind, ["row_id", *FIELD_ORDER[fetched.data_kind]], row_count=len(rows))
+    return (
+        StepResult("succeeded", [str(schema_path)], {fetched.data_kind: len(rows)}, details={"columns": ["row_id", *FIELD_ORDER[fetched.data_kind]], "format": "sql_ready_rows", "retention": "sql_only_no_jsonl_or_csv_payload"}),
+        CleanedPayload(fetched.data_kind, with_row_id([sanitize_value(row) for row in rows], FIELD_ORDER[fetched.data_kind], namespace=fetched.data_kind)),
+    )
 
 
-def save(context: FeedContext, clean_result: StepResult) -> StepResult:
+def save(context: FeedContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
     data_kind = next(iter(clean_result.row_counts))
-    rows = [json.loads(line) for line in (context.cleaned_dir / f"{data_kind}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    references: list[str] = []
+    columns = ["row_id", *FIELD_ORDER[data_kind]]
+    metadata = write_table(table=TABLE_BY_KIND[data_kind], columns=columns, rows=payload.rows, key_columns=["row_id"], sql_writer=sql_writer)
+    references = [sql_reference(metadata)]
     if data_kind == "sec_filing_document":
-        for index, row in enumerate(rows, start=1):
-            source_text_path = Path(str(row.get("document_text_path") or ""))
-            saved_text_path = context.saved_dir / ("sec_filing_document_text.txt" if len(rows) == 1 else f"sec_filing_document_text_{index}.txt")
-            if source_text_path.exists():
-                saved_text_path.write_text(source_text_path.read_text(encoding="utf-8"), encoding="utf-8")
-                row["document_text_path"] = str(saved_text_path)
-                references.append(str(saved_text_path))
-    path = context.saved_dir / f"{data_kind}.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELD_ORDER[data_kind], extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return StepResult("succeeded", [str(path), *references], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELD_ORDER[data_kind]})
+        references.extend(str(row["document_text_path"]) for row in payload.rows if row.get("document_text_path"))
+    return StepResult("succeeded", references, dict(clean_result.row_counts), details={"format": "sql_table", "table": TABLE_BY_KIND[data_kind], "columns": columns, "storage": metadata, "file_payload_deleted": True})
 
 
 def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
@@ -316,13 +317,13 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": context.metadata["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sec_user_agent: str = DEFAULT_SEC_USER_AGENT, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sec_user_agent: str = DEFAULT_SEC_USER_AGENT, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, fetched = fetch(context, client=client, sec_user_agent=sec_user_agent, client_is_fixture=client_is_fixture)
-        clean_result = clean(context, fetched)
-        save_result = save(context, clean_result)
+        clean_result, payload = clean(context, fetched)
+        save_result = save(context, clean_result, payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

@@ -21,8 +21,10 @@ from zoneinfo import ZoneInfo
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
 from feed_availability.http import HttpClient, HttpResult
 from feed_availability.sanitize import sanitize_url, sanitize_value
+from storage.sql import SqlTableWriter
 
 FEED = "12_feed_official_calendar_discovery"
 DEFAULT_TIMEOUT_SECONDS = 20
@@ -37,6 +39,16 @@ OUTPUT_BY_KIND = {
     "nasdaq_earnings_calendar": "release_calendar",
     "official_index_announcement": "index_calendar",
     "official_exchange_calendar": "official_exchange_calendar",
+}
+TABLE_BY_OUTPUT = {
+    "release_calendar": "feed_12_release_calendar",
+    "index_calendar": "feed_12_index_calendar",
+    "official_exchange_calendar": "feed_12_official_exchange_calendar",
+}
+KEYS_BY_OUTPUT = {
+    "release_calendar": ["calendar_source", "event_date", "release_time", "symbol", "event_name"],
+    "index_calendar": ["calendar_source", "index_symbol", "event_type", "announcement_time", "event_name"],
+    "official_exchange_calendar": ["venue", "calendar_date", "session_status"],
 }
 FIELD_ORDER = {
     "release_calendar": [
@@ -112,6 +124,12 @@ class FetchedCalendarPayload:
     retrieved_time: str
     source_format: str
     request: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    output_kind: str
+    rows: list[dict[str, Any]]
 
 
 class OfficialCalendarDiscoveryError(ValueError):
@@ -609,62 +627,46 @@ def normalize_rows(fetched: FetchedCalendarPayload, *, params: Mapping[str, Any]
     raise AssertionError(fetched.data_kind)
 
 
-def clean(context: FeedContext, fetched: FetchedCalendarPayload) -> StepResult:
+def clean(context: FeedContext, fetched: FetchedCalendarPayload) -> tuple[StepResult, CleanedPayload]:
     params = dict(context.task_key.get("params") or {})
     output_kind = OUTPUT_BY_KIND[fetched.data_kind]
     rows = normalize_rows(fetched, params=params)
     if not rows:
         if fetched.data_kind != "nasdaq_earnings_calendar":
             raise OfficialCalendarDiscoveryError(f"{fetched.data_kind} response produced zero normalized rows")
-        context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-        jsonl_path = context.cleaned_dir / f"{output_kind}.jsonl"
-        jsonl_path.write_text("", encoding="utf-8")
-        schema_path = context.cleaned_dir / "schema.json"
-        schema_path.write_text(json.dumps({output_kind: FIELD_ORDER[output_kind], "row_count": 0}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        return StepResult(
-            "succeeded",
-            [str(jsonl_path), str(schema_path)],
-            {output_kind: 0},
-            warnings=["nasdaq_earnings_calendar returned no normalized rows for the requested date and symbol filter"],
-            details={"columns": FIELD_ORDER[output_kind], "format": "jsonl", "empty_result": True},
+        schema_path = write_schema(context.run_dir, output_kind, FIELD_ORDER[output_kind], row_count=0)
+        return (
+            StepResult(
+                "succeeded",
+                [str(schema_path)],
+                {output_kind: 0},
+                warnings=["nasdaq_earnings_calendar returned no normalized rows for the requested date and symbol filter"],
+                details={"columns": FIELD_ORDER[output_kind], "format": "sql_ready_rows", "retention": "sql_only_no_jsonl_or_csv_payload", "empty_result": True},
+            ),
+            CleanedPayload(output_kind, []),
         )
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     if fetched.data_kind == "official_index_announcement":
         text = fetched.payload if isinstance(fetched.payload, str) else json.dumps(fetched.payload, sort_keys=True, default=str)
         if text.strip():
-            text_path = context.cleaned_dir / "source_text.txt"
+            context.run_dir.mkdir(parents=True, exist_ok=True)
+            text_path = context.run_dir / "source_text.txt"
             text_path.write_text(text, encoding="utf-8")
             for row in rows:
                 row["source_text_path"] = str(text_path)
-    jsonl_path = context.cleaned_dir / f"{output_kind}.jsonl"
-    with jsonl_path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
-    schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({output_kind: FIELD_ORDER[output_kind], "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(jsonl_path), str(schema_path)], {output_kind: len(rows)}, details={"columns": FIELD_ORDER[output_kind], "format": "jsonl"})
+    schema_path = write_schema(context.run_dir, output_kind, FIELD_ORDER[output_kind], row_count=len(rows))
+    return (
+        StepResult("succeeded", [str(schema_path)], {output_kind: len(rows)}, details={"columns": FIELD_ORDER[output_kind], "format": "sql_ready_rows", "retention": "sql_only_no_jsonl_or_csv_payload"}),
+        CleanedPayload(output_kind, sql_rows([sanitize_value(row) for row in rows], FIELD_ORDER[output_kind])),
+    )
 
 
-def save(context: FeedContext, clean_result: StepResult) -> StepResult:
+def save(context: FeedContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
     output_kind = next(iter(clean_result.row_counts))
-    rows = [json.loads(line) for line in (context.cleaned_dir / f"{output_kind}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    references: list[str] = []
+    metadata = write_table(table=TABLE_BY_OUTPUT[output_kind], columns=FIELD_ORDER[output_kind], rows=payload.rows, key_columns=KEYS_BY_OUTPUT[output_kind], sql_writer=sql_writer)
+    references = [sql_reference(metadata)]
     if output_kind == "index_calendar":
-        source_text = context.cleaned_dir / "source_text.txt"
-        if source_text.exists():
-            saved_text = context.saved_dir / "source_text.txt"
-            saved_text.write_text(source_text.read_text(encoding="utf-8"), encoding="utf-8")
-            for row in rows:
-                if row.get("source_text_path"):
-                    row["source_text_path"] = str(saved_text)
-            references.append(str(saved_text))
-    path = context.saved_dir / f"{output_kind}.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELD_ORDER[output_kind], extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return StepResult("succeeded", [str(path), *references], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELD_ORDER[output_kind]})
+        references.extend(str(row["source_text_path"]) for row in payload.rows if row.get("source_text_path"))
+    return StepResult("succeeded", references, dict(clean_result.row_counts), details={"format": "sql_table", "table": TABLE_BY_OUTPUT[output_kind], "columns": FIELD_ORDER[output_kind], "storage": metadata, "file_payload_deleted": True})
 
 
 def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
@@ -695,13 +697,13 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": context.metadata["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
-        clean_result = clean(context, fetched)
-        save_result = save(context, clean_result)
+        clean_result, payload = clean(context, fetched)
+        save_result = save(context, clean_result, payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

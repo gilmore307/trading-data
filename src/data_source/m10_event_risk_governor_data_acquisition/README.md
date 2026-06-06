@@ -16,13 +16,15 @@ Required task key fields:
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date
-- `params.events` or `params.event_artifact_paths`: at least one explicit event overview row or one reviewed local feed artifact path
+- `params.events`, `params.event_sql_inputs`, or `params.event_artifact_paths`: at least one explicit event overview row, SQL feed input, or reviewed local feed artifact path
 
 Optional task key fields:
 
 - `params.focus_sectors`: focused sectors/themes
 - `params.symbols`: focused symbols
-- `params.event_artifact_paths` / `params.feed_artifact_paths`: reviewed local saved artifacts to normalize into event overview rows. Supported artifacts are `03_feed_alpaca_news` `equity_news.csv` (`symbol_news`), `05_feed_gdelt_news` `gdelt_article.csv` (`macro_news` / `sector_news` / `symbol_news` by scope hints), `trading-execution` `calendar_discovery` `release_calendar.csv` (`earnings_guidance` scheduled shells for `nasdaq_earnings_calendar`), and `08_feed_sec_company_financials` SEC CSV outputs (`earnings_guidance` result artifacts for 10-Q/10-K or earnings-related 8-K rows; otherwise `sec_filing`). Trading Economics macro rows stay in canonical storage and are not valid Layer 10 input until a later accepted route explicitly promotes them.
+- `params.event_sql_inputs` / `params.feed_sql_inputs`: SQL feed rows to normalize into event overview rows. Supported current inputs are `feed_03_alpaca_news` (`symbol_news`), `feed_05_gdelt_article` (`macro_news` / `sector_news` / `symbol_news` by scope hints), `feed_12_release_calendar` (`earnings_guidance` scheduled shells for `nasdaq_earnings_calendar`), and `feed_08_sec_company_fact` (`earnings_guidance` result artifacts for 10-Q/10-K or earnings-related 8-K rows; otherwise `sec_filing`). Each entry may provide `table`, `kind`, `columns`, `where_equals`, `where_in`, `time_column`, `start`, `end`, and `order_by`.
+- `params.event_artifact_paths` / `params.feed_artifact_paths`: compatibility/reviewed local artifact input. Use this for TE-exception or explicitly reviewed local evidence only, not for current non-TE feed outputs.
+- Trading Economics macro rows stay in canonical storage and are not valid Layer 10 input until a later accepted route explicitly promotes them.
 - `output_root`: local receipt/request-manifest root
 
 Each event row requires:

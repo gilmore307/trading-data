@@ -8,7 +8,6 @@ feed, in the event-overlay/model boundary.
 
 from __future__ import annotations
 
-import csv
 import json
 import re
 from dataclasses import asdict, dataclass, field
@@ -21,8 +20,11 @@ from feed_availability.sanitize import sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
+from storage.sql import SqlTableWriter
 
 FEED = "05_feed_gdelt_news"
+OUTPUT_TABLE = "feed_05_gdelt_article"
 ET = ZoneInfo("America/New_York")
 DEFAULT_MAX_ROWS = 100
 DEFAULT_FOCUS = "us_market"
@@ -99,6 +101,11 @@ class StepResult:
 @dataclass(frozen=True)
 class FetchedGdeltRows:
     sql: str
+    rows: list[dict[str, Any]]
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
     rows: list[dict[str, Any]]
 
 
@@ -358,7 +365,7 @@ def normalize_rows(rows: list[dict[str, Any]], *, params: Mapping[str, Any]) -> 
     return output
 
 
-def clean(context: FeedContext, fetched: FetchedGdeltRows) -> StepResult:
+def clean(context: FeedContext, fetched: FetchedGdeltRows) -> tuple[StepResult, CleanedPayload]:
     params = dict(context.task_key.get("params") or {})
     rows = normalize_rows(fetched.rows, params=params)
     start_dt, end_dt = _window_bounds(params)
@@ -373,28 +380,19 @@ def clean(context: FeedContext, fetched: FetchedGdeltRows) -> StepResult:
     rows = in_window_rows
     if not rows:
         raise GdeltNewsError("GDELT query produced zero usable article rows")
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    path = context.cleaned_dir / "gdelt_article.jsonl"
-    with path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
-    schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({"gdelt_article": ARTICLE_FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    schema_path = write_schema(context.run_dir, "gdelt_article", ARTICLE_FIELDS, row_count=len(rows))
     warnings = []
     if out_of_window_count:
         warnings.append(f"out_of_window_gdelt_rows_skipped={out_of_window_count}")
-    return StepResult("succeeded", [str(path), str(schema_path)], {"gdelt_article": len(rows)}, warnings=warnings, details={"columns": ARTICLE_FIELDS, "window_start": start_dt.isoformat(), "window_end_exclusive": end_dt.isoformat()})
+    return (
+        StepResult("succeeded", [str(schema_path)], {"gdelt_article": len(rows)}, warnings=warnings, details={"columns": ARTICLE_FIELDS, "window_start": start_dt.isoformat(), "window_end_exclusive": end_dt.isoformat(), "retention": "sql_only_no_jsonl_or_csv_payload"}),
+        CleanedPayload(sql_rows([sanitize_value(row) for row in rows], ARTICLE_FIELDS)),
+    )
 
 
-def save(context: FeedContext, clean_result: StepResult) -> StepResult:
-    rows = [json.loads(line) for line in (context.cleaned_dir / "gdelt_article.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / "gdelt_article.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=ARTICLE_FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": ARTICLE_FIELDS})
+def save(context: FeedContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    metadata = write_table(table=OUTPUT_TABLE, columns=ARTICLE_FIELDS, rows=payload.rows, key_columns=["article_id"], sql_writer=sql_writer)
+    return StepResult("succeeded", [sql_reference(metadata)], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": ARTICLE_FIELDS, "storage": metadata, "file_payload_deleted": True})
 
 
 def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
@@ -415,13 +413,13 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": run_id, "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: QueryClient | None = None, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: QueryClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
-        clean_result = clean(context, fetched)
-        save_result = save(context, clean_result)
+        clean_result, payload = clean(context, fetched)
+        save_result = save(context, clean_result, payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

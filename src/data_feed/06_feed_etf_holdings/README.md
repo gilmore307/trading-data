@@ -31,9 +31,9 @@ Normalize issuer-published ETF holdings evidence into `etf_holding_snapshot` row
 
 ```text
 request_manifest.json
-cleaned/etf_holding_snapshot.jsonl
-saved/etf_holding_snapshot.csv
+schema.json
+trading_data.feed_06_etf_holding_snapshot
 completion_receipt.json
 ```
 
-Only final normalized holdings rows are saved by default. Raw source files/pages are input evidence and should not be copied into Git.
+Only final normalized holdings rows are written to SQL by default. Raw source files/pages are input evidence and should not be copied into Git.

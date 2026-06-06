@@ -12,17 +12,17 @@
 
 ## Calendar Observation Layer
 
-`calendar_observation` is the source-shell artifact layer for scheduled calendar facts before Layer 10 event-pool promotion. It is built from accepted calendar inputs such as rule-generated market sessions, deterministic option-expiry windows, Trading Economics macro calendar rows, and `calendar_discovery` `release_calendar.csv` artifacts.
+`calendar_observation` is the source-shell artifact layer for scheduled calendar facts before Layer 10 event-pool promotion. It is built from accepted calendar inputs such as rule-generated market sessions, deterministic option-expiry windows, Trading Economics macro calendar rows, and SQL-retained calendar-discovery rows.
 
 Current implemented observation sources:
 
 - `market_session` from deterministic NYSE/NASDAQ/crypto session rows;
 - `weekly_option_expiry`, `monthly_option_expiry`, and `triple_witching` from deterministic Friday/third-Friday rules;
-- official NYSE/NASDAQ holiday, closure, and early-close rows from accepted official exchange calendar artifacts;
+- official NYSE/NASDAQ holiday, closure, and early-close rows from accepted official exchange calendar rows;
 - Nasdaq-100 and S&P 500 methodology-backed index schedule shells from the accepted headline-index route;
-- official Nasdaq/S&P DJI index announcement rows from accepted `index_calendar` artifacts;
+- official Nasdaq/S&P DJI index announcement rows from accepted `index_calendar` rows;
 - `macro_release_calendar` from retained Trading Economics calendar rows;
-- `earnings_calendar` and generic `release_calendar` from `calendar_discovery` artifacts, including Nasdaq earnings-calendar scheduled shells.
+- `earnings_calendar` and generic `release_calendar` from calendar-discovery rows, including Nasdaq earnings-calendar scheduled shells.
 
 Accepted future index-calendar source routing:
 

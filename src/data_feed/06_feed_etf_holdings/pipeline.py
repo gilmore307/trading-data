@@ -28,8 +28,11 @@ from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from data_runtime.provider_policy import require_provider_execution_allowed
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
+from storage.sql import SqlTableWriter
 
 FEED = "06_feed_etf_holdings"
+OUTPUT_TABLE = "feed_06_etf_holding_snapshot"
 FIELDS = [
     "etf_symbol",
     "issuer_name",
@@ -86,6 +89,11 @@ class FeedPayload:
     kind: str
     text: str | bytes
     source_url: str
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    rows: list[dict[str, Any]]
 
 
 class EtfHoldingsError(ValueError):
@@ -502,7 +510,7 @@ def _data_point_scalar(value: Any) -> Any:
     return value.get("value") or value.get("formattedValue") or ""
 
 
-def clean(context: FeedContext, payload: FeedPayload) -> StepResult:
+def clean(context: FeedContext, payload: FeedPayload) -> tuple[StepResult, CleanedPayload]:
     params = dict(context.task_key.get("params") or {})
     etf_symbol = _etf_symbol_param(params)
     issuer = _issuer_key(str(_required(params, "issuer_name")))
@@ -523,25 +531,16 @@ def clean(context: FeedContext, payload: FeedPayload) -> StepResult:
     rows = [row for row in rows if row["holding_symbol"] or row["holding_name"]]
     if not rows:
         raise EtfHoldingsError("ETF holdings feed produced zero parseable holding rows")
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    path = context.cleaned_dir / "etf_holding_snapshot.jsonl"
-    with path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(sanitize_value(row), sort_keys=True) + "\n")
-    schema = context.cleaned_dir / "schema.json"
-    schema.write_text(json.dumps({"etf_holding_snapshot": FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(path), str(schema)], {"etf_holding_snapshot": len(rows)}, details={"columns": FIELDS})
+    schema = write_schema(context.run_dir, "etf_holding_snapshot", FIELDS, row_count=len(rows))
+    return (
+        StepResult("succeeded", [str(schema)], {"etf_holding_snapshot": len(rows)}, details={"columns": FIELDS, "retention": "sql_only_no_jsonl_or_csv_payload"}),
+        CleanedPayload(sql_rows([sanitize_value(row) for row in rows], FIELDS)),
+    )
 
 
-def save(context: FeedContext, clean_result: StepResult) -> StepResult:
-    rows = [json.loads(line) for line in (context.cleaned_dir / "etf_holding_snapshot.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / "etf_holding_snapshot.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
+def save(context: FeedContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    metadata = write_table(table=OUTPUT_TABLE, columns=FIELDS, rows=payload.rows, key_columns=["etf_symbol", "issuer_name", "as_of_date", "holding_symbol", "holding_name"], sql_writer=sql_writer)
+    return StepResult("succeeded", [sql_reference(metadata)], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": FIELDS, "storage": metadata, "file_payload_deleted": True})
 
 
 def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
@@ -561,13 +560,13 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, payload = fetch(context)
-        clean_result = clean(context, payload)
-        save_result = save(context, clean_result)
+        clean_result, cleaned = clean(context, payload)
+        save_result = save(context, clean_result, cleaned, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

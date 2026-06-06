@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import csv
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -15,6 +14,8 @@ from feed_availability.sanitize import sanitize_url, sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
+from storage.sql import SqlTableWriter
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
@@ -25,6 +26,8 @@ OKX_BAR_MAP = {"1Min": "1m", "5Min": "5m", "15Min": "15m", "1Hour": "1H", "1Day"
 CRYPTO_BAR_FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]
 CRYPTO_TRADE_FIELDS = ["data_kind", "source", "symbol", "timestamp_utc", "timestamp", "trade_id", "side", "price", "size", "notional"]
 CRYPTO_LIQUIDITY_FIELDS = ["symbol", "timeframe", "interval_start", "bar_trade_count", "quote_count", "bar_volume", "bar_vwap", "bar_open", "bar_high", "bar_low", "bar_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "bar_vwap_minus_avg_mid"]
+CRYPTO_BAR_TABLE = "feed_04_okx_crypto_bar"
+CRYPTO_LIQUIDITY_TABLE = "feed_04_okx_crypto_liquidity_bar"
 
 
 @dataclass(frozen=True)
@@ -53,6 +56,12 @@ class FetchedPayload:
     candles: list[list[Any]]
     trades: list[dict[str, Any]]
     evidence: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    bar_rows: list[dict[str, Any]]
+    liquidity_rows: list[dict[str, Any]]
 
 
 class OkxCryptoMarketDataError(ValueError):
@@ -304,57 +313,42 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], timefram
     return out
 
 
-def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
-    with path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
-
-
-def _write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def clean(context: FeedContext, fetched: FetchedPayload) -> StepResult:
+def clean(context: FeedContext, fetched: FetchedPayload) -> tuple[StepResult, CleanedPayload]:
     bar_rows = normalize_bars(fetched.symbol, fetched.candles, fetched.timeframe)
     trade_rows = normalize_trades(fetched.symbol, fetched.trades)
     liquidity_rows = aggregate_liquidity_bars(fetched.symbol, trade_rows, fetched.timeframe)
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    outputs = {
-        "crypto_bar": (bar_rows, CRYPTO_BAR_FIELDS),
-        "crypto_liquidity_bar": (liquidity_rows, CRYPTO_LIQUIDITY_FIELDS),
-    }
-    transient_outputs = {"crypto_trade_transient": (trade_rows, CRYPTO_TRADE_FIELDS)}
-    refs = []
-    for name, (rows, _fields) in {**outputs, **transient_outputs}.items():
-        path = context.cleaned_dir / f"{name}.jsonl"
-        _write_jsonl(path, rows)
-        refs.append(str(path))
-    schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({name: fields for name, (_rows, fields) in {**outputs, **transient_outputs}.items()}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    refs.append(str(schema_path))
+    schema_path = write_schema(
+        context.run_dir,
+        "crypto_market_data",
+        [
+            "crypto_bar:" + ",".join(CRYPTO_BAR_FIELDS),
+            "crypto_liquidity_bar:" + ",".join(CRYPTO_LIQUIDITY_FIELDS),
+        ],
+        row_count=len(bar_rows) + len(liquidity_rows),
+    )
+    outputs = {"crypto_bar": (bar_rows, CRYPTO_BAR_FIELDS), "crypto_liquidity_bar": (liquidity_rows, CRYPTO_LIQUIDITY_FIELDS)}
     row_counts = {name: len(rows) for name, (rows, _fields) in outputs.items()}
     row_counts["crypto_trade_transient"] = len(trade_rows)
-    return StepResult("succeeded", refs, row_counts, details={"timezone": "America/New_York", "quote_features_available": False, "transient_inputs": ["crypto_trade"]})
+    return (
+        StepResult(
+            "succeeded",
+            [str(schema_path)],
+            row_counts,
+            details={"timezone": "America/New_York", "quote_features_available": False, "transient_inputs": ["crypto_trade"], "retention": "sql_only_no_jsonl_or_csv_payload"},
+        ),
+        CleanedPayload(sql_rows(bar_rows, CRYPTO_BAR_FIELDS), sql_rows(liquidity_rows, CRYPTO_LIQUIDITY_FIELDS)),
+    )
 
 
-def save(context: FeedContext) -> StepResult:
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    outputs = {
-        "crypto_bar": CRYPTO_BAR_FIELDS,
-        "crypto_liquidity_bar": CRYPTO_LIQUIDITY_FIELDS,
-    }
-    refs: list[str] = []
-    counts: dict[str, int] = {}
-    for name, fields in outputs.items():
-        rows = [json.loads(line) for line in (context.cleaned_dir / f"{name}.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-        csv_path = context.saved_dir / f"{name}.csv"
-        _write_csv(csv_path, rows, fields)
-        refs.append(str(csv_path))
-        counts[name] = len(rows)
-    return StepResult("succeeded", refs, counts, details={"format": "csv"})
+def save(context: FeedContext, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    bar_metadata = write_table(table=CRYPTO_BAR_TABLE, columns=CRYPTO_BAR_FIELDS, rows=payload.bar_rows, key_columns=["symbol", "timeframe", "timestamp"], sql_writer=sql_writer)
+    liquidity_metadata = write_table(table=CRYPTO_LIQUIDITY_TABLE, columns=CRYPTO_LIQUIDITY_FIELDS, rows=payload.liquidity_rows, key_columns=["symbol", "timeframe", "interval_start"], sql_writer=sql_writer)
+    return StepResult(
+        "succeeded",
+        [sql_reference(bar_metadata), sql_reference(liquidity_metadata)],
+        {"crypto_bar": len(payload.bar_rows), "crypto_liquidity_bar": len(payload.liquidity_rows)},
+        details={"format": "sql_table", "tables": [CRYPTO_BAR_TABLE, CRYPTO_LIQUIDITY_TABLE], "storage": {"crypto_bar": bar_metadata, "crypto_liquidity_bar": liquidity_metadata}, "file_payload_deleted": True},
+    )
 
 
 def write_receipt(context: FeedContext, *, fetch_result: StepResult, clean_result: StepResult, save_result: StepResult, error: str | None = None) -> StepResult:
@@ -377,13 +371,13 @@ def write_receipt(context: FeedContext, *, fetch_result: StepResult, clean_resul
     return StepResult("succeeded", [str(context.receipt_path)], {"runs_recorded": len(existing["runs"])})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     empty = StepResult("skipped")
     try:
         fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
-        clean_result = clean(context, fetched)
-        save_result = save(context)
+        clean_result, payload = clean(context, fetched)
+        save_result = save(context, payload, sql_writer=sql_writer)
         write_receipt(context, fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
         return save_result
     except Exception as exc:

@@ -1,6 +1,6 @@
 """Alpaca news acquisition feed."""
 from __future__ import annotations
-import csv,json
+import json
 from dataclasses import asdict,dataclass,field
 from datetime import datetime,timezone
 from pathlib import Path
@@ -12,7 +12,10 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
+from storage.sql import SqlTableWriter
 ET=ZoneInfo('America/New_York'); UTC=timezone.utc
+OUTPUT_TABLE='feed_03_alpaca_news'
 NEWS_FIELDS=['id','timeline_headline','created_at','updated_at','symbols','summary','event_link_url']
 @dataclass(frozen=True)
 class FeedContext: task_key:dict[str,Any]; run_dir:Path; cleaned_dir:Path; saved_dir:Path; receipt_path:Path; metadata:dict[str,Any]=field(default_factory=dict)
@@ -20,6 +23,8 @@ class FeedContext: task_key:dict[str,Any]; run_dir:Path; cleaned_dir:Path; saved
 class StepResult: status:str; references:list[str]=field(default_factory=list); row_counts:dict[str,int]=field(default_factory=dict); warnings:list[str]=field(default_factory=list); details:dict[str,Any]=field(default_factory=dict)
 @dataclass(frozen=True)
 class FetchedPayload: symbols:list[str]; news:list[dict[str,Any]]; secret_alias:dict[str,Any]|None=None
+@dataclass(frozen=True)
+class CleanedPayload: rows:list[dict[str,Any]]
 class AlpacaNewsError(ValueError): pass
 def _now_utc(): return datetime.now(UTC).replace(microsecond=0).isoformat().replace('+00:00','Z')
 def _required(m,k):
@@ -69,17 +74,11 @@ def clean(context,fetched):
     rows=[]
     for i in fetched.news:
         rows.append({'id':i.get('id'),'timeline_headline':i.get('headline'),'created_at':_et_iso(i.get('created_at')),'updated_at':_et_iso(i.get('updated_at')),'symbols':i.get('symbols') or [],'summary':i.get('summary'),'event_link_url':i.get('url')})
-    context.cleaned_dir.mkdir(parents=True,exist_ok=True); path=context.cleaned_dir/'equity_news.jsonl'
-    with path.open('w') as h:
-        for r in rows: h.write(json.dumps(sanitize_value(r),sort_keys=True)+'\n')
-    (context.cleaned_dir/'schema.json').write_text(json.dumps({'equity_news':NEWS_FIELDS},indent=2,sort_keys=True)+'\n')
-    return StepResult('succeeded',[str(path),str(context.cleaned_dir/'schema.json')],{'equity_news':len(rows)},details={'timezone':'America/New_York'})
-def save(context,clean_result):
-    context.saved_dir.mkdir(parents=True,exist_ok=True); refs=[]; src=context.cleaned_dir/'equity_news.jsonl'
-    rows=[json.loads(l) for l in src.read_text().splitlines() if l.strip()]; csvp=context.saved_dir/'equity_news.csv'; cols=NEWS_FIELDS
-    with csvp.open('w',newline='') as h:
-        w=csv.DictWriter(h,fieldnames=cols); w.writeheader(); w.writerows(rows)
-    refs.append(str(csvp)); return StepResult('succeeded',refs,dict(clean_result.row_counts),details={'format':'csv','field_order':cols})
+    schema=write_schema(context.run_dir,'equity_news',NEWS_FIELDS,row_count=len(rows))
+    return StepResult('succeeded',[str(schema)],{'equity_news':len(rows)},details={'timezone':'America/New_York','retention':'sql_only_no_jsonl_or_csv_payload'}), CleanedPayload(sql_rows([sanitize_value(row) for row in rows],NEWS_FIELDS))
+def save(context,clean_result,payload,*,sql_writer:SqlTableWriter|None=None):
+    metadata=write_table(table=OUTPUT_TABLE,columns=NEWS_FIELDS,rows=payload.rows,key_columns=['id'],sql_writer=sql_writer)
+    return StepResult('succeeded',[sql_reference(metadata)],dict(clean_result.row_counts),details={'format':'sql_table','table':OUTPUT_TABLE,'field_order':NEWS_FIELDS,'storage':metadata,'file_payload_deleted':True})
 def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_result=None,error=None):
     context.receipt_path.parent.mkdir(parents=True,exist_ok=True); existing={'task_id':context.task_key.get('task_id'),'feed':'03_feed_alpaca_news','runs':[]}
     if context.receipt_path.exists():
@@ -88,8 +87,8 @@ def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_resu
     entry={'run_id':context.metadata['run_id'],'status':status,'started_at':context.metadata.get('started_at'),'completed_at':_now_utc(),'output_dir':str(context.run_dir),'outputs':save_result.references if save_result else [],'row_counts':save_result.row_counts if save_result else clean_result.row_counts if clean_result else {},'steps':{'fetch':asdict(fetch_result) if fetch_result else None,'clean':asdict(clean_result) if clean_result else None,'save':asdict(save_result) if save_result else None},'error':None if error is None else {'type':type(error).__name__,'message':str(error)}}
     existing['runs']=[r for r in existing.get('runs',[]) if r.get('run_id')!=context.metadata['run_id']]+[entry]; existing.update({'task_id':context.task_key.get('task_id'),'feed':'03_feed_alpaca_news'})
     write_receipt_bundle(context.receipt_path, context.run_dir, existing); return StepResult(status,[str(context.receipt_path),*entry['outputs']],entry['row_counts'],details={'run_id':context.metadata['run_id'],'error':entry['error']})
-def run(task_key,*,run_id,client=None,client_is_fixture=False):
+def run(task_key,*,run_id,client=None,client_is_fixture=False,sql_writer:SqlTableWriter|None=None):
     c=build_context(task_key,run_id); c.cleaned_dir.mkdir(parents=True,exist_ok=True); c.saved_dir.mkdir(parents=True,exist_ok=True); fr=cr=sr=None
     try:
-        fr,f=fetch(c,client=client,client_is_fixture=client_is_fixture); cr=clean(c,f); sr=save(c,cr); return write_receipt(c,status='succeeded',fetch_result=fr,clean_result=cr,save_result=sr)
+        fr,f=fetch(c,client=client,client_is_fixture=client_is_fixture); cr,payload=clean(c,f); sr=save(c,cr,payload,sql_writer=sql_writer); return write_receipt(c,status='succeeded',fetch_result=fr,clean_result=cr,save_result=sr)
     except Exception as exc: return write_receipt(c,status='failed',fetch_result=fr,clean_result=cr,save_result=sr,error=exc)

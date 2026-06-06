@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import csv
 import json
 import math
 from dataclasses import asdict, dataclass, field
@@ -17,9 +16,12 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
+from storage.sql import SqlTableWriter
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
+OUTPUT_TABLE = "feed_02_alpaca_liquidity_bar"
 EQUITY_LIQUIDITY_BAR_FIELDS = ["symbol", "timeframe", "interval_start", "bar_trade_count", "quote_count", "bar_volume", "bar_vwap", "bar_open", "bar_high", "bar_low", "bar_close", "avg_bid", "avg_ask", "avg_mid", "avg_spread", "last_bid", "last_ask", "last_mid", "bar_vwap_minus_avg_mid"]
 DEFAULT_TIMEOUT_SECONDS = 20
 SUPPORTED_TIMEFRAMES = {"1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "1Day": 86400}
@@ -52,6 +54,11 @@ class FetchedPayload:
     request_evidence: dict[str, Any]
     secret_alias: dict[str, Any] | None = None
     liquidity_rows: list[dict[str, Any]] | None = None
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    rows: list[dict[str, Any]]
 
 
 class AlpacaLiquidityError(ValueError):
@@ -246,7 +253,7 @@ def _fetch_paginated(
     return rows, evidence
 
 
-def clean(context: FeedContext, fetched: FetchedPayload) -> StepResult:
+def clean(context: FeedContext, fetched: FetchedPayload) -> tuple[StepResult, CleanedPayload]:
     params = dict(context.task_key.get("params") or {})
     timeframe = str(params.get("timeframe", "1Min"))
     if timeframe not in SUPPORTED_TIMEFRAMES:
@@ -256,14 +263,16 @@ def clean(context: FeedContext, fetched: FetchedPayload) -> StepResult:
         if fetched.liquidity_rows is not None
         else aggregate_liquidity_bars(fetched.symbol, fetched.trades, fetched.quotes, timeframe)
     )
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    output = context.cleaned_dir / "equity_liquidity_bar.jsonl"
-    with output.open("w", encoding="utf-8") as handle:
-        for row in liquidity_rows:
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
-    schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(json.dumps({"equity_liquidity_bar": sorted({key for row in liquidity_rows for key in row})}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(output), str(schema_path)], {"equity_liquidity_bar": len(liquidity_rows)}, details={"timeframe": timeframe, "timezone": "America/New_York"})
+    schema_path = write_schema(context.run_dir, "equity_liquidity_bar", EQUITY_LIQUIDITY_BAR_FIELDS, row_count=len(liquidity_rows))
+    return (
+        StepResult(
+            "succeeded",
+            [str(schema_path)],
+            {"equity_liquidity_bar": len(liquidity_rows)},
+            details={"timeframe": timeframe, "timezone": "America/New_York", "retention": "sql_only_no_jsonl_or_csv_payload"},
+        ),
+        CleanedPayload(sql_rows(liquidity_rows, EQUITY_LIQUIDITY_BAR_FIELDS)),
+    )
 
 
 def aggregate_trades(symbol: str, trades: list[dict[str, Any]], timeframe: str) -> list[dict[str, Any]]:
@@ -369,19 +378,20 @@ def aggregate_liquidity_bars(symbol: str, trades: list[dict[str, Any]], quotes: 
     return rows
 
 
-def save(context: FeedContext, clean_result: StepResult) -> StepResult:
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    references = []
-    for src in context.cleaned_dir.glob("*.jsonl"):
-        rows = [json.loads(line) for line in src.read_text(encoding="utf-8").splitlines() if line.strip()]
-        csv_path = context.saved_dir / (src.stem + ".csv")
-        columns = EQUITY_LIQUIDITY_BAR_FIELDS if src.stem == "equity_liquidity_bar" else sorted({key for row in rows for key in row.keys()})
-        with csv_path.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
-            writer.writeheader()
-            writer.writerows(rows)
-        references.append(str(csv_path))
-    return StepResult("succeeded", references, dict(clean_result.row_counts), details={"format": "csv", "raw_persistence": "not_persisted_by_default"})
+def save(context: FeedContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    metadata = write_table(
+        table=OUTPUT_TABLE,
+        columns=EQUITY_LIQUIDITY_BAR_FIELDS,
+        rows=payload.rows,
+        key_columns=["symbol", "timeframe", "interval_start"],
+        sql_writer=sql_writer,
+    )
+    return StepResult(
+        "succeeded",
+        [sql_reference(metadata)],
+        dict(clean_result.row_counts),
+        details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": EQUITY_LIQUIDITY_BAR_FIELDS, "storage": metadata, "file_payload_deleted": True},
+    )
 
 
 def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
@@ -399,15 +409,15 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     return StepResult(status, [str(context.receipt_path), *entry["outputs"]], entry["row_counts"], details={"run_id": context.metadata["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     context.saved_dir.mkdir(parents=True, exist_ok=True)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
-        clean_result = clean(context, fetched)
-        save_result = save(context, clean_result)
+        clean_result, payload = clean(context, fetched)
+        save_result = save(context, clean_result, payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

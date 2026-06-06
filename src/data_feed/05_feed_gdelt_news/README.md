@@ -30,13 +30,13 @@ Optional params:
 Outputs:
 
 - `request_manifest.json` — query metadata and sanitized SQL evidence.
-- `cleaned/gdelt_article.jsonl` and `cleaned/schema.json` — run-local normalized rows.
-- `saved/gdelt_article.csv` — final source evidence rows.
+- `schema.json` — SQL output schema and row count evidence.
+- `trading_data.feed_05_gdelt_article` — final source evidence rows.
 - `completion_receipt.json` — per-run status and outputs.
 
 Boundary:
 
 - This feed pre-filters at the BigQuery query layer; do not fetch global all-news rows and filter them locally by default.
-- This feed saves requested-window GDELT article/source evidence, not final canonical events. Rows outside `[start_date, end_date)` are skipped and reported in receipt warnings.
+- This feed writes requested-window GDELT article/source evidence to SQL, not final canonical events. Rows outside `[start_date, end_date)` are skipped and reported in receipt warnings.
 - Event extraction/clustering is a separate reviewed boundary that projects `gdelt_article` into canonical event/evidence outputs.
 - SEC/company official disclosures still outrank derivative news coverage for canonical event identity.

@@ -1,4 +1,3 @@
-import csv
 import json
 import tempfile
 import urllib.error
@@ -8,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 
 from importlib import import_module
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 pipeline = import_module("data_feed.06_feed_etf_holdings.pipeline")
 run = pipeline.run
@@ -32,12 +32,11 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["etf_holding_snapshot"], 2)
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
-            with saved.open(newline="") as handle:
-                rows = list(csv.DictReader(handle))
+            rows = writer.rows_for("feed_06_etf_holding_snapshot")
             self.assertEqual(rows[0]["etf_symbol"], "VGT")
             self.assertEqual(rows[0]["holding_symbol"], "NVDA")
             self.assertEqual(rows[0]["weight"], "18.53")
@@ -59,7 +58,7 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "output_root": str(Path(tmp) / "task"),
             }
 
-            result = run(task_key, run_id="run")
+            result = run(task_key, run_id="run", sql_writer=FakeSqlWriter())
 
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["etf_holding_snapshot"], 1)
@@ -114,7 +113,7 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
 
             try:
                 pipeline._fetch_source_url = fake_fetch_source_url
-                result = run(task_key, run_id="run")
+                result = run(task_key, run_id="run", sql_writer=FakeSqlWriter())
             finally:
                 pipeline._fetch_source_url = original
 
@@ -137,11 +136,10 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "params": {"etf_symbol": "VGT", "issuer_name": "vanguard", "as_of_date": "2026-04-24", "html": html},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_06_etf_holding_snapshot")[0]
             self.assertEqual(row["holding_name"], "NVIDIA Corp.")
             self.assertEqual(row["sedol"], "2379504")
             self.assertEqual(row["shares"], "129246346")
@@ -160,11 +158,10 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "params": {"etf_symbol": "XLK", "issuer_name": "State Street / SPDR", "as_of_date": "2026-04-24", "xlsx_path": str(xlsx_path)},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_06_etf_holding_snapshot")[0]
             self.assertEqual(row["holding_symbol"], "NVDA")
             self.assertEqual(row["asset_class"], "Equity")
 
@@ -182,11 +179,10 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "params": {"etf_symbol": "CIBR", "issuer_name": "First Trust", "as_of_date": "2026-05-18", "html": html},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_06_etf_holding_snapshot")[0]
             self.assertEqual(row["holding_symbol"], "PANW")
             self.assertEqual(row["holding_name"], "Palo Alto Networks, Inc.")
             self.assertEqual(row["sector_type"], "Software and Computer Services")
@@ -223,11 +219,10 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "params": {"etf_symbol": "IYT", "issuer_name": "BlackRock / iShares", "json_text": json.dumps(payload)},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_06_etf_holding_snapshot")[0]
             self.assertEqual(row["issuer_name"], "blackrock_ishares")
             self.assertEqual(row["as_of_date"], "2026-05-15")
             self.assertEqual(row["holding_symbol"], "UNP")
@@ -251,11 +246,10 @@ AAPL,Apple Inc,Information Technology,Equity,"$90,000",15.85%,1000,037833100
                 "params": {"etf_symbol": "SMH", "issuer_name": "VanEck", "xlsx_path": str(xlsx_path)},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "etf_holding_snapshot.csv"
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_06_etf_holding_snapshot")[0]
             self.assertEqual(row["as_of_date"], "2026-05-15")
             self.assertEqual(row["holding_symbol"], "NVDA")
             self.assertEqual(row["holding_name"], "Nvidia Corp")

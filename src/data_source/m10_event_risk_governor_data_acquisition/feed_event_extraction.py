@@ -1,8 +1,10 @@
-"""Canonical event extraction from reviewed local feed artifacts.
+"""Canonical event extraction from reviewed feed rows.
 
-This module intentionally performs no provider calls. It converts already-saved
-feed artifacts into the compact ``m10_event_risk_governor_data_acquisition`` overview contract
-used by the Layer 10 event-risk governor. Raw article/filing/calendar detail remains behind references.
+This module intentionally performs no provider calls. It converts SQL-retained
+feed rows, and TE-exception local artifacts, into the compact
+``m10_event_risk_governor_data_acquisition`` overview contract used by the
+Layer 10 event-risk governor. Raw article/filing/calendar detail remains behind
+references.
 """
 
 from __future__ import annotations
@@ -14,9 +16,26 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from storage.sql import PostgresSqlTableReader, SqlTableReader
+
 
 class FeedEventExtractionError(ValueError):
     """Raised when a reviewed feed artifact cannot be normalized."""
+
+
+SQL_INPUT_FIELDS_BY_KIND = {
+    "alpaca_news": ["id", "timeline_headline", "created_at", "updated_at", "symbols", "summary", "event_link_url"],
+    "gdelt_news": ["article_id", "seen_at", "source_domain", "event_link_url", "title", "source_theme_tags", "organizations", "tone", "impact_scope", "scope_type", "sector_type", "symbol"],
+    "release_calendar": ["event_id", "calendar_source", "event_name", "release_time", "event_date", "timezone", "source_url", "raw_summary", "symbol"],
+    "sec_company_financials": ["cik", "entity_name", "taxonomy", "tag", "label", "description", "unit", "fy", "fp", "form", "filed", "frame", "end", "value", "accession_number", "symbol"],
+}
+
+SQL_INPUT_KIND_BY_TABLE = {
+    "feed_03_alpaca_news": "alpaca_news",
+    "feed_05_gdelt_article": "gdelt_news",
+    "feed_08_sec_company_fact": "sec_company_financials",
+    "feed_12_release_calendar": "release_calendar",
+}
 
 
 def _as_list(value: Any) -> list[str]:
@@ -84,7 +103,7 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
         return [{str(key): str(value or "") for key, value in row.items()} for row in csv.DictReader(handle)]
 
 
-def _reference(path: Path, row: Mapping[str, str], *keys: str) -> str:
+def _reference(path: Path | str, row: Mapping[str, str], *keys: str) -> str:
     for key in keys:
         value = str(row.get(key) or "").strip()
         if value:
@@ -117,7 +136,7 @@ def _date_to_event_time(value: str) -> str:
 
 def _base_event(
     *,
-    artifact_path: Path,
+    artifact_path: Path | str,
     event_time: str,
     available_time: str | None,
     information_role_type: str,
@@ -155,7 +174,7 @@ def _base_event(
     return row
 
 
-def _alpaca_news_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
+def _alpaca_news_events(path: Path | str, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     for row in rows:
         created_at = _first(row, "created_at", "updated_at")
@@ -185,7 +204,7 @@ def _alpaca_news_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[d
     return events
 
 
-def _gdelt_news_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
+def _gdelt_news_events(path: Path | str, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     for row in rows:
         seen_at = _first(row, "seen_at", "gdelt_date")
@@ -225,7 +244,7 @@ def _gdelt_news_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[di
     return events
 
 
-def _release_calendar_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
+def _release_calendar_events(path: Path | str, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
     """Normalize reviewed calendar-discovery artifacts into event shells.
 
     Earnings calendar rows are scheduling shells only. They establish a visible
@@ -274,7 +293,7 @@ def _release_calendar_events(path: Path, rows: Sequence[Mapping[str, str]]) -> l
     return events
 
 
-def _sec_group_key(path: Path, row: Mapping[str, str]) -> tuple[str, str, str, str]:
+def _sec_group_key(path: Path | str, row: Mapping[str, str]) -> tuple[str, str, str, str]:
     accession = _first(row, "accession_number")
     if accession:
         return ("accession", accession, _first(row, "symbol"), _first(row, "cik"))
@@ -286,7 +305,7 @@ def _sec_group_key(path: Path, row: Mapping[str, str]) -> tuple[str, str, str, s
     )
 
 
-def _sec_events(path: Path, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
+def _sec_events(path: Path | str, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     grouped: dict[tuple[str, str, str, str], list[Mapping[str, str]]] = {}
     for row in rows:
@@ -365,8 +384,28 @@ def _detect_artifact_kind(path: Path, rows: Sequence[Mapping[str, str]]) -> str:
     raise FeedEventExtractionError(f"unsupported event feed artifact shape: {path}")
 
 
+def _string_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, str]]:
+    return [{str(key): "" if value is None else str(value) for key, value in row.items()} for row in rows]
+
+
+def _events_for_kind(kind: str, reference: Path | str, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
+    if kind == "alpaca_news":
+        return _alpaca_news_events(reference, rows)
+    if kind == "gdelt_news":
+        return _gdelt_news_events(reference, rows)
+    if kind == "release_calendar":
+        return _release_calendar_events(reference, rows)
+    if kind == "sec_company_financials":
+        return _sec_events(reference, rows)
+    raise FeedEventExtractionError(f"unsupported event SQL input kind: {kind}")
+
+
 def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict[str, Any]]:
-    """Extract canonical Layer 10 event-risk rows from saved feed artifacts."""
+    """Extract canonical Layer 10 event-risk rows from local feed artifacts.
+
+    This remains for TE-exception/local reviewed artifacts. Current non-TE feed
+    outputs should prefer ``extract_events_from_sql_inputs``.
+    """
 
     events: list[dict[str, Any]] = []
     for raw_path in paths:
@@ -375,17 +414,45 @@ def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict
         if not rows:
             continue
         kind = _detect_artifact_kind(path, rows)
-        if kind == "alpaca_news":
-            events.extend(_alpaca_news_events(path, rows))
-        elif kind == "gdelt_news":
-            events.extend(_gdelt_news_events(path, rows))
-        elif kind == "release_calendar":
-            events.extend(_release_calendar_events(path, rows))
-        elif kind == "sec_company_financials":
-            events.extend(_sec_events(path, rows))
-        else:  # pragma: no cover - guarded by detector
-            raise AssertionError(kind)
+        events.extend(_events_for_kind(kind, path, rows))
     return events
 
 
-__all__ = ["FeedEventExtractionError", "extract_events_from_artifact_paths"]
+def extract_events_from_sql_inputs(inputs: Iterable[Mapping[str, Any]], *, sql_reader: SqlTableReader | None = None) -> list[dict[str, Any]]:
+    """Extract canonical Layer 10 event-risk rows from SQL-retained feed tables."""
+
+    reader = sql_reader or PostgresSqlTableReader.from_config({})
+    events: list[dict[str, Any]] = []
+    for item in inputs:
+        table = str(item.get("table") or "").strip()
+        if not table:
+            raise FeedEventExtractionError("event_sql_inputs entries require table")
+        kind = str(item.get("kind") or item.get("data_kind") or SQL_INPUT_KIND_BY_TABLE.get(table) or "").strip()
+        if not kind:
+            raise FeedEventExtractionError(f"event_sql_inputs entry for {table!r} requires kind")
+        columns = [str(column) for column in item.get("columns") or SQL_INPUT_FIELDS_BY_KIND.get(kind) or []]
+        if not columns:
+            raise FeedEventExtractionError(f"no SQL columns registered for event input kind {kind!r}")
+        where_equals = item.get("where_equals") if isinstance(item.get("where_equals"), Mapping) else None
+        where_in = item.get("where_in") if isinstance(item.get("where_in"), Mapping) else None
+        order_by = [str(column) for column in item.get("order_by") or []] or None
+        rows = _string_rows(
+            reader.read_rows(
+                table=table,
+                columns=columns,
+                where_equals=where_equals,
+                where_in=where_in,
+                time_column=str(item.get("time_column") or "").strip() or None,
+                start=item.get("start"),
+                end=item.get("end"),
+                order_by=order_by,
+            )
+        )
+        if not rows:
+            continue
+        reference = f"sql://trading_data/{table}"
+        events.extend(_events_for_kind(kind, reference, rows))
+    return events
+
+
+__all__ = ["FeedEventExtractionError", "extract_events_from_artifact_paths", "extract_events_from_sql_inputs"]

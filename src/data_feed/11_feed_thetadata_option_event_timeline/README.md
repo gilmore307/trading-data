@@ -4,7 +4,7 @@ ThetaData specified-contract option activity event feed.
 
 ## Purpose
 
-Produce `option_activity_event.csv` rows and one compact `<event_id>.csv` detail artifact for each triggered option activity event. The feed emits events only; it does not save rolling process state, raw trade/quote rows, or periodic chain snapshots by default.
+Produce SQL `feed_11_option_activity_event` rows and matching `feed_11_option_activity_event_detail` rows for triggered option activity events. The feed emits events only; it does not save rolling process state, raw trade/quote rows, or periodic chain snapshots by default.
 
 ## Required params
 
@@ -85,16 +85,13 @@ Rows are transient. The feed groups them into ET evidence windows and emits a fi
 ```text
 <output_root>/runs/<run_id>/
   request_manifest.json
-  cleaned/
-    option_activity_event.jsonl
-    schema.json
-  saved/
-    option_activity_event.csv
-    <event_id>.csv
+  schema.json
+  trading_data.feed_11_option_activity_event
+  trading_data.feed_11_option_activity_event_detail
 <output_root>/completion_receipt.json
 ```
 
-Only `saved/option_activity_event.csv` and `saved/<event_id>.csv` are final saved outputs. Cleaned JSONL is run-local development evidence. Raw provider responses are not persisted by default.
+Only the two SQL tables are final saved outputs. Raw provider responses are not persisted by default.
 
 ## Directional evidence boundary
 
@@ -115,4 +112,4 @@ If side/aggressor, sweep/block, OI/opening-vs-closing, IV-change, skew, term-str
 
 ## Failure and retry
 
-Final CSV/JSON writes are atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.
+Final SQL writes are atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.

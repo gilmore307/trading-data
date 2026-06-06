@@ -6,6 +6,7 @@ from pathlib import Path
 from importlib import import_module
 
 from feed_availability.http import HttpResult
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 _okx_pipeline = import_module("data_feed.04_feed_okx_crypto_market_data.pipeline")
 aggregate_liquidity_bars = _okx_pipeline.aggregate_liquidity_bars
@@ -76,16 +77,20 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
                 'params': {'instId': 'BTC-USDT', 'timeframe': '1Min', 'limit': 2},
                 'output_root': str(Path(tmp) / '04_feed_okx_crypto_market_data_task_test'),
             }
-            result = run(task_key, run_id='04_feed_okx_crypto_market_data_run_test', client=FakeOkxClient(), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id='04_feed_okx_crypto_market_data_run_test', client=FakeOkxClient(), client_is_fixture=True, sql_writer=writer)
             saved = Path(task_key['output_root']) / 'runs' / '04_feed_okx_crypto_market_data_run_test' / 'saved'
+            cleaned = Path(task_key['output_root']) / 'runs' / '04_feed_okx_crypto_market_data_run_test' / 'cleaned'
             self.assertEqual(result.row_counts['crypto_bar'], 1)
             self.assertNotIn('crypto_trade', result.row_counts)
             self.assertEqual(result.row_counts['crypto_liquidity_bar'], 1)
+            self.assertEqual(len(writer.rows_for('feed_04_okx_crypto_bar')), 1)
+            self.assertEqual(len(writer.rows_for('feed_04_okx_crypto_liquidity_bar')), 1)
             for name in ['crypto_bar', 'crypto_liquidity_bar']:
-                self.assertTrue((saved / f'{name}.csv').exists())
+                self.assertFalse((saved / f'{name}.csv').exists())
                 self.assertFalse((saved / f'{name}.jsonl').exists())
             self.assertFalse((saved / 'crypto_trade.csv').exists())
-            self.assertTrue((Path(task_key['output_root']) / 'runs' / '04_feed_okx_crypto_market_data_run_test' / 'cleaned' / 'crypto_trade_transient.jsonl').exists())
+            self.assertFalse((cleaned / 'crypto_trade_transient.jsonl').exists())
             receipt = json.loads((Path(task_key['output_root']) / 'completion_receipt.json').read_text())
             self.assertEqual(receipt['feed'], '04_feed_okx_crypto_market_data')
 
@@ -103,7 +108,8 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
                 },
                 'output_root': str(Path(tmp) / '04_feed_okx_crypto_market_data_history_task_test'),
             }
-            result = run(task_key, run_id='04_feed_okx_crypto_market_data_history_run_test', client=FakeOkxClient(), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id='04_feed_okx_crypto_market_data_history_run_test', client=FakeOkxClient(), client_is_fixture=True, sql_writer=writer)
             saved = Path(task_key['output_root']) / 'runs' / '04_feed_okx_crypto_market_data_history_run_test' / 'saved'
             self.assertEqual(result.row_counts['crypto_bar'], 2)
             self.assertEqual(result.row_counts['crypto_liquidity_bar'], 0)
@@ -111,7 +117,8 @@ class OkxCryptoMarketDataPipelineTests(unittest.TestCase):
             manifest = json.loads((Path(receipt['runs'][0]['output_dir']) / 'request_manifest.json').read_text())
             self.assertTrue(manifest['historical_mode'])
             self.assertIsNone(manifest['trades_endpoint'])
-            self.assertTrue((saved / 'crypto_bar.csv').exists())
+            self.assertFalse((saved / 'crypto_bar.csv').exists())
+            self.assertEqual(len(writer.rows_for('feed_04_okx_crypto_bar')), 2)
 
 
 if __name__ == '__main__':

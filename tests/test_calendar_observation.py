@@ -9,11 +9,24 @@ from data_runtime.calendar_observation import (
     build_market_session_observations,
     build_option_expiry_observations,
     index_calendar_observations,
+    index_calendar_observations_from_sql_inputs,
     official_exchange_calendar_observations,
+    official_exchange_calendar_observations_from_sql_inputs,
     release_calendar_observations,
+    release_calendar_observations_from_sql_inputs,
     trading_economics_observations,
     write_observations,
 )
+
+
+class FakeSqlReader:
+    def __init__(self, rows_by_table):
+        self.rows_by_table = rows_by_table
+        self.calls = []
+
+    def read_rows(self, *, table, columns, where_equals=None, where_in=None, time_column=None, start=None, end=None, order_by=None):
+        self.calls.append({"table": table, "columns": columns, "where_equals": where_equals, "where_in": where_in, "time_column": time_column, "start": start, "end": end, "order_by": order_by})
+        return [{column: row.get(column) for column in columns} for row in self.rows_by_table.get(table, [])]
 
 
 class CalendarObservationTests(unittest.TestCase):
@@ -53,6 +66,28 @@ class CalendarObservationTests(unittest.TestCase):
             self.assertEqual(rows[0].observation_type, "official_exchange_early_close")
             self.assertEqual(rows[0].certainty_status, "confirmed")
             self.assertEqual(rows[0].venue, "NYSE")
+
+    def test_maps_official_exchange_calendar_sql_rows(self):
+        reader = FakeSqlReader(
+            {
+                "feed_12_official_exchange_calendar": [
+                    {
+                        "venue": "NYSE",
+                        "calendar_date": "2026-11-27",
+                        "session_status": "early_close",
+                        "open_time": "2026-11-27T09:30:00-05:00",
+                        "close_time": "2026-11-27T13:00:00-05:00",
+                        "holiday_name": "Day after Thanksgiving",
+                        "source_ref": "https://www.nyse.com/markets/hours-calendars",
+                    }
+                ]
+            }
+        )
+        rows = official_exchange_calendar_observations_from_sql_inputs([{}], sql_reader=reader)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].observation_type, "official_exchange_early_close")
+        self.assertEqual(rows[0].venue, "NYSE")
+        self.assertEqual(reader.calls[0]["table"], "feed_12_official_exchange_calendar")
 
     def test_builds_headline_index_schedule_without_djia_shells(self):
         rows = build_headline_index_calendar_observations("2026-12-01", "2026-12-31")
@@ -98,6 +133,27 @@ class CalendarObservationTests(unittest.TestCase):
             self.assertEqual(rows[0].source_priority, "official_index_announcement")
             self.assertEqual(rows[0].result_status, "membership_result_available")
 
+    def test_maps_index_calendar_sql_rows(self):
+        reader = FakeSqlReader(
+            {
+                "feed_12_index_calendar": [
+                    {
+                        "calendar_source": "sp_dow_jones_indices_announcement",
+                        "index_symbol": "DJIA",
+                        "event_type": "index_constituent_change",
+                        "event_name": "DJIA constituent change",
+                        "announcement_time": "2026-05-01T17:15:00-04:00",
+                        "effective_time": "2026-05-04T09:30:00-04:00",
+                        "source_ref": "https://www.spglobal.com/spdji/",
+                    }
+                ]
+            }
+        )
+        rows = index_calendar_observations_from_sql_inputs([{}], sql_reader=reader)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].symbol, "DJIA")
+        self.assertEqual(rows[0].source_priority, "official_index_announcement")
+
     def test_maps_nasdaq_release_calendar_to_tentative_earnings_shell(self):
         with tempfile.TemporaryDirectory() as raw_tmp:
             path = Path(raw_tmp) / "release_calendar.csv"
@@ -122,6 +178,29 @@ class CalendarObservationTests(unittest.TestCase):
             self.assertEqual(rows[0].symbol, "AAPL")
             self.assertEqual(rows[0].certainty_status, "tentative")
             self.assertEqual(rows[0].result_status, "result_fields_not_available")
+
+    def test_maps_nasdaq_release_calendar_sql_rows(self):
+        reader = FakeSqlReader(
+            {
+                "feed_12_release_calendar": [
+                    {
+                        "event_id": "cal1",
+                        "calendar_source": "nasdaq_earnings_calendar",
+                        "event_name": "AAPL earnings release (Apple Inc.)",
+                        "release_time": "2026-04-24T08:00:00-04:00",
+                        "event_date": "2026-04-24",
+                        "timezone": "America/New_York",
+                        "source_url": "https://api.nasdaq.com/api/calendar/earnings?date=2026-04-24",
+                        "raw_summary": "{}",
+                    }
+                ]
+            }
+        )
+        rows = release_calendar_observations_from_sql_inputs([{}], sql_reader=reader)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].observation_type, "earnings_calendar")
+        self.assertEqual(rows[0].symbol, "AAPL")
+        self.assertEqual(rows[0].source_ref, "https://api.nasdaq.com/api/calendar/earnings?date=2026-04-24")
 
     def test_maps_trading_economics_rows_to_macro_calendar_shells(self):
         with tempfile.TemporaryDirectory() as raw_tmp:

@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from storage.sql import PostgresSqlTableReader, SqlTableReader
+
 from data_runtime.temporal_explorer import build_market_session_rows
 
 ET = ZoneInfo("America/New_York")
@@ -42,6 +44,10 @@ CALENDAR_OBSERVATION_FIELDS = [
     "source_ref",
     "payload_json",
 ]
+
+OFFICIAL_EXCHANGE_CALENDAR_SQL_FIELDS = ["venue", "calendar_date", "session_status", "open_time", "close_time", "holiday_name", "source_ref"]
+INDEX_CALENDAR_SQL_FIELDS = ["calendar_source", "index_symbol", "event_type", "event_name", "announcement_time", "effective_time", "source_ref"]
+RELEASE_CALENDAR_SQL_FIELDS = ["event_id", "calendar_source", "event_name", "release_time", "event_date", "timezone", "source_url", "raw_summary"]
 
 
 @dataclass(frozen=True)
@@ -115,6 +121,32 @@ def _iter_jsonl(path: Path) -> Iterable[dict[str, Any]]:
             payload = json.loads(line)
             if isinstance(payload, dict):
                 yield payload
+
+
+def _sql_input_rows(
+    inputs: Sequence[Mapping[str, Any]],
+    *,
+    default_table: str,
+    default_columns: Sequence[str],
+    sql_reader: SqlTableReader | None,
+) -> list[tuple[str, list[dict[str, Any]]]]:
+    reader = sql_reader or PostgresSqlTableReader.from_config({})
+    output: list[tuple[str, list[dict[str, Any]]]] = []
+    for item in inputs:
+        table = str(item.get("table") or default_table).strip()
+        columns = [str(column) for column in item.get("columns") or default_columns]
+        rows = reader.read_rows(
+            table=table,
+            columns=columns,
+            where_equals=item.get("where_equals") if isinstance(item.get("where_equals"), Mapping) else None,
+            where_in=item.get("where_in") if isinstance(item.get("where_in"), Mapping) else None,
+            time_column=str(item.get("time_column") or "").strip() or None,
+            start=item.get("start"),
+            end=item.get("end"),
+            order_by=[str(column) for column in item.get("order_by") or []] or None,
+        )
+        output.append((f"sql://trading_data/{table}", rows))
+    return output
 
 
 def build_market_session_observations(
@@ -226,40 +258,53 @@ def official_exchange_calendar_observations(paths: Sequence[Path | str]) -> list
     for path_value in paths:
         path = Path(path_value)
         rows: Iterable[Mapping[str, Any]] = _iter_csv(path) if path.suffix == ".csv" else _iter_jsonl(path)
-        for row in rows:
-            venue = str(row.get("venue") or "").upper()
-            calendar_date = str(row.get("calendar_date") or row.get("date") or "")[:10]
-            status = str(row.get("session_status") or row.get("session_type") or "").lower()
-            if venue not in {"NYSE", "NASDAQ"} or not calendar_date or status not in {"closed", "early_close", "regular"}:
-                continue
-            holiday_name = str(row.get("holiday_name") or row.get("event_name") or "").strip()
-            open_time = _parse_datetime(row.get("open_time"))
-            close_time = _parse_datetime(row.get("close_time"))
-            retrieved_time = _parse_datetime(row.get("retrieved_time") or row.get("source_published_time"))
-            observation_time = close_time or open_time or retrieved_time or datetime.combine(_coerce_date(calendar_date), time.min, ET)
-            event_name = holiday_name or f"{venue} official {status.replace('_', ' ')} session"
-            observations.append(
-                CalendarObservation(
-                    observation_id=_stable_id("official_exchange_calendar", venue, calendar_date, status, path),
-                    observation_type=f"official_exchange_{status}",
-                    calendar_source="official_exchange_calendar",
-                    event_name=event_name,
-                    calendar_date=calendar_date,
-                    observation_time=observation_time.isoformat(),
-                    timezone=str(row.get("timezone") or "America/New_York"),
-                    event_window_start=_iso(open_time),
-                    event_window_end=_iso(close_time),
-                    scope_type="market",
-                    venue=venue,
-                    event_phase="session_window",
-                    lifecycle_class="scheduled_market_structure",
-                    source_priority="official_exchange_calendar",
-                    certainty_status="confirmed",
-                    result_status="not_result_source",
-                    source_ref=str(row.get("source_ref") or row.get("source_url") or path),
-                    payload_json=_json(row),
-                )
+        observations.extend(_official_exchange_calendar_observations_from_rows(rows, source_ref=str(path)))
+    return observations
+
+
+def _official_exchange_calendar_observations_from_rows(rows: Iterable[Mapping[str, Any]], *, source_ref: str) -> list[CalendarObservation]:
+    observations: list[CalendarObservation] = []
+    for row in rows:
+        venue = str(row.get("venue") or "").upper()
+        calendar_date = str(row.get("calendar_date") or row.get("date") or "")[:10]
+        status = str(row.get("session_status") or row.get("session_type") or "").lower()
+        if venue not in {"NYSE", "NASDAQ"} or not calendar_date or status not in {"closed", "early_close", "regular"}:
+            continue
+        holiday_name = str(row.get("holiday_name") or row.get("event_name") or "").strip()
+        open_time = _parse_datetime(row.get("open_time"))
+        close_time = _parse_datetime(row.get("close_time"))
+        retrieved_time = _parse_datetime(row.get("retrieved_time") or row.get("source_published_time"))
+        observation_time = close_time or open_time or retrieved_time or datetime.combine(_coerce_date(calendar_date), time.min, ET)
+        event_name = holiday_name or f"{venue} official {status.replace('_', ' ')} session"
+        observations.append(
+            CalendarObservation(
+                observation_id=_stable_id("official_exchange_calendar", venue, calendar_date, status, source_ref),
+                observation_type=f"official_exchange_{status}",
+                calendar_source="official_exchange_calendar",
+                event_name=event_name,
+                calendar_date=calendar_date,
+                observation_time=observation_time.isoformat(),
+                timezone=str(row.get("timezone") or "America/New_York"),
+                event_window_start=_iso(open_time),
+                event_window_end=_iso(close_time),
+                scope_type="market",
+                venue=venue,
+                event_phase="session_window",
+                lifecycle_class="scheduled_market_structure",
+                source_priority="official_exchange_calendar",
+                certainty_status="confirmed",
+                result_status="not_result_source",
+                source_ref=str(row.get("source_ref") or row.get("source_url") or source_ref),
+                payload_json=_json(row),
             )
+        )
+    return observations
+
+
+def official_exchange_calendar_observations_from_sql_inputs(inputs: Sequence[Mapping[str, Any]], *, sql_reader: SqlTableReader | None = None) -> list[CalendarObservation]:
+    observations: list[CalendarObservation] = []
+    for source_ref, rows in _sql_input_rows(inputs, default_table="feed_12_official_exchange_calendar", default_columns=OFFICIAL_EXCHANGE_CALENDAR_SQL_FIELDS, sql_reader=sql_reader):
+        observations.extend(_official_exchange_calendar_observations_from_rows(rows, source_ref=source_ref))
     return observations
 
 
@@ -355,6 +400,15 @@ def build_headline_index_calendar_observations(start_date: date | str, end_date_
 def index_calendar_observations(paths: Sequence[Path | str]) -> list[CalendarObservation]:
     """Parse reviewed Nasdaq/S&P DJI index methodology or announcement artifacts."""
 
+    observations: list[CalendarObservation] = []
+    for path_value in paths:
+        path = Path(path_value)
+        rows: Iterable[Mapping[str, Any]] = _iter_csv(path) if path.suffix == ".csv" else _iter_jsonl(path)
+        observations.extend(_index_calendar_observations_from_rows(rows, source_ref=str(path)))
+    return observations
+
+
+def _index_calendar_observations_from_rows(rows: Iterable[Mapping[str, Any]], *, source_ref: str) -> list[CalendarObservation]:
     accepted_sources = {
         "nasdaq_global_indexes_methodology": ("NDX", "Nasdaq Global Indexes", "scheduled"),
         "nasdaq_global_indexes_announcement": ("NDX", "Nasdaq Global Indexes", "confirmed"),
@@ -362,49 +416,53 @@ def index_calendar_observations(paths: Sequence[Path | str]) -> list[CalendarObs
         "sp_dow_jones_indices_announcement": ("", "S&P Dow Jones Indices", "confirmed"),
     }
     observations: list[CalendarObservation] = []
-    for path_value in paths:
-        path = Path(path_value)
-        rows: Iterable[Mapping[str, Any]] = _iter_csv(path) if path.suffix == ".csv" else _iter_jsonl(path)
-        for row in rows:
-            calendar_source = str(row.get("calendar_source") or "").strip()
-            if calendar_source not in accepted_sources:
-                continue
-            default_symbol, provider, default_certainty = accepted_sources[calendar_source]
-            index_symbol = str(row.get("index_symbol") or default_symbol).upper()
-            if index_symbol not in {"NDX", "SPX", "DJIA", "DJI"}:
-                continue
-            if index_symbol in {"DJIA", "DJI"} and calendar_source.endswith("_methodology"):
-                continue
-            effective_time = _parse_datetime(row.get("effective_time") or row.get("event_time") or row.get("event_window_start"))
-            announcement_time = _parse_datetime(row.get("announcement_time") or row.get("source_published_time") or row.get("available_time"))
-            if effective_time is None and announcement_time is None:
-                continue
-            event_dt = effective_time or announcement_time
-            event_type = str(row.get("event_type") or "index_rebalance_window").strip() or "index_rebalance_window"
-            event_name = str(row.get("event_name") or f"{index_symbol} {event_type.replace('_', ' ')}").strip()
-            result_status = str(row.get("result_status") or ("membership_result_available" if "announcement" in calendar_source else "membership_result_requires_official_announcement"))
-            observations.append(
-                CalendarObservation(
-                    observation_id=_stable_id("index_calendar", calendar_source, index_symbol, event_type, event_dt.isoformat(), path),
-                    observation_type=event_type,
-                    calendar_source=calendar_source,
-                    event_name=event_name,
-                    calendar_date=event_dt.date().isoformat(),
-                    observation_time=event_dt.isoformat(),
-                    timezone=str(row.get("timezone") or "America/New_York"),
-                    event_window_start=_iso(_parse_datetime(row.get("event_window_start")) or effective_time),
-                    event_window_end=_iso(_parse_datetime(row.get("event_window_end")) or effective_time),
-                    scope_type="index",
-                    symbol="DJIA" if index_symbol == "DJI" else index_symbol,
-                    event_phase=str(row.get("event_phase") or ("announced_result" if "announcement" in calendar_source else "scheduled_shell")),
-                    lifecycle_class="scheduled_market_structure",
-                    source_priority="official_index_announcement" if "announcement" in calendar_source else "official_index_methodology",
-                    certainty_status=str(row.get("certainty_status") or default_certainty),
-                    result_status=result_status,
-                    source_ref=str(row.get("source_ref") or row.get("source_url") or path),
-                    payload_json=_json({"index_provider": provider, **dict(row)}),
-                )
+    for row in rows:
+        calendar_source = str(row.get("calendar_source") or "").strip()
+        if calendar_source not in accepted_sources:
+            continue
+        default_symbol, provider, default_certainty = accepted_sources[calendar_source]
+        index_symbol = str(row.get("index_symbol") or default_symbol).upper()
+        if index_symbol not in {"NDX", "SPX", "DJIA", "DJI"}:
+            continue
+        if index_symbol in {"DJIA", "DJI"} and calendar_source.endswith("_methodology"):
+            continue
+        effective_time = _parse_datetime(row.get("effective_time") or row.get("event_time") or row.get("event_window_start"))
+        announcement_time = _parse_datetime(row.get("announcement_time") or row.get("source_published_time") or row.get("available_time"))
+        if effective_time is None and announcement_time is None:
+            continue
+        event_dt = effective_time or announcement_time
+        event_type = str(row.get("event_type") or "index_rebalance_window").strip() or "index_rebalance_window"
+        event_name = str(row.get("event_name") or f"{index_symbol} {event_type.replace('_', ' ')}").strip()
+        result_status = str(row.get("result_status") or ("membership_result_available" if "announcement" in calendar_source else "membership_result_requires_official_announcement"))
+        observations.append(
+            CalendarObservation(
+                observation_id=_stable_id("index_calendar", calendar_source, index_symbol, event_type, event_dt.isoformat(), source_ref),
+                observation_type=event_type,
+                calendar_source=calendar_source,
+                event_name=event_name,
+                calendar_date=event_dt.date().isoformat(),
+                observation_time=event_dt.isoformat(),
+                timezone=str(row.get("timezone") or "America/New_York"),
+                event_window_start=_iso(_parse_datetime(row.get("event_window_start")) or effective_time),
+                event_window_end=_iso(_parse_datetime(row.get("event_window_end")) or effective_time),
+                scope_type="index",
+                symbol="DJIA" if index_symbol == "DJI" else index_symbol,
+                event_phase=str(row.get("event_phase") or ("announced_result" if "announcement" in calendar_source else "scheduled_shell")),
+                lifecycle_class="scheduled_market_structure",
+                source_priority="official_index_announcement" if "announcement" in calendar_source else "official_index_methodology",
+                certainty_status=str(row.get("certainty_status") or default_certainty),
+                result_status=result_status,
+                source_ref=str(row.get("source_ref") or row.get("source_url") or source_ref),
+                payload_json=_json({"index_provider": provider, **dict(row)}),
             )
+        )
+    return observations
+
+
+def index_calendar_observations_from_sql_inputs(inputs: Sequence[Mapping[str, Any]], *, sql_reader: SqlTableReader | None = None) -> list[CalendarObservation]:
+    observations: list[CalendarObservation] = []
+    for source_ref, rows in _sql_input_rows(inputs, default_table="feed_12_index_calendar", default_columns=INDEX_CALENDAR_SQL_FIELDS, sql_reader=sql_reader):
+        observations.extend(_index_calendar_observations_from_rows(rows, source_ref=source_ref))
     return observations
 
 
@@ -412,42 +470,55 @@ def release_calendar_observations(paths: Sequence[Path | str]) -> list[CalendarO
     observations: list[CalendarObservation] = []
     for path_value in paths:
         path = Path(path_value)
-        for row in _iter_csv(path):
-            calendar_source = str(row.get("calendar_source") or "")
-            event_name = str(row.get("event_name") or "")
-            release_time = _parse_datetime(row.get("release_time"))
-            if not calendar_source or not event_name or release_time is None:
-                continue
-            symbol = ""
-            scope_type = "macro"
-            observation_type = "release_calendar"
-            lifecycle_class = "scheduled_known_outcome_later"
-            if calendar_source == "nasdaq_earnings_calendar":
-                observation_type = "earnings_calendar"
-                scope_type = "symbol"
-                symbol = event_name.split(" ", 1)[0].strip().upper()
-            observations.append(
-                CalendarObservation(
-                    observation_id=_stable_id(calendar_source, event_name, release_time.isoformat(), path),
-                    observation_type=observation_type,
-                    calendar_source=calendar_source,
-                    event_name=event_name,
-                    calendar_date=str(row.get("event_date") or release_time.date().isoformat()),
-                    observation_time=release_time.isoformat(),
-                    timezone=str(row.get("timezone") or "America/New_York"),
-                    event_window_start=release_time.isoformat(),
-                    event_window_end=release_time.isoformat(),
-                    scope_type=scope_type,
-                    symbol=symbol,
-                    event_phase="scheduled_shell",
-                    lifecycle_class=lifecycle_class,
-                    source_priority="approved_calendar" if calendar_source == "nasdaq_earnings_calendar" else "official_data_release",
-                    certainty_status="tentative" if calendar_source == "nasdaq_earnings_calendar" else "confirmed",
-                    result_status="result_fields_not_available",
-                    source_ref=str(row.get("source_url") or path),
-                    payload_json=_json(row),
-                )
+        observations.extend(_release_calendar_observations_from_rows(_iter_csv(path), source_ref=str(path)))
+    return observations
+
+
+def _release_calendar_observations_from_rows(rows: Iterable[Mapping[str, Any]], *, source_ref: str) -> list[CalendarObservation]:
+    observations: list[CalendarObservation] = []
+    for row in rows:
+        calendar_source = str(row.get("calendar_source") or "")
+        event_name = str(row.get("event_name") or "")
+        release_time = _parse_datetime(row.get("release_time"))
+        if not calendar_source or not event_name or release_time is None:
+            continue
+        symbol = ""
+        scope_type = "macro"
+        observation_type = "release_calendar"
+        lifecycle_class = "scheduled_known_outcome_later"
+        if calendar_source == "nasdaq_earnings_calendar":
+            observation_type = "earnings_calendar"
+            scope_type = "symbol"
+            symbol = event_name.split(" ", 1)[0].strip().upper()
+        observations.append(
+            CalendarObservation(
+                observation_id=_stable_id(calendar_source, event_name, release_time.isoformat(), source_ref),
+                observation_type=observation_type,
+                calendar_source=calendar_source,
+                event_name=event_name,
+                calendar_date=str(row.get("event_date") or release_time.date().isoformat()),
+                observation_time=release_time.isoformat(),
+                timezone=str(row.get("timezone") or "America/New_York"),
+                event_window_start=release_time.isoformat(),
+                event_window_end=release_time.isoformat(),
+                scope_type=scope_type,
+                symbol=symbol,
+                event_phase="scheduled_shell",
+                lifecycle_class=lifecycle_class,
+                source_priority="approved_calendar" if calendar_source == "nasdaq_earnings_calendar" else "official_data_release",
+                certainty_status="tentative" if calendar_source == "nasdaq_earnings_calendar" else "confirmed",
+                result_status="result_fields_not_available",
+                source_ref=str(row.get("source_url") or source_ref),
+                payload_json=_json(row),
             )
+        )
+    return observations
+
+
+def release_calendar_observations_from_sql_inputs(inputs: Sequence[Mapping[str, Any]], *, sql_reader: SqlTableReader | None = None) -> list[CalendarObservation]:
+    observations: list[CalendarObservation] = []
+    for source_ref, rows in _sql_input_rows(inputs, default_table="feed_12_release_calendar", default_columns=RELEASE_CALENDAR_SQL_FIELDS, sql_reader=sql_reader):
+        observations.extend(_release_calendar_observations_from_rows(rows, source_ref=source_ref))
     return observations
 
 
@@ -522,8 +593,11 @@ __all__ = [
     "build_market_session_observations",
     "build_option_expiry_observations",
     "index_calendar_observations",
+    "index_calendar_observations_from_sql_inputs",
     "official_exchange_calendar_observations",
+    "official_exchange_calendar_observations_from_sql_inputs",
     "release_calendar_observations",
+    "release_calendar_observations_from_sql_inputs",
     "trading_economics_observations",
     "sort_observations",
     "write_observations",

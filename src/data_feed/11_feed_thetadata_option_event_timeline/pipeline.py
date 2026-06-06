@@ -1,15 +1,14 @@
 """ThetaData option activity event timeline feed.
 
-Development-stage final outputs are ``option_activity_event.csv`` and one
-``<event_id>.csv`` detail artifact per emitted event. Provider trade/quote
-rows are transient and are not persisted by default.
+Final outputs are SQL rows in ``feed_11_option_activity_event`` and
+``feed_11_option_activity_event_detail``. Provider trade/quote rows are
+transient and are not persisted by default.
 """
 
 from __future__ import annotations
 
 import csv
 import json
-import os
 import secrets
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
@@ -24,11 +23,15 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import manager_registry_csv, resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
+from storage.sql import SqlTableWriter
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
 DEFAULT_REGISTRY_CSV = manager_registry_csv()
 FEED = "11_feed_thetadata_option_event_timeline"
+EVENT_TABLE = "feed_11_option_activity_event"
+DETAIL_TABLE = "feed_11_option_activity_event_detail"
 SUPPORTED_TIMEFRAMES = {
     "1Min": 60,
     "5Min": 300,
@@ -342,6 +345,11 @@ CSV_FIELD_REFS = [
 class EventRecord:
     row: dict[str, Any]
     detail: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    events: list[EventRecord]
 
 
 def _now_utc() -> str:
@@ -1406,7 +1414,7 @@ def _build_event(
     event_id = _new_id("opt_evt")
     created_at = _iso(trade_ts) or window_start.isoformat()
     updated_at = fetched.standard_context.get("generated_at") or created_at
-    detail_filename = f"{event_id}.csv"
+    detail_ref = f"sql://trading_data/{DETAIL_TABLE}/{event_id}"
     window_end = window_start + timedelta(seconds=SUPPORTED_TIMEFRAMES[fetched.timeframe])
     standard_context = {
         f(OPTION_EVENT_DETAIL_STANDARD_SOURCE): fetched.standard_context.get("standard_source"),
@@ -1476,12 +1484,12 @@ def _build_event(
         f(TIMELINE_UPDATED_AT): updated_at,
         f(TIMELINE_SYMBOLS): f"{fetched.underlying};{contract_symbol}",
         f(TIMELINE_SUMMARY): ";".join(order),
-        f(TIMELINE_URL): detail_filename,
+        f(TIMELINE_URL): detail_ref,
     }
     return EventRecord(row=row, detail=detail)
 
 
-def clean(context: FeedContext, fetched: FetchedTradeQuote) -> StepResult:
+def clean(context: FeedContext, fetched: FetchedTradeQuote) -> tuple[StepResult, CleanedPayload]:
     names = RegistryNames(context.registry_csv)
     timestamped_rows: list[tuple[datetime, dict[str, Any]]] = []
     for row in fetched.rows:
@@ -1509,57 +1517,27 @@ def clean(context: FeedContext, fetched: FetchedTradeQuote) -> StepResult:
             if len(events) >= fetched.max_events:
                 break
 
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    jsonl_path = context.cleaned_dir / "option_activity_event.jsonl"
-    with jsonl_path.open("w", encoding="utf-8") as handle:
-        for event in events:
-            handle.write(json.dumps({"row": event.row, "detail": event.detail}, sort_keys=True) + "\n")
-    schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(
-        json.dumps({"option_activity_event": [names.field_name(ref) for ref in CSV_FIELD_REFS]}, indent=2, sort_keys=True)
-        + "\n",
-        encoding="utf-8",
-    )
-    return StepResult(
-        "succeeded",
-        [str(jsonl_path), str(schema_path)],
-        {
-            "option_activity_event": len(events),
-            "option_activity_event_detail": len(events),
-            "option_trade_quote_rows_transient": len(fetched.rows),
-        },
-        warnings=[] if events else ["no option activity events satisfied the supplied current_standard"],
-        details={"timezone": "America/New_York", "format": "jsonl", "window_count": len(windows)},
+    schema_path = write_schema(context.run_dir, "option_activity_event", [names.field_name(ref) for ref in CSV_FIELD_REFS], row_count=len(events))
+    return (
+        StepResult(
+            "succeeded",
+            [str(schema_path)],
+            {
+                "option_activity_event": len(events),
+                "option_activity_event_detail": len(events),
+                "option_trade_quote_rows_transient": len(fetched.rows),
+            },
+            warnings=[] if events else ["no option activity events satisfied the supplied current_standard"],
+            details={"timezone": "America/New_York", "format": "sql_ready_rows", "retention": "sql_only_no_jsonl_or_csv_payload", "window_count": len(windows)},
+        ),
+        CleanedPayload(events),
     )
 
 
-def _read_cleaned_events(path: Path) -> list[EventRecord]:
-    events: list[EventRecord] = []
-    if not path.exists():
-        return events
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        payload = json.loads(line)
-        events.append(EventRecord(row=payload["row"], detail=payload["detail"]))
-    return events
-
-
-def save(context: FeedContext, clean_result: StepResult) -> StepResult:
+def save(context: FeedContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
     names = RegistryNames(context.registry_csv)
     fields = [names.field_name(ref) for ref in CSV_FIELD_REFS]
-    events = _read_cleaned_events(context.cleaned_dir / "option_activity_event.jsonl")
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = context.saved_dir / "option_activity_event.csv"
-    tmp_csv = csv_path.with_suffix(csv_path.suffix + ".tmp")
-    with tmp_csv.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows([event.row for event in events])
-    os.replace(tmp_csv, csv_path)
-
-    references = [str(csv_path)]
-    url_field = names.field_name(TIMELINE_URL)
+    events = payload.events
     detail_fields = [
         names.field_name(OPTION_EVENT_DETAIL_EVENT_ID),
         names.field_name(TIMELINE_CREATED_AT),
@@ -1587,12 +1565,11 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
         names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS),
     ]
     contract_field = names.field_name(OPTION_EVENT_DETAIL_CONTRACT)
+    detail_rows: list[dict[str, Any]] = []
     for event in events:
-        detail_path = context.saved_dir / event.row[url_field]
-        tmp_detail = detail_path.with_suffix(detail_path.suffix + ".tmp")
         detail = event.detail
         contract = detail.get(contract_field, {})
-        detail_row = {
+        detail_rows.append({
             names.field_name(OPTION_EVENT_DETAIL_EVENT_ID): detail.get(names.field_name(OPTION_EVENT_DETAIL_EVENT_ID)),
             names.field_name(TIMELINE_CREATED_AT): detail.get(names.field_name(TIMELINE_CREATED_AT)),
             names.field_name(TIMELINE_UPDATED_AT): detail.get(names.field_name(TIMELINE_UPDATED_AT)),
@@ -1617,19 +1594,15 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
             names.field_name(OPTION_EVENT_DETAIL_ABNORMALITY_EVIDENCE_COVERAGE): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_ABNORMALITY_EVIDENCE_COVERAGE), {}), separators=(",", ":")),
             names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_QUOTE_CONTEXT), {}), separators=(",", ":")),
             names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS): json.dumps(detail.get(names.field_name(OPTION_EVENT_DETAIL_SOURCE_REFS), {}), separators=(",", ":")),
-        }
-        with tmp_detail.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.DictWriter(handle, fieldnames=detail_fields, extrasaction="ignore")
-            writer.writeheader()
-            writer.writerow(detail_row)
-        os.replace(tmp_detail, detail_path)
-        references.append(str(detail_path))
+        })
+    event_metadata = write_table(table=EVENT_TABLE, columns=fields, rows=sql_rows([event.row for event in events], fields), key_columns=[names.field_name(TIMELINE_ID)], sql_writer=sql_writer)
+    detail_metadata = write_table(table=DETAIL_TABLE, columns=detail_fields, rows=sql_rows(detail_rows, detail_fields), key_columns=[names.field_name(OPTION_EVENT_DETAIL_EVENT_ID)], sql_writer=sql_writer)
     return StepResult(
         "succeeded",
-        references,
+        [sql_reference(event_metadata), sql_reference(detail_metadata)],
         dict(clean_result.row_counts),
         warnings=list(clean_result.warnings),
-        details={"format": "csv", "atomic_write": True},
+        details={"format": "sql_table", "tables": [EVENT_TABLE, DETAIL_TABLE], "storage": {"option_activity_event": event_metadata, "option_activity_event_detail": detail_metadata}, "file_payload_deleted": True},
     )
 
 
@@ -1695,13 +1668,13 @@ def write_receipt(
     )
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
-        clean_result = clean(context, fetched)
-        save_result = save(context, clean_result)
+        clean_result, payload = clean(context, fetched)
+        save_result = save(context, clean_result, payload, sql_writer=sql_writer)
         return write_receipt(
             context,
             status="succeeded",

@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from importlib import import_module
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 _liquidity_pipeline = import_module("data_feed.02_feed_alpaca_liquidity.pipeline")
 aggregate_liquidity_bars = _liquidity_pipeline.aggregate_liquidity_bars
@@ -77,12 +78,16 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             old = pipeline.load_secret_alias
             pipeline.load_secret_alias = lambda alias: Secret()
             try:
-                result = run(task_key, run_id='02_feed_alpaca_liquidity_run_test', client=FakeAlpacaClient(), client_is_fixture=True)
+                writer = FakeSqlWriter()
+                result = run(task_key, run_id='02_feed_alpaca_liquidity_run_test', client=FakeAlpacaClient(), client_is_fixture=True, sql_writer=writer)
             finally:
                 pipeline.load_secret_alias = old
             self.assertEqual(result.status, 'succeeded')
+            self.assertEqual(len(writer.rows_for('feed_02_alpaca_liquidity_bar')), 2)
             saved = Path(task_key['output_root']) / 'runs' / '02_feed_alpaca_liquidity_run_test' / 'saved'
-            self.assertTrue((saved / 'equity_liquidity_bar.csv').exists())
+            cleaned = Path(task_key['output_root']) / 'runs' / '02_feed_alpaca_liquidity_run_test' / 'cleaned'
+            self.assertFalse((saved / 'equity_liquidity_bar.csv').exists())
+            self.assertFalse((cleaned / 'equity_liquidity_bar.jsonl').exists())
             self.assertFalse((saved / 'equity_liquidity_bar.jsonl').exists())
             self.assertFalse((saved / 'equity_trade_bar_derived.jsonl').exists())
             self.assertFalse((saved / 'equity_quote_bar_derived.jsonl').exists())
@@ -113,7 +118,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             old = pipeline.load_secret_alias
             pipeline.load_secret_alias = lambda alias: Secret()
             try:
-                result = run(task_key, run_id='02_feed_alpaca_liquidity_sample_run_test', client=FakeAlpacaClient(), client_is_fixture=True)
+                result = run(task_key, run_id='02_feed_alpaca_liquidity_sample_run_test', client=FakeAlpacaClient(), client_is_fixture=True, sql_writer=FakeSqlWriter())
             finally:
                 pipeline.load_secret_alias = old
             self.assertEqual(result.status, 'succeeded')
@@ -146,7 +151,7 @@ class AlpacaLiquidityPipelineTests(unittest.TestCase):
             old = pipeline.load_secret_alias
             pipeline.load_secret_alias = lambda alias: Secret()
             try:
-                result = run(task_key, run_id='02_feed_alpaca_liquidity_full_run_test', client=FakeAlpacaClient(), client_is_fixture=True)
+                result = run(task_key, run_id='02_feed_alpaca_liquidity_full_run_test', client=FakeAlpacaClient(), client_is_fixture=True, sql_writer=FakeSqlWriter())
             finally:
                 pipeline.load_secret_alias = old
             self.assertEqual(result.status, 'succeeded')

@@ -10,6 +10,9 @@ from importlib import import_module
 extract_events_from_artifact_paths = import_module(
     "data_source.m10_event_risk_governor_data_acquisition.feed_event_extraction"
 ).extract_events_from_artifact_paths
+extract_events_from_sql_inputs = import_module(
+    "data_source.m10_event_risk_governor_data_acquisition.feed_event_extraction"
+).extract_events_from_sql_inputs
 source_pipeline = import_module("data_source.m10_event_risk_governor_data_acquisition.pipeline")
 
 
@@ -20,6 +23,16 @@ class FakeSqlWriter:
     def write_rows(self, *, table, columns, rows, key_columns):
         self.calls.append({"table": table, "columns": columns, "rows": rows, "key_columns": key_columns})
         return {"table": table, "qualified_table": f"trading_data.{table}", "row_count": len(rows)}
+
+
+class FakeSqlReader:
+    def __init__(self, rows_by_table):
+        self.rows_by_table = rows_by_table
+        self.calls = []
+
+    def read_rows(self, *, table, columns, where_equals=None, where_in=None, time_column=None, start=None, end=None, order_by=None):
+        self.calls.append({"table": table, "columns": columns, "where_equals": where_equals, "where_in": where_in, "time_column": time_column, "start": start, "end": end, "order_by": order_by})
+        return [{column: row.get(column) for column in columns} for row in self.rows_by_table.get(table, [])]
 
 
 class EventOverlayFeedExtractionTests(unittest.TestCase):
@@ -52,6 +65,36 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             self.assertIn("grouped_rows=2", sec_rows[0]["summary"])
             self.assertIn("event_phase=release_result", sec_rows[0]["summary"])
             self.assertEqual([row for row in rows if row.get("symbol") == "AAPL"][0]["scope_type"], "symbol")
+
+    def test_extracts_sql_feed_rows_to_canonical_event_rows(self) -> None:
+        reader = FakeSqlReader(
+            {
+                "feed_03_alpaca_news": [
+                    {"id": "n1", "timeline_headline": "Apple reports results", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Earnings article", "event_link_url": "https://example.com/aapl"}
+                ],
+                "feed_05_gdelt_article": [
+                    {"article_id": "g1", "seen_at": "2024-01-09T09:00:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/macro", "title": "Fed policy update", "source_theme_tags": "ECON_STOCKMARKET", "organizations": "Federal Reserve", "tone": "-1.0", "impact_scope": "market"}
+                ],
+                "feed_08_sec_company_fact": [
+                    {"cik": "320193", "entity_name": "Apple Inc.", "taxonomy": "us-gaap", "tag": "Revenues", "unit": "USD", "fy": "2024", "fp": "Q1", "form": "10-Q", "filed": "2024-02-02", "end": "2023-12-30", "value": "119575000000", "accession_number": "0000320193-24-000006", "symbol": "AAPL"}
+                ],
+                "feed_12_release_calendar": [
+                    {"event_id": "cal1", "calendar_source": "nasdaq_earnings_calendar", "event_name": "AAPL earnings release (Apple Inc.)", "release_time": "2026-04-24T08:00:00-04:00", "event_date": "2026-04-24", "timezone": "America/New_York", "source_url": "https://api.nasdaq.com/api/calendar/earnings?date=2026-04-24", "raw_summary": "{}"}
+                ],
+            }
+        )
+        rows = extract_events_from_sql_inputs(
+            [
+                {"table": "feed_03_alpaca_news"},
+                {"table": "feed_05_gdelt_article"},
+                {"table": "feed_08_sec_company_fact"},
+                {"table": "feed_12_release_calendar"},
+            ],
+            sql_reader=reader,
+        )
+        self.assertEqual({row["event_category_type"] for row in rows}, {"symbol_news", "macro_news", "earnings_guidance"})
+        self.assertTrue(all(row["source_artifact_path"].startswith("sql://trading_data/feed_") for row in rows))
+        self.assertEqual([call["table"] for call in reader.calls], ["feed_03_alpaca_news", "feed_05_gdelt_article", "feed_08_sec_company_fact", "feed_12_release_calendar"])
 
 
     def test_extracts_nasdaq_earnings_calendar_as_scheduled_shell(self) -> None:
@@ -116,6 +159,28 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_name"], "03_feed_alpaca_news")
             self.assertEqual(row["source_artifact_path"], str(alpaca))
+
+    def test_source_pipeline_accepts_event_sql_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            tmp = Path(raw_tmp)
+            task_key = {
+                "task_id": "m10_event_risk_governor_data_acquisition_sql_task",
+                "source": "m10_event_risk_governor_data_acquisition",
+                "params": {
+                    "start": "2024-01-01T00:00:00-05:00",
+                    "end": "2024-02-01T00:00:00-05:00",
+                    "event_sql_inputs": [{"table": "feed_03_alpaca_news"}],
+                },
+                "output_root": str(tmp / "task"),
+            }
+            writer = FakeSqlWriter()
+            reader = FakeSqlReader({"feed_03_alpaca_news": [{"id": "n1", "timeline_headline": "Apple files earnings story", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Article", "event_link_url": "https://example.com/aapl"}]})
+            result = source_pipeline.run(task_key, run_id="run", sql_writer=writer, sql_reader=reader)
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(result.row_counts["m10_event_risk_governor_data_acquisition"], 1)
+            row = writer.calls[0]["rows"][0]
+            self.assertEqual(row["event_category_type"], "symbol_news")
+            self.assertEqual(row["source_artifact_path"], "sql://trading_data/feed_03_alpaca_news")
 
     def test_source_pipeline_preserves_same_time_news_events(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:

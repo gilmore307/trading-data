@@ -4,7 +4,7 @@ ThetaData option-chain selection snapshot feed.
 
 ## Purpose
 
-Produce a point-in-time `option_chain_snapshot.csv` artifact for a specified underlying and explicit ET snapshot time. The feed captures chain visibility; it does not select contracts or apply liquidity/spread/IV/Greek filters.
+Produce a point-in-time SQL `feed_09_option_chain_snapshot` row for a specified underlying and explicit ET snapshot time. The feed captures chain visibility; it does not select contracts or apply liquidity/spread/IV/Greek filters.
 
 ## Required params
 
@@ -40,15 +40,15 @@ Historical requests pass underlying, wildcard expiration, snapshot date, a bound
 ```text
 <output_root>/runs/<run_id>/
   request_manifest.json
-  saved/
-    option_chain_snapshot.csv
+  schema.json
+  trading_data.feed_09_option_chain_snapshot
 <output_root>/completion_receipt.json
 ```
 
-Only the normalized final CSV is saved. Raw provider responses are normalized in memory and discarded by default.
+Only the normalized final SQL row is saved. Raw provider responses are normalized in memory and discarded by default.
 
 Key row fields include underlying, snapshot time, contract identity, quote, IV, first-order Greeks, trade summary, and derived/context fields where provider data is available.
 
 ## Failure and retry
 
-The final CSV write is atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.
+The final SQL write is atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.

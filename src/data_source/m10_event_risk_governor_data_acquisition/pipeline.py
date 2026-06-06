@@ -12,9 +12,9 @@ from zoneinfo import ZoneInfo
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
-from storage.sql import PostgresSqlTableWriter, SqlTableWriter
+from storage.sql import PostgresSqlTableWriter, SqlTableReader, SqlTableWriter
 
-from .feed_event_extraction import extract_events_from_artifact_paths
+from .feed_event_extraction import extract_events_from_artifact_paths, extract_events_from_sql_inputs
 
 SOURCE = "m10_event_risk_governor_data_acquisition"
 MODEL_ID = "event_risk_governor"
@@ -155,7 +155,7 @@ def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
-def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
+def fetch(context: SourceContext, *, sql_reader: SqlTableReader | None = None) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     start = str(_required(params, "start"))
     end = str(_required(params, "end"))
@@ -163,14 +163,17 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
     symbols = [item.upper() for item in _string_list(params.get("symbols"))]
     events = [dict(item) for item in _as_list(params.get("events")) if isinstance(item, Mapping)]
     artifact_paths = _string_list(params.get("event_artifact_paths") or params.get("feed_artifact_paths"))
+    sql_inputs = [dict(item) for item in _as_list(params.get("event_sql_inputs") or params.get("feed_sql_inputs")) if isinstance(item, Mapping)]
+    if sql_inputs:
+        events.extend(extract_events_from_sql_inputs(sql_inputs, sql_reader=sql_reader))
     if artifact_paths:
         events.extend(extract_events_from_artifact_paths(artifact_paths))
     if not events:
-        raise EventRiskInputsError("params.events or params.event_artifact_paths must contain at least one event overview row")
+        raise EventRiskInputsError("params.events, params.event_sql_inputs, or params.event_artifact_paths must contain at least one event overview row")
     context.run_dir.mkdir(parents=True, exist_ok=True)
     manifest = context.run_dir / "request_manifest.json"
-    manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "focus_sectors": focus_sectors, "symbols": symbols, "event_count": len(events), "event_artifact_paths": artifact_paths, "raw_persistence": "event details remain behind references; SQL stores overview rows only", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(manifest)], {"raw_event_overview_rows": len(events)}, details={"event_count": len(events), "event_artifact_path_count": len(artifact_paths)}), SourcePayload(start, end, focus_sectors, symbols, events)
+    manifest.write_text(json.dumps(sanitize_value({"source": SOURCE, "model_id": MODEL_ID, "start": start, "end": end, "focus_sectors": focus_sectors, "symbols": symbols, "event_count": len(events), "event_sql_inputs": sql_inputs, "event_artifact_paths": artifact_paths, "raw_persistence": "event details remain behind SQL references; SQL stores overview rows only", "fetched_at_utc": _now_utc()}), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return StepResult("succeeded", [str(manifest)], {"raw_event_overview_rows": len(events)}, details={"event_count": len(events), "event_sql_input_count": len(sql_inputs), "event_artifact_path_count": len(artifact_paths)}), SourcePayload(start, end, focus_sectors, symbols, events)
 
 
 def _enum(value: Any, allowed: set[str], field_name: str) -> str:
@@ -330,11 +333,11 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, warnings=warnings, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, sql_writer: SqlTableWriter | None = None, sql_reader: SqlTableReader | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, feed_payload = fetch(context)
+        fetch_result, feed_payload = fetch(context, sql_reader=sql_reader)
         clean_result, cleaned_payload = clean(context, feed_payload)
         save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

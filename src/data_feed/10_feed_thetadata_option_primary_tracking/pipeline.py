@@ -1,15 +1,14 @@
 """ThetaData specified-contract option primary tracking feed.
 
-Development-stage final output is ``option_bar.csv``. ThetaData 1-second
-OHLC provider rows are fetched and normalized in memory; full raw provider
-responses are not persisted by default.
+Output is a SQL-only ``option_bar`` table. ThetaData 1-second OHLC provider
+rows are fetched and normalized in memory; full raw provider responses are not
+persisted by default.
 """
 
 from __future__ import annotations
 
 import csv
 import json
-import os
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timedelta, timezone
@@ -23,11 +22,14 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import manager_registry_csv, resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
+from storage.sql import SqlTableWriter
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
 DEFAULT_REGISTRY_CSV = manager_registry_csv()
 FEED = "10_feed_thetadata_option_primary_tracking"
+OUTPUT_TABLE = "feed_10_option_bar"
 SUPPORTED_TIMEFRAMES = {
     "1Sec": 1,
     "1Min": 60,
@@ -186,6 +188,11 @@ class FetchedOhlc:
     source_rows: list[dict[str, Any]]
     request_evidence: dict[str, Any]
     secret_alias: dict[str, Any] | None
+
+
+@dataclass(frozen=True)
+class CleanedPayload:
+    rows: list[dict[str, Any]]
 
 
 class ThetaDataOptionPrimaryTrackingError(ValueError):
@@ -565,60 +572,55 @@ def _aggregate_rows(names: RegistryNames, fetched: FetchedOhlc) -> tuple[list[di
     return output_rows, active_count
 
 
-def clean(context: FeedContext, fetched: FetchedOhlc) -> StepResult:
+def clean(context: FeedContext, fetched: FetchedOhlc) -> tuple[StepResult, CleanedPayload]:
     names = RegistryNames(context.registry_csv)
     rows, active_count = _aggregate_rows(names, fetched)
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    jsonl_path = context.cleaned_dir / "option_bar.jsonl"
-    with jsonl_path.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
-    schema_path = context.cleaned_dir / "schema.json"
-    schema_path.write_text(
-        json.dumps({"option_bar": [names.field_name(ref) for ref in CSV_FIELD_REFS]}, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    fields = [names.field_name(ref) for ref in CSV_FIELD_REFS]
+    schema_path = write_schema(context.run_dir, "option_bar", fields, row_count=len(rows))
     warnings = []
     if not rows:
         warnings.append("ThetaData OHLC returned no nonzero-volume/count rows for the requested contract/range")
-    return StepResult(
-        "succeeded",
-        [str(jsonl_path), str(schema_path)],
-        {"option_bar": len(rows), "active_option_ohlc_rows_transient": active_count},
-        warnings=warnings,
-        details={
-            "timezone": "America/New_York",
-            "format": "jsonl",
-            "zero_volume_placeholders_skipped": len(fetched.source_rows) - active_count,
-            "vwap_method": "close_volume_weighted_from_1sec_ohlc",
-        },
+    return (
+        StepResult(
+            "succeeded",
+            [str(schema_path)],
+            {"option_bar": len(rows), "active_option_ohlc_rows_transient": active_count},
+            warnings=warnings,
+            details={
+                "timezone": "America/New_York",
+                "format": "sql_ready_rows",
+                "retention": "sql_only_no_jsonl_or_csv_payload",
+                "zero_volume_placeholders_skipped": len(fetched.source_rows) - active_count,
+                "vwap_method": "close_volume_weighted_from_1sec_ohlc",
+            },
+        ),
+        CleanedPayload(sql_rows(rows, fields)),
     )
 
 
-def _read_cleaned_rows(path: Path) -> list[dict[str, Any]]:
-    if not path.exists():
-        return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-
-
-def save(context: FeedContext, clean_result: StepResult) -> StepResult:
+def save(context: FeedContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
     names = RegistryNames(context.registry_csv)
     fields = [names.field_name(ref) for ref in CSV_FIELD_REFS]
-    rows = _read_cleaned_rows(context.cleaned_dir / "option_bar.jsonl")
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / "option_bar.csv"
-    tmp_path = path.with_suffix(path.suffix + ".tmp")
-    with tmp_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    os.replace(tmp_path, path)
+    metadata = write_table(
+        table=OUTPUT_TABLE,
+        columns=fields,
+        rows=payload.rows,
+        key_columns=[
+            names.field_name(OPTION_UNDERLYING),
+            names.field_name(OPTION_EXPIRATION),
+            names.field_name(OPTION_RIGHT_TYPE),
+            names.field_name(OPTION_STRIKE),
+            names.field_name(TIMEFRAME),
+            names.field_name(DATA_TIMESTAMP),
+        ],
+        sql_writer=sql_writer,
+    )
     return StepResult(
         "succeeded",
-        [str(path)],
+        [sql_reference(metadata)],
         dict(clean_result.row_counts),
         warnings=list(clean_result.warnings),
-        details={"format": "csv", "atomic_write": True},
+        details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": fields, "storage": metadata, "file_payload_deleted": True},
     )
 
 
@@ -684,13 +686,13 @@ def write_receipt(
     )
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
-        clean_result = clean(context, fetched)
-        save_result = save(context, clean_result)
+        clean_result, payload = clean(context, fetched)
+        save_result = save(context, clean_result, payload, sql_writer=sql_writer)
         return write_receipt(
             context,
             status="succeeded",

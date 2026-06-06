@@ -28,9 +28,9 @@ Common params:
 Outputs:
 
 - `request_manifest.json` — endpoint, sanitized request params, fetch time, and fair-access evidence.
-- `cleaned/<data_kind>.jsonl` and `cleaned/schema.json` — transient run-local normalized rows.
-- `saved/<data_kind>.csv` — final compact CSV output.
-- `saved/sec_filing_document_text.txt` — final official filing text artifact for `sec_filing_document` only.
+- `schema.json` — SQL output schema and row count evidence.
+- `trading_data.feed_08_sec_submission`, `trading_data.feed_08_sec_company_fact`, `trading_data.feed_08_sec_company_concept`, `trading_data.feed_08_sec_xbrl_frame`, or `trading_data.feed_08_sec_filing_document` — final compact SQL rows.
+- `sec_filing_document_text.txt` — final official filing text artifact for `sec_filing_document` only.
 - `completion_receipt.json` at task root.
 
 Rules:
@@ -38,6 +38,6 @@ Rules:
 - Use official SEC endpoints only by default.
 - Automated requests must send an identifying SEC User-Agent.
 - `sec_submission` preserves SEC `acceptanceDateTime` when the submissions API provides it; this is the filing visibility clock for realtime issuer-event checks.
-- Full raw SEC JSON responses are not persisted by default because `companyfacts` can be large.
+- Full raw SEC JSON responses and CSV/JSONL mirrors are not persisted by default because `companyfacts` can be large.
 - `sec_filing_document` is the explicit exception: the requested official document text is persisted as a reviewed artifact because downstream guidance/result interpretation needs source text and provenance.
 - This feed does not normalize GAAP facts into model-ready financial statements; that belongs to a reviewed model/financials transformation boundary.

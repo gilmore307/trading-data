@@ -80,7 +80,7 @@ ThetaData runtime lives outside Git under `/root/tools/thetadata-terminal/` and 
 ## D013 — ThetaData option feeds are use-case split
 
 - `09_feed_thetadata_option_selection_snapshot` captures point-in-time option-chain visibility.
-- `10_feed_thetadata_option_primary_tracking` tracks one caller-supplied contract and writes `option_bar.csv`.
+- `10_feed_thetadata_option_primary_tracking` tracks one caller-supplied contract and writes SQL `feed_10_option_bar` rows.
 - `11_feed_thetadata_option_event_timeline` emits event rows/details for one caller-supplied contract and supplied event standard.
 
 `trading-data` does not choose contracts inside these feeds.

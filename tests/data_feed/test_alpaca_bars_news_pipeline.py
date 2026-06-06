@@ -1,8 +1,9 @@
 from __future__ import annotations
-import csv,json,tempfile,unittest
+import json,tempfile,unittest
 from importlib import import_module
 from pathlib import Path
 from feed_availability.http import HttpResult
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 class FakeBarsClient:
     def get(self,url,*,params=None,headers=None):
@@ -15,13 +16,6 @@ class FakeNewsClient:
         return HttpResult(url=url,status=200,headers={},body=json.dumps({'news':[{'id':1,'headline':'h','source':'benzinga','author':'a','created_at':'2024-01-09T19:46:19Z','updated_at':'2024-01-09T19:46:19Z','symbols':['AAPL'],'summary':'s','content':'','url':'https://example.test','images':[{}]}]}).encode())
 class Secret:
     alias='alpaca'; path=Path('/root/secrets/alpaca.json'); present=True; keys_present=('api_key','secret_key'); values={'api_key':'k','secret_key':'s','data_endpoint':'https://data.alpaca.markets'}
-class FakeSqlWriter:
-    def __init__(self):
-        self.calls=[]
-    def write_rows(self,*,table,columns,rows,key_columns):
-        self.calls.append({'table':table,'columns':tuple(columns),'rows':list(rows),'key_columns':tuple(key_columns)})
-        return {'qualified_table':f'trading_data.{table}','table':table,'rows_written':len(rows),'driver':'fake'}
-
 class AlpacaBarsNewsPipelineTests(unittest.TestCase):
     def test_bars_pipeline_writes_sql_without_jsonl_or_csv_payload(self):
         p = import_module("data_feed.01_feed_alpaca_bars.pipeline")
@@ -90,12 +84,14 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 tk={'task_id':'03_feed_alpaca_news_task_test','feed':'03_feed_alpaca_news','params':{'symbols':'AAPL','start':'2024-01-09T00:00:00Z','end':'2024-01-10T00:00:00Z'},'output_root':str(Path(tmp)/'task')}
-                r=p.run(tk,run_id='03_feed_alpaca_news_run_test',client=FakeNewsClient(), client_is_fixture=True)
+                writer=FakeSqlWriter()
+                r=p.run(tk,run_id='03_feed_alpaca_news_run_test',client=FakeNewsClient(), client_is_fixture=True, sql_writer=writer)
                 self.assertEqual(r.status,'succeeded')
-                with (Path(tk['output_root'])/'runs/03_feed_alpaca_news_run_test/saved/equity_news.csv').open(newline='') as handle:
-                    reader=csv.DictReader(handle); row=next(reader)
-                self.assertEqual(reader.fieldnames,['id','timeline_headline','created_at','updated_at','symbols','summary','event_link_url'])
+                row=writer.rows_for('feed_03_alpaca_news')[0]
+                self.assertEqual(writer.calls[0]['columns'],('id','timeline_headline','created_at','updated_at','symbols','summary','event_link_url'))
                 self.assertEqual(row['created_at'],'2024-01-09T14:46:19-05:00')
-                self.assertFalse((Path(tk['output_root'])/'runs/03_feed_alpaca_news_run_test/saved/equity_news.jsonl').exists())
+                run_dir=Path(tk['output_root'])/'runs/03_feed_alpaca_news_run_test'
+                self.assertFalse((run_dir/'saved/equity_news.csv').exists())
+                self.assertFalse((run_dir/'cleaned/equity_news.jsonl').exists())
         finally: p.load_secret_alias=old
 if __name__=='__main__': unittest.main()

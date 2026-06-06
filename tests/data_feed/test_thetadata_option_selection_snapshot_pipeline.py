@@ -1,4 +1,3 @@
-import csv
 import json
 import tempfile
 import unittest
@@ -10,6 +9,7 @@ from importlib import import_module
 pipeline = import_module("data_feed.09_feed_thetadata_option_selection_snapshot.pipeline")
 run = pipeline.run
 from feed_availability.http import HttpResult
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 
 class FakeThetaDataClient:
@@ -200,21 +200,21 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
-            result = run(task_key, run_id="09_feed_thetadata_option_selection_snapshot_run_test", client=FakeThetaDataClient(), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="09_feed_thetadata_option_selection_snapshot_run_test", client=FakeThetaDataClient(), client_is_fixture=True, sql_writer=writer)
 
             self.assertEqual(result.status, "succeeded")
             saved_path = output_root / "runs" / "09_feed_thetadata_option_selection_snapshot_run_test" / "saved" / "option_chain_snapshot.csv"
-            self.assertTrue(saved_path.exists())
+            self.assertFalse(saved_path.exists())
             self.assertFalse((saved_path.parent / "option_chain_snapshot.csv.tmp").exists())
             self.assertFalse((saved_path.parent / "option_chain_snapshot.jsonl").exists())
 
-            with saved_path.open(newline="") as handle:
-                snapshot = next(csv.DictReader(handle))
+            snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
             self.assertNotIn("data_kind", snapshot)
             self.assertNotIn("source", snapshot)
             self.assertEqual(snapshot["underlying"], "AAPL")
             self.assertEqual(snapshot["snapshot_time"], "2026-04-24T09:30:02.500000-04:00")
-            self.assertEqual(snapshot["contract_count"], "1")
+            self.assertEqual(snapshot["contract_count"], 1)
 
             contract = json.loads(snapshot["contracts"])[0]
             self.assertEqual(contract["option_right_type"], "CALL")
@@ -270,7 +270,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 "output_root": str(output_root),
             }
             with patch.object(pipeline, "HttpClient", CapturingThetaDataClient):
-                result = run(task_key, run_id="run_default_retry", client_is_fixture=True)
+                result = run(task_key, run_id="run_default_retry", client_is_fixture=True, sql_writer=FakeSqlWriter())
 
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(len(CapturingThetaDataClient.instances), 1)
@@ -298,20 +298,20 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(output_root),
             }
+            writer = FakeSqlWriter()
             result = run(
                 task_key,
                 run_id="09_feed_thetadata_option_selection_snapshot_window_test",
                 client=FakeHistoricalThetaDataClient(),
                 client_is_fixture=True,
+                sql_writer=writer,
             )
 
             self.assertEqual(result.status, "succeeded")
-            saved_path = output_root / "runs" / "09_feed_thetadata_option_selection_snapshot_window_test" / "saved" / "option_chain_snapshot.csv"
-            with saved_path.open(newline="") as handle:
-                snapshot = next(csv.DictReader(handle))
+            snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
             contracts = json.loads(snapshot["contracts"])
 
-            self.assertEqual(snapshot["contract_count"], "2")
+            self.assertEqual(snapshot["contract_count"], 2)
             self.assertEqual([contract["snapshot_time"] for contract in contracts], [
                 "2016-01-05T09:30:00-05:00",
                 "2016-01-05T09:31:00-05:00",

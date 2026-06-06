@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import json
 import tempfile
 import unittest
@@ -8,6 +7,7 @@ from importlib import import_module
 from pathlib import Path
 
 from feed_availability.http import HttpResult
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 pipeline = import_module("data_feed.12_feed_official_calendar_discovery.pipeline")
 
@@ -40,12 +40,11 @@ class OfficialCalendarDiscoveryPipelineTests(unittest.TestCase):
                 "params": {"data_kind": "nasdaq_earnings_calendar", "date": "2026-06-05", "symbols": ["AAPL"]},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = pipeline.run(task_key, run_id="run", client=FakeCalendarClient(payload), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = pipeline.run(task_key, run_id="run", client=FakeCalendarClient(payload), client_is_fixture=True, sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["release_calendar"], 1)
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "release_calendar.csv"
-            with saved.open(newline="", encoding="utf-8") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_12_release_calendar")[0]
             self.assertEqual(row["calendar_source"], "nasdaq_earnings_calendar")
             self.assertEqual(row["event_name"], "AAPL earnings")
             self.assertIn("T16:05:00", row["release_time"])
@@ -65,16 +64,15 @@ class OfficialCalendarDiscoveryPipelineTests(unittest.TestCase):
                 "params": {"data_kind": "nasdaq_earnings_calendar", "date": "2026-06-05", "symbols": ["AAPL"]},
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = pipeline.run(task_key, run_id="run", client=FakeCalendarClient(payload), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = pipeline.run(task_key, run_id="run", client=FakeCalendarClient(payload), client_is_fixture=True, sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["release_calendar"], 0)
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             warnings = receipt["runs"][0]["steps"]["clean"]["warnings"]
             self.assertIn("no normalized rows", warnings[0])
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "release_calendar.csv"
-            with saved.open(newline="", encoding="utf-8") as handle:
-                rows = list(csv.DictReader(handle))
-            self.assertEqual(rows, [])
+            self.assertEqual(writer.calls, [])
+            self.assertFalse((Path(task_key["output_root"]) / "runs/run/saved/release_calendar.csv").exists())
 
     def test_official_exchange_calendar_parses_nyse_holiday_page(self):
         payload = """
@@ -105,11 +103,10 @@ class OfficialCalendarDiscoveryPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = pipeline.run(task_key, run_id="run", client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = pipeline.run(task_key, run_id="run", client_is_fixture=True, sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "official_exchange_calendar.csv"
-            with saved.open(newline="", encoding="utf-8") as handle:
-                rows = list(csv.DictReader(handle))
+            rows = writer.rows_for("feed_12_official_exchange_calendar")
             row_by_key = {(row["venue"], row["calendar_date"], row["session_status"]): row for row in rows}
             self.assertEqual(row_by_key[("NYSE", "2026-01-01", "closed")]["holiday_name"], "New Year’s Day")
             self.assertEqual(row_by_key[("NYSE", "2026-06-19", "closed")]["holiday_name"], "Juneteenth National Independence Day")
@@ -185,12 +182,11 @@ class OfficialCalendarDiscoveryPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = pipeline.run(task_key, run_id="run", client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = pipeline.run(task_key, run_id="run", client_is_fixture=True, sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["index_calendar"], 1)
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "index_calendar.csv"
-            with saved.open(newline="", encoding="utf-8") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_12_index_calendar")[0]
             self.assertEqual(row["calendar_source"], "sp_dow_jones_indices_announcement")
             self.assertEqual(row["index_symbol"], "DJIA")
             self.assertEqual(row["result_status"], "membership_result_available")

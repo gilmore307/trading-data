@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import csv
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from importlib import import_module
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 run = import_module("data_feed.08_feed_sec_company_financials.pipeline").run
 from feed_availability.http import HttpResult
@@ -43,16 +43,18 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
                 "output_root": str(Path(tmp) / "08_feed_sec_company_financials_task_test"),
             }
             client = FakeSecClient(payload)
-            result = run(task_key, run_id="08_feed_sec_company_financials_run_test", client=client, client_is_fixture=True, sec_user_agent="test@example.com")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="08_feed_sec_company_financials_run_test", client=client, client_is_fixture=True, sec_user_agent="test@example.com", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertIn("CIK0000320193/us-gaap/Assets.json", client.requests[0][0])
             self.assertEqual(client.requests[0][2]["User-Agent"], "test@example.com")
-            saved = Path(task_key["output_root"]) / "runs" / "08_feed_sec_company_financials_run_test" / "saved" / "sec_company_concept.csv"
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_08_sec_company_concept")[0]
             self.assertEqual(row["cik"], "320193")
             self.assertEqual(row["tag"], "Assets")
-            self.assertEqual(row["value"], "352583000000")
+            self.assertEqual(row["value"], 352583000000)
+            run_dir = Path(task_key["output_root"]) / "runs" / "08_feed_sec_company_financials_run_test"
+            self.assertFalse((run_dir / "saved/sec_company_concept.csv").exists())
+            self.assertFalse((run_dir / "cleaned/sec_company_concept.jsonl").exists())
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["row_counts"]["sec_company_concept"], 1)
 
@@ -69,7 +71,7 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "08_feed_sec_company_financials_task_fact", "feed": "08_feed_sec_company_financials", "params": {"data_kind": "sec_company_fact", "cik": "0000320193", "taxonomy": "us-gaap", "tag": "Assets", "unit": "USD"}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeSecClient(payload), client_is_fixture=True, sec_user_agent="test")
+            result = run(task_key, run_id="run", client=FakeSecClient(payload), client_is_fixture=True, sec_user_agent="test", sql_writer=FakeSqlWriter())
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_company_fact"], 1)
 
@@ -80,12 +82,11 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "08_feed_sec_company_financials_task_sub", "feed": "08_feed_sec_company_financials", "params": {"data_kind": "sec_submission", "cik": "320193"}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeSecClient(payload), client_is_fixture=True, sec_user_agent="test")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", client=FakeSecClient(payload), client_is_fixture=True, sec_user_agent="test", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_submission"], 1)
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "sec_submission.csv"
-            with saved.open(newline="", encoding="utf-8") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_08_sec_submission")[0]
             self.assertEqual(row["acceptance_datetime"], "2024-01-01T16:02:03.000Z")
 
     def test_filing_document_fetch_saves_metadata_and_text_artifact(self):
@@ -103,19 +104,20 @@ class SecCompanyFinancialsPipelineTests(unittest.TestCase):
                 "output_root": str(Path(tmp) / "task"),
             }
             client = FakeSecClient(payload)
-            result = run(task_key, run_id="run", client=client, client_is_fixture=True, sec_user_agent="test")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", client=client, client_is_fixture=True, sec_user_agent="test", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["sec_filing_document"], 1)
             self.assertIn("/Archives/edgar/data/320193/000032019324000001/aapl-20240101.htm", client.requests[0][0])
-            saved_dir = Path(task_key["output_root"]) / "runs" / "run" / "saved"
-            with (saved_dir / "sec_filing_document.csv").open(newline="", encoding="utf-8") as handle:
-                row = next(csv.DictReader(handle))
+            run_dir = Path(task_key["output_root"]) / "runs" / "run"
+            row = writer.rows_for("feed_08_sec_filing_document")[0]
             self.assertEqual(row["accession_number"], "0000320193-24-000001")
             self.assertEqual(row["document_name"], "aapl-20240101.htm")
             self.assertTrue(row["text_sha256"])
             text_path = Path(row["document_text_path"])
             self.assertTrue(text_path.exists())
             self.assertIn("updates outlook", text_path.read_text(encoding="utf-8"))
+            self.assertFalse((run_dir / "saved/sec_filing_document.csv").exists())
 
     def test_bad_kind_writes_failed_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

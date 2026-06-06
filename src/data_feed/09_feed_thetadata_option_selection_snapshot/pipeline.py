@@ -1,14 +1,13 @@
 """ThetaData option-chain selection snapshot acquisition feed.
 
-Development-stage output is a single final ``option_chain_snapshot.csv`` file.
-Raw provider responses are fetched and normalized in memory, then discarded.
+Output is a SQL-only option-chain snapshot row. Raw provider responses are
+fetched and normalized in memory, then discarded.
 """
 
 from __future__ import annotations
 
 import csv
 import json
-import os
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
@@ -22,11 +21,14 @@ from feed_availability.secrets import load_secret_alias, public_secret_summary
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import manager_registry_csv, resolve_output_root
 from data_runtime.io import write_receipt_bundle
+from data_feed.sql_only import sql_reference, sql_rows, write_table
+from storage.sql import SqlTableWriter
 
 ET = ZoneInfo("America/New_York")
 UTC = timezone.utc
 DEFAULT_REGISTRY_CSV = manager_registry_csv()
 FEED = "09_feed_thetadata_option_selection_snapshot"
+OUTPUT_TABLE = "feed_09_option_chain_snapshot"
 DEFAULT_MAX_DTE = 45
 DEFAULT_STRIKE_RANGE = 5
 DEFAULT_OPTION_BUCKET_POLICY_REF = "LAYER_09_OPTION_BUCKET_STRIKE_POLICY"
@@ -855,12 +857,13 @@ def clean(context: FeedContext, fetched: FetchedSnapshot) -> tuple[StepResult, d
             "contract_count": len(contracts),
             "candidate_count": len(keys),
             "prefilter_rejected": rejected_by_reason,
-            "format": "csv",
+            "format": "sql_ready_rows",
+            "retention": "sql_only_no_jsonl_or_csv_payload",
         },
     ), snapshot
 
 
-def save(context: FeedContext, clean_result: StepResult, snapshot: dict[str, Any]) -> StepResult:
+def save(context: FeedContext, clean_result: StepResult, snapshot: dict[str, Any], *, sql_writer: SqlTableWriter | None = None) -> StepResult:
     names = RegistryNames(context.registry_csv)
     fields = [
         names.field_name(OPTION_UNDERLYING),
@@ -868,21 +871,13 @@ def save(context: FeedContext, clean_result: StepResult, snapshot: dict[str, Any
         names.field_name(OPTION_CONTRACT_COUNT),
         names.field_name(OPTION_CONTRACTS),
     ]
-    row = dict(snapshot)
-    row[names.field_name(OPTION_CONTRACTS)] = json.dumps(row.get(names.field_name(OPTION_CONTRACTS), []), separators=(",", ":"))
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / "option_chain_snapshot.csv"
-    tmp_path = path.with_suffix(path.suffix + ".tmp")
-    with tmp_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerow(row)
-    os.replace(tmp_path, path)
+    rows = sql_rows([snapshot], fields)
+    metadata = write_table(table=OUTPUT_TABLE, columns=fields, rows=rows, key_columns=[names.field_name(OPTION_UNDERLYING), names.field_name(SNAPSHOT_TIME)], sql_writer=sql_writer)
     return StepResult(
         "succeeded",
-        [str(path)],
+        [sql_reference(metadata)],
         dict(clean_result.row_counts),
-        details={"format": "csv", "atomic_write": True},
+        details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": fields, "storage": metadata, "file_payload_deleted": True},
     )
 
 
@@ -940,13 +935,13 @@ def write_receipt(
     )
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
         clean_result, snapshot = clean(context, fetched)
-        save_result = save(context, clean_result, snapshot)
+        save_result = save(context, clean_result, snapshot, sql_writer=sql_writer)
         return write_receipt(
             context,
             status="succeeded",

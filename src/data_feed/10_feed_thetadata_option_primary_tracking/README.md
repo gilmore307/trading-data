@@ -4,7 +4,7 @@ ThetaData specified-contract option bar feed.
 
 ## Purpose
 
-Produce final `option_bar.csv` rows for one option contract supplied by the caller. The feed tracks the supplied contract; it does not choose contracts.
+Produce final SQL `feed_10_option_bar` rows for one option contract supplied by the caller. The feed tracks the supplied contract; it does not choose contracts.
 
 ## Required params
 
@@ -36,18 +36,15 @@ ThetaData returns 1-second OHLC rows, including zero-volume placeholders. The fe
 ```text
 <output_root>/runs/<run_id>/
   request_manifest.json
-  cleaned/
-    option_bar.jsonl
-    schema.json
-  saved/
-    option_bar.csv
+  schema.json
+  trading_data.feed_10_option_bar
 <output_root>/completion_receipt.json
 ```
 
-Only `saved/option_bar.csv` is the final saved output. Cleaned JSONL is run-local development evidence. Raw provider responses are not persisted by default.
+Only `trading_data.feed_10_option_bar` is the final saved output. Raw provider responses are not persisted by default.
 
-Final CSV fields include contract identity, timeframe, timestamp, OHLC, volume, trade count, and VWAP.
+Final SQL fields include contract identity, timeframe, timestamp, OHLC, volume, trade count, and VWAP.
 
 ## Failure and retry
 
-The final CSV write is atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.
+The final SQL write is atomic. A failed run has no valid partial final output; rerun the task after fixing the cause.

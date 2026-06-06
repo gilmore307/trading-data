@@ -136,7 +136,7 @@ class PostgresSqlTableWriter:
             conflict = f"ON CONFLICT ({', '.join(id_keys)}) DO UPDATE SET {assignments}"
         else:
             conflict = f"ON CONFLICT ({', '.join(id_keys)}) DO NOTHING"
-        ddl = _table_ddl(table, qualified) if self.create_table else None
+        ddl = _table_ddl(table, qualified, columns=columns, key_columns=key_columns) if self.create_table else None
         statement = f"INSERT INTO {qualified} ({', '.join(id_columns)}) VALUES ({placeholders}) {conflict}"
         values = [tuple(row.get(column) for column in columns) for row in rows]
         try:
@@ -248,7 +248,13 @@ class PostgresSqlTableReader:
                 return [dict(row) for row in cursor.fetchall()]
 
 
-def _table_ddl(table: str, qualified_table: str) -> str | None:
+def _table_ddl(
+    table: str,
+    qualified_table: str,
+    *,
+    columns: Sequence[str] | None = None,
+    key_columns: Sequence[str] | None = None,
+) -> str | None:
     if table in {"source_01_market_regime", "m01_market_regime_data_acquisition"}:
         return _market_regime_table_ddl(qualified_table)
     if table == "model_input_artifact_reference":
@@ -263,7 +269,20 @@ def _table_ddl(table: str, qualified_table: str) -> str | None:
         return _source_06_position_execution_ddl(qualified_table)
     if table == "m10_event_risk_governor_data_acquisition":
         return _source_10_event_risk_governor_ddl(qualified_table)
+    if columns and key_columns:
+        return _generic_feed_table_ddl(qualified_table, columns=columns, key_columns=key_columns)
     return None
+
+
+def _generic_feed_table_ddl(qualified_table: str, *, columns: Sequence[str], key_columns: Sequence[str]) -> str:
+    column_defs = ",\n        ".join(f"{_ident(column)} TEXT" for column in columns)
+    primary_key = ", ".join(_ident(column) for column in key_columns)
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        {column_defs},
+        PRIMARY KEY ({primary_key})
+    )
+    """
 
 
 def _market_regime_table_ddl(qualified_table: str) -> str:

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import csv
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from importlib import import_module
+from tests.data_feed.fake_sql import FakeSqlWriter
 
 run = import_module("data_feed.05_feed_gdelt_news.pipeline").run
 
@@ -50,7 +50,8 @@ class GdeltNewsPipelineTests(unittest.TestCase):
                 "output_root": str(Path(tmp) / "05_feed_gdelt_news_task_test"),
             }
             client = FakeBigQueryClient(rows)
-            result = run(task_key, run_id="05_feed_gdelt_news_run_test", client=client, client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="05_feed_gdelt_news_run_test", client=client, client_is_fixture=True, sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["gdelt_article"], 1)
             sql, max_results, maximum_bytes_billed, dry_run = client.requests[0]
@@ -62,12 +63,13 @@ class GdeltNewsPipelineTests(unittest.TestCase):
             self.assertEqual(max_results, 10)
             self.assertIsNone(maximum_bytes_billed)
             self.assertFalse(dry_run)
-            saved = Path(task_key["output_root"]) / "runs" / "05_feed_gdelt_news_run_test" / "saved" / "gdelt_article.csv"
-            with saved.open(newline="") as handle:
-                row = next(csv.DictReader(handle))
+            row = writer.rows_for("feed_05_gdelt_article")[0]
             self.assertEqual(row["article_id"], "20260427123000-1")
             self.assertEqual(row["seen_at"], "2026-04-27T08:30:00-04:00")
             self.assertEqual(row["tone"], "-1.2")
+            run_dir = Path(task_key["output_root"]) / "runs" / "05_feed_gdelt_news_run_test"
+            self.assertFalse((run_dir / "saved/gdelt_article.csv").exists())
+            self.assertFalse((run_dir / "cleaned/gdelt_article.jsonl").exists())
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["row_counts"]["gdelt_article"], 1)
 
@@ -76,7 +78,7 @@ class GdeltNewsPipelineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "05_feed_gdelt_news_task_default", "feed": "05_feed_gdelt_news", "params": {"max_rows": 1, "start_date": "2026-04-27", "end_date": "2026-04-28"}, "output_root": str(Path(tmp) / "task")}
             client = FakeBigQueryClient(rows)
-            result = run(task_key, run_id="run", client=client, client_is_fixture=True)
+            result = run(task_key, run_id="run", client=client, client_is_fixture=True, sql_writer=FakeSqlWriter())
             self.assertEqual(result.status, "succeeded")
             sql = client.requests[0][0].lower()
             self.assertIn("government", sql)
@@ -91,14 +93,13 @@ class GdeltNewsPipelineTests(unittest.TestCase):
         ]
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {"task_id": "05_feed_gdelt_news_task_window", "feed": "05_feed_gdelt_news", "params": {"query_terms": ["inflation"], "start_date": "2026-04-27", "end_date": "2026-04-28"}, "output_root": str(Path(tmp) / "task")}
-            result = run(task_key, run_id="run", client=FakeBigQueryClient(rows), client_is_fixture=True)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", client=FakeBigQueryClient(rows), client_is_fixture=True, sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["gdelt_article"], 1)
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["steps"]["clean"]["warnings"], ["out_of_window_gdelt_rows_skipped=1"])
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "gdelt_article.csv"
-            with saved.open(newline="") as handle:
-                saved_rows = list(csv.DictReader(handle))
+            saved_rows = writer.rows_for("feed_05_gdelt_article")
             self.assertEqual([row["article_id"] for row in saved_rows], ["inside"])
 
     def test_bad_topic_category_writes_failed_receipt(self):

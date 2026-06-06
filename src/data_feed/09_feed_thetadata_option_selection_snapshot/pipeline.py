@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import json
 from collections.abc import Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -384,6 +385,24 @@ def _fetch_endpoint(
     }
 
 
+def _fetch_endpoints_parallel(
+    client: HttpClient,
+    base_url: str,
+    requests: Sequence[tuple[str, str, Mapping[str, str], str]],
+) -> dict[str, tuple[list[dict[str, Any]], dict[str, Any]]]:
+    if not requests:
+        return {}
+    results: dict[str, tuple[list[dict[str, Any]], dict[str, Any]]] = {}
+    with ThreadPoolExecutor(max_workers=len(requests)) as executor:
+        futures = {
+            executor.submit(_fetch_endpoint, client, base_url, endpoint, params, name): key
+            for key, endpoint, params, name in requests
+        }
+        for future in as_completed(futures):
+            results[futures[future]] = future.result()
+    return results
+
+
 def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedSnapshot]:
     params = dict(context.task_key.get("params") or {})
     underlying = str(_required(params, "underlying")).upper()
@@ -444,12 +463,6 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             "max_dte": max_dte,
             "strike_range": strike_range,
         }
-        quote_rows, quote_evidence = _fetch_endpoint(
-            client, base_url, "/v3/option/history/quote", quote_params, "historical quote snapshot"
-        )
-        greeks_rows, greeks_evidence = _fetch_endpoint(
-            client, base_url, "/v3/option/history/greeks/eod", greeks_params, "historical EOD Greeks snapshot"
-        )
         trade_params = {
             **request_params,
             "date": window_start.date().isoformat(),
@@ -458,9 +471,18 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             "max_dte": max_dte,
             "strike_range": strike_range,
         }
-        trade_rows, trade_evidence = _fetch_endpoint(
-            client, base_url, "/v3/option/history/trade", trade_params, "historical trade window"
+        fetched = _fetch_endpoints_parallel(
+            client,
+            base_url,
+            (
+                ("quote", "/v3/option/history/quote", quote_params, "historical quote snapshot"),
+                ("greeks", "/v3/option/history/greeks/eod", greeks_params, "historical EOD Greeks snapshot"),
+                ("trade", "/v3/option/history/trade", trade_params, "historical trade window"),
+            ),
         )
+        quote_rows, quote_evidence = fetched["quote"]
+        greeks_rows, greeks_evidence = fetched["greeks"]
+        trade_rows, trade_evidence = fetched["trade"]
         iv_rows = greeks_rows
         iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}
     else:
@@ -470,23 +492,23 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             "strike_range": strike_range,
             "min_time": snapshot_time.strftime("%H:%M:%S.000"),
         }
-        quote_rows, quote_evidence = _fetch_endpoint(
-            client, base_url, "/v3/option/snapshot/quote", snapshot_params, "quote snapshot"
-        )
-        iv_rows, iv_evidence = _fetch_endpoint(
+        fetched = _fetch_endpoints_parallel(
             client,
             base_url,
-            "/v3/option/snapshot/greeks/implied_volatility",
-            snapshot_params,
-            "implied-volatility snapshot",
+            (
+                ("quote", "/v3/option/snapshot/quote", snapshot_params, "quote snapshot"),
+                (
+                    "iv",
+                    "/v3/option/snapshot/greeks/implied_volatility",
+                    snapshot_params,
+                    "implied-volatility snapshot",
+                ),
+                ("greeks", "/v3/option/snapshot/greeks/first_order", snapshot_params, "first-order Greeks snapshot"),
+            ),
         )
-        greeks_rows, greeks_evidence = _fetch_endpoint(
-            client,
-            base_url,
-            "/v3/option/snapshot/greeks/first_order",
-            snapshot_params,
-            "first-order Greeks snapshot",
-        )
+        quote_rows, quote_evidence = fetched["quote"]
+        iv_rows, iv_evidence = fetched["iv"]
+        greeks_rows, greeks_evidence = fetched["greeks"]
         trade_rows = []
         trade_evidence = {"name": "trade window", "row_count": 0, "skipped": "not_available_for_realtime_snapshot_mode"}
 

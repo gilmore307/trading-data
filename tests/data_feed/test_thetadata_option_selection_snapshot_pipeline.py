@@ -1,5 +1,7 @@
 import json
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -185,6 +187,24 @@ class CapturingThetaDataClient(FakeThetaDataClient):
         self.instances.append(self)
 
 
+class SlowThetaDataClient(FakeThetaDataClient):
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._active = 0
+        self.max_active = 0
+
+    def get(self, url, *, params=None, headers=None):
+        with self._lock:
+            self._active += 1
+            self.max_active = max(self.max_active, self._active)
+        try:
+            time.sleep(0.05)
+            return super().get(url, params=params, headers=headers)
+        finally:
+            with self._lock:
+                self._active -= 1
+
+
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_only_with_snapshot_clock(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -281,6 +301,27 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             manifest = json.loads((output_root / "runs" / "run_default_retry" / "request_manifest.json").read_text())
             self.assertEqual(manifest["params"]["retry_attempts"], 3)
             self.assertEqual(manifest["params"]["retry_backoff_seconds"], 1.0)
+
+    def test_realtime_snapshot_fetches_endpoints_concurrently(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2026-04-24T09:30:02.500000-04:00",
+                    "historical_mode": False,
+                    "thetadata_base_url": "http://127.0.0.1:25503",
+                },
+                "output_root": str(output_root),
+            }
+            client = SlowThetaDataClient()
+
+            result = run(task_key, run_id="run_parallel_fetch", client=client, client_is_fixture=True, sql_writer=FakeSqlWriter())
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertGreaterEqual(client.max_active, 2)
 
     def test_historical_window_keeps_each_minute_and_trade_summary(self):
         with tempfile.TemporaryDirectory() as tmp:

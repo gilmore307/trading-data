@@ -205,6 +205,82 @@ class SlowThetaDataClient(FakeThetaDataClient):
                 self._active -= 1
 
 
+class FakeThetaDataFrame:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def to_dicts(self):
+        return [dict(row) for row in self._rows]
+
+
+class FakeThetaDataPythonClient:
+    def __init__(self):
+        self.calls = []
+
+    def option_history_quote(self, **kwargs):
+        self.calls.append(("option_history_quote", kwargs))
+        return FakeThetaDataFrame(
+            [
+                {
+                    "symbol": "AAPL",
+                    "expiration": "2016-01-15",
+                    "strike": 100.0,
+                    "right": "CALL",
+                    "timestamp": "2016-01-05T09:30:00",
+                    "bid": 1.0,
+                    "ask": 1.2,
+                    "bid_size": 10,
+                    "ask_size": 11,
+                },
+                {
+                    "symbol": "AAPL",
+                    "expiration": "2016-01-15",
+                    "strike": 100.0,
+                    "right": "CALL",
+                    "timestamp": "2016-01-05T09:31:00",
+                    "bid": 1.1,
+                    "ask": 1.3,
+                    "bid_size": 12,
+                    "ask_size": 13,
+                },
+            ]
+        )
+
+    def option_history_greeks_eod(self, **kwargs):
+        self.calls.append(("option_history_greeks_eod", kwargs))
+        return FakeThetaDataFrame(
+            [
+                {
+                    "symbol": "AAPL",
+                    "expiration": "2016-01-15",
+                    "strike": 100.0,
+                    "right": "CALL",
+                    "timestamp": "2016-01-05T16:00:00",
+                    "implied_vol": 0.32,
+                    "iv_error": 0.0,
+                    "delta": 0.51,
+                    "theta": -0.03,
+                    "vega": 0.11,
+                    "rho": 0.02,
+                    "epsilon": -0.1,
+                    "lambda": 4.0,
+                    "underlying_price": 101.0,
+                    "underlying_timestamp": "2016-01-05T21:00:00",
+                }
+            ]
+        )
+
+    def option_history_trade(self, **kwargs):
+        self.calls.append(("option_history_trade", kwargs))
+        return FakeThetaDataFrame(
+            [
+                {"symbol": "AAPL", "expiration": "2016-01-15", "strike": 100.0, "right": "CALL", "timestamp": "2016-01-05T09:30:10", "price": 1.1, "size": 2},
+                {"symbol": "AAPL", "expiration": "2016-01-15", "strike": 100.0, "right": "CALL", "timestamp": "2016-01-05T09:30:40", "price": 1.2, "size": 3},
+                {"symbol": "AAPL", "expiration": "2016-01-15", "strike": 100.0, "right": "CALL", "timestamp": "2016-01-05T09:31:15", "price": 1.25, "size": 4},
+            ]
+        )
+
+
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_only_with_snapshot_clock(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -322,6 +398,50 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
 
             self.assertEqual(result.status, "succeeded")
             self.assertGreaterEqual(client.max_active, 2)
+
+    def test_historical_default_transport_uses_thetadata_python_client(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2016-01-05T09:30:00-05:00",
+                    "window_start": "2016-01-05T09:30:00-05:00",
+                    "window_end": "2016-01-05T09:31:59.999000-05:00",
+                    "historical_mode": True,
+                },
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["thetadata"],
+                    "allowed_endpoint_families": ["option_selection_snapshot"],
+                    "max_requests": 4,
+                    "max_symbols": 1,
+                    "max_time_window": "1d",
+                },
+                "output_root": str(output_root),
+            }
+            writer = FakeSqlWriter()
+            client = FakeThetaDataPythonClient()
+
+            result = run(task_key, run_id="run_python_library", theta_client=client, sql_writer=writer)
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual([name for name, _kwargs in client.calls], [
+                "option_history_quote",
+                "option_history_greeks_eod",
+                "option_history_trade",
+            ])
+            snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
+            contracts = json.loads(snapshot["contracts"])
+            self.assertEqual(snapshot["contract_count"], 2)
+            self.assertEqual(contracts[0]["quote"]["mid"], 1.1)
+            self.assertEqual(contracts[0]["trade_summary"]["bar_volume"], 5)
+            manifest = json.loads((output_root / "runs" / "run_python_library" / "request_manifest.json").read_text())
+            self.assertEqual(manifest["params"]["thetadata_transport"], "python_library")
+            self.assertTrue(all(request.get("transport") == "python_library" for request in manifest["requests"][:3]))
 
     def test_historical_window_keeps_each_minute_and_trade_summary(self):
         with tempfile.TemporaryDirectory() as tmp:

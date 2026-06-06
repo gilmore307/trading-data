@@ -16,7 +16,9 @@ No implicit latest/current mode exists. The caller must supply `snapshot_time`.
 ## Optional runtime params
 
 - `output_root` — development output root at task-key top level; defaults to `storage/<task_id>`.
-- `thetadata_base_url` — local ThetaData Terminal base URL; defaults to `http://127.0.0.1:25503`.
+- `thetadata_transport` — defaults to `python_library`; set `terminal_rest` only for controlled fallback or fixture tests.
+- `thetadata_base_url` — local ThetaData Terminal base URL used only by `terminal_rest`; defaults to `http://127.0.0.1:25503`.
+- `thetadata_credentials_file` — optional ThetaData Python library credential file path; defaults to the local reviewed ThetaData runtime credentials file.
 - `timeout_seconds` — request timeout; defaults to `30`.
 - `registry_csv` — optional registry snapshot for retained registered-field validation; when missing, fixture/local runs use code-local field names without reading an external repository path.
 - `historical_mode` — defaults to `true` for past dates. Historical replay uses ThetaData history endpoints instead of realtime snapshot endpoints.
@@ -26,9 +28,11 @@ No implicit latest/current mode exists. The caller must supply `snapshot_time`.
 - `option_prefilter_enabled` — defaults to `true`; filters structurally invalid option quotes before final normalization.
 - `option_prefilter_min_mid` — minimum quote mid retained by the structural prefilter; defaults to `0.01`.
 
-## Source endpoints
+## Source route
 
-ThetaData Terminal v3:
+Default historical and current acquisition uses the official ThetaData Python library through the shared `trading-manager` Python environment. This bypasses the local Terminal REST concurrency cap and returns tabular rows that are normalized in memory into the same feed contract.
+
+Explicit `terminal_rest` fallback uses ThetaData Terminal v3:
 
 - Historical replay: `/v3/option/history/quote`, `/v3/option/history/trade`, and `/v3/option/history/greeks/eod`.
 - Realtime/current snapshot mode: `/v3/option/snapshot/quote`, `/v3/option/snapshot/greeks/implied_volatility`, and `/v3/option/snapshot/greeks/first_order`.

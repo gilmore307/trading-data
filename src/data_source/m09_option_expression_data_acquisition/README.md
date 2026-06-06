@@ -21,7 +21,8 @@ Optional task key fields:
 - `params.strike_range`: ThetaData strike range bound; defaults to `5`
 - `params.option_bucket_policy_ref`: Layer 9 bucket policy evidence; defaults to `LAYER_09_OPTION_BUCKET_STRIKE_POLICY`
 - `params.reuse_option_chain_state_source`: defaults to enabled; set to `false` only for controlled provider-refresh tests
-- `params.thetadata_base_url`: local ThetaData terminal/API base URL
+- `params.thetadata_transport`: defaults to `python_library`; set `terminal_rest` only for controlled fallback or fixture tests
+- `params.thetadata_base_url`: local ThetaData Terminal/API base URL used only by `terminal_rest`
 - `params.timeout_seconds`: request timeout
 - `output_root`: local receipt/request-manifest root
 

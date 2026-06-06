@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import json
+import time
 from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
@@ -403,7 +404,188 @@ def _fetch_endpoints_parallel(
     return results
 
 
-def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedSnapshot]:
+def _safe_data_value(value: Any) -> Any:
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return value
+
+
+def _frame_rows(frame: Any) -> list[dict[str, Any]]:
+    if hasattr(frame, "to_dicts"):
+        return [{key: _safe_data_value(value) for key, value in row.items()} for row in frame.to_dicts()]
+    if isinstance(frame, Sequence) and not isinstance(frame, (str, bytes)):
+        return [{key: _safe_data_value(value) for key, value in dict(row).items()} for row in frame if isinstance(row, Mapping)]
+    raise ThetaDataOptionSelectionSnapshotError("ThetaData Python library response was not row-like")
+
+
+def _flat_rows_to_response_rows(rows: Sequence[Mapping[str, Any]], endpoint_name: str) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, float, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        symbol = str(row.get("symbol") or "").upper()
+        expiration = str(_safe_data_value(row.get("expiration")) or "")
+        right = str(row.get("right") or "").upper()
+        strike = _float(row.get("strike"))
+        if not symbol or not expiration or not right or strike is None:
+            continue
+        data = {
+            str(key): _safe_data_value(value)
+            for key, value in row.items()
+            if key not in {"symbol", "expiration", "strike", "right"}
+        }
+        grouped.setdefault((symbol, expiration, strike, right), []).append(data)
+    response_rows = [
+        {
+            "contract": {
+                "symbol": symbol,
+                "expiration": expiration,
+                "right": right,
+                "strike": strike,
+            },
+            "data": data_rows,
+        }
+        for (symbol, expiration, strike, right), data_rows in grouped.items()
+    ]
+    if rows and not response_rows:
+        raise ThetaDataOptionSelectionSnapshotError(f"ThetaData Python library {endpoint_name} rows had no usable contract keys")
+    return response_rows
+
+
+def _python_client_from_params(params: Mapping[str, Any]) -> Any:
+    try:
+        from thetadata import ThetaClient  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise ThetaDataOptionSelectionSnapshotError(
+            "ThetaData Python library is not installed in the shared trading-manager environment"
+        ) from exc
+    credentials_file = str(params.get("thetadata_credentials_file") or "/root/tools/thetadata-terminal/creds.txt")
+    return ThetaClient(creds_file=credentials_file, dataframe_type="polars")
+
+
+def _fetch_python_call(name: str, call: Any) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    started = time.perf_counter()
+    frame = call()
+    elapsed = time.perf_counter() - started
+    flat_rows = _frame_rows(frame)
+    rows = _flat_rows_to_response_rows(flat_rows, name)
+    return rows, {
+        "endpoint": f"thetadata_python_library:{name}",
+        "transport": "python_library",
+        "row_count": len(rows),
+        "data_row_count": len(flat_rows),
+        "elapsed_seconds": round(elapsed, 3),
+    }
+
+
+def _fetch_with_python_library(
+    theta_client: Any,
+    *,
+    underlying: str,
+    snapshot_time: datetime,
+    window_start: datetime,
+    window_end: datetime,
+    historical_mode: bool,
+    params: Mapping[str, Any],
+    max_dte: int,
+    strike_range: int,
+) -> tuple[
+    list[dict[str, Any]],
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any],
+]:
+    start_time, end_time = _history_time_params(window_start, window_end)
+    interval = str(params.get("interval") or "1m")
+    if historical_mode:
+        quote_rows, quote_evidence = _fetch_python_call(
+            "option_history_quote",
+            lambda: theta_client.option_history_quote(
+                symbol=underlying,
+                expiration="*",
+                date=window_start.date(),
+                interval=interval,
+                start_time=start_time,
+                end_time=end_time,
+                max_dte=max_dte,
+                strike_range=strike_range,
+            ),
+        )
+        greeks_rows, greeks_evidence = _fetch_python_call(
+            "option_history_greeks_eod",
+            lambda: theta_client.option_history_greeks_eod(
+                symbol=underlying,
+                expiration="*",
+                start_date=window_start.date(),
+                end_date=window_start.date(),
+                max_dte=max_dte,
+                strike_range=strike_range,
+            ),
+        )
+        trade_rows, trade_evidence = _fetch_python_call(
+            "option_history_trade",
+            lambda: theta_client.option_history_trade(
+                symbol=underlying,
+                expiration="*",
+                date=window_start.date(),
+                start_time=start_time,
+                end_time=end_time,
+                max_dte=max_dte,
+                strike_range=strike_range,
+            ),
+        )
+        iv_rows = greeks_rows
+        iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}
+        return quote_rows, quote_evidence, iv_rows, iv_evidence, greeks_rows, greeks_evidence, trade_rows, trade_evidence
+
+    min_time = snapshot_time.strftime("%H:%M:%S.000")
+    quote_rows, quote_evidence = _fetch_python_call(
+        "option_snapshot_quote",
+        lambda: theta_client.option_snapshot_quote(
+            symbol=underlying,
+            expiration="*",
+            max_dte=max_dte,
+            strike_range=strike_range,
+            min_time=min_time,
+        ),
+    )
+    iv_rows, iv_evidence = _fetch_python_call(
+        "option_snapshot_greeks_implied_volatility",
+        lambda: theta_client.option_snapshot_greeks_implied_volatility(
+            symbol=underlying,
+            expiration="*",
+            max_dte=max_dte,
+            strike_range=strike_range,
+            min_time=min_time,
+        ),
+    )
+    greeks_rows, greeks_evidence = _fetch_python_call(
+        "option_snapshot_greeks_first_order",
+        lambda: theta_client.option_snapshot_greeks_first_order(
+            symbol=underlying,
+            expiration="*",
+            max_dte=max_dte,
+            strike_range=strike_range,
+            min_time=min_time,
+        ),
+    )
+    trade_rows: list[dict[str, Any]] = []
+    trade_evidence = {"name": "trade window", "row_count": 0, "skipped": "not_available_for_realtime_snapshot_mode"}
+    return quote_rows, quote_evidence, iv_rows, iv_evidence, greeks_rows, greeks_evidence, trade_rows, trade_evidence
+
+
+def _terminal_rest_requested(params: Mapping[str, Any], *, client: HttpClient | None, client_is_fixture: bool) -> bool:
+    transport = str(params.get("thetadata_transport") or "").strip().lower()
+    if transport in {"terminal_rest", "rest", "http"}:
+        return True
+    if client is not None or client_is_fixture:
+        return True
+    return False
+
+
+def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_client: Any | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedSnapshot]:
     params = dict(context.task_key.get("params") or {})
     underlying = str(_required(params, "underlying")).upper()
     snapshot_time = _parse_snapshot_time(_required(params, "snapshot_time"))
@@ -422,14 +604,6 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             requested_start=window_start.isoformat(),
             requested_end=window_end.isoformat(),
         )
-    client = client or HttpClient(
-        timeout_seconds=timeout,
-        retry_policy=RetryPolicy(
-            max_attempts=retry_attempts,
-            backoff_seconds=retry_backoff_seconds,
-        ),
-    )
-
     secret_summary = None
     try:
         secret_summary = public_secret_summary(load_secret_alias("thetadata"))
@@ -444,8 +618,40 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
     }
     max_dte = str(params.get("max_dte") or DEFAULT_MAX_DTE)
     strike_range = str(params.get("strike_range") or DEFAULT_STRIKE_RANGE)
+    max_dte_int = int(max_dte)
+    strike_range_int = int(strike_range)
     option_bucket_policy_ref = str(params.get("option_bucket_policy_ref") or DEFAULT_OPTION_BUCKET_POLICY_REF)
-    if historical_mode:
+    transport = "terminal_rest" if _terminal_rest_requested(params, client=client, client_is_fixture=client_is_fixture) else "python_library"
+    if transport == "python_library":
+        theta_client = theta_client or _python_client_from_params(params)
+        (
+            quote_rows,
+            quote_evidence,
+            iv_rows,
+            iv_evidence,
+            greeks_rows,
+            greeks_evidence,
+            trade_rows,
+            trade_evidence,
+        ) = _fetch_with_python_library(
+            theta_client,
+            underlying=underlying,
+            snapshot_time=snapshot_time,
+            window_start=window_start,
+            window_end=window_end,
+            historical_mode=historical_mode,
+            params=params,
+            max_dte=max_dte_int,
+            strike_range=strike_range_int,
+        )
+    elif historical_mode:
+        client = client or HttpClient(
+            timeout_seconds=timeout,
+            retry_policy=RetryPolicy(
+                max_attempts=retry_attempts,
+                backoff_seconds=retry_backoff_seconds,
+            ),
+        )
         start_time, end_time = _history_time_params(window_start, window_end)
         quote_params = {
             **request_params,
@@ -486,6 +692,13 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         iv_rows = greeks_rows
         iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}
     else:
+        client = client or HttpClient(
+            timeout_seconds=timeout,
+            retry_policy=RetryPolicy(
+                max_attempts=retry_attempts,
+                backoff_seconds=retry_backoff_seconds,
+            ),
+        )
         snapshot_params = {
             **request_params,
             "max_dte": max_dte,
@@ -530,6 +743,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
                         "max_dte": max_dte,
                         "strike_range": strike_range,
                         "option_bucket_policy_ref": option_bucket_policy_ref,
+                        "thetadata_transport": transport,
                         "retry_attempts": retry_attempts,
                         "retry_backoff_seconds": retry_backoff_seconds,
                     }
@@ -957,11 +1171,19 @@ def write_receipt(
     )
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
+def run(
+    task_key: dict[str, Any],
+    *,
+    run_id: str,
+    client: HttpClient | None = None,
+    theta_client: Any | None = None,
+    client_is_fixture: bool = False,
+    sql_writer: SqlTableWriter | None = None,
+) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
+        fetch_result, fetched = fetch(context, client=client, theta_client=theta_client, client_is_fixture=client_is_fixture)
         clean_result, snapshot = clean(context, fetched)
         save_result = save(context, clean_result, snapshot, sql_writer=sql_writer)
         return write_receipt(

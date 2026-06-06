@@ -114,11 +114,18 @@ def _read_shared_source_rows(params: Mapping[str, Any], *, sql_reader: SqlTableR
     if not underlying or not snapshot_time:
         return []
     reader = sql_reader or PostgresSqlTableReader.from_config(params)
+    window_start = params.get("window_start")
+    window_end = params.get("window_end")
+    time_column = "snapshot_time" if window_start and window_end else None
+    where_equals = {"underlying": underlying} if time_column else {"underlying": underlying, "snapshot_time": snapshot_time}
     rows = reader.read_rows(
         table=option_chain_source.OUTPUT_TABLE,
         columns=option_chain_source.SQL_FIELDS,
-        where_equals={"underlying": underlying, "snapshot_time": snapshot_time},
-        order_by=("expiration", "option_right_type", "strike", "option_symbol"),
+        where_equals=where_equals,
+        time_column=time_column,
+        start=window_start if time_column else None,
+        end=window_end if time_column else None,
+        order_by=("snapshot_time", "expiration", "option_right_type", "strike", "option_symbol"),
     )
     return [dict(row) for row in rows]
 
@@ -263,7 +270,7 @@ def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, C
     params = dict(context.task_key.get("params") or {})
     snapshot_type = _snapshot_type(params)
     rows = [_layer_nine_row(snapshot_type, row) for row in payload.rows]
-    rows.sort(key=lambda row: (row["expiration"], row["option_right_type"], row["strike"] if row["strike"] is not None else -1, row["option_symbol"]))
+    rows.sort(key=lambda row: (row["snapshot_time"], row["expiration"], row["option_right_type"], row["strike"] if row["strike"] is not None else -1, row["option_symbol"]))
     result = StepResult(
         "succeeded",
         [],

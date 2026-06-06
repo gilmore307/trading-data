@@ -50,7 +50,19 @@ class FakeSqlReader:
         self.calls.append(kwargs)
         rows = self.rows_by_table.get(kwargs["table"], [])
         where_equals = kwargs.get("where_equals") or {}
-        return [dict(row) for row in rows if all(row.get(column) == value for column, value in where_equals.items())]
+        time_column = kwargs.get("time_column")
+        start = kwargs.get("start")
+        end = kwargs.get("end")
+        filtered = []
+        for row in rows:
+            if not all(row.get(column) == value for column, value in where_equals.items()):
+                continue
+            if time_column and start is not None and str(row.get(time_column) or "") < str(start):
+                continue
+            if time_column and end is not None and str(row.get(time_column) or "") >= str(end):
+                continue
+            filtered.append(dict(row))
+        return filtered
 
 
 class Secret:
@@ -232,6 +244,78 @@ class NumberedDataSourceTests(unittest.TestCase):
         self.assertEqual(result.row_counts["option_chain_state_source"], 1)
         self.assertEqual([call["table"] for call in writer.calls], ["option_chain_state_source", "m09_option_expression_data_acquisition"])
         self.assertEqual(writer.calls[1]["rows"][0]["option_symbol"], "AAPL_2026-05-15_C_270")
+
+    def test_option_expression_source_reuses_shared_option_chain_window_rows(self):
+        module = import_module("data_source.m09_option_expression_data_acquisition.pipeline")
+        first_time = "2016-01-05T09:30:00-05:00"
+        second_time = "2016-01-05T09:31:00-05:00"
+        base_row = {
+            "underlying": "AAPL",
+            "option_symbol": "AAPL_2016-01-15_C_100",
+            "expiration": "2016-01-15",
+            "option_right_type": "CALL",
+            "strike": 100.0,
+            "bid": 1.15,
+            "ask": 1.25,
+            "mid": 1.2,
+            "spread": 0.1,
+            "spread_pct": 0.0833,
+            "bid_size": 10,
+            "ask_size": 12,
+            "bid_exchange": None,
+            "ask_exchange": None,
+            "bid_condition": None,
+            "ask_condition": None,
+            "implied_vol": 0.64,
+            "iv_error": None,
+            "delta": 0.52,
+            "theta": -0.03,
+            "vega": 0.14,
+            "rho": 0.01,
+            "epsilon": None,
+            "lambda": None,
+            "underlying_price": 101.0,
+            "underlying_timestamp": first_time,
+            "days_to_expiration": 10,
+            "bar_open": None,
+            "bar_high": None,
+            "bar_low": None,
+            "bar_close": None,
+            "bar_volume": None,
+            "bar_trade_count": None,
+            "bar_vwap": None,
+            "trade_notional": None,
+            "open_interest": None,
+            "open_interest_change": None,
+            "source_run_ref": "option_chain_state_source/run_001",
+        }
+        rows = [
+            {**base_row, "snapshot_time": first_time},
+            {**base_row, "snapshot_time": second_time, "option_symbol": "AAPL_2016-01-15_C_101", "strike": 101.0},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "m09_option_expression_data_acquisition_task_test",
+                "source": "m09_option_expression_data_acquisition",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": first_time,
+                    "window_start": first_time,
+                    "window_end": "2016-01-05T09:32:00-05:00",
+                },
+                "output_root": str(Path(tmp) / "task"),
+            }
+            writer = FakeSqlWriter()
+            reader = FakeSqlReader({"option_chain_state_source": rows})
+            result = module.run(task_key, run_id="run", sql_reader=reader, sql_writer=writer)
+
+        self.assertEqual(result.status, "succeeded")
+        self.assertEqual(reader.calls[0]["where_equals"], {"underlying": "AAPL"})
+        self.assertEqual(reader.calls[0]["time_column"], "snapshot_time")
+        self.assertEqual(reader.calls[0]["start"], first_time)
+        self.assertEqual(reader.calls[0]["end"], "2016-01-05T09:32:00-05:00")
+        self.assertEqual(result.row_counts["m09_option_expression_data_acquisition"], 2)
+        self.assertEqual([row["snapshot_time"] for row in writer.calls[1]["rows"]], [first_time, second_time])
 
     def test_option_expression_cli_accepts_task_key_manifest_batch(self):
         module = import_module("data_source.m09_option_expression_data_acquisition.__main__")

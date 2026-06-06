@@ -155,6 +155,8 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is
                     "params": {
                         "underlying": feed_params.get("underlying"),
                         "snapshot_time": feed_params.get("snapshot_time"),
+                        "window_start": feed_params.get("window_start"),
+                        "window_end": feed_params.get("window_end"),
                         "max_dte": feed_params.get("max_dte"),
                         "strike_range": feed_params.get("strike_range"),
                         "option_bucket_policy_ref": feed_params.get("option_bucket_policy_ref"),

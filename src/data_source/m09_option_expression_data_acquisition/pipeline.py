@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -110,6 +110,35 @@ def _snapshot_type(params: Mapping[str, Any]) -> str:
     return value
 
 
+def _parse_time(value: Any) -> datetime | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed
+
+
+def _shared_rows_cover_requested_window(rows: list[dict[str, Any]], *, window_start: Any, window_end: Any, min_ratio: float = 0.8) -> bool:
+    start = _parse_time(window_start)
+    end = _parse_time(window_end)
+    if start is None or end is None or end <= start:
+        return True
+    minutes = {
+        parsed.replace(second=0, microsecond=0)
+        for row in rows
+        if (parsed := _parse_time(row.get("snapshot_time"))) is not None and start <= parsed < end
+    }
+    expected_minutes = max(1, int((end - start + timedelta(microseconds=1)).total_seconds() // 60))
+    return len(minutes) >= int(expected_minutes * min_ratio)
+
+
 def _read_shared_source_rows(params: Mapping[str, Any], *, sql_reader: SqlTableReader | None = None) -> list[dict[str, Any]]:
     if params.get("reuse_option_chain_state_source") is False:
         return []
@@ -136,7 +165,10 @@ def _read_shared_source_rows(params: Mapping[str, Any], *, sql_reader: SqlTableR
         if _is_missing_sql_table_error(exc):
             return []
         raise
-    return [dict(row) for row in rows]
+    shared_rows = [dict(row) for row in rows]
+    if time_column and not _shared_rows_cover_requested_window(shared_rows, window_start=window_start, window_end=window_end):
+        return []
+    return shared_rows
 
 
 def fetch(

@@ -334,6 +334,21 @@ class NumberedDataSourceTests(unittest.TestCase):
 
         self.assertEqual(module._read_shared_source_rows(params, sql_reader=MissingTableSqlReader()), [])
 
+    def test_option_expression_source_treats_partial_day_shared_rows_as_cache_miss(self):
+        module = import_module("data_source.m09_option_expression_data_acquisition.pipeline")
+        params = {
+            "underlying": "AAPL",
+            "snapshot_time": "2016-01-05T04:00:00-05:00",
+            "window_start": "2016-01-05T04:00:00-05:00",
+            "window_end": "2016-01-05T19:59:59.999000-05:00",
+        }
+        rows = [
+            {"underlying": "AAPL", "snapshot_time": "2016-01-05T04:00:00-05:00", "option_symbol": "AAPL_1"},
+            {"underlying": "AAPL", "snapshot_time": "2016-01-05T04:01:00-05:00", "option_symbol": "AAPL_2"},
+        ]
+
+        self.assertEqual(module._read_shared_source_rows(params, sql_reader=FakeSqlReader({"option_chain_state_source": rows})), [])
+
     def test_option_expression_cli_accepts_task_key_manifest_batch(self):
         module = import_module("data_source.m09_option_expression_data_acquisition.__main__")
         with tempfile.TemporaryDirectory() as tmp:

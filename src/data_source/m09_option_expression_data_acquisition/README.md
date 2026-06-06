@@ -16,7 +16,7 @@ Required task key fields:
 Optional task key fields:
 
 - `params.snapshot_type`: `entry` or `exit`; defaults to `entry` for compatibility
-- `params.window_start` / `params.window_end`: optional bounded snapshot window; when present, existing `option_chain_state_source` rows are reused by `underlying + snapshot_time range` before any provider fetch
+- `params.window_start` / `params.window_end`: optional bounded snapshot window; when present, existing `option_chain_state_source` rows are reused by `underlying + snapshot_time range` before any provider fetch. Historical training requests normally use a full ET trading day window so one provider fetch can serve all downstream 30-minute/minute modeling windows for that date.
 - `params.max_dte`: maximum days to expiration; defaults to `45`
 - `params.strike_range`: ThetaData strike range bound; defaults to `5`
 - `params.option_bucket_policy_ref`: Layer 9 bucket policy evidence; defaults to `LAYER_09_OPTION_BUCKET_STRIKE_POLICY`

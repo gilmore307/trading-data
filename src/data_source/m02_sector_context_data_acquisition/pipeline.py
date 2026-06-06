@@ -192,8 +192,8 @@ def _fetch_one_holding_feed(context: SourceContext, universe_row: Mapping[str, s
     }
     feed_context = build_holding_context(feed_task, str(context.metadata["run_id"]))
     fetch_result, feed_payload = fetch_holding_feed(feed_context)
-    clean_result = clean_holding_feed(feed_context, feed_payload)
-    rows = [json.loads(line) for line in (feed_context.cleaned_dir / "etf_holding_snapshot.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    clean_result, cleaned_payload = clean_holding_feed(feed_context, feed_payload)
+    rows = cleaned_payload.rows
     evidence.append({"etf_symbol": symbol, "issuer_name": issuer, "start": start, "end": end, "fetch": asdict(fetch_result), "clean": asdict(clean_result), "raw_rows": len(rows)})
     return [{field: str(row.get(field) or "") for field in RAW_HOLDING_FIELDS} for row in rows]
 

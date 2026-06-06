@@ -178,17 +178,15 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
     def test_etf_universe_holdings_collects_layer2_and_dedupes_etf_symbols(self) -> None:
         import scripts.data.fetch_etf_universe_holdings as holdings_module
 
-        original = holdings_module._run_feed
+        original = holdings_module._fetch_feed_rows
 
-        def fake_run_feed(task_key: dict, *, run_id: str) -> SimpleNamespace:
-            saved = Path(task_key["output_root"]) / "runs" / run_id / "saved" / "etf_holding_snapshot.csv"
+        def fake_fetch_feed_rows(task_key: dict, *, run_id: str):
             rows = [
                 {"etf_symbol": task_key["params"]["etf_symbol"], "issuer_name": "test", "as_of_date": "2026-06-04", "holding_symbol": "NVDA", "holding_name": "NVIDIA", "weight": "10", "shares": "", "market_value": "", "cusip": "", "sedol": "", "asset_class": "Equity", "sector_type": "", "source_url": "fixture"},
                 {"etf_symbol": task_key["params"]["etf_symbol"], "issuer_name": "test", "as_of_date": "2026-06-04", "holding_symbol": "NVDA", "holding_name": "NVIDIA", "weight": "10", "shares": "", "market_value": "", "cusip": "", "sedol": "", "asset_class": "Equity", "sector_type": "", "source_url": "fixture"},
                 {"etf_symbol": task_key["params"]["etf_symbol"], "issuer_name": "test", "as_of_date": "2026-06-04", "holding_symbol": "USD", "holding_name": "Cash", "weight": "1", "shares": "", "market_value": "", "cusip": "", "sedol": "", "asset_class": "Cash", "sector_type": "", "source_url": "fixture"},
             ]
-            _write_csv(saved, list(rows[0]), rows)
-            return SimpleNamespace(status="succeeded", references=[str(saved)], row_counts={"etf_holding_snapshot": len(rows)}, details={"run_id": run_id})
+            return rows, {"references": ["sql://trading_data/feed_06_etf_holding_snapshot"], "row_counts": {"etf_holding_snapshot": len(rows)}, "details": {"run_id": run_id}}
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -203,7 +201,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             )
 
             try:
-                holdings_module._run_feed = fake_run_feed
+                holdings_module._fetch_feed_rows = fake_fetch_feed_rows
                 rows, receipt = collect_holdings(
                     universe_csv=universe,
                     output_root=root / "out",
@@ -212,7 +210,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
                     allow_partial=True,
                 )
             finally:
-                holdings_module._run_feed = original
+                holdings_module._fetch_feed_rows = original
 
         self.assertEqual([(row["etf_symbol"], row["holding_symbol"]) for row in rows], [("XLK", "NVDA")])
         self.assertEqual(receipt["requested_etf_count"], 1)

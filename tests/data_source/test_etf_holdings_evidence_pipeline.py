@@ -152,12 +152,7 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
                 return module.StepResult("succeeded", [], {"feed_payloads": 1}), object()
 
             def fake_clean(context, payload):
-                context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-                (context.cleaned_dir / "etf_holding_snapshot.jsonl").write_text(
-                    json.dumps({"etf_symbol": "XLK", "holding_symbol": "MSFT", "holding_name": "Microsoft Corp", "asset_class": "Equity", "as_of_date": "2026-04-24"}) + "\n",
-                    encoding="utf-8",
-                )
-                return module.StepResult("succeeded", [], {"etf_holding_snapshot": 1})
+                return module.StepResult("succeeded", [], {"etf_holding_snapshot": 1}), type("Payload", (), {"rows": [{"etf_symbol": "XLK", "holding_symbol": "MSFT", "holding_name": "Microsoft Corp", "asset_class": "Equity", "as_of_date": "2026-04-24"}]})()
 
             original_fetch = module.fetch_holding_feed
             original_clean = module.clean_holding_feed

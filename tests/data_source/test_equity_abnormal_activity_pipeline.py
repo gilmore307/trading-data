@@ -22,6 +22,15 @@ class FakeReader:
         return list(self.rows)
 
 
+class FakeSqlWriter:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def write_rows(self, *, table, columns, rows, key_columns):
+        self.calls.append({"table": table, "columns": list(columns), "rows": list(rows), "key_columns": list(key_columns)})
+        return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"trading_data.{table}", "rows_written": len(rows)}
+
+
 def _bar(symbol: str, idx: int, close: float, volume: int, open_: float | None = None) -> dict[str, str]:
     return {
         "symbol": symbol,
@@ -80,7 +89,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
         taxonomy = json.loads(event["taxonomy_context"])
         self.assertIn("false_breakout", taxonomy["price_action_event_types"])
 
-    def test_pipeline_saves_event_csv_from_saved_bar_inputs(self):
+    def test_pipeline_writes_event_sql_from_bar_inputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             bars_path = Path(tmp) / "equity_bar.csv"
             rows = [_bar("NVDA", i, 100 + i * 0.1, 1000 + i) for i in range(10)] + [_bar("NVDA", 10, 120, 10000, open_=118)]
@@ -100,14 +109,18 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run")
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["equity_abnormal_activity_event"], 1)
-            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "equity_abnormal_activity_event.csv"
-            with saved.open(newline="", encoding="utf-8") as handle:
-                row = next(csv.DictReader(handle))
+            self.assertEqual(writer.calls[0]["table"], "m10_equity_abnormal_activity_event")
+            self.assertEqual(writer.calls[0]["key_columns"], ["event_id"])
+            row = writer.calls[0]["rows"][0]
             self.assertEqual(row["source_type"], "alpaca_equity_market_data")
             self.assertIn("01_feed_alpaca_bars:NVDA", row["source_references"])
+            run_dir = Path(task_key["output_root"]) / "runs" / "run"
+            self.assertFalse((run_dir / "saved" / "equity_abnormal_activity_event.csv").exists())
+            self.assertFalse((run_dir / "cleaned" / "equity_abnormal_activity_event.jsonl").exists())
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 
@@ -134,11 +147,13 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
-            result = run(task_key, run_id="run", sql_reader=reader)
+            writer = FakeSqlWriter()
+            result = run(task_key, run_id="run", sql_reader=reader, sql_writer=writer)
 
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["equity_abnormal_activity_event"], 1)
             self.assertEqual(reader.calls[0]["where_equals"], {"symbol": "XLF", "timeframe": "1Min"})
+            self.assertEqual(writer.calls[0]["table"], "m10_equity_abnormal_activity_event")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             fetch_details = receipt["runs"][0]["steps"]["fetch"]["details"]
             self.assertIsNone(fetch_details["bars_csv_path"])

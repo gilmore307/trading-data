@@ -17,12 +17,14 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from data_source.config import load_source_config
+from data_feed.sql_only import sql_reference, sql_rows, write_schema, write_table
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
-from storage.sql import PostgresSqlTableReader, SqlTableReader
+from storage.sql import PostgresSqlTableReader, SqlTableReader, SqlTableWriter
 
 SOURCE = "m10_event_risk_governor_data_acquisition.equity_abnormal_activity"
+OUTPUT_TABLE = "m10_equity_abnormal_activity_event"
 BAR_SQL_SOURCE_TABLE = "m01_market_regime_data_acquisition"
 BAR_SQL_SOURCE_COLUMNS = [
     "symbol",
@@ -61,8 +63,6 @@ FIELDS = [
 class SourceContext:
     task_key: dict[str, Any]
     run_dir: Path
-    cleaned_dir: Path
-    saved_dir: Path
     receipt_path: Path
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -83,6 +83,11 @@ class SourcePayload:
     liquidity_rows: list[dict[str, str]]
 
 
+@dataclass(frozen=True)
+class CleanedPayload:
+    rows: list[dict[str, Any]]
+
+
 class EquityAbnormalActivityError(ValueError):
     """Raised for invalid EventRiskGovernor equity abnormal activity detector tasks."""
 
@@ -96,7 +101,7 @@ def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
         raise EquityAbnormalActivityError(f"task_key.source must be {SOURCE}")
     output_root = resolve_output_root(task_key, default_task_id=f"{SOURCE}_task")
     run_dir = output_root / "runs" / run_id
-    return SourceContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
+    return SourceContext(task_key, run_dir, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
 def _require(params: Mapping[str, Any], key: str) -> Any:
@@ -368,7 +373,7 @@ def detect_events(*, bars: list[dict[str, str]], reference_bars: list[dict[str, 
     return events
 
 
-def clean(context: SourceContext, payload: SourcePayload) -> StepResult:
+def clean(context: SourceContext, payload: SourcePayload) -> tuple[StepResult, CleanedPayload]:
     params = dict(context.task_key.get("params") or {})
     config_path = str(params.get("config_path") or "") or None
     defaults = load_source_config(SOURCE, config_path=config_path)
@@ -387,25 +392,21 @@ def clean(context: SourceContext, payload: SourcePayload) -> StepResult:
         min_price_action_wick_ratio=float(effective.get("min_price_action_wick_ratio", 0.35)),
         model_standard=str(effective.get("model_standard", "equity_abnormal_activity_conservative")),
     )
-    context.cleaned_dir.mkdir(parents=True, exist_ok=True)
-    output = context.cleaned_dir / "equity_abnormal_activity_event.jsonl"
-    with output.open("w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
-    schema = context.cleaned_dir / "schema.json"
-    schema.write_text(json.dumps({"equity_abnormal_activity_event": FIELDS, "row_count": len(rows)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return StepResult("succeeded", [str(output), str(schema)], {"equity_abnormal_activity_event": len(rows)}, details={"columns": FIELDS})
+    schema = write_schema(context.run_dir, "equity_abnormal_activity_event", FIELDS, row_count=len(rows))
+    return (
+        StepResult(
+            "succeeded",
+            [str(schema)],
+            {"equity_abnormal_activity_event": len(rows)},
+            details={"columns": FIELDS, "table": OUTPUT_TABLE, "retention": "sql_only_no_jsonl_or_csv_payload"},
+        ),
+        CleanedPayload(sql_rows(rows, FIELDS)),
+    )
 
 
-def save(context: SourceContext, clean_result: StepResult) -> StepResult:
-    rows = [json.loads(line) for line in (context.cleaned_dir / "equity_abnormal_activity_event.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    context.saved_dir.mkdir(parents=True, exist_ok=True)
-    path = context.saved_dir / "equity_abnormal_activity_event.csv"
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
+def save(context: SourceContext, clean_result: StepResult, payload: CleanedPayload, *, sql_writer: SqlTableWriter | None = None) -> StepResult:
+    metadata = write_table(table=OUTPUT_TABLE, columns=FIELDS, rows=payload.rows, key_columns=["event_id"], sql_writer=sql_writer)
+    return StepResult("succeeded", [sql_reference(metadata)], dict(clean_result.row_counts), details={"format": "sql_table", "table": OUTPUT_TABLE, "columns": FIELDS, "storage": metadata})
 
 
 def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
@@ -425,13 +426,13 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, sql_reader: SqlTableReader | None = None) -> StepResult:
+def run(task_key: dict[str, Any], *, run_id: str, sql_reader: SqlTableReader | None = None, sql_writer: SqlTableWriter | None = None) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
         fetch_result, payload = fetch(context, sql_reader=sql_reader)
-        clean_result = clean(context, payload)
-        save_result = save(context, clean_result)
+        clean_result, cleaned_payload = clean(context, payload)
+        save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

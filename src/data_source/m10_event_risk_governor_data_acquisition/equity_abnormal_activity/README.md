@@ -9,7 +9,7 @@ It converts SQL-retained equity/ETF bars, optional reference bars, and optional 
 - `params.bars_sql_source` — preferred production input, pointing at `trading_data.m01_market_regime_data_acquisition` with `source_symbol`, `timeframe`, `start`, and `end`.
 - `params.bars_csv_path` — local fixture/debug input only; production Alpaca bars are retained in SQL and do not require saved `equity_bar.csv`.
 - `params.reference_bars_csv_path` — optional reference/sector ETF bar CSV path for controlled detector experiments.
-- `params.liquidity_path` — optional `equity_liquidity_bar.csv` path.
+- `params.liquidity_csv_path` — optional local fixture/debug liquidity CSV path.
 - `params.config_path` — reviewed one-off config override path; normal runs use this folder's `config.json`.
 
 ## Config defaults
@@ -23,7 +23,7 @@ It converts SQL-retained equity/ETF bars, optional reference bars, and optional 
 
 ## Output
 
-`saved/equity_abnormal_activity_event.csv` with compact event-style rows for abnormal price, volume, relative-strength, gap, liquidity, and price-action behavior. Full details remain in evidence/reference fields rather than being duplicated as upstream model features.
+`trading_data.m10_equity_abnormal_activity_event` with compact event-style rows for abnormal price, volume, relative-strength, gap, liquidity, and price-action behavior. The detector writes only SQL rows plus concise schema/receipt evidence; it does not write CSV/JSONL mirrors. Full details remain in evidence/reference fields rather than being duplicated as upstream model features.
 
 ## Production rule
 

@@ -19,7 +19,9 @@ DEFAULT_RECEIPT_ROOT = Path("/root/projects/trading-storage/storage/02_control_p
 DEFAULT_MODEL_LAYER = "layer_02_sector_context"
 
 _ETF_HOLDINGS_MODULE = import_module("data_feed.06_feed_etf_holdings.pipeline")
-_run_feed = _ETF_HOLDINGS_MODULE.run
+_build_feed_context = _ETF_HOLDINGS_MODULE.build_context
+_fetch_feed = _ETF_HOLDINGS_MODULE.fetch
+_clean_feed = _ETF_HOLDINGS_MODULE.clean
 OUTPUT_FIELDS = list(_ETF_HOLDINGS_MODULE.FIELDS)
 
 
@@ -90,17 +92,26 @@ def _is_equity_holding(row: dict[str, str]) -> bool:
     return any(token in asset_class for token in ("equity", "stock", "common"))
 
 
-def _read_feed_rows(path: Path) -> list[dict[str, str]]:
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        return [{str(key): str(value or "") for key, value in row.items()} for row in csv.DictReader(handle)]
-
-
 def _write_rows(path: Path, rows: list[dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=OUTPUT_FIELDS, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _fetch_feed_rows(task_key: dict[str, Any], *, run_id: str) -> tuple[list[dict[str, str]], dict[str, Any]]:
+    context = _build_feed_context(task_key, run_id)
+    fetch_result, payload = _fetch_feed(context)
+    clean_result, cleaned = _clean_feed(context, payload)
+    rows = [{field: str(row.get(field) or "") for field in OUTPUT_FIELDS} for row in cleaned.rows]
+    return rows, {
+        "fetch": asdict(fetch_result),
+        "clean": asdict(clean_result),
+        "references": [*fetch_result.references, *clean_result.references],
+        "row_counts": dict(clean_result.row_counts),
+        "details": dict(clean_result.details),
+    }
 
 
 def collect_holdings(
@@ -131,21 +142,31 @@ def collect_holdings(
             "manager_controls": controls,
             "output_root": str(task_output_root),
         }
-        result = _run_feed(task_key, run_id=run_id)
+        feed_rows: list[dict[str, str]] = []
+        try:
+            feed_rows, feed_result = _fetch_feed_rows(task_key, run_id=run_id)
+            status = "succeeded"
+            row_counts = feed_result["row_counts"]
+            references = feed_result["references"]
+            details = feed_result["details"]
+        except Exception as exc:
+            status = "failed"
+            row_counts = {}
+            references = []
+            details = {"error_type": type(exc).__name__, "message": str(exc)}
         entry = {
             "etf": asdict(spec),
-            "status": result.status,
-            "row_counts": dict(result.row_counts),
-            "references": list(result.references),
-            "details": dict(result.details),
+            "status": status,
+            "row_counts": row_counts,
+            "references": references,
+            "details": details,
         }
         results.append(entry)
-        if result.status != "succeeded":
+        if status != "succeeded":
             if not allow_partial:
                 raise RuntimeError(f"ETF holdings fetch failed for {spec.symbol}: {entry['details']}")
             continue
-        saved = task_output_root / "runs" / run_id / "saved" / "etf_holding_snapshot.csv"
-        for row in _read_feed_rows(saved):
+        for row in feed_rows:
             row["holding_symbol"] = _clean_symbol(row.get("holding_symbol", ""))
             if not _is_equity_holding(row):
                 continue

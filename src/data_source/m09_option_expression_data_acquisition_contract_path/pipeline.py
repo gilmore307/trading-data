@@ -6,7 +6,6 @@ not a model-output layer and emits no execution instructions.
 """
 from __future__ import annotations
 
-import csv
 import json
 from importlib import import_module
 from dataclasses import asdict, dataclass, field
@@ -15,7 +14,10 @@ from pathlib import Path
 from typing import Any, Mapping
 from zoneinfo import ZoneInfo
 
-run_option_tracking = import_module("data_feed.10_feed_thetadata_option_primary_tracking.pipeline").run
+_option_tracking_feed = import_module("data_feed.10_feed_thetadata_option_primary_tracking.pipeline")
+build_option_tracking_context = _option_tracking_feed.build_context
+fetch_option_tracking = _option_tracking_feed.fetch
+clean_option_tracking = _option_tracking_feed.clean
 from feed_availability.http import HttpClient
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
@@ -140,13 +142,6 @@ def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
-def _read_csv(path: Path) -> list[dict[str, Any]]:
-    if not path.exists():
-        return []
-    with path.open(newline="", encoding="utf-8") as handle:
-        return [dict(row) for row in csv.DictReader(handle)]
-
-
 def _fetch_contract_rows(
     context: SourceContext,
     contract: Mapping[str, Any],
@@ -177,12 +172,10 @@ def _fetch_contract_rows(
     for passthrough in ("thetadata_base_url", "timeout_seconds", "registry_csv"):
         if passthrough in contract:
             feed_task["params"][passthrough] = contract[passthrough]
-    result = run_option_tracking(feed_task, run_id=str(context.metadata["run_id"]), client=client, client_is_fixture=client_is_fixture)
-    if result.status != "succeeded":
-        raise SelectedContractTrackingInputsError(f"option tracking failed for {_option_symbol(contract)}: {result.details.get('error')}")
-    output_refs = [ref for ref in result.references if ref.endswith("option_bar.csv")]
-    rows = _read_csv(Path(output_refs[0])) if output_refs else []
-    return rows, result.references
+    feed_context = build_option_tracking_context(feed_task, str(context.metadata["run_id"]))
+    fetch_result, fetched = fetch_option_tracking(feed_context, client=client, client_is_fixture=client_is_fixture)
+    clean_result, cleaned = clean_option_tracking(feed_context, fetched)
+    return [dict(row) for row in cleaned.rows], [*fetch_result.references, *clean_result.references]
 
 
 def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, SourcePayload]:

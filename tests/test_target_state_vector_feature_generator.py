@@ -35,6 +35,18 @@ def _bar(symbol: str, timestamp: datetime, close: float, *, volume: int = 1000) 
     }
 
 
+def _keys_recursive(value) -> set[str]:
+    keys: set[str] = set()
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            keys.add(str(key))
+            keys.update(_keys_recursive(nested))
+    elif isinstance(value, list):
+        for item in value:
+            keys.update(_keys_recursive(item))
+    return keys
+
+
 class TargetStateVectorFeatureTests(unittest.TestCase):
     def test_generates_four_block_state_vector_without_symbol_leakage(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
@@ -117,6 +129,115 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertNotIn("3_strategy_family", rows[-1])
         self.assertNotIn("3_strategy_variant", rows[-1])
         self.assertNotIn("strategy_variant", repr(rows[-1]))
+
+    def test_reduces_option_chain_rows_to_target_level_state_without_contract_leakage(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        option_rows = [
+            {
+                "underlying": "AAPL",
+                "snapshot_time": (start + timedelta(minutes=10)).isoformat(),
+                "expiration": "2026-01-23",
+                "option_right_type": "CALL",
+                "strike": 100,
+                "bid": 4.9,
+                "ask": 5.1,
+                "mid": 5.0,
+                "spread_pct": 0.04,
+                "bid_size": 120,
+                "ask_size": 130,
+                "implied_vol": 0.46,
+                "delta": 0.51,
+                "underlying_price": 100,
+                "days_to_expiration": 21,
+                "bar_volume": 40,
+                "bar_trade_count": 8,
+            },
+            {
+                "underlying": "AAPL",
+                "snapshot_time": (start + timedelta(minutes=10)).isoformat(),
+                "expiration": "2026-01-23",
+                "option_right_type": "PUT",
+                "strike": 100,
+                "bid": 5.0,
+                "ask": 5.2,
+                "mid": 5.1,
+                "spread_pct": 0.04,
+                "bid_size": 100,
+                "ask_size": 120,
+                "implied_vol": 0.55,
+                "delta": -0.50,
+                "underlying_price": 100,
+                "days_to_expiration": 21,
+                "bar_volume": 10,
+                "bar_trade_count": 2,
+            },
+            {
+                "underlying": "AAPL",
+                "snapshot_time": (start + timedelta(minutes=10)).isoformat(),
+                "expiration": "2026-03-20",
+                "option_right_type": "CALL",
+                "strike": 103,
+                "bid": 3.0,
+                "ask": 3.2,
+                "mid": 3.1,
+                "spread_pct": 0.06,
+                "bid_size": 60,
+                "ask_size": 70,
+                "implied_vol": 0.39,
+                "delta": 0.30,
+                "underlying_price": 100,
+                "days_to_expiration": 77,
+            },
+            {
+                "underlying": "AAPL",
+                "snapshot_time": (start + timedelta(minutes=10)).isoformat(),
+                "expiration": "2026-03-20",
+                "option_right_type": "PUT",
+                "strike": 97,
+                "bid": 3.4,
+                "ask": 3.6,
+                "mid": 3.5,
+                "spread_pct": 0.06,
+                "bid_size": 60,
+                "ask_size": 70,
+                "implied_vol": 0.47,
+                "delta": -0.30,
+                "underlying_price": 100,
+                "days_to_expiration": 77,
+            },
+        ]
+        inputs = generator.build_inputs(
+            bar_rows=[_bar("AAPL", start + timedelta(minutes=index), 100 + index * 0.1) for index in range(20)],
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
+            option_chain_rows=option_rows,
+        )
+
+        rows = generator.generate_rows(inputs)
+        target_state = rows[-1]["target_state_features"]
+        option_state = target_state["target_option_chain_state"]
+
+        self.assertEqual(option_state["target_option_liquidity_state"]["liquidity_state"], "deep")
+        self.assertEqual(option_state["target_iv_pressure_state"]["iv_pressure_state"], "high")
+        self.assertEqual(option_state["target_option_flow_pressure_state"]["flow_pressure_state"], "call_activity_elevated")
+        forbidden = {
+            "option_contract_id",
+            "option_symbol",
+            "strike",
+            "expiration",
+            "expiry",
+            "dte",
+            "delta",
+            "bid",
+            "ask",
+            "quote",
+            "implied_vol",
+            "option_chain_snapshot_ref",
+        }
+        self.assertTrue(forbidden.isdisjoint(_keys_recursive(option_state)))
+        diagnostics = rows[-1]["feature_quality_diagnostics"]["target_option_chain_diagnostics"]
+        self.assertTrue(diagnostics["has_option_chain_source"])
+        self.assertEqual(diagnostics["option_contract_row_count"], 4)
+        self.assertIn("option_quote_available_ratio", diagnostics)
 
     def test_rejects_unmapped_bars_instead_of_emitting_identity_features(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)

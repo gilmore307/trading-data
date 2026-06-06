@@ -66,11 +66,37 @@ class ContextRow:
 
 
 @dataclass(frozen=True)
+class OptionChainRow:
+    underlying: str
+    snapshot_time: datetime
+    expiration: str
+    option_right_type: str
+    strike: float | None
+    bid: float | None
+    ask: float | None
+    mid: float | None
+    spread_pct: float | None
+    bid_size: float | None
+    ask_size: float | None
+    implied_vol: float | None
+    delta: float | None
+    underlying_price: float | None
+    days_to_expiration: int | None
+    bar_volume: float | None = None
+    bar_trade_count: int | None = None
+    trade_notional: float | None = None
+    open_interest: float | None = None
+    open_interest_change: float | None = None
+
+
+@dataclass(frozen=True)
 class TargetStateInputs:
     bars_by_candidate: dict[str, list[Bar]]
     market_context_rows: tuple[ContextRow, ...] = ()
     sector_context_rows: tuple[ContextRow, ...] = ()
     sector_context_symbol_by_candidate: dict[str, str] | None = None
+    symbol_by_candidate: dict[str, str] | None = None
+    option_chain_rows_by_symbol: dict[str, tuple[OptionChainRow, ...]] | None = None
 
 
 class TargetStateVectorError(ValueError):
@@ -85,6 +111,22 @@ class _ContextTimeline:
     def latest_at(self, available_time: datetime) -> ContextRow | None:
         index = bisect_right(self.available_times, available_time) - 1
         return self.rows[index] if index >= 0 else None
+
+
+@dataclass(frozen=True)
+class _OptionSnapshot:
+    snapshot_time: datetime
+    rows: tuple[OptionChainRow, ...]
+
+
+@dataclass(frozen=True)
+class _OptionChainTimeline:
+    snapshots: tuple[_OptionSnapshot, ...]
+    snapshot_times: tuple[datetime, ...]
+
+    def latest_at(self, available_time: datetime) -> _OptionSnapshot | None:
+        index = bisect_right(self.snapshot_times, available_time) - 1
+        return self.snapshots[index] if index >= 0 else None
 
 
 def read_csv_rows(path: str | Path) -> list[dict[str, str]]:
@@ -110,8 +152,10 @@ def build_inputs(
     candidate_rows: Iterable[Mapping[str, Any]],
     market_context_rows: Iterable[Mapping[str, Any]] = (),
     sector_context_rows: Iterable[Mapping[str, Any]] = (),
+    option_chain_rows: Iterable[Mapping[str, Any]] = (),
 ) -> TargetStateInputs:
     candidates, sector_context_symbol_by_candidate = _candidate_maps(candidate_rows)
+    symbol_by_candidate = {target_candidate_id: symbol for symbol, target_candidate_id in candidates.items()}
     bars_by_candidate: dict[str, list[Bar]] = {}
     for row in bar_rows:
         symbol = str(row.get("symbol") or "").strip().upper()
@@ -146,6 +190,8 @@ def build_inputs(
         market_context_rows=tuple(_context_rows(market_context_rows, default_prefix="market_context")),
         sector_context_rows=tuple(_context_rows(sector_context_rows, default_prefix="sector_context")),
         sector_context_symbol_by_candidate=sector_context_symbol_by_candidate,
+        symbol_by_candidate=symbol_by_candidate,
+        option_chain_rows_by_symbol=_option_chain_rows_by_symbol(option_chain_rows),
     )
 
 
@@ -157,7 +203,9 @@ def generate_rows(
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     sector_rows_by_symbol = _sector_rows_by_symbol(inputs.sector_context_rows)
+    option_chain_rows_by_symbol = inputs.option_chain_rows_by_symbol or {}
     for target_candidate_id in sorted(inputs.bars_by_candidate):
+        symbol = (inputs.symbol_by_candidate or {}).get(target_candidate_id, "")
         sector_context_rows = _sector_rows_for_candidate(
             sector_rows_by_symbol,
             (inputs.sector_context_symbol_by_candidate or {}).get(target_candidate_id),
@@ -167,6 +215,7 @@ def generate_rows(
                 inputs.bars_by_candidate[target_candidate_id],
                 inputs.market_context_rows,
                 sector_context_rows,
+                option_chain_rows_by_symbol.get(symbol, ()),
                 run_id=run_id,
                 target_context_state_version=target_context_state_version,
             )
@@ -179,6 +228,7 @@ def generate_candidate_rows(
     bars: Sequence[Bar],
     market_context_rows: Sequence[ContextRow] = (),
     sector_context_rows: Sequence[ContextRow] = (),
+    option_chain_rows: Sequence[OptionChainRow] = (),
     *,
     run_id: str = DEFAULT_RUN_ID,
     target_context_state_version: str = DEFAULT_VECTOR_VERSION,
@@ -186,6 +236,7 @@ def generate_candidate_rows(
     rows: list[dict[str, Any]] = []
     market_context_lookup = _context_timeline(market_context_rows)
     sector_context_lookup = _context_timeline(sector_context_rows)
+    option_context_lookup = _option_chain_timeline(option_chain_rows)
     closes = [bar.close for bar in bars]
     highs = [bar.high for bar in bars]
     lows = [bar.low for bar in bars]
@@ -198,7 +249,8 @@ def generate_candidate_rows(
     for index, bar in enumerate(bars):
         market_context = market_context_lookup.latest_at(bar.available_time)
         sector_context = sector_context_lookup.latest_at(bar.available_time)
-        target_state = _target_state_features(index, closes, highs, lows, volumes, vwaps, spreads, dollar_volumes, feature_cache=feature_cache)
+        option_state, option_diagnostics = _target_option_chain_state(option_context_lookup.latest_at(bar.available_time))
+        target_state = _target_state_features(index, closes, highs, lows, volumes, vwaps, spreads, dollar_volumes, feature_cache=feature_cache, option_chain_state=option_state)
         market_state = _market_state_features(market_context)
         sector_state = _sector_state_features(sector_context)
         cross_state = _cross_state_features(target_state, market_state, sector_state)
@@ -216,7 +268,7 @@ def generate_candidate_rows(
                 "sector_state_features": sector_state,
                 "target_state_features": target_state,
                 "cross_state_features": cross_state,
-                "feature_quality_diagnostics": _feature_quality(index, bar, market_context, sector_context),
+                "feature_quality_diagnostics": _feature_quality(index, bar, market_context, sector_context, option_diagnostics),
             }
         )
     return rows
@@ -243,6 +295,17 @@ def _candidate_maps(rows: Iterable[Mapping[str, Any]]) -> tuple[dict[str, str], 
 def _context_timeline(rows: Sequence[ContextRow]) -> _ContextTimeline:
     sorted_rows = tuple(sorted(rows, key=lambda item: item.available_time))
     return _ContextTimeline(sorted_rows, tuple(row.available_time for row in sorted_rows))
+
+
+def _option_chain_timeline(rows: Sequence[OptionChainRow]) -> _OptionChainTimeline:
+    grouped: dict[datetime, list[OptionChainRow]] = {}
+    for row in rows:
+        grouped.setdefault(row.snapshot_time, []).append(row)
+    snapshots = tuple(
+        _OptionSnapshot(snapshot_time, tuple(sorted(items, key=lambda item: (item.expiration, item.option_right_type, item.strike or -1.0))))
+        for snapshot_time, items in sorted(grouped.items(), key=lambda item: item[0])
+    )
+    return _OptionChainTimeline(snapshots, tuple(snapshot.snapshot_time for snapshot in snapshots))
 
 
 def _sector_rows_by_symbol(rows: Sequence[ContextRow]) -> dict[str, tuple[ContextRow, ...]]:
@@ -275,6 +338,39 @@ def _context_rows(rows: Iterable[Mapping[str, Any]], *, default_prefix: str) -> 
         payload = {str(key): value for key, value in row.items() if key not in {"available_time", "snapshot_time", "timestamp", "context_ref", "state_ref"}}
         output.append(ContextRow(available_time=available_time, context_ref=context_ref, payload=payload))
     return sorted(output, key=lambda item: item.available_time)
+
+
+def _option_chain_rows_by_symbol(rows: Iterable[Mapping[str, Any]]) -> dict[str, tuple[OptionChainRow, ...]]:
+    grouped: dict[str, list[OptionChainRow]] = {}
+    for row in rows:
+        underlying = str(row.get("underlying") or row.get("symbol") or "").strip().upper()
+        if not underlying:
+            continue
+        snapshot_time = _parse_timestamp(row.get("snapshot_time") or row.get("available_time") or row.get("timestamp"))
+        item = OptionChainRow(
+            underlying=underlying,
+            snapshot_time=snapshot_time,
+            expiration=str(row.get("expiration") or ""),
+            option_right_type=str(row.get("option_right_type") or ""),
+            strike=_safe_float(row.get("strike")),
+            bid=_safe_float(row.get("bid")),
+            ask=_safe_float(row.get("ask")),
+            mid=_safe_float(row.get("mid")),
+            spread_pct=_safe_float(row.get("spread_pct")),
+            bid_size=_safe_float(row.get("bid_size")),
+            ask_size=_safe_float(row.get("ask_size")),
+            implied_vol=_safe_float(row.get("implied_vol")),
+            delta=_safe_float(row.get("delta")),
+            underlying_price=_safe_float(row.get("underlying_price")),
+            days_to_expiration=_safe_int(row.get("days_to_expiration")),
+            bar_volume=_safe_float(row.get("bar_volume")),
+            bar_trade_count=_safe_int(row.get("bar_trade_count")),
+            trade_notional=_safe_float(row.get("trade_notional")),
+            open_interest=_safe_float(row.get("open_interest")),
+            open_interest_change=_safe_float(row.get("open_interest_change")),
+        )
+        grouped.setdefault(underlying, []).append(item)
+    return {symbol: tuple(sorted(items, key=lambda item: (item.snapshot_time, item.expiration, item.option_right_type, item.strike or -1.0))) for symbol, items in grouped.items()}
 
 
 def _latest_context(rows: Sequence[ContextRow], available_time: datetime) -> ContextRow | None:
@@ -688,6 +784,215 @@ class _TargetRollingFeatures:
         ])
 
 
+def _target_option_chain_state(snapshot: _OptionSnapshot | None) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    if snapshot is None:
+        return None, {"has_option_chain_source": False}
+    rows = list(snapshot.rows)
+    canonical = [row for row in rows if _expiry_bucket(row.days_to_expiration) in {"front", "near", "mid", "long"}]
+    atm_by_bucket = {bucket: [row for row in canonical if _expiry_bucket(row.days_to_expiration) == bucket and _moneyness_bucket(row) == "atm"] for bucket in ("front", "near", "mid", "long")}
+    front_atm_iv = _median([row.implied_vol for row in atm_by_bucket["front"] if row.implied_vol is not None])
+    near_atm_iv = _median([row.implied_vol for row in atm_by_bucket["near"] if row.implied_vol is not None])
+    mid_atm_iv = _median([row.implied_vol for row in atm_by_bucket["mid"] if row.implied_vol is not None])
+    call_wing_iv = _median([row.implied_vol for row in canonical if _moneyness_bucket(row) == "otm_call_wing" and row.implied_vol is not None])
+    put_wing_iv = _median([row.implied_vol for row in canonical if _moneyness_bucket(row) == "otm_put_wing" and row.implied_vol is not None])
+    quote_rows = [row for row in canonical if _has_quote(row)]
+    spread_values = [row.spread_pct for row in quote_rows if row.spread_pct is not None]
+    depth_values = [(row.bid_size or 0.0) + (row.ask_size or 0.0) for row in quote_rows if row.bid_size is not None or row.ask_size is not None]
+    volume_call = sum(row.bar_volume or 0.0 for row in canonical if row.option_right_type.upper().startswith("C"))
+    volume_put = sum(row.bar_volume or 0.0 for row in canonical if row.option_right_type.upper().startswith("P"))
+    trade_count_call = sum(row.bar_trade_count or 0 for row in canonical if row.option_right_type.upper().startswith("C"))
+    trade_count_put = sum(row.bar_trade_count or 0 for row in canonical if row.option_right_type.upper().startswith("P"))
+    state = {
+        "target_option_liquidity_state": {
+            "liquidity_state": _liquidity_state(_median(spread_values), _median(depth_values)),
+            "quote_depth_state": _depth_state(_median(depth_values)),
+            "spread_state": _spread_state(_median(spread_values)),
+        },
+        "target_iv_pressure_state": {
+            "iv_pressure_state": _iv_pressure_state(front_atm_iv),
+            "baseline_policy": "rolling_baseline_pending_uses_absolute_pressure_until_baseline_is_available",
+        },
+        "target_option_skew_pressure_state": {
+            "skew_pressure_state": _skew_state(None if put_wing_iv is None or call_wing_iv is None else put_wing_iv - call_wing_iv),
+        },
+        "target_option_term_structure_pressure_state": {
+            "term_structure_pressure_state": _term_state(front_atm_iv, near_atm_iv, mid_atm_iv),
+        },
+        "target_option_flow_pressure_state": {
+            "flow_pressure_state": _flow_state(volume_call, volume_put, trade_count_call, trade_count_put),
+            "flow_baseline_policy": "rolling_baseline_pending_uses_same_snapshot_call_put_balance",
+        },
+    }
+    diagnostics = {
+        "has_option_chain_source": True,
+        "option_source": "ThetaData",
+        "option_chain_snapshot_time": snapshot.snapshot_time.isoformat(),
+        "option_contract_row_count": len(rows),
+        "option_canonical_contract_row_count": len(canonical),
+        "option_short_dte_contract_row_count": sum(1 for row in rows if _expiry_bucket(row.days_to_expiration) == "short"),
+        "option_quote_available_ratio": _ratio(sum(1 for row in canonical if _has_quote(row)), len(canonical)),
+        "option_trade_available_ratio": _ratio(sum(1 for row in canonical if (row.bar_volume or 0) > 0 or (row.bar_trade_count or 0) > 0), len(canonical)),
+        "option_iv_available_ratio": _ratio(sum(1 for row in canonical if row.implied_vol is not None), len(canonical)),
+        "option_greeks_available_ratio": _ratio(sum(1 for row in canonical if row.delta is not None), len(canonical)),
+        "option_chain_observability_score": _average([
+            _ratio(sum(1 for row in canonical if _has_quote(row)), len(canonical)),
+            _ratio(sum(1 for row in canonical if row.implied_vol is not None), len(canonical)),
+            _ratio(sum(1 for row in canonical if row.delta is not None), len(canonical)),
+        ]),
+        "option_liquidity_quality_score": _liquidity_quality_score(_median(spread_values), _median(depth_values)),
+        "option_bucket_counts": {
+            bucket: sum(1 for row in rows if _expiry_bucket(row.days_to_expiration) == bucket)
+            for bucket in ("short", "front", "near", "mid", "long", "outside")
+        },
+        "option_chain_state_reduction_policy": "target_level_only_no_contract_identity_or_executable_terms",
+    }
+    return state, diagnostics
+
+
+def _expiry_bucket(days_to_expiration: int | None) -> str:
+    if days_to_expiration is None:
+        return "outside"
+    if 0 <= days_to_expiration <= 6:
+        return "short"
+    if 7 <= days_to_expiration <= 45:
+        return "front"
+    if 46 <= days_to_expiration <= 90:
+        return "near"
+    if 91 <= days_to_expiration <= 180:
+        return "mid"
+    if 181 <= days_to_expiration <= 365:
+        return "long"
+    return "outside"
+
+
+def _moneyness_bucket(row: OptionChainRow) -> str | None:
+    delta = row.delta
+    right = row.option_right_type.upper()
+    if delta is not None:
+        if 0.45 <= abs(delta) <= 0.55:
+            return "atm"
+        if right.startswith("C") and 0.20 <= delta <= 0.35:
+            return "otm_call_wing"
+        if right.startswith("P") and -0.35 <= delta <= -0.20:
+            return "otm_put_wing"
+    if row.strike not in (None, 0) and row.underlying_price not in (None, 0):
+        if abs(math.log(float(row.strike) / float(row.underlying_price))) <= 0.03:
+            return "atm"
+    return None
+
+
+def _has_quote(row: OptionChainRow) -> bool:
+    return row.bid is not None and row.ask is not None and row.ask >= row.bid and (row.mid is not None or row.ask > 0)
+
+
+def _median(values: Iterable[float | int | None]) -> float | None:
+    clean = sorted(float(value) for value in values if value is not None)
+    if not clean:
+        return None
+    midpoint = len(clean) // 2
+    if len(clean) % 2:
+        return clean[midpoint]
+    return (clean[midpoint - 1] + clean[midpoint]) / 2
+
+
+def _ratio(numerator: int, denominator: int) -> float | None:
+    return None if denominator <= 0 else numerator / denominator
+
+
+def _spread_state(spread_pct: float | None) -> str | None:
+    if spread_pct is None:
+        return None
+    if spread_pct <= 0.05:
+        return "tight"
+    if spread_pct <= 0.15:
+        return "normal"
+    if spread_pct <= 0.35:
+        return "wide"
+    return "stressed"
+
+
+def _depth_state(depth: float | None) -> str | None:
+    if depth is None:
+        return None
+    if depth >= 200:
+        return "deep"
+    if depth >= 40:
+        return "normal"
+    if depth > 0:
+        return "thin"
+    return "missing"
+
+
+def _liquidity_quality_score(spread_pct: float | None, depth: float | None) -> float | None:
+    spread_score = None if spread_pct is None else max(0.0, 1.0 - min(spread_pct / 0.35, 1.0))
+    depth_score = None if depth is None else min(math.log10(max(depth, 1.0)) / 3.0, 1.0)
+    return _average([spread_score, depth_score])
+
+
+def _liquidity_state(spread_pct: float | None, depth: float | None) -> str | None:
+    score = _liquidity_quality_score(spread_pct, depth)
+    if score is None:
+        return None
+    if score >= 0.75:
+        return "deep"
+    if score >= 0.45:
+        return "normal"
+    if score >= 0.20:
+        return "thin"
+    return "stressed"
+
+
+def _iv_pressure_state(front_atm_iv: float | None) -> str | None:
+    if front_atm_iv is None:
+        return None
+    if front_atm_iv >= 0.75:
+        return "extreme_high"
+    if front_atm_iv >= 0.45:
+        return "high"
+    if front_atm_iv <= 0.15:
+        return "low"
+    return "normal"
+
+
+def _skew_state(skew: float | None) -> str | None:
+    if skew is None:
+        return None
+    if skew >= 0.12:
+        return "extreme_put_skew"
+    if skew >= 0.04:
+        return "put_skew"
+    if skew <= -0.04:
+        return "call_skew"
+    return "balanced"
+
+
+def _term_state(front: float | None, near: float | None, mid: float | None) -> str | None:
+    if front is None or near is None:
+        return None
+    slope = front - near
+    if slope >= 0.08:
+        return "front_rich"
+    if slope <= -0.08:
+        return "upward_sloping"
+    if mid is not None and near - mid >= 0.08:
+        return "near_rich"
+    return "flat"
+
+
+def _flow_state(call_volume: float, put_volume: float, call_trades: int, put_trades: int) -> str | None:
+    call_activity = call_volume + call_trades
+    put_activity = put_volume + put_trades
+    if call_activity <= 0 and put_activity <= 0:
+        return None
+    total = call_activity + put_activity
+    call_share = call_activity / total if total else 0.0
+    if call_share >= 0.65:
+        return "call_activity_elevated"
+    if call_share <= 0.35:
+        return "put_activity_elevated"
+    return "balanced_activity"
+
+
 def _target_state_features(
     index: int,
     closes: Sequence[float | None],
@@ -698,6 +1003,7 @@ def _target_state_features(
     spreads: Sequence[float | None],
     dollar_volumes: Sequence[float | None],
     feature_cache: _TargetRollingFeatures | None = None,
+    option_chain_state: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     close = closes[index]
     returns_cache: dict[tuple[int, int, int], list[float]] = {}
@@ -717,6 +1023,7 @@ def _target_state_features(
         "target_session_position_state": {},
         "target_peer_rank_state": {},
         "target_shortability_state": {},
+        "target_option_chain_state": {},
         "target_event_risk_state": {},
         "target_data_quality_state": {},
     }
@@ -761,6 +1068,7 @@ def _target_state_features(
     state["target_vwap_location_state"]["vwap_distance_pct"] = _safe_ratio_delta(close, vwaps[index])
     state["target_session_position_state"].update(_session_position_state(index, closes, highs, lows, vwaps, feature_cache=feature_cache))
     state["target_shortability_state"].update({"shortable_state": None, "borrow_availability_score": None, "borrow_cost_score": None, "hard_to_borrow_flag": None, "locate_quality_score": None, "short_sale_constraint_score": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
+    state["target_option_chain_state"].update(option_chain_state or {"data_policy": "optional_overlay_not_available"})
     state["target_event_risk_state"].update({"earnings_proximity_score": None, "scheduled_event_risk_score": None, "news_shock_state": None, "halt_risk_score": None, "macro_event_window_flag": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
     state["target_data_quality_state"]["has_close"] = close is not None
     state["target_data_quality_state"]["has_high_low"] = highs[index] is not None and lows[index] is not None
@@ -864,7 +1172,7 @@ def _cross_multi_frame_state(
     return frames
 
 
-def _feature_quality(index: int, bar: Bar, market_context: ContextRow | None, sector_context: ContextRow | None) -> dict[str, Any]:
+def _feature_quality(index: int, bar: Bar, market_context: ContextRow | None, sector_context: ContextRow | None, option_diagnostics: Mapping[str, Any] | None = None) -> dict[str, Any]:
     return {
         "history_bars": index + 1,
         "has_market_context": market_context is not None,
@@ -872,6 +1180,7 @@ def _feature_quality(index: int, bar: Bar, market_context: ContextRow | None, se
         "has_target_close": bar.close is not None,
         "has_target_volume": bar.volume is not None,
         "has_spread_bps": bar.spread_bps is not None,
+        "target_option_chain_diagnostics": dict(option_diagnostics or {"has_option_chain_source": False}),
     }
 
 
@@ -1254,6 +1563,15 @@ def _safe_float(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None
+
+
+def _safe_int(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def _parse_timestamp(value: Any) -> datetime:

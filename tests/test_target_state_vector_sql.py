@@ -130,6 +130,36 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn("available_time < %s", statement)
         self.assertEqual(params, ["2016-01-04T16:00:00-05:00"])
 
+    def test_option_chain_rows_are_optional_and_half_open(self) -> None:
+        cursor = FakeCursor()
+        cursor._one = {"table_ref": "trading_data.option_chain_state_source"}
+
+        sql.fetch_option_chain_rows(
+            cursor,
+            source_schema="trading_data",
+            source_table="option_chain_state_source",
+            source_start="2026-01-01T00:00:00-05:00",
+            source_end="2026-02-01T00:00:00-05:00",
+        )
+
+        statements = "\n".join(statement for statement, _ in cursor.calls)
+        params = [param for _, call_params in cursor.calls for param in call_params]
+        self.assertIn("SELECT to_regclass", cursor.calls[0][0])
+        self.assertIn('FROM "trading_data"."option_chain_state_source"', statements)
+        self.assertIn("snapshot_time >= %s", statements)
+        self.assertIn("snapshot_time < %s", statements)
+        self.assertNotIn("snapshot_time <= %s", statements)
+        self.assertEqual(params, ["trading_data.option_chain_state_source", "2026-01-01T00:00:00-05:00", "2026-02-01T00:00:00-05:00"])
+
+    def test_missing_option_chain_table_returns_empty_rows(self) -> None:
+        cursor = FakeCursor()
+        cursor._one = {"table_ref": None}
+
+        rows = sql.fetch_option_chain_rows(cursor, source_schema="trading_data", source_table="option_chain_state_source")
+
+        self.assertEqual(rows, [])
+        self.assertEqual(len(cursor.calls), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

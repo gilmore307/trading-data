@@ -263,6 +263,8 @@ def _table_ddl(
         return _source_02_target_candidate_holdings_ddl(qualified_table)
     if table in {"source_03_target_state", "m03_target_state_vector_data_acquisition"}:
         return _source_03_target_state_ddl(qualified_table)
+    if table == "option_chain_state_source":
+        return _option_chain_state_source_ddl(qualified_table)
     if table in {"source_05_option_expression", "m09_option_expression_data_acquisition"}:
         return _source_05_option_expression_ddl(qualified_table)
     if table in {"source_06_position_execution", "m09_option_expression_data_acquisition_contract_path"}:
@@ -406,6 +408,53 @@ def _source_05_option_expression_ddl(qualified_table: str) -> str:
         underlying_timestamp TIMESTAMPTZ,
         days_to_expiration BIGINT,
         PRIMARY KEY (underlying, snapshot_time, snapshot_type, option_symbol)
+    )
+    """
+
+
+def _option_chain_state_source_ddl(qualified_table: str) -> str:
+    return f"""
+    CREATE TABLE IF NOT EXISTS {qualified_table} (
+        underlying TEXT NOT NULL,
+        snapshot_time TIMESTAMPTZ NOT NULL,
+        option_symbol TEXT NOT NULL,
+        expiration DATE NOT NULL,
+        option_right_type TEXT NOT NULL,
+        strike DOUBLE PRECISION NOT NULL,
+        bid DOUBLE PRECISION,
+        ask DOUBLE PRECISION,
+        mid DOUBLE PRECISION,
+        spread DOUBLE PRECISION,
+        spread_pct DOUBLE PRECISION,
+        bid_size DOUBLE PRECISION,
+        ask_size DOUBLE PRECISION,
+        bid_exchange BIGINT,
+        ask_exchange BIGINT,
+        bid_condition BIGINT,
+        ask_condition BIGINT,
+        implied_vol DOUBLE PRECISION,
+        iv_error DOUBLE PRECISION,
+        delta DOUBLE PRECISION,
+        theta DOUBLE PRECISION,
+        vega DOUBLE PRECISION,
+        rho DOUBLE PRECISION,
+        epsilon DOUBLE PRECISION,
+        lambda DOUBLE PRECISION,
+        underlying_price DOUBLE PRECISION,
+        underlying_timestamp TIMESTAMPTZ,
+        days_to_expiration BIGINT,
+        bar_open DOUBLE PRECISION,
+        bar_high DOUBLE PRECISION,
+        bar_low DOUBLE PRECISION,
+        bar_close DOUBLE PRECISION,
+        bar_volume DOUBLE PRECISION,
+        bar_trade_count BIGINT,
+        bar_vwap DOUBLE PRECISION,
+        trade_notional DOUBLE PRECISION,
+        open_interest DOUBLE PRECISION,
+        open_interest_change DOUBLE PRECISION,
+        source_run_ref TEXT,
+        PRIMARY KEY (underlying, snapshot_time, option_symbol)
     )
     """
 

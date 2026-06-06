@@ -66,7 +66,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         model_name="TargetStateVectorModel",
         doc_path="docs/12_layer_03_target_state_vector.md",
         owns_dedicated_data_surface=True,
-        source_packages=("data_source.m03_target_state_vector_data_acquisition",),
+        source_packages=("data_source.m03_target_state_vector_data_acquisition", "data_source.option_chain_state_source"),
         feature_packages=("data_feature.m03_target_state_vector_feature_generation",),
         cli_commands=(
             "trading-data-m03-target-state-vector-data-acquisition",
@@ -143,7 +143,7 @@ LAYER_CONTRACTS: tuple[LayerDataContract, ...] = (
         model_name="TradingGuidanceModel / OptionExpressionModel",
         doc_path="docs/18_layer_09_trading_guidance.md",
         owns_dedicated_data_surface=True,
-        source_packages=("data_source.m09_option_expression_data_acquisition", "data_source.m09_option_expression_data_acquisition_contract_path"),
+        source_packages=("data_source.option_chain_state_source", "data_source.m09_option_expression_data_acquisition", "data_source.m09_option_expression_data_acquisition_contract_path"),
         feature_packages=("data_feature.m09_option_expression_feature_generation",),
         feed_packages=(
             "data_feed.09_feed_thetadata_option_selection_snapshot",

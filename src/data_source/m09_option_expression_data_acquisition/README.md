@@ -2,7 +2,7 @@
 
 Manager-facing OptionExpressionModel option-chain snapshot input source.
 
-This source accepts a manager-selected underlying, explicit snapshot time, and entry/exit snapshot role, calls the ThetaData option selection snapshot feed interface, and writes one SQL row per visible option contract. Stable defaults live in pipeline code; there is no source-local `config.json`.
+This source accepts a manager-selected underlying, explicit snapshot time, and entry/exit snapshot role, derives Layer 9 rows from the shared `option_chain_state_source`, and writes one SQL row per visible option contract. The shared source/cache owns the single ThetaData option-chain provider call for this request. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 ## Input parameters
 
@@ -25,7 +25,13 @@ Optional task key fields:
 
 ## Output
 
-Final saved output is SQL-only:
+Final saved outputs are SQL-only:
+
+```text
+option_chain_state_source
+```
+
+This shared source/cache table retains contract-level rows for Layer 3 target-level reduction and Layer 9 option-expression preparation.
 
 ```text
 m09_option_expression_data_acquisition
@@ -71,4 +77,4 @@ Columns:
 
 `option_symbol` uses the same normalized fallback format consumed by `m09_option_expression_data_acquisition_contract_path` selected-contract tracking when no provider-native symbol is supplied: `<UNDERLYING>_<expiration>_<C|P>_<strike>`.
 
-The final table intentionally has no nested `contracts` JSONB column. Raw ThetaData responses and feed snapshot nesting are transient feed evidence. `snapshot_time` is the table's point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted. `run_id`, `task_id`, and write/audit timestamps live in manifests and completion receipts, not in this business table. No saved source CSV mirror is written.
+The final Layer 9 table intentionally has no nested `contracts` JSONB column. Raw ThetaData responses and feed snapshot nesting are transient feed evidence. `snapshot_time` is the table's point-in-time clock; quote/IV/Greeks provider row timestamps are intentionally omitted. `run_id`, `task_id`, and write/audit timestamps live in manifests and completion receipts, not in this business table. No saved source CSV mirror is written.

@@ -38,12 +38,36 @@ JSONB_COLUMNS = (
 KEY_COLUMNS = ("target_candidate_id", "available_time", "target_context_state_version")
 INSERT_BATCH_SIZE = 1000
 DEFAULT_TARGET_CONTEXT_MAPPING_PATH = Path("/root/projects/trading-storage/main/shared/layer_02_target_context_mapping.csv")
+DEFAULT_OPTION_CHAIN_SOURCE_TABLE = "option_chain_state_source"
 MAPPING_METHOD_RANK = {
     "crypto_business_context": 10,
     "primary_sector_context": 20,
     "secondary_sector_context": 30,
     "weak_demand_side_context": 90,
 }
+OPTION_CHAIN_SOURCE_COLUMNS = (
+    "underlying",
+    "snapshot_time",
+    "option_symbol",
+    "expiration",
+    "option_right_type",
+    "strike",
+    "bid",
+    "ask",
+    "mid",
+    "spread_pct",
+    "bid_size",
+    "ask_size",
+    "implied_vol",
+    "delta",
+    "underlying_price",
+    "days_to_expiration",
+    "bar_volume",
+    "bar_trade_count",
+    "trade_notional",
+    "open_interest",
+    "open_interest_change",
+)
 
 
 def _load_generator():
@@ -160,6 +184,47 @@ def fetch_context_rows(
     for row in rows:
         row.setdefault("context_ref", row.get(ref_column) or row.get("model_run_id") or row.get("target_context_state_ref"))
     return rows
+
+
+def table_exists(cursor: Any, *, schema: str, table: str) -> bool:
+    cursor.execute("SELECT to_regclass(%s) AS table_ref", [f"{schema}.{table}"])
+    row = cursor.fetchone()
+    if row is None:
+        return False
+    if isinstance(row, Mapping):
+        return bool(row.get("table_ref"))
+    return bool(row[0])
+
+
+def fetch_option_chain_rows(
+    cursor: Any,
+    *,
+    source_schema: str,
+    source_table: str | None,
+    source_start: str | None = None,
+    source_end: str | None = None,
+) -> list[dict[str, Any]]:
+    if not source_table or not table_exists(cursor, schema=source_schema, table=source_table):
+        return []
+    where: list[str] = []
+    params: list[Any] = []
+    if source_start:
+        where.append("snapshot_time >= %s")
+        params.append(source_start)
+    if source_end:
+        where.append("snapshot_time < %s")
+        params.append(source_end)
+    where_sql = " WHERE " + " AND ".join(where) if where else ""
+    cursor.execute(
+        f"""
+        SELECT {", ".join(_quote_identifier(column) for column in OPTION_CHAIN_SOURCE_COLUMNS)}
+        FROM {_qualified(source_schema, source_table)}
+        {where_sql}
+        ORDER BY underlying ASC, snapshot_time ASC, expiration ASC, option_right_type ASC, strike ASC, option_symbol ASC
+        """,
+        params,
+    )
+    return [dict(row) for row in cursor.fetchall()]
 
 
 def load_accepted_target_context_mappings(path: str | Path | None) -> list[dict[str, Any]]:
@@ -326,6 +391,8 @@ def generate_sql(
     sector_context_schema: str,
     sector_context_table: str,
     target_context_mapping_path: str | Path | None,
+    option_chain_source_schema: str,
+    option_chain_source_table: str | None,
     run_id: str,
     target_context_state_version: str,
 ) -> int:
@@ -336,6 +403,13 @@ def generate_sql(
             source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
             market_rows = fetch_context_rows(cursor, schema=market_context_schema, table=market_context_table, ref_column="market_context_state_ref", source_start=source_start, source_end=source_end)
             sector_rows = fetch_context_rows(cursor, schema=sector_context_schema, table=sector_context_table, ref_column="sector_context_state_ref", source_start=source_start, source_end=source_end)
+            option_chain_rows = fetch_option_chain_rows(
+                cursor,
+                source_schema=option_chain_source_schema,
+                source_table=option_chain_source_table,
+                source_start=source_start,
+                source_end=source_end,
+            )
             candidate_rows = fetch_candidate_rows(
                 cursor,
                 source_schema=source_schema,
@@ -346,7 +420,7 @@ def generate_sql(
                 source_end=source_end,
                 target_context_mapping_path=target_context_mapping_path,
             )
-            inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows)
+            inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows, option_chain_rows=option_chain_rows)
             rows = generator.generate_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
             write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
             return len(rows)
@@ -363,6 +437,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--market-context-table", default="m01_market_regime_model_generation")
     parser.add_argument("--sector-context-schema", default="trading_model")
     parser.add_argument("--sector-context-table", default="m02_sector_context_model_generation")
+    parser.add_argument("--option-chain-source-schema", default="trading_data")
+    parser.add_argument("--option-chain-source-table", default=DEFAULT_OPTION_CHAIN_SOURCE_TABLE)
     parser.add_argument("--target-context-mapping-path", type=Path, default=DEFAULT_TARGET_CONTEXT_MAPPING_PATH)
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
@@ -387,6 +463,8 @@ def main(argv: list[str] | None = None) -> int:
         sector_context_schema=args.sector_context_schema,
         sector_context_table=args.sector_context_table,
         target_context_mapping_path=args.target_context_mapping_path,
+        option_chain_source_schema=args.option_chain_source_schema,
+        option_chain_source_table=args.option_chain_source_table,
         run_id=args.run_id,
         target_context_state_version=args.target_context_state_version,
     )

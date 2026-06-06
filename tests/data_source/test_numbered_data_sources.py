@@ -125,8 +125,14 @@ class NumberedDataSourceTests(unittest.TestCase):
             result = module.run(task_key, run_id="run", client=FakeThetaDataClient(), sql_writer=writer, client_is_fixture=True)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["m09_option_expression_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["option_chain_state_source"], 1)
             self.assertEqual(result.row_counts["option_chain_snapshot_contracts"], 1)
-            call = writer.calls[0]
+            self.assertEqual([call["table"] for call in writer.calls], ["option_chain_state_source", "m09_option_expression_data_acquisition"])
+            shared_call = writer.calls[0]
+            self.assertEqual(shared_call["key_columns"], ["underlying", "snapshot_time", "option_symbol"])
+            self.assertEqual(shared_call["rows"][0]["underlying"], "AAPL")
+            self.assertEqual(shared_call["rows"][0]["option_symbol"], "AAPL_2026-05-15_C_270")
+            call = writer.calls[1]
             self.assertEqual(call["table"], "m09_option_expression_data_acquisition")
             self.assertEqual(call["key_columns"], ["underlying", "snapshot_time", "snapshot_type", "option_symbol"])
             row = call["rows"][0]
@@ -351,6 +357,17 @@ class NumberedDataSourceTests(unittest.TestCase):
             "source_artifact_path TEXT",
         }:
             self.assertIn(column, ddl)
+
+    def test_option_chain_state_source_sql_ddl_is_typed_contract_table(self):
+        from storage.sql import _table_ddl
+
+        ddl = _table_ddl("option_chain_state_source", '"trading_data"."option_chain_state_source"')
+        self.assertIsNotNone(ddl)
+        self.assertIn("snapshot_time TIMESTAMPTZ NOT NULL", ddl)
+        self.assertIn("strike DOUBLE PRECISION NOT NULL", ddl)
+        self.assertIn("bar_volume DOUBLE PRECISION", ddl)
+        self.assertIn("open_interest_change DOUBLE PRECISION", ddl)
+        self.assertIn("PRIMARY KEY (underlying, snapshot_time, option_symbol)", ddl)
 
     def test_market_regime_missing_time_range_fails_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:

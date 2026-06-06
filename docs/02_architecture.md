@@ -21,7 +21,7 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 | Layer | Owns | Examples |
 |---|---|---|
 | Data feeds | Smallest-unit provider/API/web/file access and feed-level normalization. | Alpaca bars/news/liquidity, ThetaData option endpoints, SEC EDGAR, ETF issuer files, official calendar pages. |
-| Data sources | Manager-facing orchestration for accepted model-input or acquisition routes. | `m01_market_regime_data_acquisition`, `m03_target_state_vector_data_acquisition`, `m10_event_risk_governor_data_acquisition`, `m09_option_expression_data_acquisition`, `m09_option_expression_data_acquisition_contract_path`. Retired standalone evidence packages such as `m02_sector_context_data_acquisition` do not define the current candidate route. |
+| Data sources | Manager-facing orchestration for accepted model-input or acquisition routes. | `m01_market_regime_data_acquisition`, `m03_target_state_vector_data_acquisition`, `option_chain_state_source`, `m10_event_risk_governor_data_acquisition`, `m09_option_expression_data_acquisition`, `m09_option_expression_data_acquisition_contract_path`. Retired standalone evidence packages such as `m02_sector_context_data_acquisition` do not define the current candidate route. |
 | Data features | Deterministic layer-ready feature blocks from accepted source outputs. | `m01_market_regime_feature_generation`, `m02_sector_context_feature_generation`, `m03_target_state_vector_feature_generation`, `m10_event_risk_governor_feature_generation`, `m09_option_expression_feature_generation`. |
 | Layer catalog | Maintained Layer 1-9 ownership map for docs/src/CLI/tests. | `src/data_layers/catalog.py`. |
 | Storage helpers | Low-level persistence helpers for reviewed outputs. | SQL writers and receipt-safe metadata helpers. |
@@ -36,6 +36,7 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 - Prefer accepted SQL outputs for numbered model-input sources.
 - Persist only final cleaned artifacts or reviewed SQL rows by default; bulky raw provider payloads stay transient unless an incident/debug artifact is explicitly approved.
 - The Temporal Explorer substrate is an index and visualization substrate. It does not materialize Layer 10 macro/news events until an accepted event-risk route explicitly promotes them. `chart_ohlcv_cache` is a compact visualization cache and is not a training truth source.
+- `option_chain_state_source` is the single contract-level ThetaData option-chain source/cache. Layer 3 consumes it only through target-level option-chain reduction; Layer 9 derives option-expression rows from the same source before candidate feature generation.
 - Register reusable feed, source, field, status, table, parameter, and artifact names through `trading-manager` before other repositories depend on them.
 - Do not use strategy returns, model labels, profitability, or execution outcomes as upstream data-production inputs.
 - Keep `src/data_layers/catalog.py` current when adding, removing, or intentionally omitting a layer surface.

@@ -41,6 +41,18 @@ class FakeSqlWriter:
         return {"storage_target_id": "test_postgres", "driver": "postgresql", "schema": "trading_data", "table": table, "qualified_table": f"{table}", "rows_written": len(rows)}
 
 
+class FakeSqlReader:
+    def __init__(self, rows_by_table=None):
+        self.rows_by_table = rows_by_table or {}
+        self.calls = []
+
+    def read_rows(self, **kwargs):
+        self.calls.append(kwargs)
+        rows = self.rows_by_table.get(kwargs["table"], [])
+        where_equals = kwargs.get("where_equals") or {}
+        return [dict(row) for row in rows if all(row.get(column) == value for column, value in where_equals.items())]
+
+
 class Secret:
     alias = "alpaca"
     path = Path("/root/secrets/alpaca.json")
@@ -157,6 +169,69 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(manifest["params"]["strike_range"], 5)
             self.assertEqual(manifest["params"]["option_bucket_policy_ref"], "LAYER_09_OPTION_BUCKET_STRIKE_POLICY")
             self.assertNotIn("created_at", row)
+
+    def test_option_expression_source_reuses_shared_option_chain_rows_before_provider_fetch(self):
+        module = import_module("data_source.m09_option_expression_data_acquisition.pipeline")
+        snapshot_time = "2026-04-24T09:30:02.500000-04:00"
+        shared_row = {
+            "underlying": "AAPL",
+            "snapshot_time": snapshot_time,
+            "option_symbol": "AAPL_2026-05-15_C_270",
+            "expiration": "2026-05-15",
+            "option_right_type": "CALL",
+            "strike": 270.0,
+            "bid": 1.15,
+            "ask": 1.25,
+            "mid": 1.2,
+            "spread": 0.1,
+            "spread_pct": 0.0833,
+            "bid_size": 10,
+            "ask_size": 12,
+            "bid_exchange": None,
+            "ask_exchange": None,
+            "bid_condition": None,
+            "ask_condition": None,
+            "implied_vol": 0.64,
+            "iv_error": None,
+            "delta": 0.52,
+            "theta": -0.03,
+            "vega": 0.14,
+            "rho": 0.01,
+            "epsilon": None,
+            "lambda": None,
+            "underlying_price": 248.9,
+            "underlying_timestamp": snapshot_time,
+            "days_to_expiration": 21,
+            "bar_open": None,
+            "bar_high": None,
+            "bar_low": None,
+            "bar_close": None,
+            "bar_volume": None,
+            "bar_trade_count": None,
+            "bar_vwap": None,
+            "trade_notional": None,
+            "open_interest": None,
+            "open_interest_change": None,
+            "source_run_ref": "option_chain_state_source/run_001",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "m09_option_expression_data_acquisition_task_test",
+                "source": "m09_option_expression_data_acquisition",
+                "params": {"underlying": "AAPL", "snapshot_time": snapshot_time},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            writer = FakeSqlWriter()
+            reader = FakeSqlReader({"option_chain_state_source": [shared_row]})
+            result = module.run(task_key, run_id="run", sql_reader=reader, sql_writer=writer)
+
+        self.assertEqual(result.status, "succeeded")
+        self.assertEqual(len(reader.calls), 1)
+        self.assertEqual(reader.calls[0]["table"], "option_chain_state_source")
+        self.assertEqual(result.row_counts["m09_option_expression_data_acquisition"], 1)
+        self.assertEqual(result.row_counts["option_chain_state_source"], 1)
+        self.assertEqual([call["table"] for call in writer.calls], ["option_chain_state_source", "m09_option_expression_data_acquisition"])
+        self.assertEqual(writer.calls[1]["rows"][0]["option_symbol"], "AAPL_2026-05-15_C_270")
 
     def test_option_expression_cli_accepts_task_key_manifest_batch(self):
         module = import_module("data_source.m09_option_expression_data_acquisition.__main__")

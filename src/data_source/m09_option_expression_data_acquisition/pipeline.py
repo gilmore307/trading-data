@@ -12,7 +12,7 @@ from feed_availability.http import HttpClient, RetryPolicy
 from feed_availability.sanitize import sanitize_value
 from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
-from storage.sql import PostgresSqlTableWriter, SqlTableWriter
+from storage.sql import PostgresSqlTableReader, PostgresSqlTableWriter, SqlTableReader, SqlTableWriter
 
 SOURCE = "m09_option_expression_data_acquisition"
 MODEL_ID = "option_expression_model"
@@ -106,9 +106,75 @@ def _snapshot_type(params: Mapping[str, Any]) -> str:
     return value
 
 
-def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, SourcePayload]:
+def _read_shared_source_rows(params: Mapping[str, Any], *, sql_reader: SqlTableReader | None = None) -> list[dict[str, Any]]:
+    if params.get("reuse_option_chain_state_source") is False:
+        return []
+    underlying = str(params.get("underlying") or "").strip().upper()
+    snapshot_time = str(params.get("snapshot_time") or "").strip()
+    if not underlying or not snapshot_time:
+        return []
+    reader = sql_reader or PostgresSqlTableReader.from_config(params)
+    rows = reader.read_rows(
+        table=option_chain_source.OUTPUT_TABLE,
+        columns=option_chain_source.SQL_FIELDS,
+        where_equals={"underlying": underlying, "snapshot_time": snapshot_time},
+        order_by=("expiration", "option_right_type", "strike", "option_symbol"),
+    )
+    return [dict(row) for row in rows]
+
+
+def fetch(
+    context: SourceContext,
+    *,
+    client: HttpClient | None = None,
+    sql_reader: SqlTableReader | None = None,
+    client_is_fixture: bool = False,
+) -> tuple[StepResult, SourcePayload]:
     params = dict(context.task_key.get("params") or {})
     snapshot_type = _snapshot_type(params)
+    shared_rows: list[dict[str, Any]] = []
+    if not client_is_fixture:
+        shared_rows = _read_shared_source_rows(params, sql_reader=sql_reader)
+    if shared_rows:
+        context.run_dir.mkdir(parents=True, exist_ok=True)
+        manifest = context.run_dir / "request_manifest.json"
+        manifest.write_text(
+            json.dumps(
+                sanitize_value(
+                    {
+                        "source": SOURCE,
+                        "model_id": MODEL_ID,
+                        "input_source": option_chain_source.SOURCE,
+                        "input_source_mode": "reused_sql_rows",
+                        "params": {
+                            "underlying": params.get("underlying"),
+                            "snapshot_time": params.get("snapshot_time"),
+                            "snapshot_type": snapshot_type,
+                        },
+                        "raw_persistence": "Layer 9 reused existing contract-level option_chain_state_source SQL rows",
+                        "fetched_at_utc": _now_utc(),
+                    }
+                ),
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        fetch_result = StepResult(
+            "succeeded",
+            [str(manifest)],
+            {option_chain_source.OUTPUT_TABLE: len(shared_rows), "option_chain_snapshot_contracts": len(shared_rows)},
+            details={
+                "underlying": params.get("underlying"),
+                "snapshot_time": params.get("snapshot_time"),
+                "snapshot_type": snapshot_type,
+                "input_source": option_chain_source.SOURCE,
+                "input_source_mode": "reused_sql_rows",
+                "provider_calls": 0,
+            },
+        )
+        return fetch_result, SourcePayload(shared_rows, fetch_result, StepResult("succeeded"))
     source_task = {
         "task_id": f"{context.task_key.get('task_id')}_option_chain_state_source",
         "source": option_chain_source.SOURCE,
@@ -128,6 +194,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is
                     "source": SOURCE,
                     "model_id": MODEL_ID,
                     "input_source": option_chain_source.SOURCE,
+                    "input_source_mode": "provider_fetch",
                     "params": {
                         "underlying": params.get("underlying"),
                         "snapshot_time": params.get("snapshot_time"),
@@ -158,6 +225,7 @@ def fetch(context: SourceContext, *, client: HttpClient | None = None, client_is
                 "snapshot_time": params.get("snapshot_time"),
                 "snapshot_type": snapshot_type,
                 "input_source": option_chain_source.SOURCE,
+                "input_source_mode": "provider_fetch",
             },
         ),
         SourcePayload(cleaned_source.rows, fetch_result, clean_result),
@@ -241,11 +309,19 @@ def write_receipt(context: SourceContext, *, status: str, fetch_result: StepResu
     return StepResult(status, [str(context.receipt_path), *outputs], row_counts, details={"run_id": entry["run_id"], "error": entry["error"]})
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, sql_writer: SqlTableWriter | None = None, client_is_fixture: bool = False):
+def run(
+    task_key: dict[str, Any],
+    *,
+    run_id: str,
+    client: HttpClient | None = None,
+    sql_reader: SqlTableReader | None = None,
+    sql_writer: SqlTableWriter | None = None,
+    client_is_fixture: bool = False,
+):
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, feed_payload = fetch(context, client=client, client_is_fixture=client_is_fixture)
+        fetch_result, feed_payload = fetch(context, client=client, sql_reader=sql_reader, client_is_fixture=client_is_fixture)
         clean_result, cleaned_payload = clean(context, feed_payload)
         save_result = save(context, clean_result, cleaned_payload, sql_writer=sql_writer)
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)

@@ -281,6 +281,12 @@ class FakeThetaDataPythonClient:
         )
 
 
+class NoTradeThetaDataPythonClient(FakeThetaDataPythonClient):
+    def option_history_trade(self, **kwargs):
+        self.calls.append(("option_history_trade", kwargs))
+        raise type("NoDataFoundError", (Exception,), {})("No data found for: option_history_trade(AAPL)")
+
+
 class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_only_with_snapshot_clock(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -442,6 +448,43 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             manifest = json.loads((output_root / "runs" / "run_python_library" / "request_manifest.json").read_text())
             self.assertEqual(manifest["params"]["thetadata_transport"], "python_library")
             self.assertTrue(all(request.get("transport") == "python_library" for request in manifest["requests"][:3]))
+
+    def test_historical_python_client_allows_missing_trade_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2016-01-05T09:30:00-05:00",
+                    "window_start": "2016-01-05T09:30:00-05:00",
+                    "window_end": "2016-01-05T09:31:59.999000-05:00",
+                    "historical_mode": True,
+                },
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["thetadata"],
+                    "allowed_endpoint_families": ["option_selection_snapshot"],
+                    "max_requests": 4,
+                    "max_symbols": 1,
+                    "max_time_window": "1d",
+                },
+                "output_root": str(output_root),
+            }
+            writer = FakeSqlWriter()
+
+            result = run(task_key, run_id="run_python_library_no_trade", theta_client=NoTradeThetaDataPythonClient(), sql_writer=writer)
+
+            self.assertEqual(result.status, "succeeded")
+            snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
+            contracts = json.loads(snapshot["contracts"])
+            self.assertEqual(snapshot["contract_count"], 2)
+            self.assertNotIn("trade_summary", contracts[0])
+            manifest = json.loads((output_root / "runs" / "run_python_library_no_trade" / "request_manifest.json").read_text())
+            trade_request = [request for request in manifest["requests"] if request["endpoint"].endswith("option_history_trade")][0]
+            self.assertEqual(trade_request["skipped"], "no_data_found")
 
     def test_historical_window_keeps_each_minute_and_trade_summary(self):
         with tempfile.TemporaryDirectory() as tmp:

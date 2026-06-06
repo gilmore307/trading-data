@@ -461,9 +461,26 @@ def _python_client_from_params(params: Mapping[str, Any]) -> Any:
     return ThetaClient(creds_file=credentials_file, dataframe_type="polars")
 
 
-def _fetch_python_call(name: str, call: Any) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def _is_no_data_found_error(exc: Exception) -> bool:
+    return exc.__class__.__name__ == "NoDataFoundError" or str(exc).startswith("No data found for:")
+
+
+def _fetch_python_call(name: str, call: Any, *, missing_ok: bool = False) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     started = time.perf_counter()
-    frame = call()
+    try:
+        frame = call()
+    except Exception as exc:
+        elapsed = time.perf_counter() - started
+        if missing_ok and _is_no_data_found_error(exc):
+            return [], {
+                "endpoint": f"thetadata_python_library:{name}",
+                "transport": "python_library",
+                "row_count": 0,
+                "data_row_count": 0,
+                "elapsed_seconds": round(elapsed, 3),
+                "skipped": "no_data_found",
+            }
+        raise
     elapsed = time.perf_counter() - started
     flat_rows = _frame_rows(frame)
     rows = _flat_rows_to_response_rows(flat_rows, name)
@@ -535,6 +552,7 @@ def _fetch_with_python_library(
                 max_dte=max_dte,
                 strike_range=strike_range,
             ),
+            missing_ok=True,
         )
         iv_rows = greeks_rows
         iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}

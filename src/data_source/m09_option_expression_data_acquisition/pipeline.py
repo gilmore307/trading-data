@@ -88,6 +88,10 @@ class OptionExpressionInputsError(ValueError):
     """Raised for invalid OptionExpressionModel input tasks."""
 
 
+def _is_missing_sql_table_error(exc: Exception) -> bool:
+    return exc.__class__.__name__ == "UndefinedTable" or "does not exist" in str(exc)
+
+
 def _now_utc() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -118,15 +122,20 @@ def _read_shared_source_rows(params: Mapping[str, Any], *, sql_reader: SqlTableR
     window_end = params.get("window_end")
     time_column = "snapshot_time" if window_start and window_end else None
     where_equals = {"underlying": underlying} if time_column else {"underlying": underlying, "snapshot_time": snapshot_time}
-    rows = reader.read_rows(
-        table=option_chain_source.OUTPUT_TABLE,
-        columns=option_chain_source.SQL_FIELDS,
-        where_equals=where_equals,
-        time_column=time_column,
-        start=window_start if time_column else None,
-        end=window_end if time_column else None,
-        order_by=("snapshot_time", "expiration", "option_right_type", "strike", "option_symbol"),
-    )
+    try:
+        rows = reader.read_rows(
+            table=option_chain_source.OUTPUT_TABLE,
+            columns=option_chain_source.SQL_FIELDS,
+            where_equals=where_equals,
+            time_column=time_column,
+            start=window_start if time_column else None,
+            end=window_end if time_column else None,
+            order_by=("snapshot_time", "expiration", "option_right_type", "strike", "option_symbol"),
+        )
+    except Exception as exc:
+        if _is_missing_sql_table_error(exc):
+            return []
+        raise
     return [dict(row) for row in rows]
 
 

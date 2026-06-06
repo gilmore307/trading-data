@@ -65,6 +65,12 @@ class FakeSqlReader:
         return filtered
 
 
+class MissingTableSqlReader:
+    def read_rows(self, **kwargs):
+        self.call = kwargs
+        raise type("UndefinedTable", (Exception,), {})('relation "trading_data.option_chain_state_source" does not exist')
+
+
 class Secret:
     alias = "alpaca"
     path = Path("/root/secrets/alpaca.json")
@@ -316,6 +322,17 @@ class NumberedDataSourceTests(unittest.TestCase):
         self.assertEqual(reader.calls[0]["end"], "2016-01-05T09:32:00-05:00")
         self.assertEqual(result.row_counts["m09_option_expression_data_acquisition"], 2)
         self.assertEqual([row["snapshot_time"] for row in writer.calls[1]["rows"]], [first_time, second_time])
+
+    def test_option_expression_source_treats_missing_shared_table_as_cache_miss(self):
+        module = import_module("data_source.m09_option_expression_data_acquisition.pipeline")
+        params = {
+            "underlying": "AAPL",
+            "snapshot_time": "2016-01-05T09:30:00-05:00",
+            "window_start": "2016-01-05T09:30:00-05:00",
+            "window_end": "2016-01-05T10:00:00-05:00",
+        }
+
+        self.assertEqual(module._read_shared_source_rows(params, sql_reader=MissingTableSqlReader()), [])
 
     def test_option_expression_cli_accepts_task_key_manifest_batch(self):
         module = import_module("data_source.m09_option_expression_data_acquisition.__main__")

@@ -64,6 +64,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
     def test_candidate_rows_bind_direct_sector_or_null_sector_symbol(self) -> None:
         cursor = FakeCursor()
+        cursor._one = {"table_ref": "trading_model.m02_sector_context_model_generation"}
 
         sql.fetch_candidate_rows(
             cursor,
@@ -80,6 +81,26 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", NULL::text)', statements)
         self.assertIn('l2."sector_or_industry_symbol" = s."symbol"', statements)
         self.assertIn('s."available_time" >= %s', statements)
+
+    def test_candidate_rows_tolerate_missing_sector_context_table(self) -> None:
+        cursor = FakeCursor()
+        cursor._one = {"table_ref": None}
+
+        rows = sql.fetch_candidate_rows(
+            cursor,
+            source_schema="trading_data",
+            source_table="m03_target_state_vector_data_acquisition",
+            sector_context_schema="trading_model",
+            sector_context_table="model_02_sector_context",
+            source_start="2016-01-01",
+            source_end="2016-02-01",
+            target_context_mapping_path=None,
+        )
+
+        statements = "\n".join(statement for statement, _ in cursor.calls)
+        self.assertEqual(rows, [])
+        self.assertIn('COALESCE(NULL::text, NULL::text)', statements)
+        self.assertNotIn('FROM "trading_model"."model_02_sector_context" AS l2', statements)
 
     def test_candidate_rows_use_accepted_target_context_mapping(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -115,6 +136,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
     def test_context_rows_keep_prior_point_in_time_context_before_source_start(self) -> None:
         cursor = FakeCursor()
+        cursor._one = {"table_ref": "trading_model.m01_market_regime_model_generation"}
 
         sql.fetch_context_rows(
             cursor,
@@ -125,10 +147,26 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             source_end="2016-01-04T16:00:00-05:00",
         )
 
-        statement, params = cursor.calls[0]
+        statement, params = cursor.calls[-1]
         self.assertNotIn("available_time >= %s", statement)
         self.assertIn("available_time < %s", statement)
         self.assertEqual(params, ["2016-01-04T16:00:00-05:00"])
+
+    def test_context_rows_tolerate_missing_context_table(self) -> None:
+        cursor = FakeCursor()
+        cursor._one = {"table_ref": None}
+
+        rows = sql.fetch_context_rows(
+            cursor,
+            schema="trading_model",
+            table="model_02_sector_context",
+            ref_column="sector_context_state_ref",
+            source_end="2016-01-04T16:00:00-05:00",
+        )
+
+        self.assertEqual(rows, [])
+        self.assertEqual(len(cursor.calls), 1)
+        self.assertIn("SELECT to_regclass", cursor.calls[0][0])
 
     def test_option_chain_rows_are_optional_and_half_open(self) -> None:
         cursor = FakeCursor()

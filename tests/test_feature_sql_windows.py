@@ -5,9 +5,13 @@ import unittest
 class FakeCursor:
     def __init__(self):
         self.calls = []
+        self._one = {"table_ref": "fixture.table"}
 
     def execute(self, sql, params=None):
         self.calls.append((sql, params))
+
+    def fetchone(self):
+        return self._one
 
     def fetchall(self):
         return []
@@ -71,7 +75,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
             source_start="2026-04-01T09:30:00Z",
             source_end="2026-04-01T16:00:00Z",
         )
-        sql, params = cursor.calls[0]
+        sql, params = cursor.calls[-1]
         self.assertNotIn("available_time >= %s", sql)
         self.assertIn("available_time < %s", sql)
         self.assertNotIn("available_time <= %s", sql)

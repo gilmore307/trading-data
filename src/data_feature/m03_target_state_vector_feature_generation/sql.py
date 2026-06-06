@@ -165,6 +165,8 @@ def fetch_context_rows(
     source_start: str | None = None,
     source_end: str | None = None,
 ) -> list[dict[str, Any]]:
+    if not table_exists(cursor, schema=schema, table=table):
+        return []
     where: list[str] = []
     params: list[Any] = []
     if source_end:
@@ -274,6 +276,7 @@ def fetch_candidate_rows(
         params.append(source_end)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     mapping_rows = load_accepted_target_context_mappings(target_context_mapping_path)
+    sector_table_exists = table_exists(cursor, schema=sector_context_schema, table=sector_context_table)
     mapping_cte = ""
     mapping_join = ""
     mapping_select = "NULL::text"
@@ -297,20 +300,27 @@ def fetch_candidate_rows(
         ) AS mapping_l2 ON TRUE
         """
         mapping_select = "mapping_l2.layer2_context_symbol"
-    cursor.execute(
-        f"""
-        {mapping_cte}
-        SELECT DISTINCT
-          s."target_candidate_id",
-          s."symbol",
-          COALESCE(direct_l2."sector_or_industry_symbol", {mapping_select}) AS "sector_context_symbol"
-        FROM {_qualified(source_schema, source_table)} AS s
+    direct_l2_join = ""
+    direct_l2_select = "NULL::text"
+    if sector_table_exists:
+        direct_l2_join = f"""
         LEFT JOIN LATERAL (
           SELECT l2."sector_or_industry_symbol"
           FROM {_qualified(sector_context_schema, sector_context_table)} AS l2
           WHERE l2."sector_or_industry_symbol" = s."symbol"
           LIMIT 1
         ) AS direct_l2 ON TRUE
+        """
+        direct_l2_select = "direct_l2.\"sector_or_industry_symbol\""
+    cursor.execute(
+        f"""
+        {mapping_cte}
+        SELECT DISTINCT
+          s."target_candidate_id",
+          s."symbol",
+          COALESCE({direct_l2_select}, {mapping_select}) AS "sector_context_symbol"
+        FROM {_qualified(source_schema, source_table)} AS s
+        {direct_l2_join}
         {mapping_join}
         {where_sql}
         ORDER BY s."target_candidate_id" ASC, s."symbol" ASC

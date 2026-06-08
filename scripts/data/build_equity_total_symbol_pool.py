@@ -128,6 +128,7 @@ def build_pool(
     *,
     tradingview_csvs: list[Path],
     optionable_symbols_file: Path | None,
+    non_optionable_symbols_file: Path | None = None,
     as_of_date: str,
     rank_limit: int = DEFAULT_RANK_LIMIT,
     allow_unknown_optionability: bool = False,
@@ -159,9 +160,15 @@ def build_pool(
             row.market_cap_rank = rank
 
     optionable = _read_symbols(optionable_symbols_file)
+    confirmed_non_optionable = _read_symbols(non_optionable_symbols_file)
+    conflicting_symbols = sorted(optionable & confirmed_non_optionable)
+    if conflicting_symbols:
+        raise ValueError(f"symbols cannot be both optionable and confirmed non-optionable: {', '.join(conflicting_symbols)}")
     for row in rows_by_symbol.values():
         if row.symbol in optionable:
             row.optionable_underlying_status = "accepted_optionable"
+        elif row.symbol in confirmed_non_optionable:
+            row.optionable_underlying_status = "confirmed_no_listed_options"
         elif allow_unknown_optionability:
             row.optionable_underlying_status = "uncertain_verify_before_use"
         else:
@@ -175,6 +182,9 @@ def build_pool(
         if not has_current_pool_source:
             row.pool_membership_status = "inactive"
             row.pool_membership_reason = "inactive_no_current_pool_source_condition"
+        elif row.optionable_underlying_status == "confirmed_no_listed_options":
+            row.pool_membership_status = "inactive"
+            row.pool_membership_reason = "inactive_confirmed_no_listed_options"
         elif row.optionable_underlying_status not in {"accepted_optionable", "uncertain_verify_before_use"}:
             row.pool_membership_status = "inactive"
             row.pool_membership_reason = "inactive_no_listed_options_or_unverified"
@@ -198,12 +208,14 @@ def build_pool(
         "tradingview_screener_inputs": [str(path) for path in tradingview_csvs],
         "rank_limit": rank_limit,
         "optionable_symbols_file": str(optionable_symbols_file) if optionable_symbols_file else None,
+        "non_optionable_symbols_file": str(non_optionable_symbols_file) if non_optionable_symbols_file else None,
         "allow_unknown_optionability": allow_unknown_optionability,
         "input_symbol_count": len(rows_by_symbol),
         "active_symbol_count": len(selected),
         "inactive_symbol_count": len(rows_by_symbol) - len(selected),
         "selected_symbol_count": len(selected),
         "excluded_non_optionable_or_unverified_count": len(rows_by_symbol) - len(selected),
+        "confirmed_no_listed_options_count": sum(1 for row in rows if row.optionable_underlying_status == "confirmed_no_listed_options"),
         "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView traded-dollar-value and market-cap snapshots; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
     }
     return rows, receipt
@@ -236,6 +248,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tradingview-csv", action="append", type=Path, default=[])
     parser.add_argument("--optionable-symbols-file", type=Path, default=None)
+    parser.add_argument("--non-optionable-symbols-file", type=Path, default=None)
     parser.add_argument("--as-of-date", default=date.today().isoformat())
     parser.add_argument("--rank-limit", type=int, default=DEFAULT_RANK_LIMIT)
     parser.add_argument("--allow-unknown-optionability", action="store_true")
@@ -251,6 +264,7 @@ def main() -> int:
     rows, receipt = build_pool(
         tradingview_csvs=args.tradingview_csv,
         optionable_symbols_file=args.optionable_symbols_file,
+        non_optionable_symbols_file=args.non_optionable_symbols_file,
         as_of_date=args.as_of_date,
         rank_limit=args.rank_limit,
         allow_unknown_optionability=args.allow_unknown_optionability,

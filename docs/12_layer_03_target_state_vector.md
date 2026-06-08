@@ -32,7 +32,8 @@ Current implementation:
 - Live Layer 3 receives candidate symbols from the reviewed realtime total-symbol pool and target metadata; historical replay receives them from the fixed historical candidate-universe table seeded from the current realtime pool plus BTC, ETH, and SOL. ETF holdings do not define the ordinary candidate universe.
 - `src/data_source/m03_target_state_vector_data_acquisition/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.m03_target_state_vector_data_acquisition` rows keyed by `target_candidate_id + timeframe + timestamp`.
 - `src/data_feature/m03_target_state_vector_feature_generation/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
-- `src/data_feature/m03_target_state_vector_feature_generation/sql.py` reads `m03_target_state_vector_data_acquisition` plus optional Layer 1/2 context rows and writes `trading_data.m03_target_state_vector_feature_generation` with JSONB blocks.
+- `src/data_feature/m03_target_state_vector_feature_generation/sql.py` reads `m03_target_state_vector_data_acquisition` plus optional Layer 1/2 context rows, carries accepted target asset-class and optionability metadata into candidate rows, and writes `trading_data.m03_target_state_vector_feature_generation` with JSONB blocks.
+- Targets marked as `crypto_spot` or `confirmed_no_listed_options` do not emit `target_option_chain_state` or target option-chain diagnostics. Option overlay fields are present only when the candidate metadata leaves listed options applicable.
 - CLI entrypoints are registered for `trading-data-m03-target-state-vector-data-acquisition` and `trading-data-m03-target-state-vector-feature-generation`.
 
 ## Inputs

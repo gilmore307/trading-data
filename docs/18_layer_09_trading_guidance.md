@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. Layer 9 owns base trading guidance; `trading-data` owns option-expression features derived from the shared option-chain source plus selected-contract tracking used after expression selection.
 
-Current feature/source names are `option_chain_state_source`, `m09_option_expression_feature_generation`, and `m09_option_expression_data_acquisition_contract_path`. `option_chain_state_source` is acquired before Layer 3 and shared by Layer 3 and Layer 9.
+Current feature/source names are `option_chain_state_source`, `m09_option_expression_feature_generation`, and `m09_option_expression_data_acquisition_contract_path`. `option_chain_state_source` is acquired before Layer 3 only when the selected target is option-applicable, then shared by Layer 3 and Layer 9. Targets marked as `crypto_spot` or confirmed no-listed-options have no Layer 9 option-expression feature path.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 

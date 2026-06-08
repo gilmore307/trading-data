@@ -239,6 +239,42 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertEqual(diagnostics["option_contract_row_count"], 4)
         self.assertIn("option_quote_available_ratio", diagnostics)
 
+    def test_non_optionable_candidate_omits_option_overlay_fields(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        inputs = generator.build_inputs(
+            bar_rows=[_bar("BTC", start + timedelta(minutes=index), 100 + index * 0.1) for index in range(20)],
+            candidate_rows=[
+                {
+                    "target_candidate_id": "tc_crypto",
+                    "symbol": "BTC",
+                    "target_asset_class": "crypto_spot",
+                    "optionable_underlying_status": "not_applicable",
+                }
+            ],
+            option_chain_rows=[
+                {
+                    "underlying": "BTC",
+                    "snapshot_time": (start + timedelta(minutes=10)).isoformat(),
+                    "expiration": "2026-01-23",
+                    "option_right_type": "CALL",
+                    "strike": 100,
+                    "bid": 4.9,
+                    "ask": 5.1,
+                    "implied_vol": 0.46,
+                    "days_to_expiration": 21,
+                }
+            ],
+        )
+
+        rows = generator.generate_rows(inputs)
+        target_state = rows[-1]["target_state_features"]
+        diagnostics = rows[-1]["feature_quality_diagnostics"]
+
+        self.assertNotIn("target_option_chain_state", target_state)
+        self.assertNotIn("target_option_chain_diagnostics", diagnostics)
+        self.assertFalse(any("option" in key for key in _keys_recursive(target_state)))
+        self.assertFalse(any("option" in key for key in _keys_recursive(diagnostics)))
+
     def test_rejects_unmapped_bars_instead_of_emitting_identity_features(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
         with self.assertRaisesRegex(generator.TargetStateVectorError, "candidate-mapped bar"):

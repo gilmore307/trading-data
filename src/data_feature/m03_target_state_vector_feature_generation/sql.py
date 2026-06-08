@@ -248,7 +248,9 @@ def load_accepted_target_context_mappings(path: str | Path | None) -> list[dict[
             rows.append(
                 {
                     "target_symbol": target_symbol,
+                    "target_asset_class": str(row.get("target_asset_class") or "").strip(),
                     "layer2_context_symbol": layer2_context_symbol,
+                    "optionable_proxy_status": str(row.get("optionable_proxy_status") or "").strip(),
                     "mapping_rank": MAPPING_METHOD_RANK.get(method_type, 100),
                 }
             )
@@ -280,19 +282,27 @@ def fetch_candidate_rows(
     mapping_cte = ""
     mapping_join = ""
     mapping_select = "NULL::text"
+    mapping_asset_class_select = "NULL::text"
+    mapping_option_status_select = "NULL::text"
     mapping_params: list[Any] = []
     if mapping_rows:
-        value_sql = ", ".join(["(%s, %s, %s)"] * len(mapping_rows))
+        value_sql = ", ".join(["(%s, %s, %s, %s, %s)"] * len(mapping_rows))
         mapping_cte = f"""
-        WITH target_context_mapping(target_symbol, layer2_context_symbol, mapping_rank) AS (
+        WITH target_context_mapping(target_symbol, layer2_context_symbol, mapping_rank, target_asset_class, optionable_proxy_status) AS (
           VALUES {value_sql}
         )
         """
         for row in mapping_rows:
-            mapping_params.extend([row["target_symbol"], row["layer2_context_symbol"], row["mapping_rank"]])
+            mapping_params.extend([
+                row["target_symbol"],
+                row["layer2_context_symbol"],
+                row["mapping_rank"],
+                row["target_asset_class"],
+                row["optionable_proxy_status"],
+            ])
         mapping_join = """
         LEFT JOIN LATERAL (
-          SELECT m.layer2_context_symbol
+          SELECT m.layer2_context_symbol, m.target_asset_class, m.optionable_proxy_status
           FROM target_context_mapping AS m
           WHERE m.target_symbol = s."symbol"
           ORDER BY m.mapping_rank ASC, m.layer2_context_symbol ASC
@@ -300,6 +310,8 @@ def fetch_candidate_rows(
         ) AS mapping_l2 ON TRUE
         """
         mapping_select = "mapping_l2.layer2_context_symbol"
+        mapping_asset_class_select = "mapping_l2.target_asset_class"
+        mapping_option_status_select = "mapping_l2.optionable_proxy_status"
     direct_l2_join = ""
     direct_l2_select = "NULL::text"
     if sector_table_exists:
@@ -318,7 +330,9 @@ def fetch_candidate_rows(
         SELECT DISTINCT
           s."target_candidate_id",
           s."symbol",
-          COALESCE({direct_l2_select}, {mapping_select}) AS "sector_context_symbol"
+          COALESCE({direct_l2_select}, {mapping_select}) AS "sector_context_symbol",
+          {mapping_asset_class_select} AS "target_asset_class",
+          {mapping_option_status_select} AS "optionable_underlying_status"
         FROM {_qualified(source_schema, source_table)} AS s
         {direct_l2_join}
         {mapping_join}

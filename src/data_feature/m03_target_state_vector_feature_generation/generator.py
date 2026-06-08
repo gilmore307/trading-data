@@ -96,6 +96,7 @@ class TargetStateInputs:
     sector_context_rows: tuple[ContextRow, ...] = ()
     sector_context_symbol_by_candidate: dict[str, str] | None = None
     symbol_by_candidate: dict[str, str] | None = None
+    option_overlay_by_candidate: dict[str, bool] | None = None
     option_chain_rows_by_symbol: dict[str, tuple[OptionChainRow, ...]] | None = None
 
 
@@ -154,7 +155,7 @@ def build_inputs(
     sector_context_rows: Iterable[Mapping[str, Any]] = (),
     option_chain_rows: Iterable[Mapping[str, Any]] = (),
 ) -> TargetStateInputs:
-    candidates, sector_context_symbol_by_candidate = _candidate_maps(candidate_rows)
+    candidates, sector_context_symbol_by_candidate, option_overlay_by_candidate = _candidate_maps(candidate_rows)
     symbol_by_candidate = {target_candidate_id: symbol for symbol, target_candidate_id in candidates.items()}
     bars_by_candidate: dict[str, list[Bar]] = {}
     for row in bar_rows:
@@ -191,6 +192,7 @@ def build_inputs(
         sector_context_rows=tuple(_context_rows(sector_context_rows, default_prefix="sector_context")),
         sector_context_symbol_by_candidate=sector_context_symbol_by_candidate,
         symbol_by_candidate=symbol_by_candidate,
+        option_overlay_by_candidate=option_overlay_by_candidate,
         option_chain_rows_by_symbol=_option_chain_rows_by_symbol(option_chain_rows),
     )
 
@@ -206,6 +208,7 @@ def generate_rows(
     option_chain_rows_by_symbol = inputs.option_chain_rows_by_symbol or {}
     for target_candidate_id in sorted(inputs.bars_by_candidate):
         symbol = (inputs.symbol_by_candidate or {}).get(target_candidate_id, "")
+        option_overlay_enabled = (inputs.option_overlay_by_candidate or {}).get(target_candidate_id, True)
         sector_context_rows = _sector_rows_for_candidate(
             sector_rows_by_symbol,
             (inputs.sector_context_symbol_by_candidate or {}).get(target_candidate_id),
@@ -218,6 +221,7 @@ def generate_rows(
                 option_chain_rows_by_symbol.get(symbol, ()),
                 run_id=run_id,
                 target_context_state_version=target_context_state_version,
+                option_overlay_enabled=option_overlay_enabled,
             )
         )
     _attach_peer_ranks(rows)
@@ -232,6 +236,7 @@ def generate_candidate_rows(
     *,
     run_id: str = DEFAULT_RUN_ID,
     target_context_state_version: str = DEFAULT_VECTOR_VERSION,
+    option_overlay_enabled: bool = True,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     market_context_lookup = _context_timeline(market_context_rows)
@@ -249,8 +254,23 @@ def generate_candidate_rows(
     for index, bar in enumerate(bars):
         market_context = market_context_lookup.latest_at(bar.available_time)
         sector_context = sector_context_lookup.latest_at(bar.available_time)
-        option_state, option_diagnostics = _target_option_chain_state(option_context_lookup.latest_at(bar.available_time))
-        target_state = _target_state_features(index, closes, highs, lows, volumes, vwaps, spreads, dollar_volumes, feature_cache=feature_cache, option_chain_state=option_state)
+        option_state: dict[str, Any] | None = None
+        option_diagnostics: dict[str, Any] | None = None
+        if option_overlay_enabled:
+            option_state, option_diagnostics = _target_option_chain_state(option_context_lookup.latest_at(bar.available_time))
+        target_state = _target_state_features(
+            index,
+            closes,
+            highs,
+            lows,
+            volumes,
+            vwaps,
+            spreads,
+            dollar_volumes,
+            feature_cache=feature_cache,
+            option_chain_state=option_state,
+            include_option_chain_state=option_overlay_enabled,
+        )
         market_state = _market_state_features(market_context)
         sector_state = _sector_state_features(sector_context)
         cross_state = _cross_state_features(target_state, market_state, sector_state)
@@ -268,7 +288,14 @@ def generate_candidate_rows(
                 "sector_state_features": sector_state,
                 "target_state_features": target_state,
                 "cross_state_features": cross_state,
-                "feature_quality_diagnostics": _feature_quality(index, bar, market_context, sector_context, option_diagnostics),
+                "feature_quality_diagnostics": _feature_quality(
+                    index,
+                    bar,
+                    market_context,
+                    sector_context,
+                    option_diagnostics,
+                    include_option_chain_diagnostics=option_overlay_enabled,
+                ),
             }
         )
     return rows
@@ -278,9 +305,10 @@ def payload_columns(rows: Iterable[Mapping[str, Any]]) -> list[str]:
     return sorted({key for row in rows for key in row if key not in METADATA_COLUMNS})
 
 
-def _candidate_maps(rows: Iterable[Mapping[str, Any]]) -> tuple[dict[str, str], dict[str, str]]:
+def _candidate_maps(rows: Iterable[Mapping[str, Any]]) -> tuple[dict[str, str], dict[str, str], dict[str, bool]]:
     candidates: dict[str, str] = {}
     sector_symbols: dict[str, str] = {}
+    option_overlay_by_candidate: dict[str, bool] = {}
     for row in rows:
         target_candidate_id = str(row.get("target_candidate_id") or "").strip()
         symbol = str(row.get("symbol") or row.get("routing_symbol_ref") or row.get("audit_symbol_ref") or "").strip().upper()
@@ -289,7 +317,23 @@ def _candidate_maps(rows: Iterable[Mapping[str, Any]]) -> tuple[dict[str, str], 
             sector_symbol = str(row.get("sector_context_symbol") or row.get("sector_or_industry_symbol") or "").strip().upper()
             if sector_symbol:
                 sector_symbols[target_candidate_id] = sector_symbol
-    return candidates, sector_symbols
+            option_overlay_by_candidate[target_candidate_id] = _candidate_option_overlay_enabled(row)
+    return candidates, sector_symbols, option_overlay_by_candidate
+
+
+def _candidate_option_overlay_enabled(row: Mapping[str, Any]) -> bool:
+    asset_class = str(row.get("target_asset_class") or row.get("asset_class") or row.get("instrument_type") or "").strip().lower()
+    option_status = str(
+        row.get("optionable_underlying_status")
+        or row.get("optionable_proxy_status")
+        or row.get("listed_option_status")
+        or ""
+    ).strip().lower()
+    if asset_class in {"crypto_spot", "spot_crypto", "crypto"}:
+        return False
+    if option_status in {"confirmed_no_listed_options", "no_listed_options", "no_listed_options_or_unverified"}:
+        return False
+    return True
 
 
 def _context_timeline(rows: Sequence[ContextRow]) -> _ContextTimeline:
@@ -1004,6 +1048,7 @@ def _target_state_features(
     dollar_volumes: Sequence[float | None],
     feature_cache: _TargetRollingFeatures | None = None,
     option_chain_state: Mapping[str, Any] | None = None,
+    include_option_chain_state: bool = True,
 ) -> dict[str, Any]:
     close = closes[index]
     returns_cache: dict[tuple[int, int, int], list[float]] = {}
@@ -1023,10 +1068,11 @@ def _target_state_features(
         "target_session_position_state": {},
         "target_peer_rank_state": {},
         "target_shortability_state": {},
-        "target_option_chain_state": {},
         "target_event_risk_state": {},
         "target_data_quality_state": {},
     }
+    if include_option_chain_state:
+        state["target_option_chain_state"] = {}
     state["target_price_state"]["bar_close"] = close
     state["target_price_state"]["bar_high"] = highs[index]
     state["target_price_state"]["bar_low"] = lows[index]
@@ -1068,7 +1114,8 @@ def _target_state_features(
     state["target_vwap_location_state"]["vwap_distance_pct"] = _safe_ratio_delta(close, vwaps[index])
     state["target_session_position_state"].update(_session_position_state(index, closes, highs, lows, vwaps, feature_cache=feature_cache))
     state["target_shortability_state"].update({"shortable_state": None, "borrow_availability_score": None, "borrow_cost_score": None, "hard_to_borrow_flag": None, "locate_quality_score": None, "short_sale_constraint_score": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
-    state["target_option_chain_state"].update(option_chain_state or {"data_policy": "optional_overlay_not_available"})
+    if include_option_chain_state:
+        state["target_option_chain_state"].update(option_chain_state or {"data_policy": "optional_overlay_not_available"})
     state["target_event_risk_state"].update({"earnings_proximity_score": None, "scheduled_event_risk_score": None, "news_shock_state": None, "halt_risk_score": None, "macro_event_window_flag": None, "data_policy": "optional_overlay_not_required_for_state_vector"})
     state["target_data_quality_state"]["has_close"] = close is not None
     state["target_data_quality_state"]["has_high_low"] = highs[index] is not None and lows[index] is not None
@@ -1172,16 +1219,25 @@ def _cross_multi_frame_state(
     return frames
 
 
-def _feature_quality(index: int, bar: Bar, market_context: ContextRow | None, sector_context: ContextRow | None, option_diagnostics: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    return {
+def _feature_quality(
+    index: int,
+    bar: Bar,
+    market_context: ContextRow | None,
+    sector_context: ContextRow | None,
+    option_diagnostics: Mapping[str, Any] | None = None,
+    include_option_chain_diagnostics: bool = True,
+) -> dict[str, Any]:
+    diagnostics = {
         "history_bars": index + 1,
         "has_market_context": market_context is not None,
         "has_sector_context": sector_context is not None,
         "has_target_close": bar.close is not None,
         "has_target_volume": bar.volume is not None,
         "has_spread_bps": bar.spread_bps is not None,
-        "target_option_chain_diagnostics": dict(option_diagnostics or {"has_option_chain_source": False}),
     }
+    if include_option_chain_diagnostics:
+        diagnostics["target_option_chain_diagnostics"] = dict(option_diagnostics or {"has_option_chain_source": False})
+    return diagnostics
 
 
 def _attach_peer_ranks(rows: list[dict[str, Any]]) -> None:

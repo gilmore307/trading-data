@@ -53,6 +53,38 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         self.assertEqual(receipt["excluded_non_optionable_or_unverified_count"], 1)
         self.assertEqual(receipt["rank_limit"], 300)
 
+    def test_build_pool_marks_confirmed_no_listed_options(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tradingview = root / "tradingview.csv"
+            optionable = root / "optionable.txt"
+            non_optionable = root / "non_optionable.txt"
+            _write_csv(
+                tradingview,
+                ["Symbol", "Name", "Sector", "Dollar Volume", "Market Cap"],
+                [
+                    {"Symbol": "NVDA", "Name": "NVIDIA Corporation", "Sector": "Technology", "Dollar Volume": "13B", "Market Cap": "4T"},
+                    {"Symbol": "XYZ", "Name": "No Options Inc.", "Sector": "Industrials", "Dollar Volume": "8B", "Market Cap": "9B"},
+                ],
+            )
+            optionable.write_text("NVDA\n", encoding="utf-8")
+            non_optionable.write_text("XYZ\n", encoding="utf-8")
+
+            rows, receipt = build_pool(
+                tradingview_csvs=[tradingview],
+                optionable_symbols_file=optionable,
+                non_optionable_symbols_file=non_optionable,
+                as_of_date="2026-06-04",
+                allow_unknown_optionability=True,
+            )
+
+        by_symbol = {row.symbol: row for row in rows}
+        self.assertEqual(by_symbol["XYZ"].optionable_underlying_status, "confirmed_no_listed_options")
+        self.assertEqual(by_symbol["XYZ"].pool_membership_status, "inactive")
+        self.assertEqual(by_symbol["XYZ"].pool_membership_reason, "inactive_confirmed_no_listed_options")
+        self.assertEqual(receipt["confirmed_no_listed_options_count"], 1)
+        self.assertEqual(receipt["active_symbol_count"], 1)
+
     def test_cli_writes_pool_and_symbols_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

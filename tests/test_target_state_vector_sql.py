@@ -129,9 +129,14 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         params = [param for _, call_params in cursor.calls for param in call_params]
         self.assertIn("WITH target_context_mapping", statements)
         self.assertIn("mapping_l2.layer2_context_symbol", statements)
+        self.assertIn("mapping_l2.target_asset_class", statements)
+        self.assertIn("mapping_l2.optionable_proxy_status", statements)
+        self.assertIn('AS "target_asset_class"', statements)
+        self.assertIn('AS "optionable_underlying_status"', statements)
         self.assertIn('COALESCE(direct_l2."sector_or_industry_symbol", mapping_l2.layer2_context_symbol)', statements)
         self.assertIn("AAPL", params)
         self.assertIn("XLK", params)
+        self.assertIn("equity_common", params)
         self.assertNotIn("MSFT", params)
 
     def test_context_rows_keep_prior_point_in_time_context_before_source_start(self) -> None:

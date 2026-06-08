@@ -62,6 +62,34 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn('%s::jsonb', insert_calls[0][0])
         self.assertIn('"target_candidate_id"', insert_calls[0][0])
 
+    def test_source_rows_with_lookback_limits_history_per_candidate(self) -> None:
+        cursor = FakeCursor()
+
+        sql.fetch_source_rows_with_lookback(
+            cursor,
+            source_schema="trading_data",
+            source_table="m03_target_state_vector_data_acquisition",
+            history_start="2016-01-01T00:00:00-05:00",
+            output_start="2016-02-01T00:00:00-05:00",
+            output_end="2016-03-01T00:00:00-05:00",
+            lookback_rows=10080,
+        )
+
+        statement, params = cursor.calls[-1]
+        self.assertIn('PARTITION BY "target_candidate_id"', statement)
+        self.assertIn("history_rank <= %s", statement)
+        self.assertIn("UNION ALL", statement)
+        self.assertEqual(
+            params,
+            [
+                "2016-01-01T00:00:00-05:00",
+                "2016-02-01T00:00:00-05:00",
+                "2016-02-01T00:00:00-05:00",
+                "2016-03-01T00:00:00-05:00",
+                10080,
+            ],
+        )
+
     def test_candidate_rows_bind_direct_sector_or_null_sector_symbol(self) -> None:
         cursor = FakeCursor()
         cursor._one = {"table_ref": "trading_model.m02_sector_context_model_generation"}
@@ -157,6 +185,24 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn("available_time < %s", statement)
         self.assertEqual(params, ["2016-01-04T16:00:00-05:00"])
 
+    def test_context_rows_can_filter_to_required_context_symbols(self) -> None:
+        cursor = FakeCursor()
+        cursor._one = {"table_ref": "trading_model.m02_sector_context_model_generation"}
+
+        sql.fetch_context_rows(
+            cursor,
+            schema="trading_model",
+            table="m02_sector_context_model_generation",
+            ref_column="sector_context_state_ref",
+            source_end="2016-02-01T00:00:00-05:00",
+            filter_column="sector_or_industry_symbol",
+            filter_values=["xlk", "XLK", ""],
+        )
+
+        statement, params = cursor.calls[-1]
+        self.assertIn('UPPER("sector_or_industry_symbol"::text) = ANY(%s)', statement)
+        self.assertEqual(params, ["2016-02-01T00:00:00-05:00", ["XLK"]])
+
     def test_context_rows_tolerate_missing_context_table(self) -> None:
         cursor = FakeCursor()
         cursor._one = {"table_ref": None}
@@ -183,6 +229,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             source_table="option_chain_state_source",
             source_start="2026-01-01T00:00:00-05:00",
             source_end="2026-02-01T00:00:00-05:00",
+            underlyings=["aapl", "AAPL", ""],
         )
 
         statements = "\n".join(statement for statement, _ in cursor.calls)
@@ -191,8 +238,9 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertIn('FROM "trading_data"."option_chain_state_source"', statements)
         self.assertIn("snapshot_time >= %s", statements)
         self.assertIn("snapshot_time < %s", statements)
+        self.assertIn('UPPER("underlying"::text) = ANY(%s)', statements)
         self.assertNotIn("snapshot_time <= %s", statements)
-        self.assertEqual(params, ["trading_data.option_chain_state_source", "2026-01-01T00:00:00-05:00", "2026-02-01T00:00:00-05:00"])
+        self.assertEqual(params, ["trading_data.option_chain_state_source", "2026-01-01T00:00:00-05:00", "2026-02-01T00:00:00-05:00", ["AAPL"]])
 
     def test_missing_option_chain_table_returns_empty_rows(self) -> None:
         cursor = FakeCursor()

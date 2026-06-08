@@ -115,6 +115,33 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertEqual(cross_state["sector_confirmation_state"], "sector_confirmed")
         self.assertIn("beta_adjustment_policy", cross_state)
 
+    def test_streaming_rows_match_single_candidate_batch_generation(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        inputs = generator.build_inputs(
+            bar_rows=[_bar("AAPL", start + timedelta(minutes=index), 100 + index, volume=1000 + index) for index in range(70)],
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
+        )
+
+        batch_rows = generator.generate_rows(inputs, run_id="state")
+        streaming_rows = list(generator.iter_rows(inputs, run_id="state"))
+
+        self.assertEqual(len(streaming_rows), len(batch_rows))
+        for batch_row, streaming_row in zip(batch_rows, streaming_rows, strict=True):
+            _assert_nested_close(self, streaming_row, batch_row)
+
+    def test_streaming_rows_can_skip_lookback_output_rows(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        inputs = generator.build_inputs(
+            bar_rows=[_bar("AAPL", start + timedelta(minutes=index), 100 + index, volume=1000 + index) for index in range(70)],
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
+        )
+
+        streaming_rows = list(generator.iter_rows(inputs, emit_start_time=start + timedelta(minutes=60)))
+
+        self.assertEqual(len(streaming_rows), 10)
+        self.assertEqual(streaming_rows[0]["available_time"], (start + timedelta(minutes=60)).isoformat())
+        self.assertGreater(streaming_rows[0]["target_state_features"]["target_data_quality_state"]["history_bars"], 1)
+
     def test_uses_sparse_state_windows_without_variant_fields(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
         inputs = generator.build_inputs(

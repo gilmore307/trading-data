@@ -8,12 +8,15 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gc
 import importlib
 import json
 import os
 import re
+from datetime import datetime, timedelta
+from itertools import chain
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from data_runtime.config import database_url_file
 
@@ -37,6 +40,8 @@ JSONB_COLUMNS = (
 )
 KEY_COLUMNS = ("target_candidate_id", "available_time", "target_context_state_version")
 INSERT_BATCH_SIZE = 1000
+SOURCE_LOOKBACK_ROWS = 10080
+OPTION_CHAIN_LOOKBACK_DAYS = 35
 DEFAULT_TARGET_CONTEXT_MAPPING_PATH = Path("/root/projects/trading-storage/main/shared/layer_02_target_context_mapping.csv")
 DEFAULT_OPTION_CHAIN_SOURCE_TABLE = "option_chain_state_source"
 MAPPING_METHOD_RANK = {
@@ -45,6 +50,30 @@ MAPPING_METHOD_RANK = {
     "secondary_sector_context": 30,
     "weak_demand_side_context": 90,
 }
+SOURCE_COLUMNS = (
+    "target_candidate_id",
+    "symbol",
+    "timeframe",
+    "timestamp",
+    "available_time",
+    "bar_open",
+    "bar_high",
+    "bar_low",
+    "bar_close",
+    "bar_volume",
+    "bar_vwap",
+    "bar_trade_count",
+    "dollar_volume",
+    "quote_count",
+    "avg_bid",
+    "avg_ask",
+    "avg_bid_size",
+    "avg_ask_size",
+    "avg_spread",
+    "spread_bps",
+    "last_bid",
+    "last_ask",
+)
 OPTION_CHAIN_SOURCE_COLUMNS = (
     "underlying",
     "snapshot_time",
@@ -105,6 +134,12 @@ def _qualified(schema: str, table: str) -> str:
     return f"{_quote_identifier(schema)}.{_quote_identifier(table)}"
 
 
+def _column_list(columns: Sequence[str], *, prefix: str | None = None) -> str:
+    if prefix:
+        return ", ".join(f"{prefix}.{_quote_identifier(column)}" for column in columns)
+    return ", ".join(_quote_identifier(column) for column in columns)
+
+
 def fetch_source_rows(
     cursor: Any,
     *,
@@ -124,34 +159,54 @@ def fetch_source_rows(
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     cursor.execute(
         f"""
-        SELECT
-          target_candidate_id,
-          symbol,
-          timeframe,
-          timestamp,
-          available_time,
-          bar_open,
-          bar_high,
-          bar_low,
-          bar_close,
-          bar_volume,
-          bar_vwap,
-          bar_trade_count,
-          dollar_volume,
-          quote_count,
-          avg_bid,
-          avg_ask,
-          avg_bid_size,
-          avg_ask_size,
-          avg_spread,
-          spread_bps,
-          last_bid,
-          last_ask
+        SELECT {_column_list(SOURCE_COLUMNS)}
         FROM {_qualified(source_schema, source_table)}
         {where_sql}
         ORDER BY target_candidate_id ASC, available_time ASC, timestamp ASC
         """,
         params,
+    )
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def fetch_source_rows_with_lookback(
+    cursor: Any,
+    *,
+    source_schema: str,
+    source_table: str,
+    history_start: str,
+    output_start: str,
+    output_end: str,
+    lookback_rows: int = SOURCE_LOOKBACK_ROWS,
+) -> list[dict[str, Any]]:
+    columns_sql = _column_list(SOURCE_COLUMNS)
+    qualified = _qualified(source_schema, source_table)
+    cursor.execute(
+        f"""
+        WITH prior_rows AS (
+          SELECT
+            {columns_sql},
+            row_number() OVER (
+              PARTITION BY "target_candidate_id"
+              ORDER BY "available_time" DESC, "timestamp" DESC
+            ) AS history_rank
+          FROM {qualified}
+          WHERE "available_time" >= %s AND "available_time" < %s
+        ),
+        output_rows AS (
+          SELECT {columns_sql}
+          FROM {qualified}
+          WHERE "available_time" >= %s AND "available_time" < %s
+        )
+        SELECT {_column_list(SOURCE_COLUMNS, prefix="combined")}
+        FROM (
+          SELECT {columns_sql} FROM prior_rows WHERE history_rank <= %s
+          UNION ALL
+          SELECT {columns_sql} FROM output_rows
+        ) AS combined
+        ORDER BY "target_candidate_id" ASC, "available_time" ASC, "timestamp" ASC
+        """,
+        [history_start, output_start, output_start, output_end, lookback_rows],
     )
     return [dict(row) for row in cursor.fetchall()]
 
@@ -164,6 +219,8 @@ def fetch_context_rows(
     ref_column: str,
     source_start: str | None = None,
     source_end: str | None = None,
+    filter_column: str | None = None,
+    filter_values: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     if not table_exists(cursor, schema=schema, table=table):
         return []
@@ -172,6 +229,10 @@ def fetch_context_rows(
     if source_end:
         where.append("available_time < %s")
         params.append(source_end)
+    normalized_filter_values = sorted({str(value).strip().upper() for value in filter_values or () if str(value).strip()})
+    if filter_column and normalized_filter_values:
+        where.append(f"UPPER({_quote_identifier(filter_column)}::text) = ANY(%s)")
+        params.append(normalized_filter_values)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     cursor.execute(
         f"""
@@ -205,6 +266,7 @@ def fetch_option_chain_rows(
     source_table: str | None,
     source_start: str | None = None,
     source_end: str | None = None,
+    underlyings: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     if not source_table or not table_exists(cursor, schema=source_schema, table=source_table):
         return []
@@ -216,6 +278,10 @@ def fetch_option_chain_rows(
     if source_end:
         where.append("snapshot_time < %s")
         params.append(source_end)
+    normalized_underlyings = sorted({str(value).strip().upper() for value in underlyings or () if str(value).strip()})
+    if normalized_underlyings:
+        where.append('UPPER("underlying"::text) = ANY(%s)')
+        params.append(normalized_underlyings)
     where_sql = " WHERE " + " AND ".join(where) if where else ""
     cursor.execute(
         f"""
@@ -346,17 +412,15 @@ def fetch_candidate_rows(
 
 def write_feature_rows_sql(
     cursor: Any,
-    rows: Sequence[Mapping[str, Any]],
+    rows: Iterable[Mapping[str, Any]],
     *,
     target_schema: str,
     target_table: str,
-) -> None:
-    if not rows:
-        return
-    for row in rows:
-        for column in (*METADATA_COLUMNS, *JSONB_COLUMNS):
-            if column not in row:
-                raise ValueError(f"feature_03 rows must include {column}")
+) -> int:
+    row_iterator = iter(rows)
+    first_row = next(row_iterator, None)
+    if first_row is None:
+        return 0
 
     qualified_table = _qualified(target_schema, target_table)
     cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {_quote_identifier(target_schema)}")
@@ -390,15 +454,54 @@ def write_feature_rows_sql(
           {", ".join(f'{_quote_identifier(column)} = EXCLUDED.{_quote_identifier(column)}' for column in update_columns)}
     """
     batch: list[list[Any]] = []
-    for row in rows:
+    connection = getattr(cursor, "connection", None)
+    row_count = 0
+    for row in chain((first_row,), row_iterator):
+        for column in (*METADATA_COLUMNS, *JSONB_COLUMNS):
+            if column not in row:
+                raise ValueError(f"feature_03 rows must include {column}")
         values = [row.get(column) for column in METADATA_COLUMNS]
         values.extend(json.dumps(row.get(column) or {}, sort_keys=True, default=str) for column in JSONB_COLUMNS)
         batch.append(values)
+        row_count += 1
         if len(batch) >= INSERT_BATCH_SIZE:
             cursor.executemany(insert_sql, batch)
             batch.clear()
+            if connection is not None:
+                connection.commit()
+            gc.collect()
     if batch:
         cursor.executemany(insert_sql, batch)
+        if connection is not None:
+            connection.commit()
+    return row_count
+
+
+def _parse_datetime(value: str) -> datetime:
+    return datetime.fromisoformat(value)
+
+
+def _iso(value: datetime) -> str:
+    return value.isoformat()
+
+
+def _bounded_time_slices(source_start: str | None, source_end: str | None, *, days: int = 7) -> list[tuple[str, str]]:
+    if not source_start or not source_end:
+        return []
+    start = _parse_datetime(source_start)
+    end = _parse_datetime(source_end)
+    slices: list[tuple[str, str]] = []
+    cursor = start
+    while cursor < end:
+        next_cursor = min(cursor + timedelta(days=days), end)
+        slices.append((_iso(cursor), _iso(next_cursor)))
+        cursor = next_cursor
+    return slices
+
+
+def _row_in_window(row: Mapping[str, Any], *, window_start: str, window_end: str) -> bool:
+    available_time = _parse_datetime(str(row.get("available_time")))
+    return _parse_datetime(window_start) <= available_time < _parse_datetime(window_end)
 
 
 def generate_sql(
@@ -424,16 +527,6 @@ def generate_sql(
     psycopg, dict_row = _load_psycopg()
     with psycopg.connect(database_url, row_factory=dict_row) as conn:
         with conn.cursor() as cursor:
-            source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
-            market_rows = fetch_context_rows(cursor, schema=market_context_schema, table=market_context_table, ref_column="market_context_state_ref", source_start=source_start, source_end=source_end)
-            sector_rows = fetch_context_rows(cursor, schema=sector_context_schema, table=sector_context_table, ref_column="sector_context_state_ref", source_start=source_start, source_end=source_end)
-            option_chain_rows = fetch_option_chain_rows(
-                cursor,
-                source_schema=option_chain_source_schema,
-                source_table=option_chain_source_table,
-                source_start=source_start,
-                source_end=source_end,
-            )
             candidate_rows = fetch_candidate_rows(
                 cursor,
                 source_schema=source_schema,
@@ -444,10 +537,71 @@ def generate_sql(
                 source_end=source_end,
                 target_context_mapping_path=target_context_mapping_path,
             )
-            inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows, option_chain_rows=option_chain_rows)
-            rows = generator.generate_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
-            write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
-            return len(rows)
+            candidate_symbols = sorted({str(row.get("symbol") or "").strip().upper() for row in candidate_rows if str(row.get("symbol") or "").strip()})
+            sector_context_symbols = sorted({
+                str(row.get("sector_context_symbol") or "").strip().upper()
+                for row in candidate_rows
+                if str(row.get("sector_context_symbol") or "").strip()
+            })
+            source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
+            market_rows = fetch_context_rows(cursor, schema=market_context_schema, table=market_context_table, ref_column="market_context_state_ref", source_start=source_start, source_end=source_end)
+            sector_rows = fetch_context_rows(
+                cursor,
+                schema=sector_context_schema,
+                table=sector_context_table,
+                ref_column="sector_context_state_ref",
+                source_start=source_start,
+                source_end=source_end,
+                filter_column="sector_or_industry_symbol",
+                filter_values=sector_context_symbols,
+            )
+            slices = _bounded_time_slices(source_start, source_end)
+            if not slices:
+                source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
+                option_chain_rows = fetch_option_chain_rows(
+                    cursor,
+                    source_schema=option_chain_source_schema,
+                    source_table=option_chain_source_table,
+                    source_start=source_start,
+                    source_end=source_end,
+                    underlyings=candidate_symbols,
+                )
+                inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows, option_chain_rows=option_chain_rows)
+                rows = generator.iter_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
+                return write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
+
+            total_rows = 0
+            history_start = source_start or slices[0][0]
+            history_floor = _parse_datetime(history_start)
+            for window_start, window_end in slices:
+                source_rows = fetch_source_rows_with_lookback(
+                    cursor,
+                    source_schema=source_schema,
+                    source_table=source_table,
+                    history_start=history_start,
+                    output_start=window_start,
+                    output_end=window_end,
+                )
+                option_start = _iso(max(history_floor, _parse_datetime(window_start) - timedelta(days=OPTION_CHAIN_LOOKBACK_DAYS)))
+                option_chain_rows = fetch_option_chain_rows(
+                    cursor,
+                    source_schema=option_chain_source_schema,
+                    source_table=option_chain_source_table,
+                    source_start=option_start,
+                    source_end=window_end,
+                    underlyings=candidate_symbols,
+                )
+                inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows, option_chain_rows=option_chain_rows)
+                rows = generator.iter_rows(
+                    inputs,
+                    run_id=run_id,
+                    target_context_state_version=target_context_state_version,
+                    emit_start_time=_parse_datetime(window_start),
+                    emit_end_time=_parse_datetime(window_end),
+                )
+                total_rows += write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
+                gc.collect()
+            return total_rows
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -234,6 +234,47 @@ def generate_rows(
     return rows
 
 
+def iter_rows(
+    inputs: TargetStateInputs,
+    *,
+    run_id: str = DEFAULT_RUN_ID,
+    target_context_state_version: str = DEFAULT_VECTOR_VERSION,
+    emit_start_time: datetime | None = None,
+    emit_end_time: datetime | None = None,
+) -> Iterable[dict[str, Any]]:
+    if len(inputs.bars_by_candidate) != 1:
+        for row in generate_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version):
+            available_time = _parse_timestamp(row.get("available_time"))
+            if emit_start_time is not None and available_time < emit_start_time:
+                continue
+            if emit_end_time is not None and available_time >= emit_end_time:
+                continue
+            yield row
+        return
+    sector_rows_by_symbol = _sector_rows_by_symbol(inputs.sector_context_rows)
+    option_chain_rows_by_symbol = inputs.option_chain_rows_by_symbol or {}
+    target_candidate_id = next(iter(inputs.bars_by_candidate))
+    symbol = (inputs.symbol_by_candidate or {}).get(target_candidate_id, "")
+    option_overlay_enabled = (inputs.option_overlay_by_candidate or {}).get(target_candidate_id, True)
+    sector_context_rows = _sector_rows_for_candidate(
+        sector_rows_by_symbol,
+        (inputs.sector_context_symbol_by_candidate or {}).get(target_candidate_id),
+    )
+    for row in iter_candidate_rows(
+        inputs.bars_by_candidate[target_candidate_id],
+        inputs.market_context_rows,
+        sector_context_rows,
+        option_chain_rows_by_symbol.get(symbol, ()),
+        run_id=run_id,
+        target_context_state_version=target_context_state_version,
+        option_overlay_enabled=option_overlay_enabled,
+        emit_start_time=emit_start_time,
+        emit_end_time=emit_end_time,
+    ):
+        _attach_peer_ranks([row])
+        yield row
+
+
 def generate_candidate_rows(
     bars: Sequence[Bar],
     market_context_rows: Sequence[ContextRow] = (),
@@ -244,7 +285,31 @@ def generate_candidate_rows(
     target_context_state_version: str = DEFAULT_VECTOR_VERSION,
     option_overlay_enabled: bool = True,
 ) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
+    return list(
+        iter_candidate_rows(
+            bars,
+            market_context_rows,
+            sector_context_rows,
+            option_chain_rows,
+            run_id=run_id,
+            target_context_state_version=target_context_state_version,
+            option_overlay_enabled=option_overlay_enabled,
+        )
+    )
+
+
+def iter_candidate_rows(
+    bars: Sequence[Bar],
+    market_context_rows: Sequence[ContextRow] = (),
+    sector_context_rows: Sequence[ContextRow] = (),
+    option_chain_rows: Sequence[OptionChainRow] = (),
+    *,
+    run_id: str = DEFAULT_RUN_ID,
+    target_context_state_version: str = DEFAULT_VECTOR_VERSION,
+    option_overlay_enabled: bool = True,
+    emit_start_time: datetime | None = None,
+    emit_end_time: datetime | None = None,
+) -> Iterable[dict[str, Any]]:
     market_context_lookup = _context_timeline(market_context_rows)
     sector_context_lookup = _context_timeline(sector_context_rows)
     option_context_lookup = _option_chain_timeline(option_chain_rows)
@@ -256,14 +321,27 @@ def generate_candidate_rows(
     spreads = [bar.spread_bps for bar in bars]
     dollar_volumes = [bar.dollar_volume for bar in bars]
     feature_cache = _TargetRollingFeatures(closes, highs, lows, volumes, vwaps, dollar_volumes)
+    option_state_cache: dict[datetime, tuple[dict[str, Any] | None, dict[str, Any]]] = {}
 
     for index, bar in enumerate(bars):
+        if emit_start_time is not None and bar.available_time < emit_start_time:
+            continue
+        if emit_end_time is not None and bar.available_time >= emit_end_time:
+            continue
         market_context = market_context_lookup.latest_at(bar.available_time)
         sector_context = sector_context_lookup.latest_at(bar.available_time)
         option_state: dict[str, Any] | None = None
         option_diagnostics: dict[str, Any] | None = None
         if option_overlay_enabled:
-            option_state, option_diagnostics = _target_option_chain_state(option_context_lookup.latest_at(bar.available_time))
+            option_snapshot = option_context_lookup.latest_at(bar.available_time)
+            if option_snapshot is None:
+                option_state, option_diagnostics = _target_option_chain_state(None)
+            else:
+                cached_option_state = option_state_cache.get(option_snapshot.snapshot_time)
+                if cached_option_state is None:
+                    cached_option_state = _target_option_chain_state(option_snapshot)
+                    option_state_cache[option_snapshot.snapshot_time] = cached_option_state
+                option_state, option_diagnostics = cached_option_state
         target_state = _target_state_features(
             index,
             closes,
@@ -280,31 +358,28 @@ def generate_candidate_rows(
         market_state = _market_state_features(market_context)
         sector_state = _sector_state_features(sector_context)
         cross_state = _cross_state_features(target_state, market_state, sector_state)
-        rows.append(
-            {
-                "run_id": run_id,
-                "source_run_ref": run_id,
-                "available_time": bar.available_time.isoformat(),
-                "tradeable_time": bar.available_time.isoformat(),
-                "target_candidate_id": bar.target_candidate_id,
-                "market_context_state_ref": market_context.context_ref if market_context else None,
-                "sector_context_state_ref": sector_context.context_ref if sector_context else None,
-                "target_context_state_version": target_context_state_version,
-                "market_state_features": market_state,
-                "sector_state_features": sector_state,
-                "target_state_features": target_state,
-                "cross_state_features": cross_state,
-                "feature_quality_diagnostics": _feature_quality(
-                    index,
-                    bar,
-                    market_context,
-                    sector_context,
-                    option_diagnostics,
-                    include_option_chain_diagnostics=option_overlay_enabled,
-                ),
-            }
-        )
-    return rows
+        yield {
+            "run_id": run_id,
+            "source_run_ref": run_id,
+            "available_time": bar.available_time.isoformat(),
+            "tradeable_time": bar.available_time.isoformat(),
+            "target_candidate_id": bar.target_candidate_id,
+            "market_context_state_ref": market_context.context_ref if market_context else None,
+            "sector_context_state_ref": sector_context.context_ref if sector_context else None,
+            "target_context_state_version": target_context_state_version,
+            "market_state_features": market_state,
+            "sector_state_features": sector_state,
+            "target_state_features": target_state,
+            "cross_state_features": cross_state,
+            "feature_quality_diagnostics": _feature_quality(
+                index,
+                bar,
+                market_context,
+                sector_context,
+                option_diagnostics,
+                include_option_chain_diagnostics=option_overlay_enabled,
+            ),
+        }
 
 
 def payload_columns(rows: Iterable[Mapping[str, Any]]) -> list[str]:

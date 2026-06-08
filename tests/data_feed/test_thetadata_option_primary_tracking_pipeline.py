@@ -71,6 +71,54 @@ class FakeThetaDataClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
+class FakeThetaDataFrame:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def to_dicts(self):
+        return self._rows
+
+
+class FakeThetaDataPythonClient:
+    def __init__(self):
+        self.calls = []
+
+    def option_history_ohlc(self, **kwargs):
+        self.calls.append(kwargs)
+        return FakeThetaDataFrame(
+            [
+                {
+                    "symbol": kwargs["symbol"],
+                    "expiration": kwargs["expiration"].isoformat(),
+                    "right": kwargs["right"],
+                    "strike": 270.0,
+                    "timestamp": "2026-04-24T09:30:00.000",
+                    "open": 10.0,
+                    "high": 10.0,
+                    "low": 10.0,
+                    "close": 10.0,
+                    "volume": 1,
+                    "count": 1,
+                    "vwap": 10.0,
+                },
+                {
+                    "symbol": kwargs["symbol"],
+                    "expiration": kwargs["expiration"].isoformat(),
+                    "right": kwargs["right"],
+                    "strike": 270.0,
+                    "timestamp": "2026-04-24T09:31:00.000",
+                    "open": 10.5,
+                    "high": 10.5,
+                    "low": 10.2,
+                    "close": 10.3,
+                    "volume": 2,
+                    "count": 2,
+                    "vwap": 10.3,
+                },
+            ]
+        )
+
+
 class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
     def test_run_saves_final_csv_and_skips_zero_volume_placeholders(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -125,11 +173,54 @@ class ThetaDataOptionPrimaryTrackingPipelineTests(unittest.TestCase):
             self.assertEqual(manifest["params"]["aggregation_timeframe"], "1Min")
             self.assertEqual(manifest["params"]["interval"], "1m")
             self.assertEqual(manifest["params"]["strike"], "270.000")
+            self.assertEqual(manifest["params"]["thetadata_transport"], "terminal_rest")
 
             receipt = json.loads((output_root / "completion_receipt.json").read_text())
             self.assertEqual(receipt["feed"], "10_feed_thetadata_option_primary_tracking")
             self.assertEqual(receipt["runs"][0]["row_counts"]["option_bar"], 2)
             self.assertEqual(receipt["runs"][0]["row_counts"]["active_option_ohlc_rows_transient"], 3)
+
+    def test_default_transport_uses_python_library_exact_ohlc(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "10_feed_thetadata_option_primary_tracking_task_test"
+            task_key = {
+                "task_id": "10_feed_thetadata_option_primary_tracking_task_test",
+                "feed": "10_feed_thetadata_option_primary_tracking",
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["thetadata"],
+                    "allowed_endpoint_families": ["option_primary_tracking"],
+                    "max_symbols": 1,
+                    "max_time_window": "1d",
+                },
+                "params": {
+                    "underlying": "AAPL",
+                    "expiration": "2026-05-15",
+                    "right": "CALL",
+                    "strike": 270,
+                    "start_date": "2026-04-24",
+                    "end_date": "2026-04-24",
+                    "timeframe": "1Min",
+                },
+                "output_root": str(output_root),
+            }
+            writer = FakeSqlWriter()
+            client = FakeThetaDataPythonClient()
+            result = run(task_key, run_id="run_python_library", theta_client=client, sql_writer=writer)
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(len(client.calls), 1)
+            self.assertEqual(client.calls[0]["right"], "C")
+            self.assertEqual(client.calls[0]["strike"], "270")
+            self.assertEqual(client.calls[0]["interval"], "1m")
+            self.assertEqual(client.calls[0]["start_time"], "09:30:00.000")
+            self.assertEqual(client.calls[0]["end_time"], "16:00:00.000")
+            rows = writer.rows_for("feed_10_option_bar")
+            self.assertEqual(len(rows), 2)
+            manifest = json.loads((output_root / "runs" / "run_python_library" / "request_manifest.json").read_text())
+            self.assertEqual(manifest["params"]["thetadata_transport"], "python_library")
+            self.assertEqual(manifest["request"]["transport"], "python_library")
 
     def test_requires_timeframe(self):
         with tempfile.TemporaryDirectory() as tmp:

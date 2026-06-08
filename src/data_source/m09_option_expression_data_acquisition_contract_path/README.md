@@ -28,7 +28,9 @@ Optional per-contract fields:
 - `option_symbol`: preferred stable contract symbol. If omitted, the source derives one from underlying/expiration/right/strike.
 - `timeframe`: default `1Min`.
 - `option_rows` / `timeseries_rows`: reviewed inline rows, mainly for tests or upstream replay.
-- `thetadata_base_url`, `timeout_seconds`, `registry_csv`: passed through when fetching from ThetaData primary tracking.
+- `thetadata_transport`, `thetadata_credentials_file`, `thetadata_base_url`, `timeout_seconds`, `retry_attempts`, `retry_backoff_seconds`, `registry_csv`: passed through when fetching from ThetaData primary tracking.
+
+Default provider acquisition uses the ThetaData Python library exact OHLC route through `10_feed_thetadata_option_primary_tracking`. `terminal_rest` is an explicit fallback/testing transport.
 
 ## Output
 

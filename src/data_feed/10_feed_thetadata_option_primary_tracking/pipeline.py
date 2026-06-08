@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+import time
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timedelta, timezone
@@ -48,6 +49,11 @@ THETADATA_INTERVAL_BY_TIMEFRAME = {
     "1Hour": "1h",
     "1Day": "1d",
 }
+DEFAULT_THETADATA_TRANSPORT = "python_library"
+DEFAULT_PROVIDER_RETRY_ATTEMPTS = 3
+DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS = 1.0
+DEFAULT_SESSION_START_TIME = "09:30:00.000"
+DEFAULT_SESSION_END_TIME = "16:00:00.000"
 
 
 @dataclass(frozen=True)
@@ -341,6 +347,142 @@ def _response_rows(payload: Any) -> list[dict[str, Any]]:
     return rows
 
 
+def _terminal_rest_requested(params: Mapping[str, Any], *, client: HttpClient | None, client_is_fixture: bool) -> bool:
+    transport = str(params.get("thetadata_transport") or "").strip().lower()
+    if transport in {"terminal_rest", "rest", "http"}:
+        return True
+    if client is not None or client_is_fixture:
+        return True
+    return False
+
+
+def _safe_data_value(value: Any) -> Any:
+    if isinstance(value, datetime):
+        return value.astimezone(ET).isoformat() if value.tzinfo is not None else value.replace(tzinfo=ET).isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if hasattr(value, "item"):
+        try:
+            return value.item()
+        except Exception:
+            pass
+    return value
+
+
+def _frame_rows(frame: Any) -> list[dict[str, Any]]:
+    if hasattr(frame, "to_dicts"):
+        return [{key: _safe_data_value(value) for key, value in row.items()} for row in frame.to_dicts()]
+    if isinstance(frame, Sequence) and not isinstance(frame, (str, bytes)):
+        return [{key: _safe_data_value(value) for key, value in dict(row).items()} for row in frame if isinstance(row, Mapping)]
+    raise ThetaDataOptionPrimaryTrackingError("ThetaData Python library response was not row-like")
+
+
+def _python_source_rows(flat_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    source_rows: list[dict[str, Any]] = []
+    for row in flat_rows:
+        source_rows.append(
+            {
+                str(key): _safe_data_value(value)
+                for key, value in row.items()
+                if key not in {"symbol", "expiration", "strike", "right"}
+            }
+        )
+    return source_rows
+
+
+def _python_client_from_params(params: Mapping[str, Any]) -> Any:
+    try:
+        from thetadata import ThetaClient  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise ThetaDataOptionPrimaryTrackingError(
+            "ThetaData Python library is not installed in the shared trading-manager environment"
+        ) from exc
+    credentials_file = str(params.get("thetadata_credentials_file") or "/root/tools/thetadata-terminal/creds.txt")
+    return ThetaClient(creds_file=credentials_file, dataframe_type="polars")
+
+
+def _is_no_data_found_error(exc: Exception) -> bool:
+    return exc.__class__.__name__ == "NoDataFoundError" or str(exc).startswith("No data found for:")
+
+
+def _is_retryable_python_client_error(exc: Exception) -> bool:
+    text = str(exc)
+    if "HTTP Status 500" in text or "Internal Server Error" in text:
+        return True
+    retryable_names = {
+        "ConnectionError",
+        "ConnectTimeout",
+        "HTTPError",
+        "ReadTimeout",
+        "Timeout",
+        "TimeoutError",
+    }
+    return exc.__class__.__name__ in retryable_names
+
+
+def _fetch_python_call(
+    name: str,
+    call: Any,
+    *,
+    missing_ok: bool = False,
+    retry_attempts: int = DEFAULT_PROVIDER_RETRY_ATTEMPTS,
+    retry_backoff_seconds: float = DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    started = time.perf_counter()
+    attempts: list[dict[str, Any]] = []
+    max_attempts = max(1, retry_attempts)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            frame = call()
+            break
+        except Exception as exc:
+            elapsed = time.perf_counter() - started
+            if missing_ok and _is_no_data_found_error(exc):
+                return [], {
+                    "endpoint": f"thetadata_python_library:{name}",
+                    "transport": "python_library",
+                    "row_count": 0,
+                    "elapsed_seconds": round(elapsed, 3),
+                    "skipped": "no_data_found",
+                    "attempt_count": attempt,
+                    "attempts": attempts
+                    + [{"attempt": attempt, "error_type": type(exc).__name__, "retryable": False}],
+                }
+            retryable = _is_retryable_python_client_error(exc)
+            attempts.append({"attempt": attempt, "error_type": type(exc).__name__, "retryable": retryable})
+            if attempt >= max_attempts or not retryable:
+                raise
+            if retry_backoff_seconds:
+                time.sleep(retry_backoff_seconds)
+    elapsed = time.perf_counter() - started
+    rows = _frame_rows(frame)
+    return rows, {
+        "endpoint": f"thetadata_python_library:{name}",
+        "transport": "python_library",
+        "row_count": len(rows),
+        "elapsed_seconds": round(elapsed, 3),
+        "attempt_count": len(attempts) + 1,
+        "attempts": attempts + [{"attempt": len(attempts) + 1, "error_type": None, "retryable": False}],
+    }
+
+
+def _right_request_value(right: str) -> str:
+    return "C" if right == "CALL" else "P" if right == "PUT" else right
+
+
+def _strike_request_value(strike: float) -> str:
+    return f"{strike:g}"
+
+
+def _iter_dates(start_date: date, end_date: date) -> Sequence[date]:
+    days: list[date] = []
+    current = start_date
+    while current <= end_date:
+        days.append(current)
+        current += timedelta(days=1)
+    return days
+
+
 def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     if task_key.get("feed") != FEED:
         raise ThetaDataOptionPrimaryTrackingError(f"task_key.feed must be {FEED}")
@@ -358,7 +500,13 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     )
 
 
-def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedOhlc]:
+def fetch(
+    context: FeedContext,
+    *,
+    client: HttpClient | None = None,
+    theta_client: Any | None = None,
+    client_is_fixture: bool = False,
+) -> tuple[StepResult, FetchedOhlc]:
     params = dict(context.task_key.get("params") or {})
     underlying = str(_required(params, "underlying")).upper()
     expiration = str(_required(params, "expiration"))
@@ -374,6 +522,7 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             f"unsupported timeframe {timeframe!r}; supported={sorted(SUPPORTED_TIMEFRAMES)}"
         )
 
+    transport = "terminal_rest" if _terminal_rest_requested(params, client=client, client_is_fixture=client_is_fixture) else DEFAULT_THETADATA_TRANSPORT
     base_url = str(params.get("thetadata_base_url") or "http://127.0.0.1:25503").rstrip("/")
     timeout = int(params.get("timeout_seconds", 30))
     if not client_is_fixture:
@@ -382,11 +531,10 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
             provider="thetadata",
             endpoint_family="option_primary_tracking",
             requested_symbols=1,
-            requested_requests=1,
+            requested_requests=1 if transport == "terminal_rest" else len(_iter_dates(start_date, end_date)),
             requested_start=start_date.isoformat(),
             requested_end=end_date.isoformat(),
         )
-    client = client or HttpClient(timeout_seconds=timeout)
 
     secret_summary = None
     try:
@@ -404,28 +552,66 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
         "interval": THETADATA_INTERVAL_BY_TIMEFRAME[timeframe],
         "format": "json",
     }
-    result = client.get(
-        f"{base_url}/v3/option/history/ohlc",
-        params=request_params,
-        headers={"Accept": "application/json"},
-    )
-    payload = _json_response(result)
-    response_rows = _response_rows(payload)
-    source_rows: list[dict[str, Any]] = []
-    for response_row in response_rows:
-        data = response_row.get("data")
-        if isinstance(data, Sequence) and not isinstance(data, (str, bytes)):
-            for item in data:
-                if isinstance(item, Mapping):
-                    source_rows.append(dict(item))
+    if transport == "python_library":
+        theta_client = theta_client or _python_client_from_params(params)
+        retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
+        retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
+        start_time = str(params.get("start_time") or DEFAULT_SESSION_START_TIME)
+        end_time = str(params.get("end_time") or DEFAULT_SESSION_END_TIME)
+        source_rows = []
+        request_items: list[dict[str, Any]] = []
+        for request_date in _iter_dates(start_date, end_date):
+            rows, evidence = _fetch_python_call(
+                "option_history_ohlc",
+                lambda request_date=request_date: theta_client.option_history_ohlc(
+                    symbol=underlying,
+                    expiration=date.fromisoformat(expiration),
+                    date=request_date,
+                    interval=THETADATA_INTERVAL_BY_TIMEFRAME[timeframe],
+                    start_time=start_time,
+                    end_time=end_time,
+                    strike=_strike_request_value(strike),
+                    right=_right_request_value(right),
+                ),
+                missing_ok=True,
+                retry_attempts=retry_attempts,
+                retry_backoff_seconds=retry_backoff_seconds,
+            )
+            source_rows.extend(_python_source_rows(rows))
+            request_items.append({**evidence, "date": request_date.isoformat()})
+        evidence = {
+            "endpoint": "thetadata_python_library:option_history_ohlc",
+            "transport": "python_library",
+            "request_count": len(request_items),
+            "source_row_count": len(source_rows),
+            "elapsed_seconds": round(sum(float(item.get("elapsed_seconds") or 0.0) for item in request_items), 3),
+            "requests": request_items,
+        }
+    else:
+        client = client or HttpClient(timeout_seconds=timeout)
+        result = client.get(
+            f"{base_url}/v3/option/history/ohlc",
+            params=request_params,
+            headers={"Accept": "application/json"},
+        )
+        payload = _json_response(result)
+        response_rows = _response_rows(payload)
+        source_rows = []
+        for response_row in response_rows:
+            data = response_row.get("data")
+            if isinstance(data, Sequence) and not isinstance(data, (str, bytes)):
+                for item in data:
+                    if isinstance(item, Mapping):
+                        source_rows.append(dict(item))
+        evidence = {
+            "endpoint": sanitize_url(result.url),
+            "transport": "terminal_rest",
+            "http_status": result.status,
+            "response_contract_count": len(response_rows),
+            "source_row_count": len(source_rows),
+        }
 
     context.run_dir.mkdir(parents=True, exist_ok=True)
-    evidence = {
-        "endpoint": sanitize_url(result.url),
-        "http_status": result.status,
-        "response_contract_count": len(response_rows),
-        "source_row_count": len(source_rows),
-    }
     manifest = context.run_dir / "request_manifest.json"
     manifest.write_text(
         json.dumps(
@@ -436,7 +622,13 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, client_is_f
                 "right": right,
                 "strike": strike,
                 "timeframe": timeframe,
-                "params": sanitize_value({**request_params, "aggregation_timeframe": timeframe}),
+                "params": sanitize_value(
+                    {
+                        **request_params,
+                        "aggregation_timeframe": timeframe,
+                        "thetadata_transport": transport,
+                    }
+                ),
                 "request": evidence,
                 "secret_alias": secret_summary,
                 "raw_persistence": "not_persisted_by_default",
@@ -686,11 +878,19 @@ def write_receipt(
     )
 
 
-def run(task_key: dict[str, Any], *, run_id: str, client: HttpClient | None = None, client_is_fixture: bool = False, sql_writer: SqlTableWriter | None = None) -> StepResult:
+def run(
+    task_key: dict[str, Any],
+    *,
+    run_id: str,
+    client: HttpClient | None = None,
+    theta_client: Any | None = None,
+    client_is_fixture: bool = False,
+    sql_writer: SqlTableWriter | None = None,
+) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
     try:
-        fetch_result, fetched = fetch(context, client=client, client_is_fixture=client_is_fixture)
+        fetch_result, fetched = fetch(context, client=client, theta_client=theta_client, client_is_fixture=client_is_fixture)
         clean_result, payload = clean(context, fetched)
         save_result = save(context, clean_result, payload, sql_writer=sql_writer)
         return write_receipt(

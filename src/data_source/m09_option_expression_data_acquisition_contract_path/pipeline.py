@@ -169,7 +169,15 @@ def _fetch_contract_rows(
         "output_root": str(context.run_dir / "feed" / _option_symbol(contract)),
         "manager_controls": context.task_key.get("manager_controls"),
     }
-    for passthrough in ("thetadata_base_url", "timeout_seconds", "registry_csv"):
+    for passthrough in (
+        "thetadata_base_url",
+        "thetadata_transport",
+        "thetadata_credentials_file",
+        "timeout_seconds",
+        "retry_attempts",
+        "retry_backoff_seconds",
+        "registry_csv",
+    ):
         if passthrough in contract:
             feed_task["params"][passthrough] = contract[passthrough]
     feed_context = build_option_tracking_context(feed_task, str(context.metadata["run_id"]))

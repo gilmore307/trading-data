@@ -16,4 +16,6 @@ Boundary:
 
 Historical manager requests should use a day-level ET window where practical. The provider fetch is serialized through one ThetaData Python-library session; downstream Layer 3 and Layer 9 reducers recover the precise modeling windows from SQL `snapshot_time` ranges.
 
+Default source-side provider bounds are `max_dte=180` and `strike_range=5`. These bounds are not the model-facing selector. They are the current reviewed ThetaData request envelope that captures enough contracts for the accepted Layer 3 role selector while avoiding ordinary broad-chain pulls.
+
 Current rows include quote, IV, first-order Greeks, underlying context, DTE, and minute trade-summary fields when the feed has them. Open-interest fields are present as nullable slots for the reviewed future ThetaData OI enrichment route.

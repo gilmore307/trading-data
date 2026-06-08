@@ -237,7 +237,75 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         diagnostics = rows[-1]["feature_quality_diagnostics"]["target_option_chain_diagnostics"]
         self.assertTrue(diagnostics["has_option_chain_source"])
         self.assertEqual(diagnostics["option_contract_row_count"], 4)
+        self.assertEqual(diagnostics["option_selected_contract_row_count"], 4)
+        self.assertEqual(
+            diagnostics["option_chain_state_reduction_policy"],
+            "target_option_contract_role_selector_stable_core_activity_attention_short_overlay",
+        )
+        self.assertTrue(diagnostics["option_role_bucket_coverage"]["front"]["atm_call"])
+        self.assertTrue(diagnostics["option_role_bucket_coverage"]["front"]["canonical_put_wing"])
+        self.assertIn("front:round_activity_attention", diagnostics["option_selected_role_counts"])
         self.assertIn("option_quote_available_ratio", diagnostics)
+
+    def test_option_short_expiry_overlay_is_separate_from_stable_core(self) -> None:
+        start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
+        option_rows = [
+            {
+                "underlying": "AAPL",
+                "snapshot_time": (start + timedelta(minutes=10)).isoformat(),
+                "expiration": "2026-01-05",
+                "option_right_type": right,
+                "strike": 100,
+                "bid": 1.0,
+                "ask": 1.1,
+                "mid": 1.05,
+                "spread_pct": 0.09,
+                "bid_size": 50,
+                "ask_size": 55,
+                "implied_vol": 0.80 if right == "CALL" else 0.82,
+                "delta": 0.51 if right == "CALL" else -0.49,
+                "underlying_price": 100,
+                "days_to_expiration": 3,
+                "bar_volume": 20 if right == "CALL" else 60,
+                "bar_trade_count": 3 if right == "CALL" else 9,
+            }
+            for right in ("CALL", "PUT")
+        ] + [
+            {
+                "underlying": "AAPL",
+                "snapshot_time": (start + timedelta(minutes=10)).isoformat(),
+                "expiration": "2026-01-23",
+                "option_right_type": right,
+                "strike": 100,
+                "bid": 4.9,
+                "ask": 5.1,
+                "mid": 5.0,
+                "spread_pct": 0.04,
+                "bid_size": 100,
+                "ask_size": 120,
+                "implied_vol": 0.46,
+                "delta": 0.51 if right == "CALL" else -0.50,
+                "underlying_price": 100,
+                "days_to_expiration": 21,
+            }
+            for right in ("CALL", "PUT")
+        ]
+        inputs = generator.build_inputs(
+            bar_rows=[_bar("AAPL", start + timedelta(minutes=index), 100 + index * 0.1) for index in range(20)],
+            candidate_rows=[{"target_candidate_id": "tc_001", "symbol": "AAPL"}],
+            option_chain_rows=option_rows,
+        )
+
+        rows = generator.generate_rows(inputs)
+        option_state = rows[-1]["target_state_features"]["target_option_chain_state"]
+        overlay = option_state["target_short_expiry_pressure_overlay"]
+        diagnostics = rows[-1]["feature_quality_diagnostics"]["target_option_chain_diagnostics"]
+
+        self.assertEqual(overlay["short_expiry_overlay_state"], "available")
+        self.assertEqual(overlay["short_iv_pressure_state"], "extreme_high")
+        self.assertEqual(overlay["short_activity_attention_state"], "put_activity_elevated")
+        self.assertEqual(diagnostics["option_short_overlay_selected_contract_row_count"], 2)
+        self.assertEqual(diagnostics["option_stable_core_selected_contract_row_count"], 2)
 
     def test_non_optionable_candidate_omits_option_overlay_fields(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)

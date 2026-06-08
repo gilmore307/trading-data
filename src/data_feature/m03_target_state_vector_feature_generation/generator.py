@@ -121,6 +121,12 @@ class _OptionSnapshot:
 
 
 @dataclass(frozen=True)
+class _OptionRoleSelection:
+    rows: tuple[OptionChainRow, ...]
+    roles_by_key: dict[tuple[str, str, float | None], set[str]]
+
+
+@dataclass(frozen=True)
 class _OptionChainTimeline:
     snapshots: tuple[_OptionSnapshot, ...]
     snapshot_times: tuple[datetime, ...]
@@ -832,65 +838,301 @@ def _target_option_chain_state(snapshot: _OptionSnapshot | None) -> tuple[dict[s
     if snapshot is None:
         return None, {"has_option_chain_source": False}
     rows = list(snapshot.rows)
-    canonical = [row for row in rows if _expiry_bucket(row.days_to_expiration) in {"front", "near", "mid", "long"}]
-    atm_by_bucket = {bucket: [row for row in canonical if _expiry_bucket(row.days_to_expiration) == bucket and _moneyness_bucket(row) == "atm"] for bucket in ("front", "near", "mid", "long")}
-    front_atm_iv = _median([row.implied_vol for row in atm_by_bucket["front"] if row.implied_vol is not None])
-    near_atm_iv = _median([row.implied_vol for row in atm_by_bucket["near"] if row.implied_vol is not None])
-    mid_atm_iv = _median([row.implied_vol for row in atm_by_bucket["mid"] if row.implied_vol is not None])
-    call_wing_iv = _median([row.implied_vol for row in canonical if _moneyness_bucket(row) == "otm_call_wing" and row.implied_vol is not None])
-    put_wing_iv = _median([row.implied_vol for row in canonical if _moneyness_bucket(row) == "otm_put_wing" and row.implied_vol is not None])
-    quote_rows = [row for row in canonical if _has_quote(row)]
+    stable_core = _select_stable_option_core(rows)
+    short_overlay = _select_short_expiry_overlay(rows)
+    stable_state_rows = _rows_with_role_suffix(stable_core, (":atm_state", ":canonical_wing_state"))
+    activity_rows = _rows_with_role_suffix(stable_core, (":round_activity_attention", ":oi_activity_attention"))
+    short_rows = list(short_overlay.rows)
+    selected_rows_by_key = {_option_row_key(row): row for row in (*stable_core.rows, *short_overlay.rows)}
+    front_atm_iv = _median(row.implied_vol for row in _rows_with_role_prefix(stable_core, "front:atm_state") if row.implied_vol is not None)
+    near_atm_iv = _median(row.implied_vol for row in _rows_with_role_prefix(stable_core, "near:atm_state") if row.implied_vol is not None)
+    mid_atm_iv = _median(row.implied_vol for row in _rows_with_role_prefix(stable_core, "mid:atm_state") if row.implied_vol is not None)
+    canonical_wings = _rows_with_role_suffix(stable_core, (":canonical_wing_state",))
+    call_wing_iv = _median(row.implied_vol for row in canonical_wings if row.option_right_type.upper().startswith("C") and row.implied_vol is not None)
+    put_wing_iv = _median(row.implied_vol for row in canonical_wings if row.option_right_type.upper().startswith("P") and row.implied_vol is not None)
+    quote_rows = [row for row in stable_state_rows if _has_quote(row)]
     spread_values = [row.spread_pct for row in quote_rows if row.spread_pct is not None]
     depth_values = [(row.bid_size or 0.0) + (row.ask_size or 0.0) for row in quote_rows if row.bid_size is not None or row.ask_size is not None]
-    volume_call = sum(row.bar_volume or 0.0 for row in canonical if row.option_right_type.upper().startswith("C"))
-    volume_put = sum(row.bar_volume or 0.0 for row in canonical if row.option_right_type.upper().startswith("P"))
-    trade_count_call = sum(row.bar_trade_count or 0 for row in canonical if row.option_right_type.upper().startswith("C"))
-    trade_count_put = sum(row.bar_trade_count or 0 for row in canonical if row.option_right_type.upper().startswith("P"))
+    volume_call = sum(row.bar_volume or 0.0 for row in activity_rows if row.option_right_type.upper().startswith("C"))
+    volume_put = sum(row.bar_volume or 0.0 for row in activity_rows if row.option_right_type.upper().startswith("P"))
+    trade_count_call = sum(row.bar_trade_count or 0 for row in activity_rows if row.option_right_type.upper().startswith("C"))
+    trade_count_put = sum(row.bar_trade_count or 0 for row in activity_rows if row.option_right_type.upper().startswith("P"))
+    short_atm_rows = _rows_with_role_suffix(short_overlay, (":atm_pressure",))
+    short_atm_iv = _median(row.implied_vol for row in short_atm_rows if row.implied_vol is not None)
+    short_call_volume = sum(row.bar_volume or 0.0 for row in short_rows if row.option_right_type.upper().startswith("C"))
+    short_put_volume = sum(row.bar_volume or 0.0 for row in short_rows if row.option_right_type.upper().startswith("P"))
+    short_call_trades = sum(row.bar_trade_count or 0 for row in short_rows if row.option_right_type.upper().startswith("C"))
+    short_put_trades = sum(row.bar_trade_count or 0 for row in short_rows if row.option_right_type.upper().startswith("P"))
     state = {
         "target_option_liquidity_state": {
             "liquidity_state": _liquidity_state(_median(spread_values), _median(depth_values)),
             "quote_depth_state": _depth_state(_median(depth_values)),
             "spread_state": _spread_state(_median(spread_values)),
+            "measurement_policy": "selected_stable_core_contract_roles",
         },
         "target_iv_pressure_state": {
             "iv_pressure_state": _iv_pressure_state(front_atm_iv),
             "baseline_policy": "rolling_baseline_pending_uses_absolute_pressure_until_baseline_is_available",
+            "measurement_policy": "front_bucket_selected_atm_roles",
         },
         "target_option_skew_pressure_state": {
             "skew_pressure_state": _skew_state(None if put_wing_iv is None or call_wing_iv is None else put_wing_iv - call_wing_iv),
+            "measurement_policy": "canonical_delta_wing_pair_with_moneyness_fallback",
         },
         "target_option_term_structure_pressure_state": {
             "term_structure_pressure_state": _term_state(front_atm_iv, near_atm_iv, mid_atm_iv),
+            "measurement_policy": "selected_atm_roles_across_front_near_mid_buckets",
         },
         "target_option_flow_pressure_state": {
             "flow_pressure_state": _flow_state(volume_call, volume_put, trade_count_call, trade_count_put),
-            "flow_baseline_policy": "rolling_baseline_pending_uses_same_snapshot_call_put_balance",
+            "flow_baseline_policy": "rolling_baseline_pending_uses_selected_activity_attention_call_put_balance",
+            "measurement_policy": "selected_activity_attention_roles_not_broad_chain_flow",
+        },
+        "target_short_expiry_pressure_overlay": {
+            "short_expiry_overlay_state": "available" if short_rows else "not_available",
+            "short_iv_pressure_state": _iv_pressure_state(short_atm_iv),
+            "short_activity_attention_state": _flow_state(short_call_volume, short_put_volume, short_call_trades, short_put_trades),
+            "measurement_policy": "zero_to_six_dte_overlay_separate_from_stable_core",
         },
     }
+    stable_bucket_rows = [row for row in rows if _stable_option_bucket(row.days_to_expiration) is not None]
+    selected_rows = list(selected_rows_by_key.values())
     diagnostics = {
         "has_option_chain_source": True,
         "option_source": "ThetaData",
         "option_chain_snapshot_time": snapshot.snapshot_time.isoformat(),
         "option_contract_row_count": len(rows),
-        "option_canonical_contract_row_count": len(canonical),
+        "option_canonical_contract_row_count": len(stable_bucket_rows),
+        "option_selected_contract_row_count": len(selected_rows),
+        "option_stable_core_selected_contract_row_count": len(stable_core.rows),
+        "option_short_overlay_selected_contract_row_count": len(short_overlay.rows),
         "option_short_dte_contract_row_count": sum(1 for row in rows if _expiry_bucket(row.days_to_expiration) == "short"),
-        "option_quote_available_ratio": _ratio(sum(1 for row in canonical if _has_quote(row)), len(canonical)),
-        "option_trade_available_ratio": _ratio(sum(1 for row in canonical if (row.bar_volume or 0) > 0 or (row.bar_trade_count or 0) > 0), len(canonical)),
-        "option_iv_available_ratio": _ratio(sum(1 for row in canonical if row.implied_vol is not None), len(canonical)),
-        "option_greeks_available_ratio": _ratio(sum(1 for row in canonical if row.delta is not None), len(canonical)),
+        "option_quote_available_ratio": _ratio(sum(1 for row in selected_rows if _has_quote(row)), len(selected_rows)),
+        "option_trade_available_ratio": _ratio(sum(1 for row in selected_rows if (row.bar_volume or 0) > 0 or (row.bar_trade_count or 0) > 0), len(selected_rows)),
+        "option_iv_available_ratio": _ratio(sum(1 for row in selected_rows if row.implied_vol is not None), len(selected_rows)),
+        "option_greeks_available_ratio": _ratio(sum(1 for row in selected_rows if row.delta is not None), len(selected_rows)),
         "option_chain_observability_score": _average([
-            _ratio(sum(1 for row in canonical if _has_quote(row)), len(canonical)),
-            _ratio(sum(1 for row in canonical if row.implied_vol is not None), len(canonical)),
-            _ratio(sum(1 for row in canonical if row.delta is not None), len(canonical)),
+            _ratio(sum(1 for row in selected_rows if _has_quote(row)), len(selected_rows)),
+            _ratio(sum(1 for row in selected_rows if row.implied_vol is not None), len(selected_rows)),
+            _ratio(sum(1 for row in selected_rows if row.delta is not None), len(selected_rows)),
         ]),
         "option_liquidity_quality_score": _liquidity_quality_score(_median(spread_values), _median(depth_values)),
         "option_bucket_counts": {
             bucket: sum(1 for row in rows if _expiry_bucket(row.days_to_expiration) == bucket)
             for bucket in ("short", "front", "near", "mid", "long", "outside")
         },
-        "option_chain_state_reduction_policy": "target_level_only_no_contract_identity_or_executable_terms",
+        "option_selected_role_counts": _role_counts(stable_core, short_overlay),
+        "option_role_bucket_coverage": {
+            bucket: _role_bucket_available(stable_core, bucket)
+            for bucket in ("front", "near", "mid")
+        },
+        "option_activity_attention_policy": "round_strike_and_point_in_time_open_interest_when_available_same_snapshot_activity_is_validation_only",
+        "option_chain_state_reduction_policy": "target_option_contract_role_selector_stable_core_activity_attention_short_overlay",
     }
     return state, diagnostics
+
+
+def _option_row_key(row: OptionChainRow) -> tuple[str, str, float | None]:
+    return (row.expiration, row.option_right_type.upper(), row.strike)
+
+
+def _add_option_role(
+    selected: dict[tuple[str, str, float | None], OptionChainRow],
+    roles: dict[tuple[str, str, float | None], set[str]],
+    row: OptionChainRow | None,
+    role: str,
+) -> None:
+    if row is None:
+        return
+    key = _option_row_key(row)
+    selected[key] = row
+    roles.setdefault(key, set()).add(role)
+
+
+def _moneyness_log(row: OptionChainRow) -> float | None:
+    if row.strike in (None, 0) or row.underlying_price in (None, 0):
+        return None
+    return math.log(float(row.strike) / float(row.underlying_price))
+
+
+def _moneyness_sort_value(row: OptionChainRow) -> float:
+    value = _moneyness_log(row)
+    return 999.0 if value is None else value
+
+
+def _right_prefix(row: OptionChainRow) -> str:
+    return row.option_right_type.upper()[:1]
+
+
+def _stable_option_bucket(days_to_expiration: int | None) -> str | None:
+    if days_to_expiration is None:
+        return None
+    if 7 <= days_to_expiration <= 45:
+        return "front"
+    if 46 <= days_to_expiration <= 90:
+        return "near"
+    if 91 <= days_to_expiration <= 180:
+        return "mid"
+    return None
+
+
+def _selected_expiry_by_bucket(rows: Sequence[OptionChainRow], buckets: Sequence[str]) -> dict[str, str]:
+    by_bucket: dict[str, dict[str, list[OptionChainRow]]] = {bucket: {} for bucket in buckets}
+    for row in rows:
+        bucket = _stable_option_bucket(row.days_to_expiration)
+        if bucket not in by_bucket:
+            continue
+        by_bucket[bucket].setdefault(row.expiration, []).append(row)
+    selected: dict[str, str] = {}
+    for bucket, expiries in by_bucket.items():
+        viable: list[tuple[int, int, str]] = []
+        for expiration, expiry_rows in expiries.items():
+            sides = {_right_prefix(row) for row in expiry_rows if _right_prefix(row) in {"C", "P"}}
+            dtes = [row.days_to_expiration for row in expiry_rows if row.days_to_expiration is not None]
+            if {"C", "P"}.issubset(sides) and dtes:
+                viable.append((min(dtes), -len(expiry_rows), expiration))
+        if viable:
+            viable.sort()
+            selected[bucket] = viable[0][2]
+    return selected
+
+
+def _selected_short_expiry(rows: Sequence[OptionChainRow]) -> str | None:
+    expiries: dict[str, list[OptionChainRow]] = {}
+    for row in rows:
+        if _expiry_bucket(row.days_to_expiration) == "short":
+            expiries.setdefault(row.expiration, []).append(row)
+    viable: list[tuple[int, int, str]] = []
+    for expiration, expiry_rows in expiries.items():
+        sides = {_right_prefix(row) for row in expiry_rows if _right_prefix(row) in {"C", "P"}}
+        dtes = [row.days_to_expiration for row in expiry_rows if row.days_to_expiration is not None]
+        if {"C", "P"}.issubset(sides) and dtes:
+            viable.append((min(dtes), -len(expiry_rows), expiration))
+    if not viable:
+        return None
+    viable.sort()
+    return viable[0][2]
+
+
+def _nearest_moneyness(rows: Sequence[OptionChainRow], target: float) -> OptionChainRow | None:
+    candidates = [row for row in rows if _moneyness_log(row) is not None]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: (abs(_moneyness_sort_value(row) - target), row.strike or 0.0))
+    return candidates[0]
+
+
+def _roundness_score(strike: float | None) -> int:
+    if strike is None:
+        return 0
+    if abs(strike - round(strike)) > 1e-6:
+        return 0
+    if abs(strike % 10) < 1e-6:
+        return 4
+    if abs(strike % 5) < 1e-6:
+        return 3
+    return 2
+
+
+def _choose_canonical_wing(rows: Sequence[OptionChainRow], side: str) -> OptionChainRow | None:
+    if side == "C":
+        delta_rows = [row for row in rows if row.delta is not None and 0.20 <= row.delta <= 0.35]
+        if delta_rows:
+            delta_rows.sort(key=lambda row: (abs(float(row.delta or 0.0) - 0.25), abs(_moneyness_sort_value(row)), row.strike or 0.0))
+            return delta_rows[0]
+        return _nearest_moneyness([row for row in rows if _right_prefix(row) == "C"], 0.05)
+    delta_rows = [row for row in rows if row.delta is not None and -0.35 <= row.delta <= -0.20]
+    if delta_rows:
+        delta_rows.sort(key=lambda row: (abs(float(row.delta or 0.0) + 0.25), abs(_moneyness_sort_value(row)), row.strike or 0.0))
+        return delta_rows[0]
+    return _nearest_moneyness([row for row in rows if _right_prefix(row) == "P"], -0.05)
+
+
+def _choose_round_activity(rows: Sequence[OptionChainRow], side: str) -> OptionChainRow | None:
+    candidates = [row for row in rows if _right_prefix(row) == side and _roundness_score(row.strike) > 0]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: (-_roundness_score(row.strike), abs(_moneyness_sort_value(row)), row.strike or 0.0))
+    return candidates[0]
+
+
+def _choose_oi_activity(rows: Sequence[OptionChainRow], side: str) -> OptionChainRow | None:
+    candidates = [row for row in rows if _right_prefix(row) == side and row.open_interest is not None]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: (-(row.open_interest or 0.0), abs(_moneyness_sort_value(row)), row.strike or 0.0))
+    return candidates[0]
+
+
+def _select_stable_option_core(rows: Sequence[OptionChainRow]) -> _OptionRoleSelection:
+    selected: dict[tuple[str, str, float | None], OptionChainRow] = {}
+    roles: dict[tuple[str, str, float | None], set[str]] = {}
+    expiries = _selected_expiry_by_bucket(rows, ("front", "near", "mid"))
+    for bucket, expiration in expiries.items():
+        bucket_rows = [row for row in rows if row.expiration == expiration and _stable_option_bucket(row.days_to_expiration) == bucket]
+        for side in ("C", "P"):
+            side_rows = [row for row in bucket_rows if _right_prefix(row) == side]
+            _add_option_role(selected, roles, _nearest_moneyness(side_rows, 0.0), f"{bucket}:atm_state")
+            _add_option_role(selected, roles, _choose_canonical_wing(side_rows, side), f"{bucket}:canonical_wing_state")
+            bounded = [
+                row for row in side_rows
+                if _moneyness_log(row) is not None
+                and ((side == "C" and -0.05 <= _moneyness_sort_value(row) <= 0.12) or (side == "P" and -0.12 <= _moneyness_sort_value(row) <= 0.05))
+            ]
+            _add_option_role(selected, roles, _choose_round_activity(bounded, side), f"{bucket}:round_activity_attention")
+            _add_option_role(selected, roles, _choose_oi_activity(bounded, side), f"{bucket}:oi_activity_attention")
+    return _OptionRoleSelection(tuple(selected.values()), roles)
+
+
+def _select_short_expiry_overlay(rows: Sequence[OptionChainRow]) -> _OptionRoleSelection:
+    selected: dict[tuple[str, str, float | None], OptionChainRow] = {}
+    roles: dict[tuple[str, str, float | None], set[str]] = {}
+    expiration = _selected_short_expiry(rows)
+    if expiration is None:
+        return _OptionRoleSelection((), {})
+    bucket_rows = [row for row in rows if row.expiration == expiration and _expiry_bucket(row.days_to_expiration) == "short"]
+    for side in ("C", "P"):
+        side_rows = [row for row in bucket_rows if _right_prefix(row) == side]
+        _add_option_role(selected, roles, _nearest_moneyness(side_rows, 0.0), "short:atm_pressure")
+        _add_option_role(selected, roles, _choose_round_activity(side_rows, side), "short:round_activity_attention")
+        _add_option_role(selected, roles, _choose_oi_activity(side_rows, side), "short:oi_activity_attention")
+    return _OptionRoleSelection(tuple(selected.values()), roles)
+
+
+def _rows_with_role_suffix(selection: _OptionRoleSelection, suffixes: Sequence[str]) -> list[OptionChainRow]:
+    return [
+        row
+        for row in selection.rows
+        if any(role.endswith(suffix) for role in selection.roles_by_key.get(_option_row_key(row), set()) for suffix in suffixes)
+    ]
+
+
+def _rows_with_role_prefix(selection: _OptionRoleSelection, prefix: str) -> list[OptionChainRow]:
+    return [
+        row
+        for row in selection.rows
+        if any(role.startswith(prefix) for role in selection.roles_by_key.get(_option_row_key(row), set()))
+    ]
+
+
+def _role_counts(*selections: _OptionRoleSelection) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for selection in selections:
+        for roles in selection.roles_by_key.values():
+            for role in roles:
+                counts[role] = counts.get(role, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _role_bucket_available(selection: _OptionRoleSelection, bucket: str) -> dict[str, bool]:
+    roles = {role for role_set in selection.roles_by_key.values() for role in role_set if role.startswith(f"{bucket}:")}
+    return {
+        "atm_call": any(role == f"{bucket}:atm_state" and _right_prefix(row) == "C" for row in selection.rows for role in selection.roles_by_key.get(_option_row_key(row), set())),
+        "atm_put": any(role == f"{bucket}:atm_state" and _right_prefix(row) == "P" for row in selection.rows for role in selection.roles_by_key.get(_option_row_key(row), set())),
+        "canonical_call_wing": any(role == f"{bucket}:canonical_wing_state" and _right_prefix(row) == "C" for row in selection.rows for role in selection.roles_by_key.get(_option_row_key(row), set())),
+        "canonical_put_wing": any(role == f"{bucket}:canonical_wing_state" and _right_prefix(row) == "P" for row in selection.rows for role in selection.roles_by_key.get(_option_row_key(row), set())),
+        "activity_attention": any(role.endswith(":round_activity_attention") or role.endswith(":oi_activity_attention") for role in roles),
+    }
 
 
 def _expiry_bucket(days_to_expiration: int | None) -> str:

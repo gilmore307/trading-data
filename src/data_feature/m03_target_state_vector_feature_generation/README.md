@@ -39,6 +39,18 @@ Each block also exposes a `multi_frame_state` map keyed by the same windows. The
 - target frames derive completed-bar return, volatility/range, volume, trend quality, path stability, persistence, and late-trend risk from target-local source rows;
 - cross-state frames compare target return/volatility against market and sector context for the matching window, falling back to the 15-minute frame only for legacy scalar compatibility.
 
+## Option Contract Selector
+
+Layer 3 consumes `option_chain_state_source` through a deterministic role selector, not through broad-chain aggregation and not through full-chain match targets.
+
+The accepted selector has three semantic surfaces:
+
+- `stable_core`: 7-45, 46-90, and 91-180 DTE buckets; one representative expiry per bucket; ATM call/put and canonical wing call/put per bucket. Canonical wings prefer nearest +/-25 delta and fall back to +/-5% OTM moneyness when delta is unavailable.
+- `activity_attention`: round-strike and point-in-time OI candidates when observable. Same-snapshot trade/volume is validation evidence after selected contracts are present; it is not a prefetch selection input.
+- `short_expiry_pressure_overlay`: 0-6DTE ATM and round/OI attention roles, kept separate from stable structural state.
+
+The model-facing option state remains target-level only. It must not expose contract identity, strikes, expirations, executable terms, quotes, or raw Greeks.
+
 ## Required row keys
 
 - `available_time`

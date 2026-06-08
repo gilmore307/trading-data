@@ -13,6 +13,7 @@ from collections.abc import Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, timezone
+import math
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -37,6 +38,7 @@ DEFAULT_OPTION_BUCKET_POLICY_REF = "LAYER_09_OPTION_BUCKET_STRIKE_POLICY"
 DEFAULT_PROVIDER_RETRY_ATTEMPTS = 3
 DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS = 1.0
 DEFAULT_OPTION_PREFILTER_MIN_MID = 0.01
+DEFAULT_SELECTED_CONTRACT_HARD_CAP = 36
 
 
 @dataclass(frozen=True)
@@ -179,6 +181,19 @@ class FetchedSnapshot:
 
 class ThetaDataOptionSelectionSnapshotError(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class PlannedOptionContract:
+    """One exact ThetaData contract selected before quote/OHLC measurement."""
+
+    expiration: str
+    right: str
+    strike: float
+    days_to_expiration: int | None
+    delta: float | None
+    underlying_price: float | None
+    roles: tuple[str, ...] = ()
 
 
 class RegistryNames:
@@ -529,6 +544,312 @@ def _fetch_python_call(
     }
 
 
+def _plan_key(contract: PlannedOptionContract) -> tuple[str, str, float]:
+    return (contract.expiration, contract.right.upper(), contract.strike)
+
+
+def _right_prefix_value(right: str) -> str:
+    return str(right or "").upper()[:1]
+
+
+def _right_request_value(right: str) -> str:
+    prefix = _right_prefix_value(right)
+    if prefix == "C":
+        return "C"
+    if prefix == "P":
+        return "P"
+    return str(right or "").upper()
+
+
+def _right_output_value(right: str) -> str:
+    prefix = _right_prefix_value(right)
+    if prefix == "C":
+        return "CALL"
+    if prefix == "P":
+        return "PUT"
+    return str(right or "").upper()
+
+
+def _strike_request_value(strike: float) -> str:
+    return f"{strike:g}"
+
+
+def _expiry_bucket(days_to_expiration: int | None) -> str:
+    if days_to_expiration is None:
+        return "outside"
+    if 0 <= days_to_expiration <= 6:
+        return "short"
+    if 7 <= days_to_expiration <= 45:
+        return "front"
+    if 46 <= days_to_expiration <= 90:
+        return "near"
+    if 91 <= days_to_expiration <= 180:
+        return "mid"
+    if 181 <= days_to_expiration <= 365:
+        return "long"
+    return "outside"
+
+
+def _stable_bucket(days_to_expiration: int | None) -> str | None:
+    bucket = _expiry_bucket(days_to_expiration)
+    return bucket if bucket in {"front", "near", "mid"} else None
+
+
+def _moneyness_log(contract: PlannedOptionContract) -> float | None:
+    if contract.strike in (None, 0) or contract.underlying_price in (None, 0):
+        return None
+    return math.log(float(contract.strike) / float(contract.underlying_price))
+
+
+def _moneyness_sort_value(contract: PlannedOptionContract) -> float:
+    value = _moneyness_log(contract)
+    return 999.0 if value is None else value
+
+
+def _selected_expiry_by_bucket(contracts: Sequence[PlannedOptionContract], buckets: Sequence[str]) -> dict[str, str]:
+    by_bucket: dict[str, dict[str, list[PlannedOptionContract]]] = {bucket: {} for bucket in buckets}
+    for contract in contracts:
+        bucket = _stable_bucket(contract.days_to_expiration)
+        if bucket not in by_bucket:
+            continue
+        by_bucket[bucket].setdefault(contract.expiration, []).append(contract)
+    selected: dict[str, str] = {}
+    for bucket, expiries in by_bucket.items():
+        viable: list[tuple[int, int, str]] = []
+        for expiration, expiry_contracts in expiries.items():
+            dtes = [contract.days_to_expiration for contract in expiry_contracts if contract.days_to_expiration is not None]
+            if dtes:
+                viable.append((min(dtes), -len(expiry_contracts), expiration))
+        if viable:
+            viable.sort()
+            selected[bucket] = viable[0][2]
+    return selected
+
+
+def _selected_short_expiry(contracts: Sequence[PlannedOptionContract]) -> str | None:
+    expiries: dict[str, list[PlannedOptionContract]] = {}
+    for contract in contracts:
+        if _expiry_bucket(contract.days_to_expiration) == "short":
+            expiries.setdefault(contract.expiration, []).append(contract)
+    viable: list[tuple[int, int, str]] = []
+    for expiration, expiry_contracts in expiries.items():
+        dtes = [contract.days_to_expiration for contract in expiry_contracts if contract.days_to_expiration is not None]
+        if dtes:
+            viable.append((min(dtes), -len(expiry_contracts), expiration))
+    if not viable:
+        return None
+    viable.sort()
+    return viable[0][2]
+
+
+def _nearest_moneyness(contracts: Sequence[PlannedOptionContract], target: float) -> PlannedOptionContract | None:
+    candidates = [contract for contract in contracts if _moneyness_log(contract) is not None]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda contract: (abs(_moneyness_sort_value(contract) - target), contract.strike))
+    return candidates[0]
+
+
+def _roundness_score(strike: float | None) -> int:
+    if strike is None:
+        return 0
+    if abs(strike - round(strike)) > 1e-6:
+        return 0
+    if abs(strike % 10) < 1e-6:
+        return 4
+    if abs(strike % 5) < 1e-6:
+        return 3
+    return 2
+
+
+def _choose_canonical_wing(contracts: Sequence[PlannedOptionContract], side: str) -> PlannedOptionContract | None:
+    if side == "C":
+        delta_contracts = [contract for contract in contracts if contract.delta is not None and 0.20 <= contract.delta <= 0.35]
+        if delta_contracts:
+            delta_contracts.sort(key=lambda contract: (abs(float(contract.delta or 0.0) - 0.25), abs(_moneyness_sort_value(contract)), contract.strike))
+            return delta_contracts[0]
+        return _nearest_moneyness([contract for contract in contracts if _right_prefix_value(contract.right) == "C"], 0.05)
+    delta_contracts = [contract for contract in contracts if contract.delta is not None and -0.35 <= contract.delta <= -0.20]
+    if delta_contracts:
+        delta_contracts.sort(key=lambda contract: (abs(float(contract.delta or 0.0) + 0.25), abs(_moneyness_sort_value(contract)), contract.strike))
+        return delta_contracts[0]
+    return _nearest_moneyness([contract for contract in contracts if _right_prefix_value(contract.right) == "P"], -0.05)
+
+
+def _choose_round_activity(contracts: Sequence[PlannedOptionContract], side: str) -> PlannedOptionContract | None:
+    candidates = [contract for contract in contracts if _right_prefix_value(contract.right) == side and _roundness_score(contract.strike) > 0]
+    if not candidates:
+        return None
+    candidates.sort(key=lambda contract: (-_roundness_score(contract.strike), abs(_moneyness_sort_value(contract)), contract.strike))
+    return candidates[0]
+
+
+def _add_planned_contract(
+    selected: dict[tuple[str, str, float], PlannedOptionContract],
+    contract: PlannedOptionContract | None,
+    role: str,
+) -> None:
+    if contract is None:
+        return
+    key = _plan_key(contract)
+    roles = set(selected.get(key, contract).roles)
+    roles.add(role)
+    selected[key] = PlannedOptionContract(
+        expiration=contract.expiration,
+        right=_right_output_value(contract.right),
+        strike=contract.strike,
+        days_to_expiration=contract.days_to_expiration,
+        delta=contract.delta,
+        underlying_price=contract.underlying_price,
+        roles=tuple(sorted(roles)),
+    )
+
+
+def _planned_contracts_from_greeks_rows(rows: Sequence[Mapping[str, Any]], *, snapshot_date: date) -> list[PlannedOptionContract]:
+    contracts: list[PlannedOptionContract] = []
+    for row in rows:
+        key = _contract_key(row)
+        if key is None:
+            continue
+        _symbol, expiration, strike, right = key
+        data = _first_data(row)
+        contracts.append(
+            PlannedOptionContract(
+                expiration=expiration,
+                right=_right_output_value(right),
+                strike=strike,
+                days_to_expiration=_days_to_expiration(expiration, snapshot_date),
+                delta=_float(data.get("delta")),
+                underlying_price=_float(data.get("underlying_price")),
+            )
+        )
+    return contracts
+
+
+def _select_planned_contracts(
+    contracts: Sequence[PlannedOptionContract], *, hard_cap: int = DEFAULT_SELECTED_CONTRACT_HARD_CAP
+) -> list[PlannedOptionContract]:
+    selected: dict[tuple[str, str, float], PlannedOptionContract] = {}
+    expiries = _selected_expiry_by_bucket(contracts, ("front", "near", "mid"))
+    for bucket, expiration in expiries.items():
+        bucket_contracts = [
+            contract
+            for contract in contracts
+            if contract.expiration == expiration and _stable_bucket(contract.days_to_expiration) == bucket
+        ]
+        for side in ("C", "P"):
+            side_contracts = [contract for contract in bucket_contracts if _right_prefix_value(contract.right) == side]
+            _add_planned_contract(selected, _nearest_moneyness(side_contracts, 0.0), f"{bucket}:atm_state")
+            _add_planned_contract(selected, _choose_canonical_wing(side_contracts, side), f"{bucket}:canonical_wing_state")
+            bounded = [
+                contract
+                for contract in side_contracts
+                if _moneyness_log(contract) is not None
+                and ((side == "C" and -0.05 <= _moneyness_sort_value(contract) <= 0.12) or (side == "P" and -0.12 <= _moneyness_sort_value(contract) <= 0.05))
+            ]
+            _add_planned_contract(selected, _choose_round_activity(bounded, side), f"{bucket}:round_activity_attention")
+    short_expiry = _selected_short_expiry(contracts)
+    if short_expiry is not None:
+        short_contracts = [contract for contract in contracts if contract.expiration == short_expiry and _expiry_bucket(contract.days_to_expiration) == "short"]
+        for side in ("C", "P"):
+            side_contracts = [contract for contract in short_contracts if _right_prefix_value(contract.right) == side]
+            _add_planned_contract(selected, _nearest_moneyness(side_contracts, 0.0), "short:atm_pressure")
+            _add_planned_contract(selected, _choose_round_activity(side_contracts, side), "short:round_activity_attention")
+    planned = sorted(
+        selected.values(),
+        key=lambda contract: (
+            0 if _expiry_bucket(contract.days_to_expiration) == "front" else 1 if _expiry_bucket(contract.days_to_expiration) == "near" else 2 if _expiry_bucket(contract.days_to_expiration) == "mid" else 3,
+            contract.expiration,
+            _right_sort_value(contract.right),
+            contract.strike,
+        ),
+    )
+    return planned[: max(0, hard_cap)]
+
+
+def _filter_response_rows_for_plan(rows: Sequence[Mapping[str, Any]], plan: Sequence[PlannedOptionContract]) -> list[dict[str, Any]]:
+    planned = {_plan_key(contract) for contract in plan}
+    return [dict(row) for row in rows if (key := _contract_key(row)) is not None and (key[1], _right_output_value(key[3]), key[2]) in planned]
+
+
+def _aggregate_exact_evidence(name: str, evidences: Sequence[Mapping[str, Any]], *, selected_contract_count: int) -> dict[str, Any]:
+    return {
+        "endpoint": f"thetadata_python_library:{name}:selected_contracts",
+        "transport": "python_library",
+        "row_count": sum(int(item.get("row_count") or 0) for item in evidences),
+        "data_row_count": sum(int(item.get("data_row_count") or 0) for item in evidences),
+        "elapsed_seconds": round(sum(float(item.get("elapsed_seconds") or 0.0) for item in evidences), 3),
+        "request_count": len(evidences),
+        "selected_contract_count": selected_contract_count,
+        "skipped_count": sum(1 for item in evidences if item.get("skipped")),
+    }
+
+
+def _fetch_exact_history_rows(
+    theta_client: Any,
+    *,
+    underlying: str,
+    window_start: datetime,
+    window_end: datetime,
+    plan: Sequence[PlannedOptionContract],
+    params: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
+    start_time, end_time = _history_time_params(window_start, window_end)
+    interval = str(params.get("interval") or "1m")
+    retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
+    retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
+    quote_rows: list[dict[str, Any]] = []
+    quote_evidences: list[dict[str, Any]] = []
+    ohlc_rows: list[dict[str, Any]] = []
+    ohlc_evidences: list[dict[str, Any]] = []
+    for contract in plan:
+        expiration = date.fromisoformat(contract.expiration)
+        strike = _strike_request_value(contract.strike)
+        right = _right_request_value(contract.right)
+        rows, evidence = _fetch_python_call(
+            "option_history_quote",
+            lambda expiration=expiration, strike=strike, right=right: theta_client.option_history_quote(
+                symbol=underlying,
+                expiration=expiration,
+                date=window_start.date(),
+                interval=interval,
+                start_time=start_time,
+                end_time=end_time,
+                strike=strike,
+                right=right,
+            ),
+            missing_ok=True,
+            retry_attempts=retry_attempts,
+            retry_backoff_seconds=retry_backoff_seconds,
+        )
+        quote_rows.extend(rows)
+        quote_evidences.append(evidence)
+        rows, evidence = _fetch_python_call(
+            "option_history_ohlc",
+            lambda expiration=expiration, strike=strike, right=right: theta_client.option_history_ohlc(
+                symbol=underlying,
+                expiration=expiration,
+                date=window_start.date(),
+                interval=interval,
+                start_time=start_time,
+                end_time=end_time,
+                strike=strike,
+                right=right,
+            ),
+            missing_ok=True,
+            retry_attempts=retry_attempts,
+            retry_backoff_seconds=retry_backoff_seconds,
+        )
+        ohlc_rows.extend(rows)
+        ohlc_evidences.append(evidence)
+    return (
+        quote_rows,
+        _aggregate_exact_evidence("option_history_quote", quote_evidences, selected_contract_count=len(plan)),
+        ohlc_rows,
+        _aggregate_exact_evidence("option_history_ohlc", ohlc_evidences, selected_contract_count=len(plan)),
+    )
+
+
 def _fetch_with_python_library(
     theta_client: Any,
     *,
@@ -555,21 +876,6 @@ def _fetch_with_python_library(
     retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
     retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
     if historical_mode:
-        quote_rows, quote_evidence = _fetch_python_call(
-            "option_history_quote",
-            lambda: theta_client.option_history_quote(
-                symbol=underlying,
-                expiration="*",
-                date=window_start.date(),
-                interval=interval,
-                start_time=start_time,
-                end_time=end_time,
-                max_dte=max_dte,
-                strike_range=strike_range,
-            ),
-            retry_attempts=retry_attempts,
-            retry_backoff_seconds=retry_backoff_seconds,
-        )
         greeks_rows, greeks_evidence = _fetch_python_call(
             "option_history_greeks_eod",
             lambda: theta_client.option_history_greeks_eod(
@@ -583,24 +889,33 @@ def _fetch_with_python_library(
             retry_attempts=retry_attempts,
             retry_backoff_seconds=retry_backoff_seconds,
         )
-        trade_rows, trade_evidence = _fetch_python_call(
-            "option_history_trade",
-            lambda: theta_client.option_history_trade(
-                symbol=underlying,
-                expiration="*",
-                date=window_start.date(),
-                start_time=start_time,
-                end_time=end_time,
-                max_dte=max_dte,
-                strike_range=strike_range,
-            ),
-            missing_ok=True,
-            retry_attempts=retry_attempts,
-            retry_backoff_seconds=retry_backoff_seconds,
+        plan = _select_planned_contracts(
+            _planned_contracts_from_greeks_rows(greeks_rows, snapshot_date=window_start.date()),
+            hard_cap=int(params.get("selected_contract_hard_cap") or DEFAULT_SELECTED_CONTRACT_HARD_CAP),
         )
-        iv_rows = greeks_rows
-        iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility snapshot"}
-        return quote_rows, quote_evidence, iv_rows, iv_evidence, greeks_rows, greeks_evidence, trade_rows, trade_evidence
+        selected_greeks_rows = _filter_response_rows_for_plan(greeks_rows, plan)
+        quote_rows, quote_evidence, trade_rows, trade_evidence = _fetch_exact_history_rows(
+            theta_client,
+            underlying=underlying,
+            window_start=window_start,
+            window_end=window_end,
+            plan=plan,
+            params=params,
+        )
+        greeks_evidence = {
+            **greeks_evidence,
+            "name": "historical EOD Greeks discovery",
+            "acquisition_mode": "selected_contract_plan",
+            "selected_contract_count": len(plan),
+            "selected_roles": {
+                f"{contract.expiration}:{contract.right}:{contract.strike:g}": list(contract.roles)
+                for contract in plan
+            },
+            "selected_row_count": len(selected_greeks_rows),
+        }
+        iv_rows = selected_greeks_rows
+        iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility selected-contract discovery"}
+        return quote_rows, quote_evidence, iv_rows, iv_evidence, selected_greeks_rows, greeks_evidence, trade_rows, trade_evidence
 
     min_time = snapshot_time.strftime("%H:%M:%S.000")
     quote_rows, quote_evidence = _fetch_python_call(
@@ -662,13 +977,17 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_clien
     retry_attempts = int(params.get("retry_attempts") or DEFAULT_PROVIDER_RETRY_ATTEMPTS)
     retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
     window_start, window_end = _window_from_params(params, snapshot_time)
+    historical_mode = bool(params.get("historical_mode", True)) and snapshot_time.date() < datetime.now(ET).date()
+    transport = "terminal_rest" if _terminal_rest_requested(params, client=client, client_is_fixture=client_is_fixture) else "python_library"
+    selected_contract_hard_cap = int(params.get("selected_contract_hard_cap") or DEFAULT_SELECTED_CONTRACT_HARD_CAP)
+    requested_requests = 1 + 2 * max(0, selected_contract_hard_cap) if historical_mode and transport == "python_library" else 4
     if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
             provider="thetadata",
             endpoint_family="option_selection_snapshot",
             requested_symbols=1,
-            requested_requests=4,
+            requested_requests=requested_requests,
             requested_start=window_start.isoformat(),
             requested_end=window_end.isoformat(),
         )
@@ -678,7 +997,6 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_clien
     except Exception as exc:  # Local terminal may already be running; secret summary is evidence only.
         secret_summary = {"alias": "thetadata", "present": False, "error_type": type(exc).__name__}
 
-    historical_mode = bool(params.get("historical_mode", True)) and snapshot_time.date() < datetime.now(ET).date()
     request_params = {
         "symbol": underlying,
         "expiration": "*",
@@ -689,7 +1007,6 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_clien
     max_dte_int = int(max_dte)
     strike_range_int = int(strike_range)
     option_bucket_policy_ref = str(params.get("option_bucket_policy_ref") or DEFAULT_OPTION_BUCKET_POLICY_REF)
-    transport = "terminal_rest" if _terminal_rest_requested(params, client=client, client_is_fixture=client_is_fixture) else "python_library"
     if transport == "python_library":
         theta_client = theta_client or _python_client_from_params(params)
         (
@@ -812,6 +1129,8 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_clien
                         "strike_range": strike_range,
                         "option_bucket_policy_ref": option_bucket_policy_ref,
                         "thetadata_transport": transport,
+                        "acquisition_mode": "selected_contract_plan_exact_quote_ohlc" if historical_mode and transport == "python_library" else "bounded_chain_snapshot",
+                        "selected_contract_hard_cap": selected_contract_hard_cap,
                         "retry_attempts": retry_attempts,
                         "retry_backoff_seconds": retry_backoff_seconds,
                     }
@@ -931,6 +1250,33 @@ def _trade_size(point: Mapping[str, Any]) -> int:
 
 
 def _summarize_trade_points(points: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    if any(_float(point.get("open")) is not None or _float(point.get("close")) is not None for point in points):
+        ohlc_points = [point for point in points if _float(point.get("open")) is not None or _float(point.get("close")) is not None]
+        if not ohlc_points:
+            return {}
+        volumes = [_number(point.get("volume")) for point in ohlc_points]
+        counts = [_number(point.get("count")) for point in ohlc_points]
+        volume = sum(int(value) for value in volumes if isinstance(value, (int, float)))
+        trade_count = sum(int(value) for value in counts if isinstance(value, (int, float)))
+        vwap_numerator = 0.0
+        vwap_denominator = 0
+        for point, point_volume in zip(ohlc_points, volumes, strict=False):
+            point_vwap = _float(point.get("vwap"))
+            if point_vwap is None or not isinstance(point_volume, (int, float)) or point_volume <= 0:
+                continue
+            vwap_numerator += point_vwap * point_volume
+            vwap_denominator += int(point_volume)
+        return _compact(
+            {
+                "bar_open": _float(ohlc_points[0].get("open")) or _float(ohlc_points[0].get("close")),
+                "bar_high": max([value for point in ohlc_points if (value := _float(point.get("high"))) is not None], default=None),
+                "bar_low": min([value for point in ohlc_points if (value := _float(point.get("low"))) is not None], default=None),
+                "bar_close": _float(ohlc_points[-1].get("close")) or _float(ohlc_points[-1].get("open")),
+                "bar_volume": volume,
+                "bar_trade_count": trade_count,
+                "bar_vwap": vwap_numerator / vwap_denominator if vwap_denominator else None,
+            }
+        )
     prices: list[float] = []
     volume = 0
     notional = 0.0

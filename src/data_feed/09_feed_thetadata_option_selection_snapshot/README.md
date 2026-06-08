@@ -4,7 +4,7 @@ ThetaData option-chain selection snapshot feed.
 
 ## Purpose
 
-Produce a point-in-time SQL `feed_09_option_chain_snapshot` row for a specified underlying and explicit ET snapshot time. The feed captures chain visibility; it does not select contracts or apply liquidity/spread/IV/Greek filters.
+Produce point-in-time SQL `feed_09_option_chain_snapshot` rows for a specified underlying and explicit ET snapshot time. Historical Python-library acquisition plans a small selected-contract universe first, then measures only those exact contracts for quote, Greeks, and OHLC activity summary.
 
 ## Required params
 
@@ -23,21 +23,31 @@ No implicit latest/current mode exists. The caller must supply `snapshot_time`.
 - `registry_csv` — optional registry snapshot for retained registered-field validation; when missing, fixture/local runs use code-local field names without reading an external repository path.
 - `historical_mode` — defaults to `true` for past dates. Historical replay uses ThetaData history endpoints instead of realtime snapshot endpoints.
 - `window_start` / `window_end` — optional explicit ET window for historical replay. When omitted, the feed uses the minute containing `snapshot_time`.
-- `max_dte` — maximum days to expiration for historical full-chain requests; defaults to `45`.
-- `strike_range` — ThetaData strike range bound for historical full-chain requests; defaults to `5`, the current Layer 9 closed-loop bucket runtime default.
+- `max_dte` — maximum days to expiration for the historical EOD Greeks discovery envelope; defaults to `45`.
+- `strike_range` — ThetaData strike range bound for the historical EOD Greeks discovery envelope; defaults to `5`.
+- `selected_contract_hard_cap` — maximum exact contracts measured after planning; defaults to `36`.
 - `option_prefilter_enabled` — defaults to `true`; filters structurally invalid option quotes before final normalization.
 - `option_prefilter_min_mid` — minimum quote mid retained by the structural prefilter; defaults to `0.01`.
 
 ## Source route
 
-Default historical and current acquisition uses the official ThetaData Python library through the shared `trading-manager` Python environment. This bypasses the local Terminal REST concurrency cap and returns tabular rows that are normalized in memory into the same feed contract.
+Default historical and current acquisition uses the official ThetaData Python library through the shared `trading-manager` Python environment.
+
+Historical Python-library acquisition is plan-first:
+
+1. Fetch one bounded EOD Greeks discovery envelope using underlying, wildcard expiration, `max_dte`, and `strike_range`.
+2. Select stable-core, activity-attention, and short-expiry overlay contracts from that point-in-time discovery data.
+3. Fetch exact `symbol + expiration + strike + right` quote rows only for selected contracts.
+4. Fetch exact `symbol + expiration + strike + right` OHLC rows only for selected contracts and use them as minute activity summaries.
+
+Raw trade ticks are not part of the normal historical source path. Use event/detail feeds when raw trade evidence is required.
 
 Explicit `terminal_rest` fallback uses ThetaData Terminal v3:
 
 - Historical replay: `/v3/option/history/quote`, `/v3/option/history/trade`, and `/v3/option/history/greeks/eod`.
 - Realtime/current snapshot mode: `/v3/option/snapshot/quote`, `/v3/option/snapshot/greeks/implied_volatility`, and `/v3/option/snapshot/greeks/first_order`.
 
-Historical requests pass underlying, wildcard expiration, snapshot date, a bounded ET time window, `max_dte`, and `strike_range`. The final artifact uses contract-level minute clocks for historical windows while keeping the top-level `snapshot_time` as the request clock.
+Explicit `terminal_rest` historical fallback remains a bounded broad-chain route and should be used only for controlled fallback or fixture tests. The final artifact uses contract-level minute clocks for historical windows while keeping the top-level `snapshot_time` as the request clock.
 
 ## Outputs
 

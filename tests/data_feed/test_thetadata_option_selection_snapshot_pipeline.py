@@ -280,11 +280,46 @@ class FakeThetaDataPythonClient:
             ]
         )
 
+    def option_history_ohlc(self, **kwargs):
+        self.calls.append(("option_history_ohlc", kwargs))
+        return FakeThetaDataFrame(
+            [
+                {
+                    "symbol": "AAPL",
+                    "expiration": "2016-01-15",
+                    "strike": 100.0,
+                    "right": "CALL",
+                    "timestamp": "2016-01-05T09:30:00",
+                    "open": 1.1,
+                    "high": 1.2,
+                    "low": 1.0,
+                    "close": 1.15,
+                    "volume": 5,
+                    "count": 2,
+                    "vwap": 1.16,
+                },
+                {
+                    "symbol": "AAPL",
+                    "expiration": "2016-01-15",
+                    "strike": 100.0,
+                    "right": "CALL",
+                    "timestamp": "2016-01-05T09:31:00",
+                    "open": 1.2,
+                    "high": 1.3,
+                    "low": 1.15,
+                    "close": 1.25,
+                    "volume": 4,
+                    "count": 1,
+                    "vwap": 1.25,
+                },
+            ]
+        )
+
 
 class NoTradeThetaDataPythonClient(FakeThetaDataPythonClient):
-    def option_history_trade(self, **kwargs):
-        self.calls.append(("option_history_trade", kwargs))
-        raise type("NoDataFoundError", (Exception,), {})("No data found for: option_history_trade(AAPL)")
+    def option_history_ohlc(self, **kwargs):
+        self.calls.append(("option_history_ohlc", kwargs))
+        raise type("NoDataFoundError", (Exception,), {})("No data found for: option_history_ohlc(AAPL)")
 
 
 class FlakyThetaDataPythonClient(FakeThetaDataPythonClient):
@@ -450,7 +485,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                     "autonomous_historical_provider_acquisition": True,
                     "allowed_providers": ["thetadata"],
                     "allowed_endpoint_families": ["option_selection_snapshot"],
-                    "max_requests": 4,
+                    "max_requests": 80,
                     "max_symbols": 1,
                     "max_time_window": "1d",
                 },
@@ -463,17 +498,22 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
 
             self.assertEqual(result.status, "succeeded")
             self.assertEqual([name for name, _kwargs in client.calls], [
-                "option_history_quote",
                 "option_history_greeks_eod",
-                "option_history_trade",
+                "option_history_quote",
+                "option_history_ohlc",
             ])
+            self.assertEqual(client.calls[1][1]["expiration"].isoformat(), "2016-01-15")
+            self.assertEqual(client.calls[1][1]["strike"], "100")
+            self.assertEqual(client.calls[1][1]["right"], "C")
             snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
             contracts = json.loads(snapshot["contracts"])
             self.assertEqual(snapshot["contract_count"], 2)
             self.assertEqual(contracts[0]["quote"]["mid"], 1.1)
             self.assertEqual(contracts[0]["trade_summary"]["bar_volume"], 5)
+            self.assertEqual(contracts[0]["trade_summary"]["bar_trade_count"], 2)
             manifest = json.loads((output_root / "runs" / "run_python_library" / "request_manifest.json").read_text())
             self.assertEqual(manifest["params"]["thetadata_transport"], "python_library")
+            self.assertEqual(manifest["params"]["acquisition_mode"], "selected_contract_plan_exact_quote_ohlc")
             self.assertTrue(all(request.get("transport") == "python_library" for request in manifest["requests"][:3]))
 
     def test_historical_python_client_allows_missing_trade_rows(self):
@@ -494,7 +534,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                     "autonomous_historical_provider_acquisition": True,
                     "allowed_providers": ["thetadata"],
                     "allowed_endpoint_families": ["option_selection_snapshot"],
-                    "max_requests": 4,
+                    "max_requests": 80,
                     "max_symbols": 1,
                     "max_time_window": "1d",
                 },
@@ -510,8 +550,8 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             self.assertEqual(snapshot["contract_count"], 2)
             self.assertNotIn("trade_summary", contracts[0])
             manifest = json.loads((output_root / "runs" / "run_python_library_no_trade" / "request_manifest.json").read_text())
-            trade_request = [request for request in manifest["requests"] if request["endpoint"].endswith("option_history_trade")][0]
-            self.assertEqual(trade_request["skipped"], "no_data_found")
+            activity_request = [request for request in manifest["requests"] if "option_history_ohlc" in request["endpoint"]][0]
+            self.assertEqual(activity_request["skipped_count"], 1)
 
     def test_historical_python_client_retries_provider_server_errors(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -533,7 +573,7 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
                     "autonomous_historical_provider_acquisition": True,
                     "allowed_providers": ["thetadata"],
                     "allowed_endpoint_families": ["option_selection_snapshot"],
-                    "max_requests": 4,
+                    "max_requests": 80,
                     "max_symbols": 1,
                     "max_time_window": "1d",
                 },
@@ -547,10 +587,9 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(client.quote_attempts, 2)
             manifest = json.loads((output_root / "runs" / "run_python_library_retry" / "request_manifest.json").read_text())
-            quote_request = [request for request in manifest["requests"] if request["endpoint"].endswith("option_history_quote")][0]
-            self.assertEqual(quote_request["attempt_count"], 2)
-            self.assertEqual(quote_request["attempts"][0]["error_type"], "AuthenticationError")
-            self.assertTrue(quote_request["attempts"][0]["retryable"])
+            quote_request = [request for request in manifest["requests"] if "option_history_quote" in request["endpoint"]][0]
+            self.assertEqual(quote_request["request_count"], 1)
+            self.assertEqual(quote_request["selected_contract_count"], 1)
 
     def test_historical_window_keeps_each_minute_and_trade_summary(self):
         with tempfile.TemporaryDirectory() as tmp:

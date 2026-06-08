@@ -95,6 +95,42 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertNotIn("available_time <= %s", sql)
         self.assertEqual(params, ["2026-05-01T00:00:00Z"])
 
+    def test_option_expression_source_end_is_half_open(self):
+        module = importlib.import_module("data_feature.m09_option_expression_feature_generation.sql")
+        cursor = FakeCursor()
+        module.fetch_source_rows(
+            cursor,
+            source_schema="trading_data",
+            source_table="option_chain_state_source",
+            source_start="2026-04-01T00:00:00Z",
+            source_end="2026-05-01T00:00:00Z",
+        )
+        sql, params = cursor.calls[0]
+        self.assertIn("snapshot_time >= %s", sql)
+        self.assertIn("snapshot_time < %s", sql)
+        self.assertNotIn("snapshot_time <= %s", sql)
+        self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
+
+    def test_option_expression_generation_uses_set_based_insert(self):
+        module = importlib.import_module("data_feature.m09_option_expression_feature_generation.sql")
+        cursor = FakeCursor()
+        module.insert_feature_rows_from_source_sql(
+            cursor,
+            source_schema="trading_data",
+            source_table="option_chain_state_source",
+            target_schema="trading_data",
+            target_table="m09_option_expression_feature_generation",
+            source_start="2026-04-01T00:00:00Z",
+            source_end="2026-05-01T00:00:00Z",
+            run_id="unit_run",
+        )
+        statements = "\n".join(sql for sql, _params in cursor.calls)
+        self.assertIn("INSERT INTO", statements)
+        self.assertIn("SELECT", statements)
+        self.assertIn("ON CONFLICT", statements)
+        self.assertNotIn("snapshot_time <= %s", statements)
+        self.assertEqual(cursor.calls[-1][1], ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z", "unit_run"])
+
 
 if __name__ == "__main__":
     unittest.main()

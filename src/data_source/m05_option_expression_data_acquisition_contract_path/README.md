@@ -37,7 +37,7 @@ Default provider acquisition uses the ThetaData Python library exact OHLC route 
 Final saved output is SQL-only:
 
 ```text
-m05_option_expression_data_acquisition_contract_path
+trading_data.model_05_option_expression_data_acquisition_contract_path
 ```
 
 Natural key:

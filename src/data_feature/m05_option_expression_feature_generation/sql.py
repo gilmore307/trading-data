@@ -312,7 +312,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
     parser.add_argument("--underlying")
-    parser.add_argument("--run-id", default="m05_option_expression_feature_generation_sql")
+    parser.add_argument("--run-id", default="model_05_option_expression_feature_generation_sql")
     args = parser.parse_args(argv)
     count = generate_sql(
         database_url=_database_url(args.database_url),

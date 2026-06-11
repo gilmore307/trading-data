@@ -9,7 +9,7 @@ trading_data.model_01_market_regime_data_acquisition
 trading_data.model_01_market_regime_feature_generation
 ```
 
-`m01_market_regime_data_acquisition` owns point-in-time ETF bar rows for the reviewed market-context universe. `m01_market_regime_feature_generation` owns deterministic point-in-time Layer 1 feature payloads consumed by `model_01_market_regime`.
+`trading_data.model_01_market_regime_data_acquisition` owns point-in-time ETF bar rows for the reviewed market-context universe. `trading_data.model_01_market_regime_feature_generation` owns deterministic point-in-time Layer 1 feature payloads consumed by `model_01_market_regime`.
 
 Historical feeds may legitimately produce zero rows for a requested symbol/month when the instrument was not yet listed or the provider returns a reviewed no-data response. `trading-data` preserves that absence as explicit receipt/manifest evidence with schema headers where possible. It must not fabricate bars, and it should not convert valid absent history into a component failure. Downstream models consume this through coverage and data-quality diagnostics.
 
@@ -34,7 +34,7 @@ Layer 1 data may use broad and cross-asset market evidence such as market ETF ba
 
 Layer 1 data must not use broad-sector or focused ETF leadership, sector rotation, ETF holdings, selected securities, strategy labels, option-contract outcomes, portfolio PnL, or future-return labels as construction inputs.
 
-The shared storage CSVs carry `model_layer` as the authoritative scope discriminator. Layer 1 feature construction consumes only `layer_01_market_regime` rows. `sector_observation_etf` / `layer_02_sector_context` evidence is not Layer 1 input; broad-sector and crypto-context behavior evidence routes to `m02_sector_context_feature_generation`.
+The shared storage CSVs carry `model_layer` as the authoritative scope discriminator. Layer 1 feature construction consumes only `layer_01_market_regime` rows. `sector_observation_etf` / `layer_02_sector_context` evidence is not Layer 1 input; broad-sector and crypto-context behavior evidence routes to `trading_data.model_02_sector_context_feature_generation`.
 
 ## Field naming
 

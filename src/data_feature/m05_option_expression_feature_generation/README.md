@@ -9,7 +9,7 @@ Output is a compact per-contract feature surface for the `TradingGuidanceModel /
 OptionExpressionModel` input boundary. The package name is the accepted physical
 feature package for this boundary.
 
-Selected-contract market-path rows from `m05_option_expression_data_acquisition_contract_path` remain
+Selected-contract market-path rows from `trading_data.model_05_option_expression_data_acquisition_contract_path` remain
 replay/evaluation evidence; they are not order instructions and are not required
 for the per-snapshot candidate feature table.
 

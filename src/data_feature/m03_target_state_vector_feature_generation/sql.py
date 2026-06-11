@@ -743,7 +743,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--target-context-mapping-path", type=Path, default=DEFAULT_TARGET_CONTEXT_MAPPING_PATH)
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
-    parser.add_argument("--run-id", default="m03_target_state_vector_feature_generation_sql")
+    parser.add_argument("--run-id", default="model_03_target_state_vector_feature_generation_sql")
     parser.add_argument(
         "--target-context-state-version",
         dest="target_context_state_version",

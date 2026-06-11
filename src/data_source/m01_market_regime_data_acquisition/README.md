@@ -33,12 +33,12 @@ The universe CSV owns ETF scope and grain choices:
 Final saved artifact is SQL-only:
 
 ```text
-m01_market_regime_data_acquisition
+trading_data.model_01_market_regime_data_acquisition
 ```
 
 Driver: PostgreSQL using the shared trading-data SQL storage target. Tests inject a fake writer; local SQLite is not the accepted production contract.
 
-Table: `m01_market_regime_data_acquisition`
+Table: `trading_data.model_01_market_regime_data_acquisition`
 
 Columns, in order:
 

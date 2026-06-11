@@ -97,7 +97,7 @@ ETF holdings are not Layer 2 core behavior input and do not define the ordinary 
 
 Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than Layer 2 ETF holdings. Live routing uses the realtime total-symbol pool. Historical replay uses a fixed candidate-universe table seeded from the current realtime pool plus BTC, ETH, and SOL; this is stable replay scope, not point-in-time historical market-wide ranking evidence, and replay must not read the mutable realtime pool directly. The fixed table preserves TradingView's raw sector classification and maps equity rows to the accepted Layer 2 SPDR sector anchors; crypto rows map to `BKCH`.
 
-`m03_target_state_vector_data_acquisition` provides target-local observed bars/liquidity. `m03_target_state_vector_feature_generation` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
+`trading_data.model_03_target_state_vector_data_acquisition` provides target-local observed bars/liquidity. `trading_data.model_03_target_state_vector_feature_generation` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 
 ## D016 — Event overlay boundary
 
@@ -107,9 +107,9 @@ Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target
 
 ## D017 — Option-expression data boundary
 
-`option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; M05 derives `m05_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
+`trading_data.option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; M05 derives `trading_data.model_05_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
 
-`m05_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
+`trading_data.model_05_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
 
 ## D018 — Downstream model layers without new acquisition
 
@@ -148,7 +148,7 @@ Accepted: 2026-05-15
 
 The active ten-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the M06 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
 
-M05 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`option_chain_state_source`, `m05_option_expression_feature_generation`, and `m05_option_expression_data_acquisition_contract_path`). M06 event-risk data uses the current event SQL surfaces (`model_06_residual_event_governance_data_acquisition`, `model_06_residual_event_governance_feature_generation`, and event-feed artifacts).
+M05 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, and `trading_data.model_05_option_expression_data_acquisition_contract_path`). M06 event-risk data uses the current event SQL surfaces (`trading_data.model_06_residual_event_governance_data_acquisition`, `trading_data.model_06_residual_event_governance_feature_generation`, and event-feed artifacts).
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 

@@ -158,7 +158,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             source_schema="trading_data",
             source_table="model_03_target_state_vector_data_acquisition",
             sector_context_schema="trading_model",
-            sector_context_table="m02_sector_context_model_generation",
+            sector_context_table="model_02_sector_context_model_generation",
             source_start="2016-01-01",
             source_end="2016-02-01",
             target_context_mapping_path=None,
@@ -208,7 +208,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
                 source_schema="trading_data",
                 source_table="model_03_target_state_vector_data_acquisition",
                 sector_context_schema="trading_model",
-                sector_context_table="m02_sector_context_model_generation",
+                sector_context_table="model_02_sector_context_model_generation",
                 target_context_mapping_path=mapping_path,
             )
 
@@ -233,7 +233,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         sql.fetch_context_rows(
             cursor,
             schema="trading_model",
-            table="m01_market_regime_model_generation",
+            table="model_01_market_regime_model_generation",
             ref_column="market_context_state_ref",
             source_start="2016-01-04T09:30:00-05:00",
             source_end="2016-01-04T16:00:00-05:00",
@@ -251,7 +251,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         sql.fetch_context_rows(
             cursor,
             schema="trading_model",
-            table="m02_sector_context_model_generation",
+            table="model_02_sector_context_model_generation",
             ref_column="sector_context_state_ref",
             source_end="2016-02-01T00:00:00-05:00",
             filter_column="sector_or_industry_symbol",
@@ -336,9 +336,9 @@ class TargetStateVectorSqlTests(unittest.TestCase):
                 source_start="2016-01-01T00:00:00-05:00",
                 source_end="2016-01-15T00:00:00-05:00",
                 market_context_schema="trading_model",
-                market_context_table="m01_market_regime_model_generation",
+                market_context_table="model_01_market_regime_model_generation",
                 sector_context_schema="trading_model",
-                sector_context_table="m02_sector_context_model_generation",
+                sector_context_table="model_02_sector_context_model_generation",
                 target_context_mapping_path=None,
                 option_chain_source_schema="trading_data",
                 option_chain_source_table="option_chain_state_source",

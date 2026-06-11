@@ -17,5 +17,5 @@ Deterministic generator for the Layer 1 MarketRegimeModel market-context feature
 ## Key file
 
 - `generator.py` owns feature generation, point-in-time filtering, and feature row output used by the SQL runner and tests.
-- `sql.py` owns SQL reads/writes for `trading_data.m01_market_regime_data_acquisition -> trading_data.m01_market_regime_feature_generation`.
+- `sql.py` owns SQL reads/writes for `trading_data.model_01_market_regime_data_acquisition -> trading_data.model_01_market_regime_feature_generation`.
 - `from_feed_artifacts.py` owns offline feature generation from SQL-retained Alpaca bar receipts. Routine saved JSONL/CSV bar artifacts are no longer part of the current route.

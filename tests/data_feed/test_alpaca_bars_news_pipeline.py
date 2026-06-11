@@ -27,7 +27,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 r=p.run(tk,run_id='01_feed_alpaca_bars_run_test',client=FakeBarsClient(), sql_writer=writer, client_is_fixture=True)
                 self.assertEqual(r.status,'succeeded')
                 self.assertEqual(len(writer.calls),1)
-                self.assertEqual(writer.calls[0]['table'],'m01_market_regime_data_acquisition')
+                self.assertEqual(writer.calls[0]['table'],'model_01_market_regime_data_acquisition')
                 self.assertEqual(writer.calls[0]['rows'][0]['timestamp'],'2024-01-02T00:00:00-05:00')
                 run_dir=Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test'
                 self.assertFalse((run_dir/'saved/equity_bar.csv').exists())
@@ -35,7 +35,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 self.assertTrue((run_dir/'schema.json').exists())
                 receipt=json.loads((Path(tk['output_root'])/'completion_receipt.json').read_text())
                 run=receipt['runs'][0]
-                self.assertEqual(run['outputs'],['trading_data.m01_market_regime_data_acquisition'])
+                self.assertEqual(run['outputs'],['trading_data.model_01_market_regime_data_acquisition'])
                 self.assertEqual(run['steps']['save']['details']['format'],'sql_table')
         finally: p.load_secret_alias=old
 
@@ -72,7 +72,7 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 self.assertEqual(run_receipt, receipt)
                 run=receipt['runs'][0]
                 self.assertEqual(run['row_counts'],{'equity_bar':0})
-                self.assertEqual(run['outputs'],['m01_market_regime_data_acquisition'])
+                self.assertEqual(run['outputs'],['model_01_market_regime_data_acquisition'])
                 self.assertTrue(run['steps']['fetch']['references'])
                 manifest=json.loads(Path(run['steps']['fetch']['references'][0]).read_text())
                 self.assertEqual(manifest['raw_count'],0)

@@ -16,7 +16,7 @@ for the per-snapshot candidate feature table.
 ## Output table
 
 ```text
-trading_data.m05_option_expression_feature_generation
+trading_data.model_05_option_expression_feature_generation
 ```
 
 Rows are keyed by `underlying + snapshot_time + snapshot_type + option_symbol`

@@ -24,8 +24,8 @@ from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableReader, SqlTableReader, SqlTableWriter
 
 SOURCE = "m06_residual_event_governance_data_acquisition.equity_abnormal_activity"
-OUTPUT_TABLE = "m06_equity_abnormal_activity_event"
-BAR_SQL_SOURCE_TABLE = "m01_market_regime_data_acquisition"
+OUTPUT_TABLE = "model_06_equity_abnormal_activity_event"
+BAR_SQL_SOURCE_TABLE = "model_01_market_regime_data_acquisition"
 BAR_SQL_SOURCE_COLUMNS = [
     "symbol",
     "timeframe",

@@ -30,7 +30,7 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
             ],
         )
         result, cleaned = module.clean(context, payload)
-        self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 1)
+        self.assertEqual(result.row_counts["model_02_sector_context_data_acquisition"], 1)
         self.assertEqual(result.details["skipped"]["outside_window"], 1)
         self.assertEqual(cleaned.rows[0]["holding_symbol"], "NVDA")
 
@@ -46,7 +46,7 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
 
         result, cleaned = module.clean(context, payload)
 
-        self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 1)
+        self.assertEqual(result.row_counts["model_02_sector_context_data_acquisition"], 1)
         self.assertEqual(cleaned.rows[0]["as_of_date"], "2026-05-18")
 
     def test_available_time_defaults_to_next_regular_us_equity_open(self):
@@ -73,7 +73,7 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
                     {"Ticker": "SAP", "Name": "SAP SE", "Weight": "1", "Asset Class": "Equity", "Sector": "Technology"},
                 ])
             task_key = {
-                "task_id": "m02_sector_context_data_acquisition_task_test",
+                "task_id": "model_02_sector_context_data_acquisition_task_test",
                 "source": "m02_sector_context_data_acquisition",
                 "params": {
                     "start": "2026-04-24",
@@ -88,14 +88,14 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
             sql_writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=sql_writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["model_02_sector_context_data_acquisition"], 1)
             manifest = json.loads((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["model_layer_filter"], "layer_02_sector_context")
             self.assertEqual(manifest["universe_type_filter"], "sector_observation_etf")
             self.assertEqual(manifest["symbols"], ["XLK"])
             self.assertEqual(len(sql_writer.calls), 1)
             call = sql_writer.calls[0]
-            self.assertEqual(call["table"], "m02_sector_context_data_acquisition")
+            self.assertEqual(call["table"], "model_02_sector_context_data_acquisition")
             self.assertEqual(call["key_columns"], ["etf_symbol", "as_of_date", "holding_symbol"])
             self.assertEqual(call["columns"], ["etf_symbol", "issuer_name", "universe_type", "exposure_type", "as_of_date", "available_time", "holding_symbol", "holding_name", "weight", "shares", "market_value", "sector_type"])
             rows = call["rows"]
@@ -188,7 +188,7 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
         result, cleaned = module.clean(context, payload)
 
         self.assertEqual(result.status, "succeeded")
-        self.assertEqual(result.row_counts["m02_sector_context_data_acquisition"], 0)
+        self.assertEqual(result.row_counts["model_02_sector_context_data_acquisition"], 0)
         self.assertEqual(cleaned.rows, [])
         self.assertEqual(result.details["missing_symbols"], ["XLF"])
         self.assertIn("accepted_partial_coverage", result.details["missing_symbol_policy"])

@@ -6,7 +6,7 @@ Layer 2 `SectorContextModel` sector/industry behavior-evidence feature generator
   - `layer_01_02_market_context_etf_universe.csv`
   - `layer_01_02_market_context_relative_strength_combinations.csv`
 - Scope: shared CSV combinations with `model_layer = layer_02_sector_context`; current reviewed rows use canonical `1m` `feature_bar_grain` values and `combination_type` values such as `sector_rotation` or `context_rotation`.
-- Output: SQL table `trading_data.m02_sector_context_feature_generation`, keyed by `snapshot_time + candidate_symbol + comparison_symbol + rotation_pair_id`.
+- Output: SQL table `trading_data.model_02_sector_context_feature_generation`, keyed by `snapshot_time + candidate_symbol + comparison_symbol + rotation_pair_id`.
 - Payload: point-in-time relative-strength return, normalized trend distance/slope/spread/alignment, volatility-ratio, and correlation evidence for a sector/industry ETF versus a reviewed comparison ETF. Raw ratio moving-average levels are not generated. The table also emits one `sector_rotation_summary` row per snapshot carrying sector-observation breadth and dispersion aggregates.
 - Source bars are canonical `1Min` rows from `m01_market_regime_data_acquisition`; current shared ETF rows use `1m` as the reviewed feature grain. Longer-horizon trend, volatility, and correlation diagnostics are still derived locally from the same 1-minute source rows.
 
@@ -25,7 +25,7 @@ PYTHONPATH=src python3 -m data_feature.m02_sector_context_feature_generation.fro
   --month 2016-01
 ```
 
-This reads existing `01_feed_alpaca_bars` completion receipts from local storage, confirms bars are already retained in `trading_data.m01_market_regime_data_acquisition`, then generates `m02_sector_context_feature_generation`. It performs zero provider calls and does not require saved `equity_bar.csv` or `equity_bar.jsonl` payloads.
+This reads existing `01_feed_alpaca_bars` completion receipts from local storage, confirms bars are already retained in `trading_data.model_01_market_regime_data_acquisition`, then generates `m02_sector_context_feature_generation`. It performs zero provider calls and does not require saved `equity_bar.csv` or `equity_bar.jsonl` payloads.
 
 Direct SQL generation remains available when the source table is already materialized:
 

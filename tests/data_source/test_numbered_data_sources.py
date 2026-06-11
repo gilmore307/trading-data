@@ -79,7 +79,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                     encoding="utf-8",
                 )
                 task_key = {
-                    "task_id": "m01_market_regime_data_acquisition_task_test",
+                    "task_id": "model_01_market_regime_data_acquisition_task_test",
                     "source": "m01_market_regime_data_acquisition",
                     "params": {"start": "2026-04-24", "end": "2026-04-25", "market_regime_etf_universe_path": str(universe_path), "max_pages": 2},
                     "output_root": str(Path(tmp) / "task"),
@@ -87,12 +87,12 @@ class NumberedDataSourceTests(unittest.TestCase):
                 writer = FakeSqlWriter()
                 result = module.run(task_key, run_id="run", client=FakeBarsClient(), sql_writer=writer, client_is_fixture=True)
                 self.assertEqual(result.status, "succeeded")
-                self.assertEqual(result.row_counts["m01_market_regime_data_acquisition"], 2)
-                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "m01_market_regime_data_acquisition.csv").exists())
-                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "m01_market_regime_data_acquisition"])
+                self.assertEqual(result.row_counts["model_01_market_regime_data_acquisition"], 2)
+                self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "saved" / "model_01_market_regime_data_acquisition.csv").exists())
+                self.assertEqual(result.references, [str(Path(task_key["output_root"]) / "completion_receipt.json"), "model_01_market_regime_data_acquisition"])
                 self.assertEqual(len(writer.calls), 1)
                 call = writer.calls[0]
-                self.assertEqual(call["table"], "m01_market_regime_data_acquisition")
+                self.assertEqual(call["table"], "model_01_market_regime_data_acquisition")
                 self.assertEqual(call["key_columns"], ["symbol", "timeframe", "timestamp"])
                 rows = sorted(call["rows"], key=lambda row: row["symbol"])
                 self.assertEqual(len(rows), 2)
@@ -116,7 +116,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                     encoding="utf-8",
                 )
                 task_key = {
-                    "task_id": "m01_market_regime_data_acquisition_task_bad_timeframe",
+                    "task_id": "model_01_market_regime_data_acquisition_task_bad_timeframe",
                     "source": "m01_market_regime_data_acquisition",
                     "params": {"start": "2026-04-24", "end": "2026-04-25", "timeframe": "1Day", "market_regime_etf_universe_path": str(universe_path)},
                     "output_root": str(Path(tmp) / "task"),
@@ -131,7 +131,7 @@ class NumberedDataSourceTests(unittest.TestCase):
         module = import_module("data_source.m05_option_expression_data_acquisition_contract_path.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "m05_option_expression_data_acquisition_contract_path_task_test",
+                "task_id": "model_05_option_expression_data_acquisition_contract_path_task_test",
                 "source": "m05_option_expression_data_acquisition_contract_path",
                 "params": {
                     "selected_contracts": [
@@ -157,9 +157,9 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m05_option_expression_data_acquisition_contract_path"], 2)
+            self.assertEqual(result.row_counts["model_05_option_expression_data_acquisition_contract_path"], 2)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "m05_option_expression_data_acquisition_contract_path")
+            self.assertEqual(call["table"], "model_05_option_expression_data_acquisition_contract_path")
             self.assertEqual(call["key_columns"], ["option_symbol", "timeframe", "timestamp"])
             self.assertNotIn("run_id", call["columns"])
             rows = call["rows"]
@@ -298,7 +298,7 @@ class NumberedDataSourceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             module = import_module("data_source.m01_market_regime_data_acquisition.pipeline")
             task_key = {
-                "task_id": "m01_market_regime_data_acquisition_task_bad",
+                "task_id": "model_01_market_regime_data_acquisition_task_bad",
                 "source": "m01_market_regime_data_acquisition",
                 "params": {"end": "2026-04-25"},
                 "output_root": str(Path(tmp) / "task"),

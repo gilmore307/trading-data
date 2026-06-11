@@ -54,7 +54,7 @@ Installed entrypoints mirror package modules:
 
 | Feed | Command/module | Output stance |
 |---|---|---|
-| Alpaca bars | `trading-data-01-feed-alpaca-bars` / `python -m data_feed.01_feed_alpaca_bars` | SQL rows in `trading_data.m01_market_regime_data_acquisition`; no JSONL/CSV payload persistence |
+| Alpaca bars | `trading-data-01-feed-alpaca-bars` / `python -m data_feed.01_feed_alpaca_bars` | SQL rows in `trading_data.model_01_market_regime_data_acquisition`; no JSONL/CSV payload persistence |
 | Alpaca liquidity | `trading-data-02-feed-alpaca-liquidity` / `python -m data_feed.02_feed_alpaca_liquidity` | SQL rows in `trading_data.feed_02_alpaca_liquidity_bar`; raw trades/quotes are transient |
 | Alpaca news | `trading-data-03-feed-alpaca-news` / `python -m data_feed.03_feed_alpaca_news` | SQL rows in `trading_data.feed_03_alpaca_news` |
 | OKX crypto market data | `trading-data-04-feed-okx-crypto-market-data` / `python -m data_feed.04_feed_okx_crypto_market_data` | SQL rows in `trading_data.feed_04_okx_crypto_bar` and `trading_data.feed_04_okx_crypto_liquidity_bar` |

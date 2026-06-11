@@ -5,7 +5,7 @@ This file records the `trading-data` responsibility for Layer 2. It is intention
 ## Owned artifact
 
 ```text
-trading_data.m02_sector_context_feature_generation
+trading_data.model_02_sector_context_feature_generation
 ```
 
 Layer 2 currently consumes a deterministic feature surface built from eligible broad sector-anchor ETF market behavior. There is no accepted separate sector-context source artifact.
@@ -38,7 +38,7 @@ Raw/source columns may use clear provider or observation names without a layer p
 flowchart LR
     request["trading-manager task/request<br/>Layer 2 sector context feature need"]
     feeds["provider/feed adapters<br/>broad sector-anchor ETF behavior evidence"]
-    feature["trading_data.m02_sector_context_feature_generation<br/>relative strength, trend, volatility, correlation, breadth, dispersion"]
+    feature["trading_data.model_02_sector_context_feature_generation<br/>relative strength, trend, volatility, correlation, breadth, dispersion"]
     model["trading-model SectorContextModel<br/>builds context_etf_state plus cross_etf_summary"]
     candidates["reviewed equity total-symbol pool<br/>ordinary target candidates"]
     downstream["Layer 3 target-state input preparation<br/>attaches broad sector context to candidates"]

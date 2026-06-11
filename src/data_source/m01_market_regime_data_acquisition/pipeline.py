@@ -20,7 +20,7 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 SOURCE = "m01_market_regime_data_acquisition"
 MODEL_ID = "market_regime_model"
 OUTPUT_NAME = SOURCE
-OUTPUT_TABLE = SOURCE
+OUTPUT_TABLE = "model_01_market_regime_data_acquisition"
 ET = ZoneInfo("America/New_York")
 FIELDS = ["symbol", "timeframe", "timestamp", "bar_open", "bar_high", "bar_low", "bar_close", "bar_volume", "bar_vwap", "bar_trade_count"]
 SQL_FIELDS = FIELDS

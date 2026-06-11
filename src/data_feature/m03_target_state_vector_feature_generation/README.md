@@ -7,7 +7,7 @@ This package builds point-in-time feature rows for `TargetStateVectorModel`; it 
 ## Intended table
 
 ```text
-trading_data.m03_target_state_vector_feature_generation
+trading_data.model_03_target_state_vector_feature_generation
 ```
 
 ## V1 feature blocks
@@ -23,7 +23,7 @@ The first implementation stores these as Python dictionaries and `sql.py` persis
 
 ## Current implementation
 
-`generator.py` consumes candidate-mapped target-local bars plus optional point-in-time market/sector context rows and emits one row per `target_candidate_id + available_time` with the four V1 blocks. `sql.py` reads accepted `m03_target_state_vector_data_acquisition` rows and writes `trading_data.m03_target_state_vector_feature_generation` keyed by `target_candidate_id + available_time + target_context_state_version`.
+`generator.py` consumes candidate-mapped target-local bars plus optional point-in-time market/sector context rows and emits one row per `target_candidate_id + available_time` with the four V1 blocks. `sql.py` reads accepted `m03_target_state_vector_data_acquisition` rows and writes `trading_data.model_03_target_state_vector_feature_generation` keyed by `target_candidate_id + available_time + target_context_state_version`.
 
 V1 sparse synchronized state windows:
 

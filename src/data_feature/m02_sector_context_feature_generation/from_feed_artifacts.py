@@ -2,7 +2,7 @@
 
 This command is intentionally offline: it reads already-acquired Alpaca bar
 completion receipts from the local trading-data storage tree, confirms bars are
-retained in the shared ``trading_data.m01_market_regime_data_acquisition`` bar
+retained in the shared ``trading_data.model_01_market_regime_data_acquisition`` bar
 table used by the market/sector feature stack, and then runs the deterministic
 ``m02_sector_context_feature_generation`` SQL generator. It does not call providers.
 """
@@ -69,7 +69,7 @@ def run_from_feed_artifacts(
             source_schema="trading_data",
             source_table=OUTPUT_TABLE,
             target_schema="trading_data",
-            target_table="m02_sector_context_feature_generation",
+            target_table="model_02_sector_context_feature_generation",
             source_start=source_start,
             source_end=source_end,
             snapshot_times=None,

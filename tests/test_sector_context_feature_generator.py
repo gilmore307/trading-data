@@ -183,7 +183,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
         cursor = FakeCursor()
 
-        sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="m01_market_regime_data_acquisition")
+        sql_runner.fetch_source_bars(cursor, source_schema="trading_data", source_table="model_01_market_regime_data_acquisition")
 
         sql_text = cursor.calls[0][0]
         self.assertIn("lower(timeframe) IN ('1m', '1min', '1minute')", sql_text)
@@ -213,10 +213,10 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             }
         ]
 
-        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="m02_sector_context_feature_generation")
+        sql_runner.write_feature_rows_sql(cursor, rows, target_schema="trading_data", target_table="model_02_sector_context_feature_generation")
 
         joined_sql = "\n".join(sql for sql, _params in cursor.calls)
-        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."m02_sector_context_feature_generation"', joined_sql)
+        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."model_02_sector_context_feature_generation"', joined_sql)
         self.assertIn('PRIMARY KEY ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id")', joined_sql)
         self.assertIn('ON CONFLICT ("snapshot_time", "candidate_symbol", "comparison_symbol", "rotation_pair_id") DO UPDATE SET', joined_sql)
         insert_params = cursor.calls[-1][1]
@@ -230,11 +230,11 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             root = Path(raw_tmp)
             receipt = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
             receipt.parent.mkdir(parents=True)
-            receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": ["trading_data.m01_market_regime_data_acquisition"], "row_counts": {"equity_bar": 1}}]}) + "\n", encoding="utf-8")
+            receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": ["trading_data.model_01_market_regime_data_acquisition"], "row_counts": {"equity_bar": 1}}]}) + "\n", encoding="utf-8")
 
             summary = from_feed_artifacts.run_from_feed_artifacts(storage_root=root, month="2016-01", dry_run=True)
 
-        self.assertEqual(summary.contract_type, "m02_sector_context_feature_generation_from_feed_artifacts")
+            self.assertEqual(summary.contract_type, "m02_sector_context_feature_generation_from_feed_artifacts")
         self.assertEqual(summary.artifact_count, 1)
         self.assertEqual(summary.source_rows_found, 1)
         self.assertEqual(summary.source_rows_written, 0)
@@ -256,7 +256,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
                 root = Path(raw_tmp)
                 receipt = root / "monthly_backfill" / "alpaca_bars" / "XLK" / "2016-01" / "completion_receipt.json"
                 receipt.parent.mkdir(parents=True)
-                receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": ["trading_data.m01_market_regime_data_acquisition"], "row_counts": {"equity_bar": 1}}]}) + "\n", encoding="utf-8")
+                receipt.write_text(json.dumps({"runs": [{"status": "succeeded", "outputs": ["trading_data.model_01_market_regime_data_acquisition"], "row_counts": {"equity_bar": 1}}]}) + "\n", encoding="utf-8")
 
                 summary = from_feed_artifacts.run_from_feed_artifacts(storage_root=root, month="2016-01")
         finally:
@@ -264,8 +264,8 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
 
         self.assertEqual(summary.source_rows_written, 0)
         self.assertEqual(summary.feature_rows_written, 7)
-        self.assertEqual(calls[0]["source_table"], "m01_market_regime_data_acquisition")
-        self.assertEqual(calls[0]["target_table"], "m02_sector_context_feature_generation")
+        self.assertEqual(calls[0]["source_table"], "model_01_market_regime_data_acquisition")
+        self.assertEqual(calls[0]["target_table"], "model_02_sector_context_feature_generation")
 
     @unittest.skipUnless(
         runtime_config.shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv").exists()

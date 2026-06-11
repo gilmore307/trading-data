@@ -110,10 +110,10 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             "feature_quality_diagnostics": {"has_target_bar": True},
         }
 
-        sql.write_feature_rows_sql(cursor, [row], target_schema="trading_data", target_table="m03_target_state_vector_feature_generation")
+        sql.write_feature_rows_sql(cursor, [row], target_schema="trading_data", target_table="model_03_target_state_vector_feature_generation")
 
         statements = "\n".join(statement for statement, _ in cursor.calls)
-        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."m03_target_state_vector_feature_generation"', statements)
+        self.assertIn('CREATE TABLE IF NOT EXISTS "trading_data"."model_03_target_state_vector_feature_generation"', statements)
         self.assertIn('PRIMARY KEY ("target_candidate_id", "available_time", "target_context_state_version")', statements)
         self.assertIn('"market_state_features" JSONB', statements)
         insert_calls = [call for call in cursor.calls if "INSERT INTO" in call[0]]
@@ -127,7 +127,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         sql.fetch_source_rows_with_lookback(
             cursor,
             source_schema="trading_data",
-            source_table="m03_target_state_vector_data_acquisition",
+            source_table="model_03_target_state_vector_data_acquisition",
             history_start="2016-01-01T00:00:00-05:00",
             output_start="2016-02-01T00:00:00-05:00",
             output_end="2016-03-01T00:00:00-05:00",
@@ -151,12 +151,12 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
     def test_candidate_rows_bind_direct_sector_or_null_sector_symbol(self) -> None:
         cursor = FakeCursor()
-        cursor._one = {"table_ref": "trading_model.m02_sector_context_model_generation"}
+        cursor._one = {"table_ref": "trading_model.model_02_sector_context_model_generation"}
 
         sql.fetch_candidate_rows(
             cursor,
             source_schema="trading_data",
-            source_table="m03_target_state_vector_data_acquisition",
+            source_table="model_03_target_state_vector_data_acquisition",
             sector_context_schema="trading_model",
             sector_context_table="m02_sector_context_model_generation",
             source_start="2016-01-01",
@@ -176,7 +176,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         rows = sql.fetch_candidate_rows(
             cursor,
             source_schema="trading_data",
-            source_table="m03_target_state_vector_data_acquisition",
+            source_table="model_03_target_state_vector_data_acquisition",
             sector_context_schema="trading_model",
             sector_context_table="model_02_sector_context",
             source_start="2016-01-01",
@@ -201,12 +201,12 @@ class TargetStateVectorSqlTests(unittest.TestCase):
                 encoding="utf-8",
             )
             cursor = FakeCursor()
-            cursor._one = {"table_ref": "trading_data.m02_sector_context_data_acquisition"}
+            cursor._one = {"table_ref": "trading_data.model_02_sector_context_data_acquisition"}
 
             sql.fetch_candidate_rows(
                 cursor,
                 source_schema="trading_data",
-                source_table="m03_target_state_vector_data_acquisition",
+                source_table="model_03_target_state_vector_data_acquisition",
                 sector_context_schema="trading_model",
                 sector_context_table="m02_sector_context_model_generation",
                 target_context_mapping_path=mapping_path,
@@ -228,7 +228,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
     def test_context_rows_keep_prior_point_in_time_context_before_source_start(self) -> None:
         cursor = FakeCursor()
-        cursor._one = {"table_ref": "trading_model.m01_market_regime_model_generation"}
+        cursor._one = {"table_ref": "trading_model.model_01_market_regime_model_generation"}
 
         sql.fetch_context_rows(
             cursor,
@@ -246,7 +246,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
     def test_context_rows_can_filter_to_required_context_symbols(self) -> None:
         cursor = FakeCursor()
-        cursor._one = {"table_ref": "trading_model.m02_sector_context_model_generation"}
+        cursor._one = {"table_ref": "trading_model.model_02_sector_context_model_generation"}
 
         sql.fetch_context_rows(
             cursor,
@@ -330,9 +330,9 @@ class TargetStateVectorSqlTests(unittest.TestCase):
             row_count = sql.generate_sql(
                 database_url="postgresql://example.invalid/db",
                 source_schema="trading_data",
-                source_table="m03_target_state_vector_data_acquisition",
+                source_table="model_03_target_state_vector_data_acquisition",
                 target_schema="trading_data",
-                target_table="m03_target_state_vector_feature_generation",
+                target_table="model_03_target_state_vector_feature_generation",
                 source_start="2016-01-01T00:00:00-05:00",
                 source_end="2016-01-15T00:00:00-05:00",
                 market_context_schema="trading_model",

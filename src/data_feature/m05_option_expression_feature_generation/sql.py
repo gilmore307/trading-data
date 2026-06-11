@@ -308,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-schema", default="trading_data")
     parser.add_argument("--source-table", default="option_chain_state_source")
     parser.add_argument("--target-schema", default="trading_data")
-    parser.add_argument("--target-table", default="m05_option_expression_feature_generation")
+    parser.add_argument("--target-table", default="model_05_option_expression_feature_generation")
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
     parser.add_argument("--underlying")

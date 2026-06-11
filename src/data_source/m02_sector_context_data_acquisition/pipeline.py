@@ -30,7 +30,7 @@ from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
 SOURCE = "m02_sector_context_data_acquisition"
 MODEL_ID = "anonymous_target_candidate_builder"
-OUTPUT_TABLE = SOURCE
+OUTPUT_TABLE = "model_02_sector_context_data_acquisition"
 SQL_FIELDS = [
     "etf_symbol",
     "issuer_name",

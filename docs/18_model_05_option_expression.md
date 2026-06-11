@@ -13,8 +13,8 @@ Current feature/source names are `option_chain_state_source`, `m05_option_expres
 
 ```text
 trading_data.option_chain_state_source
-trading_data.m05_option_expression_feature_generation
-trading_data.m05_option_expression_data_acquisition_contract_path
+trading_data.model_05_option_expression_feature_generation
+trading_data.model_05_option_expression_data_acquisition_contract_path
 ```
 
 - `option_chain_state_source` is the shared contract-level option-chain source/cache.

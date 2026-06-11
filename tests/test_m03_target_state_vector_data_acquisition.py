@@ -56,7 +56,7 @@ class Source03TargetStateTests(unittest.TestCase):
         _, payload = pipeline.fetch(context)
         clean_result, cleaned = pipeline.clean(context, payload)
 
-        self.assertEqual(clean_result.row_counts["m03_target_state_vector_data_acquisition"], 1)
+        self.assertEqual(clean_result.row_counts["model_03_target_state_vector_data_acquisition"], 1)
         row = cleaned.rows[0]
         self.assertEqual(row["target_candidate_id"], "tcand_001")
         self.assertEqual(row["symbol"], "AAPL")
@@ -91,7 +91,7 @@ class Source03TargetStateTests(unittest.TestCase):
                 "target_candidates": [{"target_candidate_id": "tcand_001", "routing_symbol_ref": "AAPL"}],
                 "bar_sql_sources": [
                     {
-                        "table": "m01_market_regime_data_acquisition",
+                        "table": "model_01_market_regime_data_acquisition",
                         "source_symbol": "XLF",
                         "target_symbol": "AAPL",
                         "month": "2026-01",
@@ -105,9 +105,9 @@ class Source03TargetStateTests(unittest.TestCase):
         clean_result, cleaned = pipeline.clean(context, payload)
 
         self.assertEqual(len(payload.bar_rows), 1)
-        self.assertEqual(reader.calls[0]["table"], "m01_market_regime_data_acquisition")
+        self.assertEqual(reader.calls[0]["table"], "model_01_market_regime_data_acquisition")
         self.assertEqual(reader.calls[0]["where_equals"], {"symbol": "XLF", "timeframe": "30Min"})
-        self.assertEqual(clean_result.row_counts["m03_target_state_vector_data_acquisition"], 1)
+        self.assertEqual(clean_result.row_counts["model_03_target_state_vector_data_acquisition"], 1)
         self.assertEqual(cleaned.rows[0]["symbol"], "AAPL")
 
     def test_save_uses_accepted_table_and_candidate_key(self) -> None:
@@ -121,12 +121,12 @@ class Source03TargetStateTests(unittest.TestCase):
             },
             "run_001",
         )
-        clean_result = pipeline.StepResult("succeeded", [], {"m03_target_state_vector_data_acquisition": 1})
+        clean_result = pipeline.StepResult("succeeded", [], {"model_03_target_state_vector_data_acquisition": 1})
         payload = pipeline.CleanedPayload(rows=[{"target_candidate_id": "tcand_001", "timeframe": "1Min", "timestamp": "2026-01-02T09:30:00-05:00"}])
         result = pipeline.save(context, clean_result, payload, sql_writer=writer)
 
-        self.assertEqual(result.references, ["trading_data.m03_target_state_vector_data_acquisition"])
-        self.assertEqual(writer.calls[0]["table"], "m03_target_state_vector_data_acquisition")
+        self.assertEqual(result.references, ["trading_data.model_03_target_state_vector_data_acquisition"])
+        self.assertEqual(writer.calls[0]["table"], "model_03_target_state_vector_data_acquisition")
         self.assertEqual(writer.calls[0]["key_columns"], ["target_candidate_id", "timeframe", "timestamp"])
 
 

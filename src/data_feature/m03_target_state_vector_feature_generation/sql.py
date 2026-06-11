@@ -2,7 +2,7 @@
 
 Reads accepted ``m03_target_state_vector_data_acquisition`` rows plus optional point-in-time Layer 1
 and Layer 2 context rows, runs the deterministic feature generator, and writes
-``trading_data.m03_target_state_vector_feature_generation`` with inspectable JSONB blocks.
+``trading_data.model_03_target_state_vector_feature_generation`` with inspectable JSONB blocks.
 """
 from __future__ import annotations
 
@@ -731,13 +731,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", help="PostgreSQL URL. Defaults to OPENCLAW_DATABASE_URL or local OpenClaw DB secret file.")
     parser.add_argument("--source-schema", default="trading_data")
-    parser.add_argument("--source-table", default="m03_target_state_vector_data_acquisition")
+    parser.add_argument("--source-table", default="model_03_target_state_vector_data_acquisition")
     parser.add_argument("--target-schema", default="trading_data")
-    parser.add_argument("--target-table", default="m03_target_state_vector_feature_generation")
+    parser.add_argument("--target-table", default="model_03_target_state_vector_feature_generation")
     parser.add_argument("--market-context-schema", default="trading_model")
-    parser.add_argument("--market-context-table", default="m01_market_regime_model_generation")
+    parser.add_argument("--market-context-table", default="model_01_market_regime_model_generation")
     parser.add_argument("--sector-context-schema", default="trading_model")
-    parser.add_argument("--sector-context-table", default="m02_sector_context_model_generation")
+    parser.add_argument("--sector-context-table", default="model_02_sector_context_model_generation")
     parser.add_argument("--option-chain-source-schema", default="trading_data")
     parser.add_argument("--option-chain-source-table", default=DEFAULT_OPTION_CHAIN_SOURCE_TABLE)
     parser.add_argument("--target-context-mapping-path", type=Path, default=DEFAULT_TARGET_CONTEXT_MAPPING_PATH)

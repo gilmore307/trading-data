@@ -5,7 +5,7 @@ Deterministic Layer 3 target-local observed-input source for `TargetStateVectorM
 This package normalizes caller-supplied, point-in-time target-local bars plus optional aggregate liquidity/quote evidence into SQL rows for:
 
 ```text
-trading_data.m03_target_state_vector_data_acquisition
+trading_data.model_03_target_state_vector_data_acquisition
 ```
 
 It performs no provider calls. Raw bulky provider responses, tick trades, and tick quotes are not persisted by this source.
@@ -26,7 +26,7 @@ Recommended parameters:
 - `params.timeframe`: default timeframe for rows missing their own `timeframe`; default `1Min`
 - `output_root`: local manifest/receipt root
 
-Production manager runs use `params.bar_sql_sources` to read SQL-retained Alpaca bars from `trading_data.m01_market_regime_data_acquisition`. The source does not require `equity_bar.jsonl` or `equity_bar.csv` payload files.
+Production manager runs use `params.bar_sql_sources` to read SQL-retained Alpaca bars from `trading_data.model_01_market_regime_data_acquisition`. The source does not require `equity_bar.jsonl` or `equity_bar.csv` payload files.
 
 Local path variants remain accepted for fixtures and controlled debug tasks: `bars_path`, `bars_csv_path`, `bars_json_path`, `liquidity_rows_path`, `liquidity_csv_path`, `liquidity_json_path`, `target_candidates_path`, and `candidate_rows_path`.
 

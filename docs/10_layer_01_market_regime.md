@@ -5,8 +5,8 @@ This file records the `trading-data` responsibility for Layer 1. It is intention
 ## Owned artifacts
 
 ```text
-trading_data.m01_market_regime_data_acquisition
-trading_data.m01_market_regime_feature_generation
+trading_data.model_01_market_regime_data_acquisition
+trading_data.model_01_market_regime_feature_generation
 ```
 
 `m01_market_regime_data_acquisition` owns point-in-time ETF bar rows for the reviewed market-context universe. `m01_market_regime_feature_generation` owns deterministic point-in-time Layer 1 feature payloads consumed by `model_01_market_regime`.
@@ -48,8 +48,8 @@ Layer-owned feature or model-facing keys use canonical compact prefixes when the
 flowchart LR
     request["trading-manager task/request<br/>historical broad-market data need"]
     feeds["provider/feed adapters<br/>bars, rates, volatility, breadth, liquidity, risk appetite"]
-    source["trading_data.m01_market_regime_data_acquisition<br/>point-in-time broad-market source rows"]
-    feature["trading_data.m01_market_regime_feature_generation<br/>deterministic Layer 1 feature payload"]
+    source["trading_data.model_01_market_regime_data_acquisition<br/>point-in-time broad-market source rows"]
+    feature["trading_data.model_01_market_regime_feature_generation<br/>deterministic Layer 1 feature payload"]
     model["trading-model MarketRegimeModel<br/>consumes Layer 1 features"]
     receipt["completion receipt / manifest / ready signal<br/>validation and handoff evidence"]
 

@@ -23,7 +23,7 @@ from storage.sql import PostgresSqlTableReader, PostgresSqlTableWriter, SqlTable
 
 SOURCE = "m03_target_state_vector_data_acquisition"
 MODEL_ID = "target_state_vector_model"
-OUTPUT_TABLE = SOURCE
+OUTPUT_TABLE = "model_03_target_state_vector_data_acquisition"
 ET = ZoneInfo("America/New_York")
 SQL_FIELDS = [
     "target_candidate_id",
@@ -96,7 +96,7 @@ def build_context(task_key: dict[str, Any], run_id: str) -> SourceContext:
     return SourceContext(task_key, output_root / "runs" / run_id, output_root / "completion_receipt.json", {"run_id": run_id, "started_at": _now_utc()})
 
 
-BAR_SQL_SOURCE_TABLE = "m01_market_regime_data_acquisition"
+BAR_SQL_SOURCE_TABLE = "model_01_market_regime_data_acquisition"
 BAR_SQL_SOURCE_COLUMNS = [
     "symbol",
     "timeframe",

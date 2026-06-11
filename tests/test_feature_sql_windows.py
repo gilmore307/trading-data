@@ -24,7 +24,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         module.fetch_source_bars(
             cursor,
             source_schema="trading_data",
-            source_table="m01_market_regime_data_acquisition",
+            source_table="model_01_market_regime_data_acquisition",
             source_start="2026-04-01T00:00:00Z",
             source_end="2026-05-01T00:00:00Z",
         )
@@ -40,7 +40,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         module.fetch_source_bars(
             cursor,
             source_schema="trading_data",
-            source_table="m01_market_regime_data_acquisition",
+            source_table="model_01_market_regime_data_acquisition",
             source_end="2026-05-01T00:00:00Z",
         )
         sql, params = cursor.calls[0]
@@ -54,7 +54,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         module.fetch_source_rows(
             cursor,
             source_schema="trading_data",
-            source_table="m03_target_state_vector_data_acquisition",
+            source_table="model_03_target_state_vector_data_acquisition",
             source_start="2026-04-01T00:00:00Z",
             source_end="2026-05-01T00:00:00Z",
         )
@@ -70,7 +70,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         module.fetch_context_rows(
             cursor,
             schema="trading_data",
-            table="m01_market_regime_feature_generation",
+            table="model_01_market_regime_feature_generation",
             ref_column="market_context_state_ref",
             source_start="2026-04-01T09:30:00Z",
             source_end="2026-04-01T16:00:00Z",
@@ -121,7 +121,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
             source_schema="trading_data",
             source_table="option_chain_state_source",
             target_schema="trading_data",
-            target_table="m05_option_expression_feature_generation",
+            target_table="model_05_option_expression_feature_generation",
             source_start="2026-04-01T00:00:00Z",
             source_end="2026-05-01T00:00:00Z",
             underlying="AAPL",

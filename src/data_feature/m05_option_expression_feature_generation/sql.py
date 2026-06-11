@@ -47,9 +47,20 @@ def _qualified(schema: str, table: str) -> str:
     return f"{_quote(schema)}.{_quote(table)}"
 
 
-def fetch_source_rows(cursor: Any, *, source_schema: str, source_table: str, source_start: str | None = None, source_end: str | None = None) -> list[dict[str, Any]]:
+def fetch_source_rows(
+    cursor: Any,
+    *,
+    source_schema: str,
+    source_table: str,
+    source_start: str | None = None,
+    source_end: str | None = None,
+    underlying: str | None = None,
+) -> list[dict[str, Any]]:
     where: list[str] = []
     params: list[Any] = []
+    if underlying:
+        where.append("underlying = %s")
+        params.append(underlying.strip().upper())
     if source_start:
         where.append("snapshot_time >= %s")
         params.append(source_start)
@@ -84,6 +95,7 @@ def insert_feature_rows_from_source_sql(
     target_table: str,
     source_start: str | None,
     source_end: str | None,
+    underlying: str | None,
     run_id: str,
 ) -> int:
     qualified_source = _qualified(source_schema, source_table)
@@ -94,6 +106,9 @@ def insert_feature_rows_from_source_sql(
     params: list[Any] = []
     if source_table != "option_chain_state_source":
         where.append("snapshot_type IS NOT NULL")
+    if underlying:
+        where.append("underlying = %s")
+        params.append(underlying.strip().upper())
     if source_start:
         where.append("snapshot_time >= %s")
         params.append(source_start)
@@ -214,7 +229,10 @@ def insert_feature_rows_from_source_sql(
         SELECT {", ".join(_quote(column) for column in COLUMNS)}
         FROM feature_rows
         ON CONFLICT ({", ".join(_quote(column) for column in KEY_COLUMNS)}) DO UPDATE SET
-          {", ".join(f'{_quote(column)} = EXCLUDED.{_quote(column)}' for column in COLUMNS if column not in KEY_COLUMNS)}
+          {", ".join(f'{_quote(column)} = EXCLUDED.{_quote(column)}' for column in COLUMNS if column not in (*KEY_COLUMNS, "run_id"))}
+        WHERE {qualified_target}."source_run_ref" IS DISTINCT FROM EXCLUDED."source_run_ref"
+           OR {qualified_target}."feature_payload_json" IS DISTINCT FROM EXCLUDED."feature_payload_json"
+           OR {qualified_target}."feature_quality_diagnostics" IS DISTINCT FROM EXCLUDED."feature_quality_diagnostics"
         """,
         [*params, run_id],
     )
@@ -254,7 +272,18 @@ def write_feature_rows_sql(cursor: Any, rows: Sequence[Mapping[str, Any]], *, ta
         cursor.execute(insert_sql, values)
 
 
-def generate_sql(*, database_url: str, source_schema: str, source_table: str, target_schema: str, target_table: str, source_start: str | None, source_end: str | None, run_id: str) -> int:
+def generate_sql(
+    *,
+    database_url: str,
+    source_schema: str,
+    source_table: str,
+    target_schema: str,
+    target_table: str,
+    source_start: str | None,
+    source_end: str | None,
+    underlying: str | None,
+    run_id: str,
+) -> int:
     import psycopg  # type: ignore
     from psycopg.rows import dict_row  # type: ignore
 
@@ -268,6 +297,7 @@ def generate_sql(*, database_url: str, source_schema: str, source_table: str, ta
                 target_table=target_table,
                 source_start=source_start,
                 source_end=source_end,
+                underlying=underlying,
                 run_id=run_id,
             )
 
@@ -281,9 +311,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--target-table", default="m05_option_expression_feature_generation")
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
+    parser.add_argument("--underlying")
     parser.add_argument("--run-id", default="m05_option_expression_feature_generation_sql")
     args = parser.parse_args(argv)
-    count = generate_sql(database_url=_database_url(args.database_url), source_schema=args.source_schema, source_table=args.source_table, target_schema=args.target_schema, target_table=args.target_table, source_start=args.source_start, source_end=args.source_end, run_id=args.run_id)
+    count = generate_sql(
+        database_url=_database_url(args.database_url),
+        source_schema=args.source_schema,
+        source_table=args.source_table,
+        target_schema=args.target_schema,
+        target_table=args.target_table,
+        source_start=args.source_start,
+        source_end=args.source_end,
+        underlying=args.underlying,
+        run_id=args.run_id,
+    )
     print(f"generated {count} rows into {args.target_schema}.{args.target_table}")
     return 0
 

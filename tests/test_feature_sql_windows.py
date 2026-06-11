@@ -104,12 +104,14 @@ class FeatureSqlWindowTests(unittest.TestCase):
             source_table="option_chain_state_source",
             source_start="2026-04-01T00:00:00Z",
             source_end="2026-05-01T00:00:00Z",
+            underlying="AAPL",
         )
         sql, params = cursor.calls[0]
+        self.assertIn("underlying = %s", sql)
         self.assertIn("snapshot_time >= %s", sql)
         self.assertIn("snapshot_time < %s", sql)
         self.assertNotIn("snapshot_time <= %s", sql)
-        self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
+        self.assertEqual(params, ["AAPL", "2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
 
     def test_option_expression_generation_uses_set_based_insert(self):
         module = importlib.import_module("data_feature.m05_option_expression_feature_generation.sql")
@@ -122,14 +124,18 @@ class FeatureSqlWindowTests(unittest.TestCase):
             target_table="m05_option_expression_feature_generation",
             source_start="2026-04-01T00:00:00Z",
             source_end="2026-05-01T00:00:00Z",
+            underlying="AAPL",
             run_id="unit_run",
         )
         statements = "\n".join(sql for sql, _params in cursor.calls)
         self.assertIn("INSERT INTO", statements)
         self.assertIn("SELECT", statements)
         self.assertIn("ON CONFLICT", statements)
+        self.assertIn("IS DISTINCT FROM EXCLUDED", statements)
+        self.assertNotIn('"run_id" = EXCLUDED."run_id"', statements)
+        self.assertIn("underlying = %s", statements)
         self.assertNotIn("snapshot_time <= %s", statements)
-        self.assertEqual(cursor.calls[-1][1], ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z", "unit_run"])
+        self.assertEqual(cursor.calls[-1][1], ["AAPL", "2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z", "unit_run"])
 
 
 if __name__ == "__main__":

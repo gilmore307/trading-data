@@ -1,4 +1,4 @@
-"""Manager-facing M09 selected-contract option time-series source.
+"""Manager-facing M05 selected-contract option time-series source.
 
 This source supports OptionExpressionModel replay/evaluation by collecting the
 market path of contracts selected by an upstream offline expression plan. It is

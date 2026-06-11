@@ -232,7 +232,7 @@ class CalendarObservationTests(unittest.TestCase):
             self.assertEqual(receipt["row_count"], 1)
             self.assertTrue((output_dir / "calendar_observation.csv").exists())
             self.assertTrue((output_dir / "calendar_observation.jsonl").exists())
-            self.assertIn("not_layer_10_event_pool", receipt["source_role"])
+            self.assertIn("not_m06_residual_event_governance_event_pool", receipt["source_role"])
 
 
 if __name__ == "__main__":

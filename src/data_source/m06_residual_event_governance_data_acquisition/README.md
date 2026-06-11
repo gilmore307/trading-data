@@ -2,7 +2,7 @@
 
 Manager-facing EventRiskGovernor data source.
 
-Layer 10 supplies bounded, point-in-time event overview rows for the event-risk governor model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
+M06 supplies bounded, point-in-time event overview rows for the event-risk governor model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
 
 This source is an event index, not the full `event_context_vector`. `EventRiskGovernor` combines these overview rows with point-in-time event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and scope/sensitivity metadata inside `trading-model`.
 
@@ -24,7 +24,7 @@ Optional task key fields:
 - `params.symbols`: focused symbols
 - `params.event_sql_inputs` / `params.feed_sql_inputs`: SQL feed rows to normalize into event overview rows. Supported current inputs are `feed_03_alpaca_news` (`symbol_news`), `feed_05_gdelt_article` (`macro_news` / `sector_news` / `symbol_news` by scope hints), `feed_12_release_calendar` (`earnings_guidance` scheduled shells for `nasdaq_earnings_calendar`), and `feed_08_sec_company_fact` (`earnings_guidance` result artifacts for 10-Q/10-K or earnings-related 8-K rows; otherwise `sec_filing`). Each entry may provide `table`, `kind`, `columns`, `where_equals`, `where_in`, `time_column`, `start`, `end`, and `order_by`.
 - `params.event_artifact_paths` / `params.feed_artifact_paths`: compatibility/reviewed local artifact input. Use this for TE-exception or explicitly reviewed local evidence only, not for current non-TE feed outputs.
-- Trading Economics macro rows stay in canonical storage and are not valid Layer 10 input until a later accepted route explicitly promotes them.
+- Trading Economics macro rows stay in canonical storage and are not valid M06 input until a later accepted route explicitly promotes them.
 - `output_root`: local receipt/request-manifest root
 
 Each event row requires:
@@ -95,7 +95,7 @@ Trading Economics calendar artifacts have one accepted source role:
 
 - canonical storage artifacts provide macro calendar/value evidence for reviewed historical windows.
 
-TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later. SQL rows are derived materializations, not the TE source of truth, and should stay empty for TE macro rows until Layer 10 explicitly promotes macro events into the accepted event-risk/attention pool. The Trading Economics subscription is expired, so website URLs are not source references and no logged-out visible-page route is an accepted normal recovery path. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
+TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later. SQL rows are derived materializations, not the TE source of truth, and should stay empty for TE macro rows until M06 explicitly promotes macro events into the accepted event-risk/attention pool. The Trading Economics subscription is expired, so website URLs are not source references and no logged-out visible-page route is an accepted normal recovery path. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

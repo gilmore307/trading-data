@@ -107,7 +107,7 @@ Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target
 
 ## D017 — Option-expression data boundary
 
-`option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; Layer 9 derives `m05_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
+`option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; M05 derives `m05_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
 
 `m05_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
 
@@ -123,7 +123,7 @@ Live-call policy, retry/rate-limit rules, checkpoint/resume evidence, manifests,
 
 Reusable logic belongs in `src/`. Stable package CLIs remain the preferred shared executable surface, but a reviewed `scripts/` wrapper may exist when it builds a bounded operational task key or matches a deployed systemd command. Such wrappers must stay thin, import `src/`/package code, and keep provider execution behind manager controls.
 
-## D021 — Price-action events belong inside Layer 10 event-risk overlay
+## D021 — Price-action events belong inside M06 event-risk overlay
 
 Date: 2026-05-09
 
@@ -138,17 +138,17 @@ Status: Accepted
 
 For browser-scraped sources, normal acquisition uses logged-out visible pages when the accepted fields are available. Feed tasks use bounded HTTP page fetches plus task-specific date/filter cookies or query params, and must not repeatedly open/login browser pages or rely on a mutable long-lived tab. An exported local cookie jar is allowed only for a reviewed recovery route that explicitly needs it. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
 
-Trading Economics is the exception: recent/future macro schedule maintenance may use the bounded TE calendar-page refresh, but its output is canonical storage source data only. It must not persist website URLs, call TE API/download/export endpoints, or populate Layer 10 SQL event rows without a later reviewed route.
+Trading Economics is the exception: recent/future macro schedule maintenance may use the bounded TE calendar-page refresh, but its output is canonical storage source data only. It must not persist website URLs, call TE API/download/export endpoints, or populate M06 SQL event rows without a later reviewed route.
 
 All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.
 
-## D023 — Event evidence moves to Layer 10 event-risk governor use
+## D023 — Event evidence moves to M06 event-risk governor use
 
 Accepted: 2026-05-15
 
-The active ten-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the Layer 10 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
+The active ten-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the M06 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
 
-Layer 9 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`option_chain_state_source`, `m05_option_expression_feature_generation`, and `m05_option_expression_data_acquisition_contract_path`). Layer 10 event-risk data uses the current event surfaces (`m06_residual_event_governance_data_acquisition`, `m06_residual_event_governance_feature_generation`, and event-feed artifacts).
+M05 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`option_chain_state_source`, `m05_option_expression_feature_generation`, and `m05_option_expression_data_acquisition_contract_path`). M06 event-risk data uses the current event surfaces (`m06_residual_event_governance_data_acquisition`, `m06_residual_event_governance_feature_generation`, and event-feed artifacts).
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 

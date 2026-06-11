@@ -1,7 +1,7 @@
 """Shared ThetaData option-chain source/cache acquisition.
 
 The source writes one contract-level SQL row per visible option contract. It is
-not model-facing output; Layer 3 and Layer 9 derive their own accepted surfaces
+not model-facing output; Layer 3 and M05 derive their own accepted surfaces
 from these rows.
 """
 from __future__ import annotations

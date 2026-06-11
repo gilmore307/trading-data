@@ -3,7 +3,7 @@
 This module intentionally performs no provider calls. It converts SQL-retained
 feed rows, and TE-exception local artifacts, into the compact
 ``m06_residual_event_governance_data_acquisition`` overview contract used by the
-Layer 10 event-risk governor. Raw article/filing/calendar detail remains behind
+M06 event-risk governor. Raw article/filing/calendar detail remains behind
 references.
 """
 
@@ -401,7 +401,7 @@ def _events_for_kind(kind: str, reference: Path | str, rows: Sequence[Mapping[st
 
 
 def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict[str, Any]]:
-    """Extract canonical Layer 10 event-risk rows from local feed artifacts.
+    """Extract canonical M06 event-risk rows from local feed artifacts.
 
     This remains for TE-exception/local reviewed artifacts. Current non-TE feed
     outputs should prefer ``extract_events_from_sql_inputs``.
@@ -419,7 +419,7 @@ def extract_events_from_artifact_paths(paths: Iterable[str | Path]) -> list[dict
 
 
 def extract_events_from_sql_inputs(inputs: Iterable[Mapping[str, Any]], *, sql_reader: SqlTableReader | None = None) -> list[dict[str, Any]]:
-    """Extract canonical Layer 10 event-risk rows from SQL-retained feed tables."""
+    """Extract canonical M06 event-risk rows from SQL-retained feed tables."""
 
     reader = sql_reader or PostgresSqlTableReader.from_config({})
     events: list[dict[str, Any]] = []

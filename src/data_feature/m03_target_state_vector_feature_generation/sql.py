@@ -13,7 +13,8 @@ import importlib
 import json
 import os
 import re
-from datetime import datetime, timedelta
+import uuid
+from datetime import UTC, datetime, timedelta
 from itertools import chain
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -122,6 +123,72 @@ def _database_url(explicit: str | None) -> str:
     if path.exists():
         return path.read_text(encoding="utf-8").strip()
     raise SystemExit(f"database URL not supplied and {path} does not exist")
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _write_task_progress(
+    *,
+    processed_count: int | None = None,
+    expected_count: int | None = None,
+    node_id: str,
+    node_label: str,
+    extra: Mapping[str, Any] | None = None,
+) -> None:
+    """Refresh manager task progress when running under the stage executor."""
+
+    progress_path_text = os.environ.get("TRADING_MANAGER_TASK_PROGRESS_PATH", "").strip()
+    worker_id = os.environ.get("TRADING_MANAGER_TASK_PROGRESS_WORKER_ID", "").strip()
+    task_uid = os.environ.get("TRADING_MANAGER_TASK_PROGRESS_TASK_UID", "").strip()
+    stage_id = os.environ.get("TRADING_MANAGER_TASK_PROGRESS_STAGE_ID", "").strip()
+    if not progress_path_text or not worker_id or not task_uid or not stage_id:
+        return
+
+    progress_path = Path(progress_path_text)
+    progress_path.parent.mkdir(parents=True, exist_ok=True)
+    now = _utc_now_iso()
+    progress_extra = {"progress_basis": "feature partitions required by the six-month fold"}
+    if extra:
+        progress_extra.update(dict(extra))
+    payload = {
+        "contract_type": "manager_worker_task_progress",
+        "worker_id": worker_id,
+        "task_uid": task_uid,
+        "stage_id": stage_id,
+        "status": "running",
+        "unit_label": "feature months",
+        "processed_count": processed_count,
+        "expected_count": expected_count,
+        "elapsed_seconds": None,
+        "expected_seconds": None,
+        "updated_at_utc": now,
+        "progress_source": "active_progress_file",
+        "progress_basis": progress_extra["progress_basis"],
+        "extra": progress_extra,
+        "nodes": [
+            {
+                "node_id": node_id,
+                "node_label": node_label,
+                "status": "running",
+                "processed_count": processed_count,
+                "expected_count": expected_count,
+                "elapsed_seconds": None,
+                "expected_seconds": None,
+                "updated_at_utc": now,
+            }
+        ],
+    }
+    tmp = progress_path.with_name(f".{progress_path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
+    try:
+        tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        tmp.replace(progress_path)
+    finally:
+        try:
+            tmp.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def _quote_identifier(identifier: str) -> str:

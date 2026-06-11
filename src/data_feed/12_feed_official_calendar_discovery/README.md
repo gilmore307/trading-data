@@ -2,7 +2,7 @@
 
 Official calendar-discovery feed for scheduled or announced event shells.
 
-This feed writes source artifacts that `calendar_observation` can consume. It does not admit rows into the Layer 10 event pool.
+This feed writes source artifacts that `calendar_observation` can consume. It does not admit rows into the M06 event pool.
 
 Supported `params.data_kind` values:
 

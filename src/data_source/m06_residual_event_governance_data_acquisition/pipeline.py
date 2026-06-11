@@ -1,4 +1,4 @@
-"""Manager-facing Layer 10 event-risk evidence source."""
+"""Manager-facing M06 event-risk evidence source."""
 from __future__ import annotations
 
 import json

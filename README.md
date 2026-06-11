@@ -35,7 +35,7 @@ Accepted SQL outputs are the preferred model-input boundary. File artifacts and 
 - `docs/20_data_feed.md` — provider and feed rules.
 - `docs/21_api_templates.md` — task/source design order.
 - `docs/22_feed_availability.md` — provider/data-kind availability inventory.
-- `docs/10_layer_01_market_regime.md` through `docs/19_layer_10_event_risk_governor.md` — layer-specific data boundaries.
+- `docs/10_layer_01_market_regime.md` through `docs/17_layer_08_underlying_action.md`, plus `docs/18_model_05_option_expression.md` and `docs/19_model_06_residual_event_governance.md` — model data boundaries.
 - `docs/30_model_inputs.md` — mapping from data outputs to model layers.
 - `docs/03_contracts.md` — accepted local data-stack acceptance.
 - `docs/40_production_hardening.md` — non-production hardening contracts.

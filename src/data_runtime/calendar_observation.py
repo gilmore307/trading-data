@@ -1,7 +1,7 @@
 """Unified calendar observation source layer.
 
 Calendar observations are source/scheduling evidence. They do not enter the
-Layer 10 event pool until Layer 10 explicitly promotes a relevant observation
+M06 event pool until M06 explicitly promotes a relevant observation
 with point-in-time evidence.
 """
 
@@ -582,7 +582,7 @@ def write_observations(observations: Sequence[CalendarObservation], output_dir: 
         "contract_type": "calendar_observation_build_receipt",
         "row_count": len(rows),
         "outputs": [str(csv_path), str(jsonl_path), str(schema_path)],
-        "source_role": "calendar_observations_are_source_shells_not_layer_10_event_pool_rows",
+        "source_role": "calendar_observations_are_source_shells_not_m06_residual_event_governance_event_pool_rows",
     }
 
 

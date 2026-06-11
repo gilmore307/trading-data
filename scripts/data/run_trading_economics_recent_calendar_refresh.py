@@ -97,7 +97,7 @@ def run_refresh(*, task_key: dict[str, Any], run_id: str, execute_live_fetch: bo
         "result": result.__dict__,
         "provider_calls_performed": 1 if result.status == "succeeded" else 0,
         "storage_mutation_performed": True,
-        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only; it does not persist source URLs or populate Layer 10 SQL rows.",
+        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only; it does not persist source URLs or populate M06 event-governance SQL rows.",
     }
 
 

@@ -35,8 +35,8 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 - Keep provider details in `data_feed`; keep model-input orchestration in `data_source`.
 - Prefer accepted SQL outputs for numbered model-input sources.
 - Persist only final cleaned artifacts or reviewed SQL rows by default; bulky raw provider payloads stay transient unless an incident/debug artifact is explicitly approved.
-- The Temporal Explorer substrate is an index and visualization substrate. It does not materialize Layer 10 macro/news events until an accepted event-risk route explicitly promotes them. `chart_ohlcv_cache` is a compact visualization cache and is not a training truth source.
-- `option_chain_state_source` is the single contract-level ThetaData option-chain source/cache. Layer 3 consumes it only through target-level option-chain reduction; Layer 9 derives option-expression rows from the same source before candidate feature generation.
+- The Temporal Explorer substrate is an index and visualization substrate. It does not materialize M06 macro/news events until an accepted event-risk route explicitly promotes them. `chart_ohlcv_cache` is a compact visualization cache and is not a training truth source.
+- `option_chain_state_source` is the single contract-level ThetaData option-chain source/cache. Layer 3 consumes it only through target-level option-chain reduction; M05 derives option-expression rows from the same source before candidate feature generation.
 - Register reusable feed, source, field, status, table, parameter, and artifact names through `trading-manager` before other repositories depend on them.
 - Do not use strategy returns, model labels, profitability, or execution outcomes as upstream data-production inputs.
 - Keep `src/data_layers/catalog.py` current when adding, removing, or intentionally omitting a layer surface.

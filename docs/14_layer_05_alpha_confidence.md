@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. `trading-data` owns no dedicated Layer 5 source/feature by default; AlphaConfidenceModel belongs to `trading-model` and consumes reviewed upstream state artifacts plus Layer 4 event-failure-risk outputs.
 
-Event data does not feed Layer 5 directly. Reviewed event observations and event/strategy-failure gates feed Layer 4; broader post-failure attribution evidence feeds Layer 10 and can affect future Layer 4 only after review.
+Event data does not feed Layer 5 directly. Reviewed event observations and event/strategy-failure gates feed Layer 4; broader post-failure attribution evidence feeds M06 and can affect future Layer 4 only after review.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 

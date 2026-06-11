@@ -7,10 +7,15 @@ import argparse
 import csv
 import json
 import os
+import sys
 from datetime import UTC, date, datetime, timedelta
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.data.run_trading_economics_recent_calendar_refresh import (
     DEFAULT_OUTPUT_ROOT as DEFAULT_TE_OUTPUT_ROOT,
@@ -160,7 +165,7 @@ def run_nasdaq_earnings_refresh(
         "provider_calls_performed": len(runs),
         "storage_mutation_performed": True,
         "runs": runs,
-        "boundary_note": "Official calendar discovery writes source artifacts for calendar_observation only; it does not admit Layer 10 event-pool rows.",
+        "boundary_note": "Official calendar discovery writes source artifacts for calendar_observation only; it does not admit M06 event-pool rows.",
     }
 
 
@@ -289,7 +294,7 @@ def run_calendar_maintenance(
         },
         "provider_calls_performed": int(te.get("provider_calls_performed") or 0) + int(official.get("provider_calls_performed") or 0) + int(exchange.get("provider_calls_performed") or 0),
         "storage_mutation_performed": bool(te.get("storage_mutation_performed") or official.get("storage_mutation_performed") or exchange.get("storage_mutation_performed") or temporal_install),
-        "boundary_note": "Shared calendar maintenance service; source rows/artifacts only, no Layer 10 event-pool admission.",
+        "boundary_note": "Shared calendar maintenance service; source rows/artifacts only, no M06 event-pool admission.",
     }
 
 

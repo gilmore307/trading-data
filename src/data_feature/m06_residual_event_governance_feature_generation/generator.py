@@ -1,4 +1,4 @@
-"""Deterministic feature builder for Layer 10 EventRiskGovernor source rows."""
+"""Deterministic feature builder for M06 EventRiskGovernor source rows."""
 
 from __future__ import annotations
 

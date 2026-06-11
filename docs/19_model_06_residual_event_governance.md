@@ -1,13 +1,13 @@
-# Layer 10 — Event Risk Governor Data Boundary
+# M06 — Event Risk Governor Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. Layer 10 owns `EventRiskGovernor / EventIntelligenceOverlay` qualitative event attribution, reviewed-pool governance, and event-risk intervention. `trading-data` owns point-in-time event evidence indexes, deterministic event-overview features, and attribution evidence refs, not event interpretation, attribution decisions, risk policy, execution, or broker mutation.
+Status: active architecture revision. M06 owns `EventRiskGovernor / EventIntelligenceOverlay` qualitative event attribution, reviewed-pool governance, and event-risk intervention. `trading-data` owns point-in-time event evidence indexes, deterministic event-overview features, and attribution evidence refs, not event interpretation, attribution decisions, risk policy, execution, or broker mutation.
 
 Current physical source/feature names are `m06_residual_event_governance_data_acquisition` and `m06_residual_event_governance_feature_generation`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
-`trading-data` owns the point-in-time event evidence index for Layer 10. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
+`trading-data` owns the point-in-time event evidence index for M06. Model-side event interpretation, event vectors, labels, training, evaluation, and promotion belong to `trading-model`.
 
 Historical replay and realtime/future event acquisition rules live in `docs/23_event_source_registry.md`. That registry defines official source priority, fallback posture, certainty flags, `available_time` handling, and persistent-regime interval evidence for the global event observation pool.
 
@@ -24,11 +24,11 @@ Nested event-overlay data-source helpers may produce source evidence before it i
 src/data_source/m06_residual_event_governance_data_acquisition/equity_abnormal_activity/
 ```
 
-`price_action` is an accepted Layer 10 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
+`price_action` is an accepted M06 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
 
 ## Boundary
 
-Layer 10 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector` and not event-failure attribution.
+M06 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector` and not event-failure attribution.
 
 `m06_residual_event_governance_data_acquisition` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
 
@@ -36,13 +36,13 @@ Layer 10 data is an event index plus deterministic event-overview features, not 
 
 `trading-model` builds `event_risk_intervention / event_context_vector` from the feature rows plus referenced artifacts and upstream context states.
 
-Layer 10's post-failure attribution route adds one data requirement: event rows and referenced artifacts must remain joinable to model failure/residual windows by point-in-time clocks. `trading-data` preserves event availability, source refs, activity windows, and compact detector evidence; `trading-model` decides whether those events explain a failure, computes `realized_impact_scope_label`, builds attribution labels, and proposes Layer 4 promotion packets.
+M06's post-failure attribution route adds one data requirement: event rows and referenced artifacts must remain joinable to model failure/residual windows by point-in-time clocks. `trading-data` preserves event availability, source refs, activity windows, and compact detector evidence; `trading-model` decides whether those events explain a failure, computes `realized_impact_scope_label`, builds attribution labels, and proposes Layer 4 promotion packets.
 
-Layer 10 is the qualitative event-impact and attribution layer, but qualitative decisions belong to `trading-model` and review. `trading-data` supports that route by preserving the evidence needed to test attribution, including co-event grouping and confounder controls when available.
+M06 is the qualitative event-impact and attribution layer, but qualitative decisions belong to `trading-model` and review. `trading-data` supports that route by preserving the evidence needed to test attribution, including co-event grouping and confounder controls when available.
 
 ## Post-failure evidence route
 
-Layer 10 post-failure attribution starts with model-side failure-scope triage, not with an unrestricted news search. `trading-data` should acquire and preserve evidence for every layer that remains relevant after triage:
+M06 post-failure attribution starts with model-side failure-scope triage, not with an unrestricted news search. `trading-data` should acquire and preserve evidence for every layer that remains relevant after triage:
 
 ```text
 failure window / residual context
@@ -133,7 +133,7 @@ These fields or refs are evidence only. `trading-data` does not decide whether a
 
 Trading-calendar and market-structure windows are attribution evidence when failures occur around non-trading intervals, expiry, or rebalance windows. `trading-data` should preserve calendar facts such as closure type, non-trading interval length, next market open, holiday name, early close, pre-holiday session flags, triple-witching/option-expiry flags, and index rebalance flags when available. `trading-model` decides whether the date has enough incremental explanatory value to supervise future Layer 4 risk conditioning.
 
-Calendar and market-structure rows live first in the global event observation pool. The row's job is to make the date, lifecycle clocks, and source/provenance knowable; it must not assert that the date caused a failure. When Layer 10 later identifies a plausible relationship after attribution, the family/mechanism enters the focused/watched event pool for systematic acquisition, offline Layer 4 candidate training, and Layer 5 validation. Only after validation and Layer 10/review disposition does it become an accepted production Layer 4 event family.
+Calendar and market-structure rows live first in the global event observation pool. The row's job is to make the date, lifecycle clocks, and source/provenance knowable; it must not assert that the date caused a failure. When M06 later identifies a plausible relationship after attribution, the family/mechanism enters the focused/watched event pool for systematic acquisition, offline Layer 4 candidate training, and Layer 5 validation. Only after validation and M06/review disposition does it become an accepted production Layer 4 event family.
 
 Persistent event-regime rows also live first in the global event observation pool. Their job is to preserve point-in-time interval evidence: regime start, optional end, active/shadow/decay status, last material update, affected scopes, decay/staleness rule, and source refs. They may remain active or shadow-active without same-day news, but `trading-data` must not assert causal impact or keep stale pressure alive without a reviewed status/decay rule.
 
@@ -164,11 +164,11 @@ option_activity_ref
 prediction_market_activity_ref
 ```
 
-Startup abnormality scope is limited to compact point-in-time detector refs for: false breakout/breakdown, liquidity sweep high/low, bull/bear trap, residual board/tape disturbance after upstream conditioning, spread/depth/quote-quality/halt or one-sided liquidity disruption, and reviewed option IV/skew/term-structure/volume/OI/liquidity disturbance. Raw bar, target-state, liquidity-feature, option-expression, Layer 10 event-risk guidance, strategy-failure, and post-event realized-label fields are excluded from activity evidence unless a later reviewed artifact proves residual/non-overlap status.
+Startup abnormality scope is limited to compact point-in-time detector refs for: false breakout/breakdown, liquidity sweep high/low, bull/bear trap, residual board/tape disturbance after upstream conditioning, spread/depth/quote-quality/halt or one-sided liquidity disruption, and reviewed option IV/skew/term-structure/volume/OI/liquidity disturbance. Raw bar, target-state, liquidity-feature, option-expression, M06 event-risk guidance, strategy-failure, and post-event realized-label fields are excluded from activity evidence unless a later reviewed artifact proves residual/non-overlap status.
 
 `trading-data` owns source refs, windows, availability clocks, and compact detector evidence. It does not decide final bridge scores, prediction-market probabilities, event-risk interventions, or trading actions.
 
-Bridge evidence must preserve a non-overlap audit trail. Price, liquidity, and option activity refs are eligible for model-side scoring only when the artifact can show that the activity leg is not already represented in upstream market/sector/target-state features, liquidity features, option-expression inputs, or Layer 9 trading-guidance payloads for the same decision context. If overlap is unknown, `trading-data` should keep the ref as provenance/review evidence and let `trading-model` mark the bridge `review_required_overlap_unknown` rather than treating it as incremental event evidence.
+Bridge evidence must preserve a non-overlap audit trail. Price, liquidity, and option activity refs are eligible for model-side scoring only when the artifact can show that the activity leg is not already represented in upstream market/sector/target-state features, liquidity features, option-expression inputs, or M05 trading-guidance payloads for the same decision context. If overlap is unknown, `trading-data` should keep the ref as provenance/review evidence and let `trading-model` mark the bridge `review_required_overlap_unknown` rather than treating it as incremental event evidence.
 
 Event-family scouting adds one data requirement: raw provider rows must preserve enough source metadata for `trading-model` to create reviewed `event_family_scouting_packet` evidence. For news this means source name, provider id, headline/summary or source artifact ref, URL/ref, published/updated times, available time when known, symbol/entity tags, and dedup/canonical refs when available. `trading-data` should not collapse raw news into a final family label or event-risk conclusion; it may provide deterministic source fields and evidence refs.
 
@@ -191,7 +191,7 @@ trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
   -> m06_residual_event_governance_data_acquisition
   -> m06_residual_event_governance_feature_generation
-  -> trading-model Layer 10 event-failure attribution or reviewed-pool governance
+  -> trading-model M06 event-failure attribution or reviewed-pool governance
   -> evaluation/promotion review outside trading-data
   -> accepted future Layer 4 event_strategy_failure_gate / event-observation scope rules
 ```
@@ -214,7 +214,7 @@ trading-manager event/source request
 
 ## Acceptance notes
 
-Layer 10 data changes are acceptable when they:
+M06 data changes are acceptable when they:
 
 - preserve point-in-time availability;
 - keep source evidence separate from model labels and alpha scores;

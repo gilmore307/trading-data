@@ -22,7 +22,8 @@ class LayerStructureCatalogTests(unittest.TestCase):
                 doc = REPO_ROOT / contract.doc_path
                 self.assertTrue(doc.exists(), contract.doc_path)
                 text = doc.read_text(encoding="utf-8")
-                self.assertIn(f"Layer {contract.layer:02d}", text)
+                expected_marker = "M05" if "model_05" in contract.doc_path else "M06" if "model_06" in contract.doc_path else f"Layer {contract.layer:02d}"
+                self.assertIn(expected_marker, text)
                 self.assertIn(contract.model_name, text)
 
     def test_no_source_layer_docs_do_not_keep_stale_layer_numbers(self) -> None:
@@ -80,13 +81,13 @@ class LayerStructureCatalogTests(unittest.TestCase):
         self.assertIn("data_source.m03_target_state_vector_data_acquisition", layer_3.source_packages)
         self.assertNotIn("trading-data-m02-sector-context-data-acquisition", layer_3.cli_commands)
 
-    def test_layer_nine_catalog_does_not_own_option_chain_snapshot_acquisition(self) -> None:
-        layer_9 = next(contract for contract in LAYER_CONTRACTS if contract.layer == 9)
+    def test_model_05_catalog_does_not_own_option_chain_snapshot_acquisition(self) -> None:
+        model_05 = next(contract for contract in LAYER_CONTRACTS if contract.doc_path == "docs/18_model_05_option_expression.md")
 
-        self.assertNotIn("data_feed.09_feed_thetadata_option_selection_snapshot", layer_9.feed_packages)
-        self.assertNotIn("trading-data-09-feed-thetadata-option-selection-snapshot", layer_9.cli_commands)
-        self.assertIn("data_feature.m05_option_expression_feature_generation", layer_9.feature_packages)
-        self.assertIn("data_source.m05_option_expression_data_acquisition_contract_path", layer_9.source_packages)
+        self.assertNotIn("data_feed.09_feed_thetadata_option_selection_snapshot", model_05.feed_packages)
+        self.assertNotIn("trading-data-09-feed-thetadata-option-selection-snapshot", model_05.cli_commands)
+        self.assertIn("data_feature.m05_option_expression_feature_generation", model_05.feature_packages)
+        self.assertIn("data_source.m05_option_expression_data_acquisition_contract_path", model_05.source_packages)
 
     def test_no_source_layers_are_explicit_and_do_not_have_symmetry_packages(self) -> None:
         for contract in LAYER_CONTRACTS:

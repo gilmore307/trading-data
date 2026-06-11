@@ -1,13 +1,13 @@
-# Layer 09 — Trading Guidance / Option Expression Data Boundary
+# M05 — Option Expression Data Boundary
 
 <!-- ACTIVE_LAYER_REVISION -->
-Status: active architecture revision. Layer 9 owns base trading guidance; `trading-data` owns option-expression features derived from the shared option-chain source plus selected-contract tracking used after expression selection.
+Status: active architecture revision. M05 owns base trading guidance; `trading-data` owns option-expression features derived from the shared option-chain source plus selected-contract tracking used after expression selection.
 
-Current feature/source names are `option_chain_state_source`, `m05_option_expression_feature_generation`, and `m05_option_expression_data_acquisition_contract_path`. `option_chain_state_source` is acquired before Layer 3 only when the selected target is option-applicable, then shared by Layer 3 and Layer 9. Targets marked as `crypto_spot` or confirmed no-listed-options have no Layer 9 option-expression feature path.
+Current feature/source names are `option_chain_state_source`, `m05_option_expression_feature_generation`, and `m05_option_expression_data_acquisition_contract_path`. `option_chain_state_source` is acquired before Layer 3 only when the selected target is option-applicable, then shared by Layer 3 and M05. Targets marked as `crypto_spot` or confirmed no-listed-options have no M05 option-expression feature path.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
-`trading-data` owns option-expression source inputs for Layer 9. Model-side contract ranking, expression choice, labels, evaluation, and promotion belong to `trading-model`.
+`trading-data` owns option-expression source inputs for M05. Model-side contract ranking, expression choice, labels, evaluation, and promotion belong to `trading-model`.
 
 ## Owned artifacts
 
@@ -23,7 +23,7 @@ trading_data.m05_option_expression_data_acquisition_contract_path
 
 ## Boundary
 
-Layer 9 data covers visible option-chain evidence, deterministic option-candidate features, and selected-contract market paths.
+M05 data covers visible option-chain evidence, deterministic option-candidate features, and selected-contract market paths.
 
 `option_chain_state_source` writes one row per visible contract at an explicit snapshot time. It captures quote, spread, IV, first-order Greeks, trade-summary fields, and contract identity where provider data is available. Layer 3 may reduce these rows into target-level option state but must not expose contract identity or executable option terms.
 
@@ -58,7 +58,7 @@ ThetaData option feeds
 
 ## Acceptance notes
 
-Layer 9 data changes are acceptable when they:
+M05 data changes are acceptable when they:
 
 - preserve explicit point-in-time snapshot times;
 - keep ThetaData raw provider rows transient by default;

@@ -1,6 +1,6 @@
 # m05_option_expression_feature_generation
 
-Deterministic option-expression feature builder for the Layer 9 trading-guidance option-expression subset.
+Deterministic option-expression feature builder for the M05 trading-guidance option-expression subset.
 
 ## Boundary
 

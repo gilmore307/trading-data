@@ -19,8 +19,8 @@ This directory contains the current documentation spine for `trading-data`.
 - `15_layer_06_dynamic_risk_policy.md` — Layer 06 — Dynamic Risk Policy Data Boundary.
 - `16_layer_07_position_projection.md` — Layer 07 — Position Projection Data Boundary.
 - `17_layer_08_underlying_action.md` — Layer 08 — Underlying Action Data Boundary.
-- `18_layer_09_trading_guidance.md` — Layer 09 — Trading Guidance / Option Expression Data Boundary.
-- `19_layer_10_event_risk_governor.md` — Layer 10 — Event Risk Governor Data Boundary.
+- `18_model_05_option_expression.md` — M05 — Trading Guidance / Option Expression Data Boundary.
+- `19_model_06_residual_event_governance.md` — M06 — Event Risk Governor Data Boundary.
 - `20_data_feed.md` — Data Feed.
 - `21_api_templates.md` — API Templates.
 - `22_feed_availability.md` — Source Availability.

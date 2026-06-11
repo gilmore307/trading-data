@@ -42,7 +42,7 @@ Provider credentials must never be committed. Secret material stays outside Git 
 | OKX | Crypto market data; private surfaces only when separately approved. | `OKX_SECRET_ALIAS` -> `okx` | Public market data may not need private credentials. |
 | SEC EDGAR | Company submissions, facts, concepts, frames, filing metadata. | no key | Requires fair-access behavior and identifying User-Agent. |
 | ETF issuers | Holdings rows, weights, fund metadata. | issuer-specific/no key | Preserve source URL, as-of date, retrieval time, and file/page format. |
-| Trading Economics calendar web | Recent/future macro calendar rows plus retained monthly source snapshots. | bounded TE calendar-page fetch into canonical `trading-storage` source data | Accepted macro source evidence is storage-owned TE rows. Source artifacts must not carry TE website URLs and must not populate Layer 10 SQL rows without a later reviewed route. |
+| Trading Economics calendar web | Recent/future macro calendar rows plus retained monthly source snapshots. | bounded TE calendar-page fetch into canonical `trading-storage` source data | Accepted macro source evidence is storage-owned TE rows. Source artifacts must not carry TE website URLs and must not populate M06 SQL rows without a later reviewed route. |
 | FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes; use only for incident review, audit, or a separately accepted replacement route. |
 | FOMC/official release pages | Official calendar events. | no key | Not an active macro runtime route while TE is accepted; preserve as manual fallback/audit source. |
 
@@ -85,7 +85,7 @@ Trading Economics recent/future calendar acquisition is active as a bounded cale
 storage/01_source_data/monthly_backfill/trading_economics_calendar_web
 ```
 
-The feed package may fetch the bounded recent/future calendar window or parse reviewed HTML inputs. It must not write website URLs into source artifacts, call TE API/download/export endpoints, or materialize Layer 10 SQL event rows.
+The feed package may fetch the bounded recent/future calendar window or parse reviewed HTML inputs. It must not write website URLs into source artifacts, call TE API/download/export endpoints, or materialize M06 SQL event rows.
 
 ## Trading Economics Recent Refresh
 
@@ -101,7 +101,7 @@ The recent/future refresh wrapper is:
 PYTHONPATH=src python3 scripts/data/run_calendar_maintenance_refresh.py
 ```
 
-Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-live-fetch` it performs one bounded TE calendar-page request, a bounded Nasdaq earnings schedule refresh, and a bounded NYSE official exchange calendar refresh. The NYSE artifact is used to overlay official NYSE/Nasdaq holiday and early-close rows into `trading_data.calendar_market_session`; the calendar-maintenance routes do not admit rows into the Layer 10 event pool. The checked-in `trading-data-calendar-maintenance.timer` may schedule this shared refresh. It reads `/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt` by default, and `TRADING_DATA_CALENDAR_SYMBOLS_FILE` in `/etc/default/trading-data-calendar-maintenance` may override that path.
+Without `--execute-live-fetch` it returns a plan-only receipt. With `--execute-live-fetch` it performs one bounded TE calendar-page request, a bounded Nasdaq earnings schedule refresh, and a bounded NYSE official exchange calendar refresh. The NYSE artifact is used to overlay official NYSE/Nasdaq holiday and early-close rows into `trading_data.calendar_market_session`; the calendar-maintenance routes do not admit rows into the M06 event pool. The checked-in `trading-data-calendar-maintenance.timer` may schedule this shared refresh. It reads `/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt` by default, and `TRADING_DATA_CALENDAR_SYMBOLS_FILE` in `/etc/default/trading-data-calendar-maintenance` may override that path.
 
 `fetch_tradingview_equity_screener.py` captures a bounded no-login TradingView US common-stock screener snapshot for realtime traded-dollar-value, market cap, and sector evidence. The accepted realtime pool seed takes the top 300 symbols by traded dollar value and the top 300 symbols by market cap. `build_equity_total_symbol_pool.py` builds the shared realtime total-pool ledger from TradingView screener CSVs plus optional optionable-underlying and confirmed non-optionable symbol lists. Confirmed no-listed-options targets are recorded as `optionable_underlying_status = confirmed_no_listed_options` and remain inactive. The CSV keeps every observed symbol row, including filtered rows marked `inactive`; only `active` rows are written to the adjacent calendar symbols text file. `refresh_equity_total_symbol_pool_from_tradingview.py` runs the TradingView snapshot and rebuilds the shared pool on the accepted 30-minute cadence. It does not fetch ETF holdings, and the realtime pool must not be used as historical replay candidate evidence. Until a strict optionable source is supplied, its default mode keeps rows marked `uncertain_verify_before_use` and includes active uncertain rows in the calendar symbol text file; this is calendar/event-monitoring scope only, not proof that listed options are available for trading.
 
@@ -123,7 +123,7 @@ Output files:
 - `calendar_observation.jsonl`
 - `schema.json`
 
-Calendar observations are not Layer 10 event-pool rows. They preserve scheduling clocks, source priority, lifecycle class, certainty, and payload refs so Layer 10 can later promote only relevant observations into focused event acquisition or attribution. Nasdaq earnings-calendar rows remain tentative `earnings_calendar` shells with `result_fields_not_available`; Trading Economics rows remain macro calendar/value source observations; option-expiry and market-session rows are rule-backed market-structure observations until official sources or Layer 10 promotion add stronger evidence.
+Calendar observations are not M06 event-pool rows. They preserve scheduling clocks, source priority, lifecycle class, certainty, and payload refs so M06 can later promote only relevant observations into focused event acquisition or attribution. Nasdaq earnings-calendar rows remain tentative `earnings_calendar` shells with `result_fields_not_available`; Trading Economics rows remain macro calendar/value source observations; option-expiry and market-session rows are rule-backed market-structure observations until official sources or M06 promotion add stronger evidence.
 
 Optional artifact inputs are `--official-exchange-calendar`, `--index-calendar`, `--release-calendar`, and `--trading-economics-calendar`; SQL-backed helper functions can consume `feed_12_*` tables directly. Exchange-calendar rows preserve official holiday and early-close evidence; index-calendar rows preserve official methodology or announcement rows. Index-calendar expansion is limited to Nasdaq-100, S&P 500, and Dow Jones Industrial Average. Nasdaq-100 may use Nasdaq Global Indexes methodology calendars for scheduled shells and Nasdaq announcements for membership results. S&P 500 may use S&P DJI methodology/index facts for quarterly maintenance windows and S&P DJI announcements for additions/deletions. DJIA has no fixed constituent-reconstitution schedule, so only S&P DJI announcement artifacts should create constituent-change observations. ETF issuer pages are outside this source route.
 
@@ -133,7 +133,7 @@ Optional artifact inputs are `--official-exchange-calendar`, `--index-calendar`,
 - Nasdaq Global Indexes and S&P DJI announcement rows become SQL `feed_12_index_calendar` rows;
 - NYSE/Nasdaq official holiday and early-close rows become SQL `feed_12_official_exchange_calendar` rows.
 
-These artifacts remain source-shell inputs. Scheduler registration and Layer 10 promotion are separate manager/model decisions.
+These artifacts remain source-shell inputs. Scheduler registration and M06 promotion are separate manager/model decisions.
 
 ## Implementation Rules
 

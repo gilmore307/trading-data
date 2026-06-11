@@ -1,6 +1,6 @@
 # m06_residual_event_governance_feature_generation
 
-Deterministic event-overlay feature builder for Layer 10 event-risk-governor inputs.
+Deterministic event-overlay feature builder for M06 event-risk-governor inputs.
 
 ## Boundary
 

@@ -886,6 +886,7 @@ def _fetch_with_python_library(
                 max_dte=max_dte,
                 strike_range=strike_range,
             ),
+            missing_ok=True,
             retry_attempts=retry_attempts,
             retry_backoff_seconds=retry_backoff_seconds,
         )
@@ -1484,7 +1485,9 @@ def clean(context: FeedContext, fetched: FetchedSnapshot) -> tuple[StepResult, d
 
     if quote_contract_keys != set(iv_index) | set(greeks_index):
         warnings.append("some contracts were present only in IV/Greeks snapshots and have empty quote context")
-    if not contracts:
+    if not contracts and not keys and not fetched.quote_rows and not fetched.iv_rows and not fetched.greeks_rows and not fetched.trade_rows:
+        warnings.append("provider_returned_no_option_chain_rows")
+    elif not contracts:
         raise ThetaDataOptionSelectionSnapshotError("ThetaData snapshot returned no contracts after normalization")
 
     snapshot = {

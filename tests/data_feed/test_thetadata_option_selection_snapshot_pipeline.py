@@ -322,6 +322,12 @@ class NoTradeThetaDataPythonClient(FakeThetaDataPythonClient):
         raise type("NoDataFoundError", (Exception,), {})("No data found for: option_history_ohlc(AAPL)")
 
 
+class NoGreeksThetaDataPythonClient(FakeThetaDataPythonClient):
+    def option_history_greeks_eod(self, **kwargs):
+        self.calls.append(("option_history_greeks_eod", kwargs))
+        raise type("NoDataFoundError", (Exception,), {})("No data found for: option_history_greeks_eod(AAPL)")
+
+
 class FlakyThetaDataPythonClient(FakeThetaDataPythonClient):
     def __init__(self):
         super().__init__()
@@ -552,6 +558,45 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             manifest = json.loads((output_root / "runs" / "run_python_library_no_trade" / "request_manifest.json").read_text())
             activity_request = [request for request in manifest["requests"] if "option_history_ohlc" in request["endpoint"]][0]
             self.assertEqual(activity_request["skipped_count"], 1)
+
+    def test_historical_python_client_allows_missing_discovery_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2016-01-05T09:30:00-05:00",
+                    "window_start": "2016-01-05T09:30:00-05:00",
+                    "window_end": "2016-01-05T09:31:59.999000-05:00",
+                    "historical_mode": True,
+                },
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["thetadata"],
+                    "allowed_endpoint_families": ["option_selection_snapshot"],
+                    "max_requests": 80,
+                    "max_symbols": 1,
+                    "max_time_window": "1d",
+                },
+                "output_root": str(output_root),
+            }
+            writer = FakeSqlWriter()
+            client = NoGreeksThetaDataPythonClient()
+
+            result = run(task_key, run_id="run_python_library_no_greeks", theta_client=client, sql_writer=writer)
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual([name for name, _kwargs in client.calls], ["option_history_greeks_eod"])
+            snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
+            self.assertEqual(snapshot["contract_count"], 0)
+            self.assertEqual(json.loads(snapshot["contracts"]), [])
+            manifest = json.loads((output_root / "runs" / "run_python_library_no_greeks" / "request_manifest.json").read_text())
+            discovery_request = [request for request in manifest["requests"] if "option_history_greeks_eod" in request["endpoint"]][0]
+            self.assertEqual(discovery_request["skipped"], "no_data_found")
+            self.assertEqual(discovery_request["selected_contract_count"], 0)
 
     def test_historical_python_client_retries_provider_server_errors(self):
         with tempfile.TemporaryDirectory() as tmp:

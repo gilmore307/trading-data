@@ -1,4 +1,4 @@
-# m09_option_expression_data_acquisition_contract_path
+# m05_option_expression_data_acquisition_contract_path
 
 Manager-facing selected-option-contract market-path tracking source.
 
@@ -10,7 +10,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `m09_option_expression_data_acquisition_contract_path`
+- `source`: `m05_option_expression_data_acquisition_contract_path`
 - `task_id`: stable task identifier
 - `params.selected_contracts`: non-empty list of contracts selected by OptionExpressionModel
 
@@ -37,7 +37,7 @@ Default provider acquisition uses the ThetaData Python library exact OHLC route 
 Final saved output is SQL-only:
 
 ```text
-m09_option_expression_data_acquisition_contract_path
+m05_option_expression_data_acquisition_contract_path
 ```
 
 Natural key:

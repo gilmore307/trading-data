@@ -16,8 +16,8 @@ Note: Layers 5-7 currently do not need new `trading-data` sources because they c
 - `m02_sector_context_data_acquisition` — retired ordinary-candidate route for SQL-only filtered US-listed equity ETF holdings evidence. It is not materialized by the current Layer 2 feature stage and does not define the realtime total pool or historical replay candidate universe.
 - `m03_target_state_vector_data_acquisition` — SQL-only target-local bar/liquidity input table for anonymous target state-vector construction.
 - `option_chain_state_source` — SQL-only shared ThetaData option-chain source/cache table; one row per visible contract per snapshot, consumed by Layer 3 target-level option-chain reduction and Layer 9 option-expression candidate preparation.
-- `m10_event_risk_governor_data_acquisition` — SQL-only EventRiskGovernor overview table; one row per event, with details behind references.
-- `m10_event_risk_governor_data_acquisition/equity_abnormal_activity` — nested event-risk detector package for equity/ETF abnormal activity evidence rows.
-- `m09_option_expression_data_acquisition_contract_path` — SQL-only selected option contract time-series source for OptionExpressionModel replay/evaluation; covers entry through exit plus one hour and emits market data only.
+- `m06_residual_event_governance_data_acquisition` — SQL-only EventRiskGovernor overview table; one row per event, with details behind references.
+- `m06_residual_event_governance_data_acquisition/equity_abnormal_activity` — nested event-risk detector package for equity/ETF abnormal activity evidence rows.
+- `m05_option_expression_data_acquisition_contract_path` — SQL-only selected option contract time-series source for OptionExpressionModel replay/evaluation; covers entry through exit plus one hour and emits market data only.
 
 Feed-level runners stay under `data_feed` until a reviewed manager-facing source composes them. Do not add new model-layer data preparation under `data_feed`, and do not name active source packages `*_model_inputs`.

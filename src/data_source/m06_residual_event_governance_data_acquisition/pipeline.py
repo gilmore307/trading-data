@@ -16,7 +16,7 @@ from storage.sql import PostgresSqlTableWriter, SqlTableReader, SqlTableWriter
 
 from .feed_event_extraction import extract_events_from_artifact_paths, extract_events_from_sql_inputs
 
-SOURCE = "m10_event_risk_governor_data_acquisition"
+SOURCE = "m06_residual_event_governance_data_acquisition"
 MODEL_ID = "event_risk_governor"
 OUTPUT_TABLE = SOURCE
 ET = ZoneInfo("America/New_York")

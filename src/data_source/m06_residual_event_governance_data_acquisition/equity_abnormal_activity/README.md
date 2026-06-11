@@ -1,6 +1,6 @@
-# m10_event_risk_governor_data_acquisition/equity_abnormal_activity
+# m06_residual_event_governance_data_acquisition/equity_abnormal_activity
 
-Derived event detector inside the `m10_event_risk_governor_data_acquisition` Layer 10 EventRiskGovernor surface. This is not a standalone manager-facing numbered data source.
+Derived event detector inside the `m06_residual_event_governance_data_acquisition` Layer 10 EventRiskGovernor surface. This is not a standalone manager-facing numbered data source.
 
 It converts SQL-retained equity/ETF bars, optional reference bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the Layer 10 event-risk evidence surface. Layer 4 may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
 
@@ -23,7 +23,7 @@ It converts SQL-retained equity/ETF bars, optional reference bars, and optional 
 
 ## Output
 
-`trading_data.m10_equity_abnormal_activity_event` with compact event-style rows for abnormal price, volume, relative-strength, gap, liquidity, and price-action behavior. The detector writes only SQL rows plus concise schema/receipt evidence; it does not write CSV/JSONL mirrors. Full details remain in evidence/reference fields rather than being duplicated as upstream model features.
+`trading_data.m06_equity_abnormal_activity_event` with compact event-style rows for abnormal price, volume, relative-strength, gap, liquidity, and price-action behavior. The detector writes only SQL rows plus concise schema/receipt evidence; it does not write CSV/JSONL mirrors. Full details remain in evidence/reference fields rather than being duplicated as upstream model features.
 
 ## Production rule
 

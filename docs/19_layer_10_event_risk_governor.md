@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. Layer 10 owns `EventRiskGovernor / EventIntelligenceOverlay` qualitative event attribution, reviewed-pool governance, and event-risk intervention. `trading-data` owns point-in-time event evidence indexes, deterministic event-overview features, and attribution evidence refs, not event interpretation, attribution decisions, risk policy, execution, or broker mutation.
 
-Current physical source/feature names are `m10_event_risk_governor_data_acquisition` and `m10_event_risk_governor_feature_generation`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
+Current physical source/feature names are `m06_residual_event_governance_data_acquisition` and `m06_residual_event_governance_feature_generation`. Event feeds must preserve point-in-time availability, row coverage, dedup/canonical metadata, and evidence refs for `event_interpretation` and event-risk governor use.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
@@ -14,14 +14,14 @@ Historical replay and realtime/future event acquisition rules live in `docs/23_e
 ## Owned artifacts
 
 ```text
-trading_data.m10_event_risk_governor_data_acquisition
-trading_data.m10_event_risk_governor_feature_generation
+trading_data.m06_residual_event_governance_data_acquisition
+trading_data.m06_residual_event_governance_feature_generation
 ```
 
 Nested event-overlay data-source helpers may produce source evidence before it is written into the overview table, for example:
 
 ```text
-src/data_source/m10_event_risk_governor_data_acquisition/equity_abnormal_activity/
+src/data_source/m06_residual_event_governance_data_acquisition/equity_abnormal_activity/
 ```
 
 `price_action` is an accepted Layer 10 event category for detector-visible board/tape behavior. In V1 it is represented as source-detector evidence, not as a new model layer. Canonical event-type tokens include `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
@@ -30,9 +30,9 @@ src/data_source/m10_event_risk_governor_data_acquisition/equity_abnormal_activit
 
 Layer 10 data is an event index plus deterministic event-overview features, not the full `event_risk_intervention / event_context_vector` and not event-failure attribution.
 
-`m10_event_risk_governor_data_acquisition` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
+`m06_residual_event_governance_data_acquisition` stores one overview row per observed event/evidence row with point-in-time availability and deduplication fields. Full article text, SEC filing contents, browser/agent analysis, abnormal-activity details, revision history, and event artifacts stay behind references.
 
-`m10_event_risk_governor_feature_generation` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
+`m06_residual_event_governance_feature_generation` derives source-only categorical, deduplication, source-priority, scope, and quality payloads from accepted overview rows. It is the deterministic feature handoff for model input preparation.
 
 `trading-model` builds `event_risk_intervention / event_context_vector` from the feature rows plus referenced artifacts and upstream context states.
 
@@ -189,8 +189,8 @@ This prevents price-derived abnormality from being validated against the same pr
 ```text
 trading-manager event/source request
   -> data_feed evidence and/or source-provided event rows
-  -> m10_event_risk_governor_data_acquisition
-  -> m10_event_risk_governor_feature_generation
+  -> m06_residual_event_governance_data_acquisition
+  -> m06_residual_event_governance_feature_generation
   -> trading-model Layer 10 event-failure attribution or reviewed-pool governance
   -> evaluation/promotion review outside trading-data
   -> accepted future Layer 4 event_strategy_failure_gate / event-observation scope rules

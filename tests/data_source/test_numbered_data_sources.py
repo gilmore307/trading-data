@@ -128,11 +128,11 @@ class NumberedDataSourceTests(unittest.TestCase):
             module.load_secret_alias = old_load_secret
 
     def test_selected_contract_tracking_source_writes_option_timeseries(self):
-        module = import_module("data_source.m09_option_expression_data_acquisition_contract_path.pipeline")
+        module = import_module("data_source.m05_option_expression_data_acquisition_contract_path.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "m09_option_expression_data_acquisition_contract_path_task_test",
-                "source": "m09_option_expression_data_acquisition_contract_path",
+                "task_id": "m05_option_expression_data_acquisition_contract_path_task_test",
+                "source": "m05_option_expression_data_acquisition_contract_path",
                 "params": {
                     "selected_contracts": [
                         {
@@ -157,9 +157,9 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m09_option_expression_data_acquisition_contract_path"], 2)
+            self.assertEqual(result.row_counts["m05_option_expression_data_acquisition_contract_path"], 2)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "m09_option_expression_data_acquisition_contract_path")
+            self.assertEqual(call["table"], "m05_option_expression_data_acquisition_contract_path")
             self.assertEqual(call["key_columns"], ["option_symbol", "timeframe", "timestamp"])
             self.assertNotIn("run_id", call["columns"])
             rows = call["rows"]
@@ -167,11 +167,11 @@ class NumberedDataSourceTests(unittest.TestCase):
             self.assertEqual(rows[-1]["timestamp"], "2026-04-24T10:31:00-04:00")
 
     def test_event_overlay_source_writes_one_row_per_event(self):
-        module = import_module("data_source.m10_event_risk_governor_data_acquisition.pipeline")
+        module = import_module("data_source.m06_residual_event_governance_data_acquisition.pipeline")
         with tempfile.TemporaryDirectory() as tmp:
             task_key = {
-                "task_id": "m10_event_risk_governor_data_acquisition_task_test",
-                "source": "m10_event_risk_governor_data_acquisition",
+                "task_id": "m06_residual_event_governance_data_acquisition_task_test",
+                "source": "m06_residual_event_governance_data_acquisition",
                 "params": {
                     "start": "2026-04-24T08:00:00-04:00",
                     "end": "2026-04-24T16:00:00-04:00",
@@ -233,7 +233,7 @@ class NumberedDataSourceTests(unittest.TestCase):
                             "symbol": "NVDA",
                             "title": "NVDA false breakout detector event",
                             "summary": "Price-action detector flagged false_breakout;liquidity_sweep_high.",
-                            "source_name": "m10_event_risk_governor_data_acquisition.equity_abnormal_activity",
+                            "source_name": "m06_residual_event_governance_data_acquisition.equity_abnormal_activity",
                             "reference_type": "internal_artifact_path",
                             "reference": "storage/events/nvda_false_breakout.json",
                         },
@@ -244,9 +244,9 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m10_event_risk_governor_data_acquisition"], 4)
+            self.assertEqual(result.row_counts["m06_residual_event_governance_data_acquisition"], 4)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "m10_event_risk_governor_data_acquisition")
+            self.assertEqual(call["table"], "m06_residual_event_governance_data_acquisition")
             self.assertEqual(call["key_columns"], ["event_id"])
             self.assertNotIn("run_id", call["columns"])
             self.assertIn("canonical_event_id", call["columns"])
@@ -271,7 +271,7 @@ class NumberedDataSourceTests(unittest.TestCase):
     def test_event_overlay_sql_ddl_includes_dedup_contract_fields(self):
         from storage.sql import _table_ddl
 
-        ddl = _table_ddl("m10_event_risk_governor_data_acquisition", '"trading_data"."m10_event_risk_governor_data_acquisition"')
+        ddl = _table_ddl("m06_residual_event_governance_data_acquisition", '"trading_data"."m06_residual_event_governance_data_acquisition"')
         self.assertIsNotNone(ddl)
         for column in {
             "canonical_event_id TEXT NOT NULL",

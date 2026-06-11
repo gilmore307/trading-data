@@ -24,7 +24,7 @@ from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableWriter, SqlTableWriter
 
-SOURCE = "m09_option_expression_data_acquisition_contract_path"
+SOURCE = "m05_option_expression_data_acquisition_contract_path"
 MODEL_ID = "option_expression_model"
 SOURCE_ROLE = "selected_contract_tracking_source"
 OUTPUT_TABLE = SOURCE

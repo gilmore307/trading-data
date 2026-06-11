@@ -94,7 +94,7 @@ def _quality(row: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "m09_option_expression_feature_generation") -> list[dict[str, Any]]:
+def generate_rows(rows: Iterable[Mapping[str, Any]], *, run_id: str = "m05_option_expression_feature_generation") -> list[dict[str, Any]]:
     """Return deterministic option-candidate feature rows for Layer 9."""
 
     output: list[dict[str, Any]] = []

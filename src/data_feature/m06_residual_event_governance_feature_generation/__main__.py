@@ -1,4 +1,4 @@
-"""CLI entrypoint for m09_option_expression_feature_generation SQL generation."""
+"""CLI entrypoint for m06_residual_event_governance_feature_generation SQL generation."""
 from __future__ import annotations
 
 from .sql import main

@@ -82,12 +82,12 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertEqual(params, ["2026-04-01T16:00:00Z"])
 
     def test_event_risk_governor_source_end_is_half_open(self):
-        module = importlib.import_module("data_feature.m10_event_risk_governor_feature_generation.sql")
+        module = importlib.import_module("data_feature.m06_residual_event_governance_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_source_rows(
             cursor,
             source_schema="trading_data",
-            source_table="m10_event_risk_governor_data_acquisition",
+            source_table="m06_residual_event_governance_data_acquisition",
             source_end="2026-05-01T00:00:00Z",
         )
         sql, params = cursor.calls[0]
@@ -96,7 +96,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertEqual(params, ["2026-05-01T00:00:00Z"])
 
     def test_option_expression_source_end_is_half_open(self):
-        module = importlib.import_module("data_feature.m09_option_expression_feature_generation.sql")
+        module = importlib.import_module("data_feature.m05_option_expression_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_source_rows(
             cursor,
@@ -112,14 +112,14 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertEqual(params, ["2026-04-01T00:00:00Z", "2026-05-01T00:00:00Z"])
 
     def test_option_expression_generation_uses_set_based_insert(self):
-        module = importlib.import_module("data_feature.m09_option_expression_feature_generation.sql")
+        module = importlib.import_module("data_feature.m05_option_expression_feature_generation.sql")
         cursor = FakeCursor()
         module.insert_feature_rows_from_source_sql(
             cursor,
             source_schema="trading_data",
             source_table="option_chain_state_source",
             target_schema="trading_data",
-            target_table="m09_option_expression_feature_generation",
+            target_table="m05_option_expression_feature_generation",
             source_start="2026-04-01T00:00:00Z",
             source_end="2026-05-01T00:00:00Z",
             run_id="unit_run",

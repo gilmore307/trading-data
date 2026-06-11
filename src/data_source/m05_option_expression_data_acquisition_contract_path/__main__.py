@@ -1,4 +1,4 @@
-"""CLI runner for the m09_option_expression_data_acquisition_contract_path data source."""
+"""CLI runner for the m05_option_expression_data_acquisition_contract_path data source."""
 from __future__ import annotations
 
 import argparse
@@ -9,8 +9,8 @@ from .pipeline import run
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m data_source.m09_option_expression_data_acquisition_contract_path")
-    parser.add_argument("task_key", type=Path, help="Path to a m09_option_expression_data_acquisition_contract_path task key JSON file")
+    parser = argparse.ArgumentParser(prog="python -m data_source.m05_option_expression_data_acquisition_contract_path")
+    parser.add_argument("task_key", type=Path, help="Path to a m05_option_expression_data_acquisition_contract_path task key JSON file")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args(argv)
     result = run(json.loads(args.task_key.read_text(encoding="utf-8")), run_id=args.run_id)

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 pipeline = importlib.import_module(
-    "data_source.m10_event_risk_governor_data_acquisition.equity_abnormal_activity.pipeline"
+    "data_source.m06_residual_event_governance_data_acquisition.equity_abnormal_activity.pipeline"
 )
 detect_events = pipeline.detect_events
 run = pipeline.run
@@ -99,7 +99,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
                 writer.writerows(rows)
             task_key = {
                 "task_id": "equity_abnormal_activity_task_test",
-                "source": "m10_event_risk_governor_data_acquisition.equity_abnormal_activity",
+                "source": "m06_residual_event_governance_data_acquisition.equity_abnormal_activity",
                 "params": {
                     "bars_csv_path": str(bars_path),
                     "lookback_intervals": 5,
@@ -113,7 +113,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
             result = run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["equity_abnormal_activity_event"], 1)
-            self.assertEqual(writer.calls[0]["table"], "m10_equity_abnormal_activity_event")
+            self.assertEqual(writer.calls[0]["table"], "m06_equity_abnormal_activity_event")
             self.assertEqual(writer.calls[0]["key_columns"], ["event_id"])
             row = writer.calls[0]["rows"][0]
             self.assertEqual(row["source_type"], "alpaca_equity_market_data")
@@ -130,7 +130,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
             reader = FakeReader(rows)
             task_key = {
                 "task_id": "equity_abnormal_activity_task_test",
-                "source": "m10_event_risk_governor_data_acquisition.equity_abnormal_activity",
+                "source": "m06_residual_event_governance_data_acquisition.equity_abnormal_activity",
                 "params": {
                     "bars_sql_source": {
                         "table": "m01_market_regime_data_acquisition",
@@ -153,7 +153,7 @@ class EquityAbnormalActivityPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["equity_abnormal_activity_event"], 1)
             self.assertEqual(reader.calls[0]["where_equals"], {"symbol": "XLF", "timeframe": "1Min"})
-            self.assertEqual(writer.calls[0]["table"], "m10_equity_abnormal_activity_event")
+            self.assertEqual(writer.calls[0]["table"], "m06_equity_abnormal_activity_event")
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text(encoding="utf-8"))
             fetch_details = receipt["runs"][0]["steps"]["fetch"]["details"]
             self.assertIsNone(fetch_details["bars_csv_path"])

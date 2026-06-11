@@ -1,4 +1,4 @@
-"""SQL wrapper for m09_option_expression_feature_generation production."""
+"""SQL wrapper for m05_option_expression_feature_generation production."""
 
 from __future__ import annotations
 
@@ -278,10 +278,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-schema", default="trading_data")
     parser.add_argument("--source-table", default="option_chain_state_source")
     parser.add_argument("--target-schema", default="trading_data")
-    parser.add_argument("--target-table", default="m09_option_expression_feature_generation")
+    parser.add_argument("--target-table", default="m05_option_expression_feature_generation")
     parser.add_argument("--source-start")
     parser.add_argument("--source-end")
-    parser.add_argument("--run-id", default="m09_option_expression_feature_generation_sql")
+    parser.add_argument("--run-id", default="m05_option_expression_feature_generation_sql")
     args = parser.parse_args(argv)
     count = generate_sql(database_url=_database_url(args.database_url), source_schema=args.source_schema, source_table=args.source_table, target_schema=args.target_schema, target_table=args.target_table, source_start=args.source_start, source_end=args.source_end, run_id=args.run_id)
     print(f"generated {count} rows into {args.target_schema}.{args.target_table}")

@@ -28,7 +28,7 @@
 - `macro_data` is not an active executable feed. Macro model inputs use canonical Trading Economics storage rows; shared calendar maintenance may append recent/future TE source rows and official calendar artifacts but is not a Layer 10 SQL event route.
 - Alpaca raw trades/quotes are transient by default; `02_feed_alpaca_liquidity` persists ET-aligned aggregate `equity_liquidity_bar` rows.
 - ThetaData option feeds are split by use case: selection snapshot, specified-contract primary tracking, and event timeline.
-- `m09_option_expression_data_acquisition_contract_path` is selected-contract option market-data tracking for `OptionExpressionModel` replay/evaluation; it is not a separate execution model.
+- `m05_option_expression_data_acquisition_contract_path` is selected-contract option market-data tracking for `OptionExpressionModel` replay/evaluation; it is not a separate execution model.
 - `m02_sector_context_data_acquisition` is retired from the current ordinary candidate route; ETF holdings do not define the realtime total pool, Layer 2 feature generation, or historical replay candidates.
 - `equity_abnormal_activity_event` default standard is conservative and not production calibrated; production labels/gates require reviewed historical calibration.
 

@@ -101,15 +101,15 @@ Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target
 
 ## D016 — Event overlay boundary
 
-`m10_event_risk_governor_data_acquisition` is a point-in-time event index with canonical-event and dedup fields. It stores overview rows and references to details; full articles, filings, detector payloads, browser/agent analysis, labels, impact scores, and alpha confidence stay outside the business table.
+`m06_residual_event_governance_data_acquisition` is a point-in-time event index with canonical-event and dedup fields. It stores overview rows and references to details; full articles, filings, detector payloads, browser/agent analysis, labels, impact scores, and alpha confidence stay outside the business table.
 
 `equity_abnormal_activity_event` uses conservative fixture/default standards until reviewed historical calibration exists.
 
 ## D017 — Option-expression data boundary
 
-`option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; Layer 9 derives `m09_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
+`option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; Layer 9 derives `m05_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
 
-`m09_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
+`m05_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
 
 ## D018 — Downstream model layers without new acquisition
 
@@ -127,7 +127,7 @@ Reusable logic belongs in `src/`. Stable package CLIs remain the preferred share
 
 Date: 2026-05-09
 
-`price_action` is an accepted `m10_event_risk_governor_data_acquisition` event category for detector-visible board/tape behavior such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
+`price_action` is an accepted `m06_residual_event_governance_data_acquisition` event category for detector-visible board/tape behavior such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
 
 These rows are source-detector event evidence. They do not create a ninth model layer, action signal, label, order instruction, or execution permission. Detector details remain behind references or compact nested detector artifacts; the overview table keeps only the event envelope, clocks, category, scope, and reference.
 
@@ -148,7 +148,7 @@ Accepted: 2026-05-15
 
 The active ten-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the Layer 10 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
 
-Layer 9 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`option_chain_state_source`, `m09_option_expression_feature_generation`, and `m09_option_expression_data_acquisition_contract_path`). Layer 10 event-risk data uses the current event surfaces (`m10_event_risk_governor_data_acquisition`, `m10_event_risk_governor_feature_generation`, and event-feed artifacts).
+Layer 9 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`option_chain_state_source`, `m05_option_expression_feature_generation`, and `m05_option_expression_data_acquisition_contract_path`). Layer 10 event-risk data uses the current event surfaces (`m06_residual_event_governance_data_acquisition`, `m06_residual_event_governance_feature_generation`, and event-feed artifacts).
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 
@@ -156,7 +156,7 @@ Event evidence must preserve point-in-time availability, row coverage, canonical
 
 Accepted: 2026-05-15
 
-Event evidence must preserve enough timing information for downstream event interpretation to distinguish scheduled-known catalysts from unscheduled surprise events. `m10_event_risk_governor_data_acquisition` remains a light overview/index surface, but referenced source artifacts must retain awareness/scheduled/published/available/interpretation/resolution clocks when the source provides or implies them.
+Event evidence must preserve enough timing information for downstream event interpretation to distinguish scheduled-known catalysts from unscheduled surprise events. `m06_residual_event_governance_data_acquisition` remains a light overview/index surface, but referenced source artifacts must retain awareness/scheduled/published/available/interpretation/resolution clocks when the source provides or implies them.
 
 Accepted lifecycle classes for downstream interpretation are `scheduled_known_outcome_later`, `unscheduled_surprise`, `scheduled_recurring_data_release`, `multi_stage_developing_event`, and `unknown`.
 

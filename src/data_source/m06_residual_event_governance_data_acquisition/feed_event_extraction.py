@@ -2,7 +2,7 @@
 
 This module intentionally performs no provider calls. It converts SQL-retained
 feed rows, and TE-exception local artifacts, into the compact
-``m10_event_risk_governor_data_acquisition`` overview contract used by the
+``m06_residual_event_governance_data_acquisition`` overview contract used by the
 Layer 10 event-risk governor. Raw article/filing/calendar detail remains behind
 references.
 """

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from data_feature.m09_option_expression_feature_generation.generator import generate_rows
+from data_feature.m05_option_expression_feature_generation.generator import generate_rows
 
 
 class OptionExpressionFeatureGeneratorTests(unittest.TestCase):

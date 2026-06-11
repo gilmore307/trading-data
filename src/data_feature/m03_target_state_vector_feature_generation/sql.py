@@ -594,6 +594,14 @@ def generate_sql(
     psycopg, dict_row = _load_psycopg()
     with psycopg.connect(database_url, row_factory=dict_row) as conn:
         with conn.cursor() as cursor:
+            slices = _bounded_time_slices(source_start, source_end)
+            expected_count = len(slices) if slices else 1
+            _write_task_progress(
+                processed_count=0,
+                expected_count=expected_count,
+                node_id="feature_generation_prepare",
+                node_label="Preparing feature generation inputs",
+            )
             candidate_rows = fetch_candidate_rows(
                 cursor,
                 source_schema=source_schema,
@@ -604,13 +612,19 @@ def generate_sql(
                 source_end=source_end,
                 target_context_mapping_path=target_context_mapping_path,
             )
+            _write_task_progress(
+                processed_count=0,
+                expected_count=expected_count,
+                node_id="feature_generation_candidates_loaded",
+                node_label="Loaded target candidate universe",
+                extra={"candidate_count": len(candidate_rows)},
+            )
             candidate_symbols = sorted({str(row.get("symbol") or "").strip().upper() for row in candidate_rows if str(row.get("symbol") or "").strip()})
             sector_context_symbols = sorted({
                 str(row.get("sector_context_symbol") or "").strip().upper()
                 for row in candidate_rows
                 if str(row.get("sector_context_symbol") or "").strip()
             })
-            source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
             market_rows = fetch_context_rows(cursor, schema=market_context_schema, table=market_context_table, ref_column="market_context_state_ref", source_start=source_start, source_end=source_end)
             sector_rows = fetch_context_rows(
                 cursor,
@@ -622,7 +636,17 @@ def generate_sql(
                 filter_column="sector_or_industry_symbol",
                 filter_values=sector_context_symbols,
             )
-            slices = _bounded_time_slices(source_start, source_end)
+            _write_task_progress(
+                processed_count=0,
+                expected_count=expected_count,
+                node_id="feature_generation_context_loaded",
+                node_label="Loaded market and sector context",
+                extra={
+                    "candidate_count": len(candidate_rows),
+                    "market_context_row_count": len(market_rows),
+                    "sector_context_row_count": len(sector_rows),
+                },
+            )
             if not slices:
                 source_rows = fetch_source_rows(cursor, source_schema=source_schema, source_table=source_table, source_start=source_start, source_end=source_end)
                 option_chain_rows = fetch_option_chain_rows(
@@ -635,12 +659,31 @@ def generate_sql(
                 )
                 inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows, option_chain_rows=option_chain_rows)
                 rows = generator.iter_rows(inputs, run_id=run_id, target_context_state_version=target_context_state_version)
-                return write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
+                row_count = write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
+                _write_task_progress(
+                    processed_count=1,
+                    expected_count=1,
+                    node_id="feature_generation_window_completed",
+                    node_label="Completed feature generation window",
+                    extra={"rows_written": row_count},
+                )
+                return row_count
 
             total_rows = 0
             history_start = source_start or slices[0][0]
             history_floor = _parse_datetime(history_start)
-            for window_start, window_end in slices:
+            for index, (window_start, window_end) in enumerate(slices, start=1):
+                _write_task_progress(
+                    processed_count=index - 1,
+                    expected_count=len(slices),
+                    node_id="feature_generation_window_started",
+                    node_label=f"Generating feature window {index} of {len(slices)}",
+                    extra={
+                        "window_start": window_start,
+                        "window_end": window_end,
+                        "rows_written": total_rows,
+                    },
+                )
                 source_rows = fetch_source_rows_with_lookback(
                     cursor,
                     source_schema=source_schema,
@@ -666,7 +709,20 @@ def generate_sql(
                     emit_start_time=_parse_datetime(window_start),
                     emit_end_time=_parse_datetime(window_end),
                 )
-                total_rows += write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
+                window_rows = write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
+                total_rows += window_rows
+                _write_task_progress(
+                    processed_count=index,
+                    expected_count=len(slices),
+                    node_id="feature_generation_window_completed",
+                    node_label=f"Completed feature window {index} of {len(slices)}",
+                    extra={
+                        "window_start": window_start,
+                        "window_end": window_end,
+                        "window_row_count": window_rows,
+                        "rows_written": total_rows,
+                    },
+                )
                 gc.collect()
             return total_rows
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 from datetime import datetime
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
@@ -16,6 +17,12 @@ class FakeCursor:
         self.calls: list[tuple[str, list[object]]] = []
         self._one = {"table_ref": None}
         self._many = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        return None
 
     def execute(self, statement: str, params=None) -> None:
         self.calls.append((statement, list(params or [])))
@@ -29,6 +36,58 @@ class FakeCursor:
 
     def fetchall(self):
         return self._many
+
+
+class FakeConnection:
+    def __init__(self, cursor: FakeCursor) -> None:
+        self._cursor = cursor
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        return None
+
+    def cursor(self):
+        return self._cursor
+
+    def commit(self) -> None:
+        return None
+
+
+class FakePsycopg:
+    def __init__(self, cursor: FakeCursor) -> None:
+        self._cursor = cursor
+
+    def connect(self, database_url: str, row_factory=None) -> FakeConnection:
+        return FakeConnection(self._cursor)
+
+
+class FakeGenerator:
+    def build_inputs(self, **kwargs):
+        return kwargs
+
+    def iter_rows(self, inputs, *, run_id, target_context_state_version, emit_start_time=None, emit_end_time=None):
+        available_time = (emit_start_time or datetime(2026, 1, 2, 9, 30, tzinfo=ET)).isoformat()
+        return iter(
+            [
+                {
+                    "run_id": run_id,
+                    "source_run_ref": run_id,
+                    "available_time": available_time,
+                    "tradeable_time": available_time,
+                    "target_candidate_id": "tcand_001",
+                    "market_context_state_ref": None,
+                    "sector_context_state_ref": None,
+                    "target_context_state_version": target_context_state_version,
+                    "market_state_features": {},
+                    "sector_state_features": {},
+                    "target_state_features": {},
+                    "cross_state_features": {},
+                    "feature_quality_diagnostics": {},
+                }
+            ]
+        )
 
 
 class TargetStateVectorSqlTests(unittest.TestCase):
@@ -250,6 +309,48 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
         self.assertEqual(rows, [])
         self.assertEqual(len(cursor.calls), 1)
+
+    def test_bounded_generation_uses_windowed_source_fetch_and_reports_progress(self) -> None:
+        cursor = FakeCursor()
+        progress_calls: list[dict[str, object]] = []
+
+        def fail_full_fetch(*args, **kwargs):
+            raise AssertionError("bounded generation must not fetch the full source window before slicing")
+
+        with (
+            patch.object(sql, "_load_psycopg", return_value=(FakePsycopg(cursor), object())),
+            patch.object(sql, "_load_generator", return_value=FakeGenerator()),
+            patch.object(sql, "fetch_candidate_rows", return_value=[{"symbol": "AAPL", "sector_context_symbol": "XLK"}]),
+            patch.object(sql, "fetch_context_rows", return_value=[]),
+            patch.object(sql, "fetch_source_rows", side_effect=fail_full_fetch),
+            patch.object(sql, "fetch_source_rows_with_lookback", return_value=[]),
+            patch.object(sql, "fetch_option_chain_rows", return_value=[]),
+            patch.object(sql, "_write_task_progress", side_effect=lambda **kwargs: progress_calls.append(kwargs)),
+        ):
+            row_count = sql.generate_sql(
+                database_url="postgresql://example.invalid/db",
+                source_schema="trading_data",
+                source_table="m03_target_state_vector_data_acquisition",
+                target_schema="trading_data",
+                target_table="m03_target_state_vector_feature_generation",
+                source_start="2016-01-01T00:00:00-05:00",
+                source_end="2016-01-15T00:00:00-05:00",
+                market_context_schema="trading_model",
+                market_context_table="m01_market_regime_model_generation",
+                sector_context_schema="trading_model",
+                sector_context_table="m02_sector_context_model_generation",
+                target_context_mapping_path=None,
+                option_chain_source_schema="trading_data",
+                option_chain_source_table="option_chain_state_source",
+                run_id="test_run",
+                target_context_state_version="target_context_state",
+            )
+
+        self.assertEqual(row_count, 2)
+        self.assertIn("feature_generation_prepare", [call["node_id"] for call in progress_calls])
+        self.assertEqual(progress_calls[0]["expected_count"], 2)
+        completed = [call for call in progress_calls if call["node_id"] == "feature_generation_window_completed"]
+        self.assertEqual([call["processed_count"] for call in completed], [1, 2])
 
 
 if __name__ == "__main__":

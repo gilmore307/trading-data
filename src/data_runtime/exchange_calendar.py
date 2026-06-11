@@ -11,6 +11,9 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
+AD_HOC_US_EQUITY_MARKET_CLOSURES = {
+    date(2018, 12, 5),  # National day of mourning for President George H. W. Bush.
+}
 
 
 def next_regular_us_equity_open_after(as_of_date: date | str) -> str:
@@ -47,6 +50,7 @@ def us_equity_holidays(year: int) -> set[date]:
     }
     if year >= 2022:
         holidays.add(_observed(date(year, 6, 19)))
+    holidays.update(day for day in AD_HOC_US_EQUITY_MARKET_CLOSURES if day.year == year)
     return holidays
 
 

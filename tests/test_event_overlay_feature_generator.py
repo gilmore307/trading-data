@@ -35,7 +35,7 @@ class EventOverlayFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         row = rows[0]
         self.assertEqual(row["run_id"], "unit_run")
-        self.assertEqual(row["source_run_ref"], "m06_residual_event_governance_data_acquisition")
+        self.assertEqual(row["source_run_ref"], "model_06_residual_event_governance_data_acquisition")
         self.assertEqual(row["event_id"], "evt_1")
         self.assertEqual(row["canonical_event_id"], "evt_1")
         self.assertEqual(row["feature_payload_json"]["source_priority_rank"], 1)

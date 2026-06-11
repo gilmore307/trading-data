@@ -18,7 +18,7 @@ from .feed_event_extraction import extract_events_from_artifact_paths, extract_e
 
 SOURCE = "m06_residual_event_governance_data_acquisition"
 MODEL_ID = "event_risk_governor"
-OUTPUT_TABLE = SOURCE
+OUTPUT_TABLE = "model_06_residual_event_governance_data_acquisition"
 ET = ZoneInfo("America/New_York")
 INFORMATION_ROLES = {"lagging_evidence", "prior_signal"}
 EVENT_CATEGORIES = {

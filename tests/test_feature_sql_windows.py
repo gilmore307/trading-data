@@ -87,7 +87,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         module.fetch_source_rows(
             cursor,
             source_schema="trading_data",
-            source_table="m06_residual_event_governance_data_acquisition",
+            source_table="model_06_residual_event_governance_data_acquisition",
             source_end="2026-05-01T00:00:00Z",
         )
         sql, params = cursor.calls[0]

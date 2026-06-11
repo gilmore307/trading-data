@@ -154,7 +154,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m06_residual_event_governance_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 1)
             row = writer.calls[0]["rows"][0]
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_name"], "03_feed_alpaca_news")
@@ -177,7 +177,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             reader = FakeSqlReader({"feed_03_alpaca_news": [{"id": "n1", "timeline_headline": "Apple files earnings story", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Article", "event_link_url": "https://example.com/aapl"}]})
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer, sql_reader=reader)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m06_residual_event_governance_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 1)
             row = writer.calls[0]["rows"][0]
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_artifact_path"], "sql://trading_data/feed_03_alpaca_news")
@@ -200,7 +200,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m06_residual_event_governance_data_acquisition"], 2)
+            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 2)
             rows = writer.calls[0]["rows"]
             self.assertEqual({row["title"] for row in rows}, {"Fed rate story", "Inflation story"})
             self.assertEqual(len({row["event_id"] for row in rows}), 2)
@@ -223,7 +223,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m06_residual_event_governance_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 1)
             self.assertIn("out_of_window_event_rows_skipped=1", result.warnings)
             self.assertEqual(writer.calls[0]["rows"][0]["event_category_type"], "macro_news")
 

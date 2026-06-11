@@ -37,7 +37,7 @@ These items are intentionally outside the current promote-first historical-train
 - `price_action` is accepted as a M06 event-risk category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
 - `m03_target_state_vector_data_acquisition` and `m03_target_state_vector_feature_generation` implement deterministic target-local observed-input and feature-block surfaces.
 - Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 emits sector/context features only; Layer 3 consumes target-local candidate evidence and accepted target-context mappings without relying on ETF holdings acquisition.
-- Event overlay sources are accepted through `m06_residual_event_governance_data_acquisition`, including equity abnormal activity evidence.
+- Event overlay sources are accepted through `model_06_residual_event_governance_data_acquisition`, including equity abnormal activity evidence.
 - Option-expression inputs are accepted through shared `option_chain_state_source` plus `m05_option_expression_feature_generation`; selected-contract tracking remains `m05_option_expression_data_acquisition_contract_path`.
 - Final non-TE feed outputs are SQL rows plus concise receipts/schema evidence; no JSONL/CSV mirror is written by default. Trading Economics calendar source rows remain the protected source-data exception.
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.

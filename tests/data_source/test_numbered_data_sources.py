@@ -244,9 +244,9 @@ class NumberedDataSourceTests(unittest.TestCase):
             writer = FakeSqlWriter()
             result = module.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["m06_residual_event_governance_data_acquisition"], 4)
+            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 4)
             call = writer.calls[0]
-            self.assertEqual(call["table"], "m06_residual_event_governance_data_acquisition")
+            self.assertEqual(call["table"], "model_06_residual_event_governance_data_acquisition")
             self.assertEqual(call["key_columns"], ["event_id"])
             self.assertNotIn("run_id", call["columns"])
             self.assertIn("canonical_event_id", call["columns"])
@@ -271,7 +271,7 @@ class NumberedDataSourceTests(unittest.TestCase):
     def test_event_overlay_sql_ddl_includes_dedup_contract_fields(self):
         from storage.sql import _table_ddl
 
-        ddl = _table_ddl("m06_residual_event_governance_data_acquisition", '"trading_data"."m06_residual_event_governance_data_acquisition"')
+        ddl = _table_ddl("model_06_residual_event_governance_data_acquisition", '"trading_data"."model_06_residual_event_governance_data_acquisition"')
         self.assertIsNotNone(ddl)
         for column in {
             "canonical_event_id TEXT NOT NULL",

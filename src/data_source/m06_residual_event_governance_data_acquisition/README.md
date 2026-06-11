@@ -56,7 +56,7 @@ Official SEC/exchange/company/regulatory disclosures outrank derivative news cov
 Final saved output is SQL-only:
 
 ```text
-m06_residual_event_governance_data_acquisition
+model_06_residual_event_governance_data_acquisition
 ```
 
 Natural key:

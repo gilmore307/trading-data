@@ -16,7 +16,7 @@ Environment=TRADING_DATA_OFFICIAL_CALENDAR_OUTPUT_ROOT=/root/projects/trading-st
 Environment=TRADING_DATA_CALENDAR_SYMBOLS_FILE=/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt
 EnvironmentFile=-/etc/default/trading-data-calendar-maintenance
 ExecStart=/root/projects/trading-manager/.venv/bin/python /root/projects/trading-data/scripts/data/run_calendar_maintenance_refresh.py \
-  --skip-trading-economics \
+  --schedule-te-release-fetches \
   --te-trailing-days ${TRADING_DATA_TE_TRAILING_DAYS} \
   --te-forward-days ${TRADING_DATA_TE_FORWARD_DAYS} \
   --te-output-root ${TRADING_DATA_TE_OUTPUT_ROOT} \

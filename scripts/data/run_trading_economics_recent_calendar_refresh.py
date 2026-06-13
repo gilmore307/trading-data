@@ -89,15 +89,16 @@ def run_refresh(*, task_key: dict[str, Any], run_id: str, execute_live_fetch: bo
         return build_plan_receipt(task_key=task_key, run_id=run_id)
     pipeline = import_module("data_feed.07_feed_trading_economics_calendar_web.pipeline")
     result = pipeline.run(task_key, run_id=run_id)
+    storage_mutation = result.status == "succeeded" and bool(result.details.get("storage_mutation_performed", True))
     return {
         "contract_type": "trading_economics_recent_calendar_refresh_receipt",
         "refresh_status": result.status,
         "run_id": run_id,
         "task_key": task_key,
         "result": result.__dict__,
-        "provider_calls_performed": 1 if result.status == "succeeded" else 0,
-        "storage_mutation_performed": True,
-        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only; it does not persist source URLs or populate M06 event-governance SQL rows.",
+        "provider_calls_performed": 1 if result.status in {"succeeded", "skipped_no_new_or_changed_rows"} else 0,
+        "storage_mutation_performed": storage_mutation,
+        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only when new or changed release-preview facts are observed; it does not persist source URLs or populate M06 event-governance SQL rows.",
     }
 
 
@@ -132,7 +133,7 @@ def main() -> int:
         args.write_task_key.write_text(json.dumps(task_key, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     receipt = run_refresh(task_key=task_key, run_id=run_id, execute_live_fetch=args.execute_live_fetch)
     print(json.dumps(receipt, indent=2, sort_keys=True))
-    return 0 if receipt["refresh_status"] in {"succeeded", "planned_requires_execute_live_fetch"} else 1
+    return 0 if receipt["refresh_status"] in {"succeeded", "skipped_no_new_or_changed_rows", "planned_requires_execute_live_fetch"} else 1
 
 
 if __name__ == "__main__":

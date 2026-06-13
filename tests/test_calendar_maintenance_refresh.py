@@ -12,6 +12,7 @@ from scripts.data.run_calendar_maintenance_refresh import (
     build_nasdaq_earnings_task_key,
     build_official_exchange_calendar_task_key,
     run_calendar_maintenance,
+    schedule_te_release_fetches,
 )
 
 
@@ -54,6 +55,9 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             nasdaq_earnings_forward_days=1,
             official_output_root="/tmp/official",
             symbols=["AAPL"],
+            schedule_te_release_fetches_enabled=False,
+            te_release_fetch_delay_minutes=2,
+            te_release_fetch_max_count=48,
         )
 
         self.assertEqual(receipt["refresh_status"], "planned_requires_execute_live_fetch")
@@ -79,6 +83,9 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             nasdaq_earnings_forward_days=0,
             official_output_root="/tmp/official",
             symbols=["AAPL"],
+            schedule_te_release_fetches_enabled=False,
+            te_release_fetch_delay_minutes=2,
+            te_release_fetch_max_count=48,
         )
 
         te = receipt["components"]["trading_economics_recent_calendar"]
@@ -87,12 +94,40 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         self.assertFalse(te["storage_mutation_performed"])
         self.assertEqual(receipt["refresh_status"], "planned_requires_execute_live_fetch")
 
+    def test_te_release_fetch_schedule_plans_one_shot_fetch(self) -> None:
+        receipt = {
+            "task_key": {"output_root": "/tmp/te-calendar"},
+            "result": {
+                "details": {
+                    "release_fetch_candidates": [
+                        {
+                            "fetch_after_utc": "2099-01-04T13:30:00Z",
+                            "start_date": "2099-01-04",
+                            "end_date": "2099-01-05",
+                            "event_count": 3,
+                        }
+                    ]
+                }
+            },
+        }
+
+        schedule = schedule_te_release_fetches(te_receipt=receipt, delay_minutes=2, max_count=48, execute=False)
+        planned = schedule["scheduled"][0]
+
+        self.assertEqual(schedule["schedule_status"], "planned")
+        self.assertEqual(schedule["candidate_count"], 1)
+        self.assertEqual(planned["status"], "planned")
+        self.assertIn("systemd-run", planned["command"])
+        self.assertIn("--on-active", planned["command"])
+        self.assertIn("--execute-live-fetch", planned["command"])
+        self.assertIn("2099-01-04", planned["command"])
+        self.assertIn("2099-01-05", planned["command"])
+
     def test_cli_plan_is_side_effect_safe(self) -> None:
         completed = subprocess.run(
             [
                 sys.executable,
                 "scripts/data/run_calendar_maintenance_refresh.py",
-                "--skip-trading-economics",
                 "--te-start-date",
                 "2026-06-01",
                 "--te-end-date",
@@ -124,7 +159,6 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
                 [
                     sys.executable,
                     "scripts/data/run_calendar_maintenance_refresh.py",
-                    "--skip-trading-economics",
                     "--te-start-date",
                     "2026-06-01",
                     "--te-end-date",
@@ -153,7 +187,6 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
                 [
                     sys.executable,
                     "scripts/data/run_calendar_maintenance_refresh.py",
-                    "--skip-trading-economics",
                     "--te-start-date",
                     "2026-06-01",
                     "--te-end-date",

@@ -3,9 +3,10 @@ Description=Periodic trading calendar source maintenance
 Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
 
 [Timer]
-OnBootSec=5min
-OnUnitActiveSec=1h
-AccuracySec=30s
+OnBootSec=10min
+OnCalendar=*-*-* 06:15:00
+AccuracySec=5min
+RandomizedDelaySec=15min
 Persistent=true
 Unit=trading-data-calendar-maintenance.service
 

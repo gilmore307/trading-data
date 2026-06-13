@@ -12,6 +12,7 @@ import csv
 import html
 import json
 import re
+import shutil
 import urllib.parse
 from io import StringIO
 from dataclasses import asdict, dataclass, field
@@ -373,6 +374,72 @@ def _event_month(row: Mapping[str, str]) -> str:
     return parsed.strftime("%Y-%m")
 
 
+def _event_datetime(row: Mapping[str, str]) -> datetime | None:
+    value = str(row.get("event_time") or "").strip()
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=ET)
+    return parsed
+
+
+def _row_fingerprint(row: Mapping[str, Any]) -> str:
+    payload = {field: str(row.get(field) or "").strip() for field in FIELDS}
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def _jsonl_rows(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            payload = json.loads(line)
+            if isinstance(payload, Mapping):
+                rows.append(dict(payload))
+    return rows
+
+
+def _existing_month_fingerprints(output_root: Path, month: str) -> set[str]:
+    month_root = output_root / month / "runs"
+    if not month_root.exists():
+        return set()
+    fingerprints: set[str] = set()
+    for path in sorted(month_root.glob("*/cleaned/trading_economics_calendar_event.jsonl")):
+        for row in _jsonl_rows(path):
+            fingerprints.add(_row_fingerprint(row))
+    return fingerprints
+
+
+def _release_fetch_candidates(rows: list[Mapping[str, Any]], *, now: datetime | None = None) -> list[dict[str, Any]]:
+    now = now or datetime.now(UTC)
+    grouped: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        event_dt = _event_datetime({key: str(value) for key, value in row.items()})
+        if event_dt is None or event_dt.astimezone(UTC) <= now:
+            continue
+        event_time = event_dt.isoformat()
+        event_date = event_dt.date()
+        grouped.setdefault(
+            event_time,
+            {
+                "event_time": event_time,
+                "fetch_after_utc": event_dt.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+                "start_date": event_date.isoformat(),
+                "end_date": (event_date + timedelta(days=1)).isoformat(),
+                "event_count": 0,
+            },
+        )
+        grouped[event_time]["event_count"] += 1
+    return [grouped[key] for key in sorted(grouped)]
+
+
 def _diagnostic_excerpt(html_text: str, *, max_chars: int = 4000) -> str:
     text = re.sub(r"<script\b[^>]*>.*?</script>", " ", html_text, flags=re.I | re.S)
     text = re.sub(r"<style\b[^>]*>.*?</style>", " ", text, flags=re.I | re.S)
@@ -459,8 +526,18 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
         references: list[str] = []
         bucket_run_dirs: list[str] = []
         bucket_counts: dict[str, int] = {}
+        skipped_months: dict[str, int] = {}
+        changed_rows_for_schedule: list[dict[str, Any]] = []
+        write_only_changed = bool(params.get("write_only_changed_monthly_buckets", True))
         for month in sorted({_event_month(row) for row in rows}):
             month_rows = [row for row in rows if _event_month(row) == month]
+            month_fingerprints = {_row_fingerprint(row) for row in month_rows}
+            existing_fingerprints = _existing_month_fingerprints(output_root, month) if write_only_changed else set()
+            changed_fingerprints = month_fingerprints - existing_fingerprints
+            if write_only_changed and not changed_fingerprints:
+                skipped_months[month] = len(month_rows)
+                continue
+            changed_rows_for_schedule.extend(row for row in month_rows if _row_fingerprint(row) in changed_fingerprints)
             month_run_dir = output_root / month / "runs" / str(context.metadata["run_id"])
             cleaned_dir = month_run_dir / "cleaned"
             saved_dir = month_run_dir / "saved"
@@ -486,6 +563,19 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
             references.append(str(cleaned_dir / "trading_economics_calendar_event.jsonl"))
             bucket_run_dirs.append(str(month_run_dir))
             bucket_counts[month] = len(month_rows)
+        if not references:
+            return StepResult(
+                "skipped_no_new_or_changed_rows",
+                [],
+                {"trading_economics_calendar_event": 0},
+                details={
+                    "monthly_backfill_bucketed_output": True,
+                    "write_only_changed_monthly_buckets": write_only_changed,
+                    "skipped_unchanged_monthly_bucket_row_counts": skipped_months,
+                    "release_fetch_candidates": [],
+                    "storage_mutation_performed": False,
+                },
+            )
         return StepResult(
             "succeeded",
             references,
@@ -494,8 +584,12 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
                 "format": "csv",
                 "columns": FIELDS,
                 "monthly_backfill_bucketed_output": True,
+                "write_only_changed_monthly_buckets": write_only_changed,
                 "monthly_bucket_run_dirs": bucket_run_dirs,
                 "monthly_bucket_row_counts": bucket_counts,
+                "skipped_unchanged_monthly_bucket_row_counts": skipped_months,
+                "release_fetch_candidates": _release_fetch_candidates(changed_rows_for_schedule),
+                "storage_mutation_performed": True,
             },
         )
     context.saved_dir.mkdir(parents=True, exist_ok=True)
@@ -530,7 +624,21 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     for step in (fetch_result, clean_result, save_result):
         if step:
             warnings.extend(step.warnings)
-    return StepResult(status, [str(context.receipt_path), *outputs], row_counts, warnings=warnings, details={"run_id": entry["run_id"], "error": entry["error"]})
+    return StepResult(
+        status,
+        [str(context.receipt_path), *outputs],
+        row_counts,
+        warnings=warnings,
+        details={
+            "run_id": entry["run_id"],
+            "error": entry["error"],
+            "fetch": fetch_result.details if fetch_result else None,
+            "clean": clean_result.details if clean_result else None,
+            "save": save_result.details if save_result else None,
+            "release_fetch_candidates": (save_result.details.get("release_fetch_candidates", []) if save_result else []),
+            "storage_mutation_performed": bool(save_result and save_result.details.get("storage_mutation_performed", False)),
+        },
+    )
 
 
 def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:
@@ -540,6 +648,13 @@ def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:
         fetch_result, fetched = fetch(context)
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
+        if save_result.status == "skipped_no_new_or_changed_rows":
+            shutil.rmtree(context.run_dir, ignore_errors=True)
+            try:
+                context.run_dir.parent.rmdir()
+            except OSError:
+                pass
+            return save_result
         return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
         return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

@@ -7,6 +7,7 @@ import argparse
 import csv
 import json
 import os
+import subprocess
 import sys
 from datetime import UTC, date, datetime, timedelta
 from importlib import import_module
@@ -27,6 +28,8 @@ from data_runtime.temporal_explorer import install_temporal_tables
 OFFICIAL_FEED = "12_feed_official_calendar_discovery"
 DEFAULT_OFFICIAL_OUTPUT_ROOT = "/root/projects/trading-storage/storage/01_source_data/realtime/official_calendar_discovery"
 DEFAULT_CALENDAR_SYMBOLS_FILE = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt")
+DEFAULT_TE_RELEASE_FETCH_DELAY_MINUTES = 2
+DEFAULT_TE_RELEASE_FETCH_MAX_COUNT = 48
 
 
 def _now_utc() -> datetime:
@@ -203,6 +206,117 @@ def run_official_exchange_calendar_refresh(
     }
 
 
+def _te_release_fetch_candidates(te_receipt: Mapping[str, Any]) -> list[dict[str, Any]]:
+    result = te_receipt.get("result")
+    if not isinstance(result, Mapping):
+        return []
+    details = result.get("details")
+    if not isinstance(details, Mapping):
+        return []
+    candidates = details.get("release_fetch_candidates")
+    if not isinstance(candidates, list):
+        return []
+    return [dict(candidate) for candidate in candidates if isinstance(candidate, Mapping)]
+
+
+def _systemd_unit_token(value: str) -> str:
+    token = "".join(char.lower() if char.isalnum() else "-" for char in value)
+    token = "-".join(part for part in token.split("-") if part)
+    return token[:96] or "unknown"
+
+
+def schedule_te_release_fetches(
+    *,
+    te_receipt: Mapping[str, Any],
+    delay_minutes: int = DEFAULT_TE_RELEASE_FETCH_DELAY_MINUTES,
+    max_count: int = DEFAULT_TE_RELEASE_FETCH_MAX_COUNT,
+    execute: bool,
+) -> dict[str, Any]:
+    candidates = _te_release_fetch_candidates(te_receipt)
+    now = datetime.now(UTC).replace(microsecond=0)
+    task_key = te_receipt.get("task_key")
+    output_root = task_key.get("output_root") if isinstance(task_key, Mapping) else None
+    scheduled: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+    for candidate in candidates[: max(0, max_count)]:
+        raw_fetch_after = str(candidate.get("fetch_after_utc") or "")
+        try:
+            fetch_after = datetime.fromisoformat(raw_fetch_after.replace("Z", "+00:00")).astimezone(UTC)
+        except ValueError:
+            skipped.append({"candidate": candidate, "reason": "invalid_fetch_after_utc"})
+            continue
+        fetch_after = fetch_after + timedelta(minutes=max(0, delay_minutes))
+        if fetch_after <= now:
+            skipped.append({"candidate": candidate, "reason": "fetch_time_not_future"})
+            continue
+        seconds = int((fetch_after - now).total_seconds())
+        start_date = str(candidate.get("start_date") or "")[:10]
+        end_date = str(candidate.get("end_date") or "")[:10]
+        if not start_date or not end_date:
+            skipped.append({"candidate": candidate, "reason": "missing_fetch_window"})
+            continue
+        unit_token = _systemd_unit_token(f"{start_date}-{raw_fetch_after}")
+        unit_name = f"trading-data-te-release-fetch-{unit_token}"
+        run_id = f"te_release_fetch_{unit_token.replace('-', '')}"
+        command = [
+            "systemd-run",
+            "--unit",
+            unit_name,
+            "--on-active",
+            f"{seconds}s",
+            "--collect",
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "data" / "run_trading_economics_recent_calendar_refresh.py"),
+            "--run-id",
+            run_id,
+            "--start-date",
+            start_date,
+            "--end-date",
+            end_date,
+            "--output-root",
+            str(output_root or DEFAULT_TE_OUTPUT_ROOT),
+            "--execute-live-fetch",
+        ]
+        row = {
+            "unit_name": unit_name,
+            "run_id": run_id,
+            "fetch_after_utc": fetch_after.isoformat().replace("+00:00", "Z"),
+            "seconds_until_fetch": seconds,
+            "start_date": start_date,
+            "end_date": end_date,
+            "event_count": int(candidate.get("event_count") or 0),
+        }
+        if execute:
+            completed = subprocess.run(command, capture_output=True, text=True)
+            row.update(
+                {
+                    "return_code": completed.returncode,
+                    "stdout": completed.stdout[-1000:],
+                    "stderr": completed.stderr[-1000:],
+                    "status": "scheduled" if completed.returncode == 0 else "failed",
+                }
+            )
+        else:
+            row.update({"command": command, "status": "planned"})
+        scheduled.append(row)
+    scheduled_count = len([row for row in scheduled if row.get("status") in {"scheduled", "planned"}])
+    if not candidates:
+        schedule_status = "not_requested"
+    elif scheduled_count:
+        schedule_status = "scheduled" if execute else "planned"
+    else:
+        schedule_status = "skipped_no_future_candidates"
+    return {
+        "contract_type": "trading_economics_release_fetch_schedule",
+        "schedule_status": schedule_status,
+        "delay_minutes": max(0, delay_minutes),
+        "candidate_count": len(candidates),
+        "scheduled_count": scheduled_count,
+        "scheduled": scheduled,
+        "skipped": skipped,
+    }
+
+
 def _official_exchange_calendar_paths(receipt: Mapping[str, Any]) -> list[Path]:
     paths: list[Path] = []
     for run in receipt.get("runs") or []:
@@ -244,6 +358,9 @@ def run_calendar_maintenance(
     nasdaq_earnings_forward_days: int,
     official_output_root: str,
     symbols: list[str],
+    schedule_te_release_fetches_enabled: bool,
+    te_release_fetch_delay_minutes: int,
+    te_release_fetch_max_count: int,
 ) -> dict[str, Any]:
     if skip_trading_economics:
         te = {
@@ -286,10 +403,18 @@ def run_calendar_maintenance(
             end_date_exclusive=_temporal_end_date_for(exchange_paths),
             official_exchange_calendar_paths=exchange_paths,
         )
+    te_release_fetch_schedule = None
+    if schedule_te_release_fetches_enabled:
+        te_release_fetch_schedule = schedule_te_release_fetches(
+            te_receipt=te,
+            delay_minutes=te_release_fetch_delay_minutes,
+            max_count=te_release_fetch_max_count,
+            execute=execute_live_fetch and not skip_trading_economics,
+        )
     statuses = [status for status in (te["refresh_status"], official["refresh_status"], exchange["refresh_status"]) if status != "skipped"]
     if statuses and all(status == "planned_requires_execute_live_fetch" for status in statuses):
         status = "planned_requires_execute_live_fetch"
-    elif statuses and all(status == "succeeded" for status in statuses):
+    elif statuses and all(status in {"succeeded", "skipped_no_new_or_changed_rows"} for status in statuses):
         status = "succeeded"
     elif not statuses:
         status = "skipped"
@@ -304,6 +429,7 @@ def run_calendar_maintenance(
             "official_calendar_discovery": official,
             "official_exchange_calendar": exchange,
             "temporal_explorer_session_overlay": temporal_install,
+            "trading_economics_release_fetch_schedule": te_release_fetch_schedule,
         },
         "provider_calls_performed": int(te.get("provider_calls_performed") or 0) + int(official.get("provider_calls_performed") or 0) + int(exchange.get("provider_calls_performed") or 0),
         "storage_mutation_performed": bool(te.get("storage_mutation_performed") or official.get("storage_mutation_performed") or exchange.get("storage_mutation_performed") or temporal_install),
@@ -316,6 +442,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--execute-live-fetch", action="store_true")
     parser.add_argument("--skip-trading-economics", action="store_true")
+    parser.add_argument("--schedule-te-release-fetches", action="store_true")
+    parser.add_argument("--te-release-fetch-delay-minutes", type=int, default=DEFAULT_TE_RELEASE_FETCH_DELAY_MINUTES)
+    parser.add_argument("--te-release-fetch-max-count", type=int, default=DEFAULT_TE_RELEASE_FETCH_MAX_COUNT)
     parser.add_argument("--te-start-date", default=None)
     parser.add_argument("--te-end-date", default=None)
     parser.add_argument("--te-trailing-days", type=int, default=7)
@@ -350,6 +479,9 @@ def main() -> int:
         nasdaq_earnings_forward_days=args.nasdaq_earnings_forward_days,
         official_output_root=args.official_output_root,
         symbols=symbols,
+        schedule_te_release_fetches_enabled=args.schedule_te_release_fetches,
+        te_release_fetch_delay_minutes=args.te_release_fetch_delay_minutes,
+        te_release_fetch_max_count=args.te_release_fetch_max_count,
     )
     print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0 if receipt["refresh_status"] in {"succeeded", "planned_requires_execute_live_fetch"} else 1

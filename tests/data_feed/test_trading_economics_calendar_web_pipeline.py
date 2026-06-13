@@ -115,6 +115,97 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertTrue((output_root / "2026-05" / "completion_receipt.json").exists())
             self.assertTrue((output_root / "_manifests" / "recent_refresh_completion_receipt.json").exists())
 
+    def test_recent_monthly_backfill_skips_when_rows_are_unchanged(self):
+        html = """
+        <table>
+          <tr><th>Date</th><th>Country</th><th>Event</th><th>Category</th><th>Reference</th><th>Actual</th><th>Previous</th><th>Consensus</th><th>Forecast</th><th>Revised</th></tr>
+          <tr><td>2026-06-05 08:30</td><td>United States</td><td>Non Farm Payrolls</td><td>Labour</td><td>May</td><td></td><td>115K</td><td>130K</td><td>125K</td><td></td></tr>
+        </table>
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "monthly_backfill" / "trading_economics_calendar_web"
+            task_key = {
+                "task_id": "te_calendar_recent_bucket_no_change_test",
+                "feed": "07_feed_trading_economics_calendar_web",
+                "params": {
+                    "html": html,
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-30",
+                    "importance": "3",
+                    "date_range_mode": "recent",
+                    "monthly_backfill_bucketed_output": True,
+                },
+                "output_root": str(output_root),
+            }
+
+            first = run(task_key, run_id="run1")
+            second = run(task_key, run_id="run2")
+
+            self.assertEqual(first.status, "succeeded")
+            self.assertEqual(second.status, "skipped_no_new_or_changed_rows")
+            self.assertFalse((output_root / "2026-06" / "runs" / "run2").exists())
+            self.assertFalse((output_root / "_manifests" / "recent_refresh_runs" / "run2").exists())
+
+    def test_changed_release_value_writes_new_monthly_bucket(self):
+        before = """
+        <table>
+          <tr><th>Date</th><th>Country</th><th>Event</th><th>Category</th><th>Reference</th><th>Actual</th><th>Previous</th><th>Consensus</th><th>Forecast</th><th>Revised</th></tr>
+          <tr><td>2026-06-05 08:30</td><td>United States</td><td>Non Farm Payrolls</td><td>Labour</td><td>May</td><td></td><td>115K</td><td>130K</td><td>125K</td><td></td></tr>
+        </table>
+        """
+        after = before.replace("<td></td><td>115K</td>", "<td>140K</td><td>115K</td>")
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "monthly_backfill" / "trading_economics_calendar_web"
+            task_key = {
+                "task_id": "te_calendar_recent_bucket_changed_test",
+                "feed": "07_feed_trading_economics_calendar_web",
+                "params": {
+                    "html": before,
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-30",
+                    "importance": "3",
+                    "date_range_mode": "recent",
+                    "monthly_backfill_bucketed_output": True,
+                },
+                "output_root": str(output_root),
+            }
+
+            self.assertEqual(run(task_key, run_id="run1").status, "succeeded")
+            task_key["params"]["html"] = after
+            self.assertEqual(run(task_key, run_id="run2").status, "succeeded")
+            self.assertTrue((output_root / "2026-06" / "runs" / "run2" / "saved" / "trading_economics_calendar_event.csv").exists())
+
+    def test_future_preview_returns_release_fetch_candidate(self):
+        html = """
+        <table>
+          <tr><th>Date</th><th>Country</th><th>Event</th><th>Category</th><th>Reference</th><th>Actual</th><th>Previous</th><th>Consensus</th><th>Forecast</th><th>Revised</th></tr>
+          <tr><td>2099-01-04 08:30</td><td>United States</td><td>Non Farm Payrolls</td><td>Labour</td><td>Dec</td><td></td><td>115K</td><td>130K</td><td>125K</td><td></td></tr>
+        </table>
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "monthly_backfill" / "trading_economics_calendar_web"
+            task_key = {
+                "task_id": "te_calendar_future_preview_candidate_test",
+                "feed": "07_feed_trading_economics_calendar_web",
+                "params": {
+                    "html": html,
+                    "start_date": "2099-01-01",
+                    "end_date": "2099-01-31",
+                    "importance": "3",
+                    "date_range_mode": "recent",
+                    "monthly_backfill_bucketed_output": True,
+                },
+                "output_root": str(output_root),
+            }
+
+            result = run(task_key, run_id="run1")
+            candidate = result.details["release_fetch_candidates"][0]
+
+            self.assertEqual(result.status, "succeeded")
+            self.assertEqual(candidate["fetch_after_utc"], "2099-01-04T13:30:00Z")
+            self.assertEqual(candidate["start_date"], "2099-01-04")
+            self.assertEqual(candidate["end_date"], "2099-01-05")
+
     def test_custom_mode_uses_range_cookie(self):
         params = {"date_range_mode": "custom", "use_authenticated_cookies": False, "start_date": "2018-10-01", "end_date": "2018-11-01", "importance": "3"}
         self.assertIn("cal-custom-range=2018-10-01 00:00|2018-11-01 00:00", te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file")))

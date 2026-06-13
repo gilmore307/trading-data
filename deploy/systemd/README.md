@@ -10,12 +10,12 @@ overrides belong in `/etc/default/trading-data-equity-total-symbol-pool-refresh`
 `trading-data-calendar-maintenance.service` and `.timer` run bounded calendar
 source maintenance:
 
-- Trading Economics recent/future macro calendar refresh into canonical storage
-  source rows;
+- Trading Economics recent/future macro calendar refresh only when the service
+  is explicitly run without `--skip-trading-economics`;
 - Nasdaq earnings schedule discovery into official calendar artifacts.
 
 The service writes source rows/artifacts only. It must not persist Trading
-Economics website URLs or populate Layer 10 SQL event rows.
+Economics website URLs or populate M06 SQL event rows.
 
 Optional environment overrides belong in `/etc/default/trading-data-calendar-maintenance`.
 `TRADING_DATA_CALENDAR_SYMBOLS_FILE` may point to a comma- or newline-delimited
@@ -25,4 +25,7 @@ returned rows for the bounded dates.
 The checked-in service defaults `TRADING_DATA_CALENDAR_SYMBOLS_FILE` to
 `/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt`.
 If that file is absent, calendar maintenance continues with an empty symbol
-filter rather than failing the Trading Economics refresh.
+filter. The checked-in unit skips Trading Economics by default to avoid
+hourly current/future-month source growth; run the wrapper manually without
+`--skip-trading-economics` only when a reviewed TE source-refresh window is
+intended.

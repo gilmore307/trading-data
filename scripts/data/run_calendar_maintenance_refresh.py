@@ -234,6 +234,7 @@ def run_calendar_maintenance(
     *,
     run_id: str,
     execute_live_fetch: bool,
+    skip_trading_economics: bool,
     te_start_date: str | None,
     te_end_date: str | None,
     te_trailing_days: int,
@@ -244,16 +245,26 @@ def run_calendar_maintenance(
     official_output_root: str,
     symbols: list[str],
 ) -> dict[str, Any]:
-    te_task_key = build_recent_calendar_task_key(
-        start_date=te_start_date,
-        end_date=te_end_date,
-        trailing_days=te_trailing_days,
-        forward_days=te_forward_days,
-        output_root=te_output_root,
-        allow_live_fetch=execute_live_fetch,
-        persist_failure_diagnostics=True,
-    )
-    te = run_te_refresh(task_key=te_task_key, run_id=f"{run_id}_te", execute_live_fetch=execute_live_fetch)
+    if skip_trading_economics:
+        te = {
+            "contract_type": "trading_economics_recent_calendar_refresh_receipt",
+            "refresh_status": "skipped",
+            "run_id": f"{run_id}_te",
+            "provider_calls_performed": 0,
+            "storage_mutation_performed": False,
+            "boundary_note": "Trading Economics recent/future refresh skipped by calendar maintenance policy.",
+        }
+    else:
+        te_task_key = build_recent_calendar_task_key(
+            start_date=te_start_date,
+            end_date=te_end_date,
+            trailing_days=te_trailing_days,
+            forward_days=te_forward_days,
+            output_root=te_output_root,
+            allow_live_fetch=execute_live_fetch,
+            persist_failure_diagnostics=True,
+        )
+        te = run_te_refresh(task_key=te_task_key, run_id=f"{run_id}_te", execute_live_fetch=execute_live_fetch)
     official = run_nasdaq_earnings_refresh(
         run_id=run_id,
         start_date=nasdaq_earnings_start_date,
@@ -275,11 +286,13 @@ def run_calendar_maintenance(
             end_date_exclusive=_temporal_end_date_for(exchange_paths),
             official_exchange_calendar_paths=exchange_paths,
         )
-    statuses = [te["refresh_status"], official["refresh_status"], exchange["refresh_status"]]
-    if all(status == "planned_requires_execute_live_fetch" for status in statuses):
+    statuses = [status for status in (te["refresh_status"], official["refresh_status"], exchange["refresh_status"]) if status != "skipped"]
+    if statuses and all(status == "planned_requires_execute_live_fetch" for status in statuses):
         status = "planned_requires_execute_live_fetch"
-    elif all(status == "succeeded" for status in statuses):
+    elif statuses and all(status == "succeeded" for status in statuses):
         status = "succeeded"
+    elif not statuses:
+        status = "skipped"
     else:
         status = "failed"
     return {
@@ -302,6 +315,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--execute-live-fetch", action="store_true")
+    parser.add_argument("--skip-trading-economics", action="store_true")
     parser.add_argument("--te-start-date", default=None)
     parser.add_argument("--te-end-date", default=None)
     parser.add_argument("--te-trailing-days", type=int, default=7)
@@ -326,6 +340,7 @@ def main() -> int:
     receipt = run_calendar_maintenance(
         run_id=run_id,
         execute_live_fetch=args.execute_live_fetch,
+        skip_trading_economics=args.skip_trading_economics,
         te_start_date=args.te_start_date,
         te_end_date=args.te_end_date,
         te_trailing_days=args.te_trailing_days,

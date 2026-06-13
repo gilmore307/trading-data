@@ -44,6 +44,7 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         receipt = run_calendar_maintenance(
             run_id="plan",
             execute_live_fetch=False,
+            skip_trading_economics=False,
             te_start_date="2026-06-01",
             te_end_date="2026-06-05",
             te_trailing_days=0,
@@ -64,11 +65,34 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         self.assertEqual(exchange["task_key"]["params"]["data_kind"], "official_exchange_calendar")
         self.assertIsNone(receipt["components"]["temporal_explorer_session_overlay"])
 
+    def test_calendar_maintenance_can_skip_trading_economics(self) -> None:
+        receipt = run_calendar_maintenance(
+            run_id="plan",
+            execute_live_fetch=False,
+            skip_trading_economics=True,
+            te_start_date=None,
+            te_end_date=None,
+            te_trailing_days=7,
+            te_forward_days=35,
+            te_output_root="/tmp/te",
+            nasdaq_earnings_start_date="2026-06-01",
+            nasdaq_earnings_forward_days=0,
+            official_output_root="/tmp/official",
+            symbols=["AAPL"],
+        )
+
+        te = receipt["components"]["trading_economics_recent_calendar"]
+        self.assertEqual(te["refresh_status"], "skipped")
+        self.assertEqual(te["provider_calls_performed"], 0)
+        self.assertFalse(te["storage_mutation_performed"])
+        self.assertEqual(receipt["refresh_status"], "planned_requires_execute_live_fetch")
+
     def test_cli_plan_is_side_effect_safe(self) -> None:
         completed = subprocess.run(
             [
                 sys.executable,
                 "scripts/data/run_calendar_maintenance_refresh.py",
+                "--skip-trading-economics",
                 "--te-start-date",
                 "2026-06-01",
                 "--te-end-date",
@@ -100,6 +124,7 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
                 [
                     sys.executable,
                     "scripts/data/run_calendar_maintenance_refresh.py",
+                    "--skip-trading-economics",
                     "--te-start-date",
                     "2026-06-01",
                     "--te-end-date",
@@ -128,6 +153,7 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
                 [
                     sys.executable,
                     "scripts/data/run_calendar_maintenance_refresh.py",
+                    "--skip-trading-economics",
                     "--te-start-date",
                     "2026-06-01",
                     "--te-end-date",

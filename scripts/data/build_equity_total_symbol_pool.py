@@ -15,6 +15,7 @@ from typing import Any, Iterable
 DEFAULT_OUTPUT_CSV = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool.csv")
 DEFAULT_SYMBOLS_TXT = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt")
 DEFAULT_RECEIPT = Path("/root/projects/trading-storage/storage/02_control_plane/runtime/equity_total_symbol_pool/build_receipt.json")
+DEFAULT_REVIEWED_ADDITIONS_CSV = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool_reviewed_additions.csv")
 DEFAULT_RANK_LIMIT = 300
 
 OUTPUT_FIELDS = [
@@ -37,6 +38,10 @@ NAME_FIELDS = ("name", "Name", "description", "Description", "Company Name")
 SECTOR_FIELDS = ("sector", "Sector")
 DOLLAR_VOLUME_FIELDS = ("dollar_volume", "Dollar Volume", "Value Traded", "Value.Traded")
 MARKET_CAP_FIELDS = ("market_cap", "marketCap", "Market Cap", "Market capitalization")
+AS_OF_DATE_FIELDS = ("as_of_date", "As Of Date", "snapshot_date")
+REVIEWED_ADDITION_EFFECTIVE_DATE_FIELDS = ("eligibility_start_date", "effective_date", "listing_date", "as_of_date")
+REVIEWED_ADDITION_REASON_FIELDS = ("reviewed_addition_reason", "reason", "review_reason")
+SOURCE_REF_FIELDS = ("source_refs", "source_ref", "Source Refs")
 
 
 @dataclass
@@ -124,29 +129,60 @@ def _read_symbols(path: Path | None) -> set[str]:
     return {_clean_symbol(raw) for raw in re.split(r"[\s,;]+", text) if raw.strip()}
 
 
+def _reviewed_addition_rows(path: Path | None) -> list[dict[str, str]]:
+    if path is None or not path.exists():
+        return []
+    return _read_csv(path)
+
+
 def build_pool(
     *,
     tradingview_csvs: list[Path],
     optionable_symbols_file: Path | None,
     non_optionable_symbols_file: Path | None = None,
     as_of_date: str,
+    reviewed_additions_csv: Path | None = None,
     rank_limit: int = DEFAULT_RANK_LIMIT,
     allow_unknown_optionability: bool = False,
 ) -> tuple[list[PoolRow], dict[str, Any]]:
     rows_by_symbol: dict[str, PoolRow] = {}
     metrics: dict[str, dict[str, float | None]] = {}
+    reviewed_addition_symbols: set[str] = set()
+    reviewed_addition_rows = _reviewed_addition_rows(reviewed_additions_csv)
 
     for path in tradingview_csvs:
         for raw in _read_csv(path):
             symbol = _clean_symbol(_field(raw, SYMBOL_FIELDS))
             if not symbol or not _is_common_stock_like(raw):
                 continue
-            row = rows_by_symbol.setdefault(symbol, PoolRow(symbol=symbol, as_of_date=as_of_date))
+            row_as_of_date = _field(raw, AS_OF_DATE_FIELDS) or as_of_date
+            row = rows_by_symbol.setdefault(symbol, PoolRow(symbol=symbol, as_of_date=row_as_of_date))
             row.name = row.name or _field(raw, NAME_FIELDS)
             row.sector = row.sector or _field(raw, SECTOR_FIELDS)
+            row.as_of_date = row.as_of_date or row_as_of_date
             row.source_refs.add(f"tradingview_screener_snapshot:{path}")
             metrics.setdefault(symbol, {})["dollar_volume"] = _number(_field(raw, DOLLAR_VOLUME_FIELDS))
             metrics.setdefault(symbol, {})["market_cap"] = _number(_field(raw, MARKET_CAP_FIELDS))
+
+    for raw in reviewed_addition_rows:
+        symbol = _clean_symbol(_field(raw, SYMBOL_FIELDS))
+        if not symbol:
+            continue
+        effective_date = _field(raw, REVIEWED_ADDITION_EFFECTIVE_DATE_FIELDS) or as_of_date
+        row = rows_by_symbol.setdefault(symbol, PoolRow(symbol=symbol, as_of_date=effective_date))
+        row.name = _field(raw, NAME_FIELDS) or row.name
+        row.sector = _field(raw, SECTOR_FIELDS) or row.sector
+        row.as_of_date = _field(raw, AS_OF_DATE_FIELDS) or row.as_of_date or effective_date
+        row.optionable_underlying_status = _field(raw, ("optionable_underlying_status",)) or row.optionable_underlying_status
+        row.source_refs.add(f"reviewed_symbol_addition:{reviewed_additions_csv}")
+        explicit_source_refs = _field(raw, SOURCE_REF_FIELDS)
+        if explicit_source_refs:
+            row.source_refs.update(ref.strip() for ref in explicit_source_refs.split(";") if ref.strip())
+        reason = _field(raw, REVIEWED_ADDITION_REASON_FIELDS)
+        if reason:
+            row.source_refs.add(f"reviewed_addition_reason:{reason}")
+        if effective_date <= as_of_date:
+            reviewed_addition_symbols.add(symbol)
 
     for rank, symbol in enumerate(_rank_symbols(metrics, "dollar_volume"), start=1):
         row = rows_by_symbol[symbol]
@@ -178,6 +214,7 @@ def build_pool(
         has_current_pool_source = (
             row.in_dollar_volume_top300
             or row.in_market_cap_top300
+            or row.symbol in reviewed_addition_symbols
         )
         if not has_current_pool_source:
             row.pool_membership_status = "inactive"
@@ -190,7 +227,10 @@ def build_pool(
             row.pool_membership_reason = "inactive_no_listed_options_or_unverified"
         else:
             row.pool_membership_status = "active"
-            row.pool_membership_reason = "active_current_pool_source_and_optionability_accepted"
+            if row.symbol in reviewed_addition_symbols and not (row.in_dollar_volume_top300 or row.in_market_cap_top300):
+                row.pool_membership_reason = "active_reviewed_symbol_addition"
+            else:
+                row.pool_membership_reason = "active_current_pool_source_and_optionability_accepted"
 
     rows = sorted(
         rows_by_symbol.values(),
@@ -209,6 +249,9 @@ def build_pool(
         "rank_limit": rank_limit,
         "optionable_symbols_file": str(optionable_symbols_file) if optionable_symbols_file else None,
         "non_optionable_symbols_file": str(non_optionable_symbols_file) if non_optionable_symbols_file else None,
+        "reviewed_additions_csv": str(reviewed_additions_csv) if reviewed_additions_csv else None,
+        "reviewed_addition_input_count": len(reviewed_addition_rows),
+        "active_reviewed_addition_count": sum(1 for row in selected if row.pool_membership_reason == "active_reviewed_symbol_addition"),
         "allow_unknown_optionability": allow_unknown_optionability,
         "input_symbol_count": len(rows_by_symbol),
         "active_symbol_count": len(selected),
@@ -216,7 +259,7 @@ def build_pool(
         "selected_symbol_count": len(selected),
         "excluded_non_optionable_or_unverified_count": len(rows_by_symbol) - len(selected),
         "confirmed_no_listed_options_count": sum(1 for row in rows if row.optionable_underlying_status == "confirmed_no_listed_options"),
-        "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView traded-dollar-value and market-cap snapshots; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
+        "boundary_note": "The CSV is the realtime equity total-symbol pool ledger built from TradingView traded-dollar-value and market-cap snapshots plus dated reviewed symbol additions; active rows feed the calendar symbols file while inactive rows preserve previously observed but currently unusable symbols. Historical replay must use its frozen candidate-universe table instead of reading this mutable realtime pool directly.",
     }
     return rows, receipt
 
@@ -249,6 +292,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tradingview-csv", action="append", type=Path, default=[])
     parser.add_argument("--optionable-symbols-file", type=Path, default=None)
     parser.add_argument("--non-optionable-symbols-file", type=Path, default=None)
+    parser.add_argument("--reviewed-additions-csv", type=Path, default=DEFAULT_REVIEWED_ADDITIONS_CSV)
     parser.add_argument("--as-of-date", default=date.today().isoformat())
     parser.add_argument("--rank-limit", type=int, default=DEFAULT_RANK_LIMIT)
     parser.add_argument("--allow-unknown-optionability", action="store_true")
@@ -265,6 +309,7 @@ def main() -> int:
         tradingview_csvs=args.tradingview_csv,
         optionable_symbols_file=args.optionable_symbols_file,
         non_optionable_symbols_file=args.non_optionable_symbols_file,
+        reviewed_additions_csv=args.reviewed_additions_csv,
         as_of_date=args.as_of_date,
         rank_limit=args.rank_limit,
         allow_unknown_optionability=args.allow_unknown_optionability,

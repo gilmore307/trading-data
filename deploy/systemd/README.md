@@ -12,8 +12,9 @@ source maintenance:
 
 - Trading Economics recent/future macro calendar preview discovery once per day,
   with source buckets written only for new or changed TE facts;
-- one-shot Trading Economics release fetches scheduled just after known future
-  release times discovered by the daily preview pass;
+- one-shot Trading Economics release jobs scheduled at known future release
+  times; each job polls TE every 5 seconds for up to 60 seconds, then writes
+  provisional web-search fallback evidence only if no formal TE actual appears;
 - Nasdaq earnings schedule discovery into official calendar artifacts.
 
 The service writes source rows/artifacts only. It must not persist Trading

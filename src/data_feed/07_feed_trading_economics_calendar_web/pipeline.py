@@ -434,9 +434,20 @@ def _release_fetch_candidates(rows: list[Mapping[str, Any]], *, now: datetime | 
                 "start_date": event_date.isoformat(),
                 "end_date": (event_date + timedelta(days=1)).isoformat(),
                 "event_count": 0,
+                "events": [],
             },
         )
         grouped[event_time]["event_count"] += 1
+        event_name = str(row.get("event") or "").strip()
+        if event_name:
+            event_ref = {
+                "country": str(row.get("country") or "").strip(),
+                "event": event_name,
+                "reference": str(row.get("reference") or "").strip(),
+                "source_event_type": str(row.get("source_event_type") or "").strip(),
+            }
+            if event_ref not in grouped[event_time]["events"]:
+                grouped[event_time]["events"].append(event_ref)
     return [grouped[key] for key in sorted(grouped)]
 
 

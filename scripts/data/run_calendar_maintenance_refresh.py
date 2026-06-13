@@ -28,8 +28,10 @@ from data_runtime.temporal_explorer import install_temporal_tables
 OFFICIAL_FEED = "12_feed_official_calendar_discovery"
 DEFAULT_OFFICIAL_OUTPUT_ROOT = "/root/projects/trading-storage/storage/01_source_data/realtime/official_calendar_discovery"
 DEFAULT_CALENDAR_SYMBOLS_FILE = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool.symbols.txt")
-DEFAULT_TE_RELEASE_FETCH_DELAY_MINUTES = 2
+DEFAULT_TE_RELEASE_FETCH_DELAY_SECONDS = 0
 DEFAULT_TE_RELEASE_FETCH_MAX_COUNT = 48
+DEFAULT_TE_RELEASE_POLL_INTERVAL_SECONDS = 5
+DEFAULT_TE_RELEASE_POLL_TIMEOUT_SECONDS = 60
 
 
 def _now_utc() -> datetime:
@@ -228,8 +230,10 @@ def _systemd_unit_token(value: str) -> str:
 def schedule_te_release_fetches(
     *,
     te_receipt: Mapping[str, Any],
-    delay_minutes: int = DEFAULT_TE_RELEASE_FETCH_DELAY_MINUTES,
+    delay_seconds: int = DEFAULT_TE_RELEASE_FETCH_DELAY_SECONDS,
     max_count: int = DEFAULT_TE_RELEASE_FETCH_MAX_COUNT,
+    poll_interval_seconds: int = DEFAULT_TE_RELEASE_POLL_INTERVAL_SECONDS,
+    poll_timeout_seconds: int = DEFAULT_TE_RELEASE_POLL_TIMEOUT_SECONDS,
     execute: bool,
 ) -> dict[str, Any]:
     candidates = _te_release_fetch_candidates(te_receipt)
@@ -245,11 +249,8 @@ def schedule_te_release_fetches(
         except ValueError:
             skipped.append({"candidate": candidate, "reason": "invalid_fetch_after_utc"})
             continue
-        fetch_after = fetch_after + timedelta(minutes=max(0, delay_minutes))
-        if fetch_after <= now:
-            skipped.append({"candidate": candidate, "reason": "fetch_time_not_future"})
-            continue
-        seconds = int((fetch_after - now).total_seconds())
+        fetch_after = fetch_after + timedelta(seconds=max(0, delay_seconds))
+        seconds = max(0, int((fetch_after - now).total_seconds()))
         start_date = str(candidate.get("start_date") or "")[:10]
         end_date = str(candidate.get("end_date") or "")[:10]
         if not start_date or not end_date:
@@ -276,7 +277,26 @@ def schedule_te_release_fetches(
             "--output-root",
             str(output_root or DEFAULT_TE_OUTPUT_ROOT),
             "--execute-live-fetch",
+            "--release-poll-until-value",
+            "--release-poll-interval-seconds",
+            str(max(1, poll_interval_seconds)),
+            "--release-poll-timeout-seconds",
+            str(max(0, poll_timeout_seconds)),
+            "--fallback-web-search-after-timeout",
         ]
+        fallback_queries: list[str] = []
+        for event in candidate.get("events") or []:
+            if not isinstance(event, Mapping):
+                continue
+            event_name = str(event.get("event") or "").strip()
+            country = str(event.get("country") or "United States").strip() or "United States"
+            reference = str(event.get("reference") or "").strip()
+            if event_name:
+                fallback_queries.append(" ".join(part for part in [country, event_name, reference, "actual released"] if part))
+        if not fallback_queries:
+            fallback_queries.append(f"United States economic data release actual {start_date}")
+        for query in fallback_queries[:5]:
+            command.extend(["--fallback-query", query])
         row = {
             "unit_name": unit_name,
             "run_id": run_id,
@@ -285,6 +305,7 @@ def schedule_te_release_fetches(
             "start_date": start_date,
             "end_date": end_date,
             "event_count": int(candidate.get("event_count") or 0),
+            "fallback_queries": fallback_queries[:5],
         }
         if execute:
             completed = subprocess.run(command, capture_output=True, text=True)
@@ -309,7 +330,9 @@ def schedule_te_release_fetches(
     return {
         "contract_type": "trading_economics_release_fetch_schedule",
         "schedule_status": schedule_status,
-        "delay_minutes": max(0, delay_minutes),
+        "delay_seconds": max(0, delay_seconds),
+        "poll_interval_seconds": max(1, poll_interval_seconds),
+        "poll_timeout_seconds": max(0, poll_timeout_seconds),
         "candidate_count": len(candidates),
         "scheduled_count": scheduled_count,
         "scheduled": scheduled,
@@ -359,8 +382,10 @@ def run_calendar_maintenance(
     official_output_root: str,
     symbols: list[str],
     schedule_te_release_fetches_enabled: bool,
-    te_release_fetch_delay_minutes: int,
+    te_release_fetch_delay_seconds: int,
     te_release_fetch_max_count: int,
+    te_release_poll_interval_seconds: int,
+    te_release_poll_timeout_seconds: int,
 ) -> dict[str, Any]:
     if skip_trading_economics:
         te = {
@@ -407,8 +432,10 @@ def run_calendar_maintenance(
     if schedule_te_release_fetches_enabled:
         te_release_fetch_schedule = schedule_te_release_fetches(
             te_receipt=te,
-            delay_minutes=te_release_fetch_delay_minutes,
+            delay_seconds=te_release_fetch_delay_seconds,
             max_count=te_release_fetch_max_count,
+            poll_interval_seconds=te_release_poll_interval_seconds,
+            poll_timeout_seconds=te_release_poll_timeout_seconds,
             execute=execute_live_fetch and not skip_trading_economics,
         )
     statuses = [status for status in (te["refresh_status"], official["refresh_status"], exchange["refresh_status"]) if status != "skipped"]
@@ -443,8 +470,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--execute-live-fetch", action="store_true")
     parser.add_argument("--skip-trading-economics", action="store_true")
     parser.add_argument("--schedule-te-release-fetches", action="store_true")
-    parser.add_argument("--te-release-fetch-delay-minutes", type=int, default=DEFAULT_TE_RELEASE_FETCH_DELAY_MINUTES)
+    parser.add_argument("--te-release-fetch-delay-seconds", type=int, default=DEFAULT_TE_RELEASE_FETCH_DELAY_SECONDS)
     parser.add_argument("--te-release-fetch-max-count", type=int, default=DEFAULT_TE_RELEASE_FETCH_MAX_COUNT)
+    parser.add_argument("--te-release-poll-interval-seconds", type=int, default=DEFAULT_TE_RELEASE_POLL_INTERVAL_SECONDS)
+    parser.add_argument("--te-release-poll-timeout-seconds", type=int, default=DEFAULT_TE_RELEASE_POLL_TIMEOUT_SECONDS)
     parser.add_argument("--te-start-date", default=None)
     parser.add_argument("--te-end-date", default=None)
     parser.add_argument("--te-trailing-days", type=int, default=7)
@@ -480,8 +509,10 @@ def main() -> int:
         official_output_root=args.official_output_root,
         symbols=symbols,
         schedule_te_release_fetches_enabled=args.schedule_te_release_fetches,
-        te_release_fetch_delay_minutes=args.te_release_fetch_delay_minutes,
+        te_release_fetch_delay_seconds=args.te_release_fetch_delay_seconds,
         te_release_fetch_max_count=args.te_release_fetch_max_count,
+        te_release_poll_interval_seconds=args.te_release_poll_interval_seconds,
+        te_release_poll_timeout_seconds=args.te_release_poll_timeout_seconds,
     )
     print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0 if receipt["refresh_status"] in {"succeeded", "planned_requires_execute_live_fetch"} else 1

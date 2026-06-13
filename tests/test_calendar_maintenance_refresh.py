@@ -56,8 +56,10 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             official_output_root="/tmp/official",
             symbols=["AAPL"],
             schedule_te_release_fetches_enabled=False,
-            te_release_fetch_delay_minutes=2,
+            te_release_fetch_delay_seconds=0,
             te_release_fetch_max_count=48,
+            te_release_poll_interval_seconds=5,
+            te_release_poll_timeout_seconds=60,
         )
 
         self.assertEqual(receipt["refresh_status"], "planned_requires_execute_live_fetch")
@@ -84,8 +86,10 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             official_output_root="/tmp/official",
             symbols=["AAPL"],
             schedule_te_release_fetches_enabled=False,
-            te_release_fetch_delay_minutes=2,
+            te_release_fetch_delay_seconds=0,
             te_release_fetch_max_count=48,
+            te_release_poll_interval_seconds=5,
+            te_release_poll_timeout_seconds=60,
         )
 
         te = receipt["components"]["trading_economics_recent_calendar"]
@@ -105,23 +109,37 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
                             "start_date": "2099-01-04",
                             "end_date": "2099-01-05",
                             "event_count": 3,
+                            "events": [
+                                {
+                                    "country": "United States",
+                                    "event": "Non Farm Payrolls",
+                                    "reference": "Dec",
+                                    "source_event_type": "non farm payrolls",
+                                }
+                            ],
                         }
                     ]
                 }
             },
         }
 
-        schedule = schedule_te_release_fetches(te_receipt=receipt, delay_minutes=2, max_count=48, execute=False)
+        schedule = schedule_te_release_fetches(te_receipt=receipt, delay_seconds=0, max_count=48, poll_interval_seconds=5, poll_timeout_seconds=60, execute=False)
         planned = schedule["scheduled"][0]
 
         self.assertEqual(schedule["schedule_status"], "planned")
+        self.assertEqual(schedule["delay_seconds"], 0)
+        self.assertEqual(schedule["poll_interval_seconds"], 5)
+        self.assertEqual(schedule["poll_timeout_seconds"], 60)
         self.assertEqual(schedule["candidate_count"], 1)
         self.assertEqual(planned["status"], "planned")
         self.assertIn("systemd-run", planned["command"])
         self.assertIn("--on-active", planned["command"])
         self.assertIn("--execute-live-fetch", planned["command"])
+        self.assertIn("--release-poll-until-value", planned["command"])
+        self.assertIn("--fallback-web-search-after-timeout", planned["command"])
         self.assertIn("2099-01-04", planned["command"])
         self.assertIn("2099-01-05", planned["command"])
+        self.assertIn("United States Non Farm Payrolls Dec actual released", planned["fallback_queries"])
 
     def test_cli_plan_is_side_effect_safe(self) -> None:
         completed = subprocess.run(

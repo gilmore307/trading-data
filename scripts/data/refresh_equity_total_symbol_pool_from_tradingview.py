@@ -12,7 +12,6 @@ from pathlib import Path
 
 DEFAULT_OUTPUT_ROOT = Path("/root/projects/trading-storage/storage/01_source_data/realtime/tradingview_equity_screener")
 DEFAULT_RECEIPT = Path("/root/projects/trading-storage/storage/02_control_plane/runtime/equity_total_symbol_pool/refresh_receipt.json")
-DEFAULT_REVIEWED_ADDITIONS_CSV = Path("/root/projects/trading-storage/main/shared/equity_total_symbol_pool_reviewed_additions.csv")
 
 
 def parse_args() -> argparse.Namespace:
@@ -20,7 +19,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--as-of-date", default=date.today().isoformat())
     parser.add_argument("--per-rank-limit", type=int, default=300)
     parser.add_argument("--optionable-symbols-file", type=Path, default=None)
-    parser.add_argument("--reviewed-additions-csv", type=Path, default=DEFAULT_REVIEWED_ADDITIONS_CSV)
     parser.add_argument("--allow-unknown-optionability", action="store_true", default=True)
     parser.add_argument("--strict-optionability", action="store_false", dest="allow_unknown_optionability")
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
@@ -57,8 +55,6 @@ def main() -> int:
         args.as_of_date,
         "--rank-limit",
         str(args.per_rank_limit),
-        "--reviewed-additions-csv",
-        str(args.reviewed_additions_csv),
     ]
     if args.optionable_symbols_file:
         build_command.extend(["--optionable-symbols-file", str(args.optionable_symbols_file)])

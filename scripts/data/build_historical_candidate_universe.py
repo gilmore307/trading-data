@@ -135,8 +135,6 @@ def _equity_rows(*, source_pool_csv: Path, freeze_as_of_date: str, universe_poli
             continue
         if str(raw.get("pool_membership_status") or "").strip().lower() != "active":
             continue
-        if str(raw.get("pool_membership_reason") or "").strip().lower() == "active_reviewed_symbol_addition":
-            continue
         tradingview_sector = str(raw.get("sector") or "")
         layer2_context_symbol, layer2_context_method = _layer2_context_for_equity(symbol, tradingview_sector)
         rows.append(
@@ -228,19 +226,13 @@ def build_universe(
         "freeze_as_of_date": freeze_as_of_date,
         "universe_policy_ref": universe_policy_ref,
         "source_row_count": source_row_count,
-        "skipped_reviewed_symbol_addition_count": sum(
-            1
-            for row in _read_csv(source_pool_csv)
-            if str(row.get("pool_membership_status") or "").strip().lower() == "active"
-            and str(row.get("pool_membership_reason") or "").strip().lower() == "active_reviewed_symbol_addition"
-        ),
         "active_candidate_count": len(rows),
         "asset_class_counts": {
             "us_equity": sum(1 for row in rows if row.asset_class == "us_equity"),
             "crypto_spot": sum(1 for row in rows if row.asset_class == "crypto_spot"),
         },
         "layer2_context_symbols": sorted({row.layer2_context_symbol for row in rows}),
-        "boundary_note": "This is a fixed historical replay candidate universe seeded from provider-derived active realtime total-symbol pool rows plus core crypto targets. Reviewed symbol additions are skipped so newly listed or discretionary attention names do not enter historical replay before a dated point-in-time candidate handoff route exists. This artifact is stable replay scope, not point-in-time historical market-wide ranking evidence.",
+        "boundary_note": "This is a fixed historical replay candidate universe seeded from provider-derived active realtime total-symbol pool rows plus core crypto targets. This artifact is stable replay scope, not point-in-time historical market-wide ranking evidence.",
     }
     return rows, receipt
 

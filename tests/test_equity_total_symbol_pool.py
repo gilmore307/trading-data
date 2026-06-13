@@ -174,68 +174,6 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             self.assertEqual(stdout["symbols_txt_optionability_statuses"], ["accepted_optionable", "uncertain_verify_before_use"])
             self.assertEqual(symbols_txt.read_text(encoding="utf-8"), "MSFT\n")
 
-    def test_build_pool_includes_dated_reviewed_symbol_additions(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            tradingview = root / "tradingview.csv"
-            additions = root / "reviewed_additions.csv"
-            _write_csv(
-                tradingview,
-                ["Ticker", "Name", "Sector", "Volume", "Dollar Volume", "Market Cap", "As Of Date"],
-                [
-                    {
-                        "Ticker": "MSFT",
-                        "Name": "Microsoft",
-                        "Sector": "Technology",
-                        "Volume": "10M",
-                        "Dollar Volume": "5B",
-                        "Market Cap": "4T",
-                        "As Of Date": "2026-06-05",
-                    }
-                ],
-            )
-            _write_csv(
-                additions,
-                [
-                    "symbol",
-                    "name",
-                    "sector",
-                    "optionable_underlying_status",
-                    "eligibility_start_date",
-                    "reviewed_addition_reason",
-                    "source_refs",
-                    "as_of_date",
-                ],
-                [
-                    {
-                        "symbol": "SPCX",
-                        "name": "Space Exploration Technologies Corp.",
-                        "sector": "Technology Services",
-                        "optionable_underlying_status": "uncertain_verify_before_use",
-                        "eligibility_start_date": "2026-06-12",
-                        "reviewed_addition_reason": "new_listing_high_attention",
-                        "source_refs": "nasdaq_private_market:https://example.test/spcx",
-                        "as_of_date": "2026-06-13",
-                    }
-                ],
-            )
-
-            rows, receipt = build_pool(
-                tradingview_csvs=[tradingview],
-                optionable_symbols_file=None,
-                reviewed_additions_csv=additions,
-                as_of_date="2026-06-13",
-                allow_unknown_optionability=True,
-            )
-
-        by_symbol = {row.symbol: row for row in rows}
-        self.assertEqual(by_symbol["MSFT"].as_of_date, "2026-06-05")
-        self.assertEqual(by_symbol["SPCX"].pool_membership_status, "active")
-        self.assertEqual(by_symbol["SPCX"].pool_membership_reason, "active_reviewed_symbol_addition")
-        self.assertEqual(by_symbol["SPCX"].sector, "Technology Services")
-        self.assertIn(f"reviewed_symbol_addition:{additions}", by_symbol["SPCX"].source_refs)
-        self.assertEqual(receipt["active_reviewed_addition_count"], 1)
-
     def test_tradingview_fetch_rows_merges_dollar_volume_and_market_cap_scans(self) -> None:
         original = sys.modules["scripts.data.fetch_tradingview_equity_screener"]._post_scan
 
@@ -381,63 +319,6 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         self.assertEqual(receipt["active_candidate_count"], 5)
         self.assertEqual(receipt["asset_class_counts"], {"us_equity": 2, "crypto_spot": 3})
         self.assertIn("not point-in-time historical", receipt["boundary_note"])
-
-    def test_historical_candidate_universe_skips_reviewed_symbol_additions(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            pool = root / "equity_total_symbol_pool.csv"
-            _write_csv(
-                pool,
-                [
-                    "symbol",
-                    "name",
-                    "sector",
-                    "optionable_underlying_status",
-                    "pool_membership_status",
-                    "pool_membership_reason",
-                    "in_dollar_volume_top300",
-                    "in_market_cap_top300",
-                    "dollar_volume_rank",
-                    "market_cap_rank",
-                    "source_refs",
-                    "as_of_date",
-                ],
-                [
-                    {
-                        "symbol": "NVDA",
-                        "name": "NVIDIA",
-                        "sector": "Technology",
-                        "optionable_underlying_status": "uncertain_verify_before_use",
-                        "pool_membership_status": "active",
-                        "pool_membership_reason": "active_current_pool_source_and_optionability_accepted",
-                        "in_dollar_volume_top300": "true",
-                        "in_market_cap_top300": "true",
-                        "dollar_volume_rank": "8",
-                        "market_cap_rank": "1",
-                        "source_refs": "fixture",
-                        "as_of_date": "2026-06-04",
-                    },
-                    {
-                        "symbol": "SPCX",
-                        "name": "Space Exploration Technologies Corp.",
-                        "sector": "Technology Services",
-                        "optionable_underlying_status": "uncertain_verify_before_use",
-                        "pool_membership_status": "active",
-                        "pool_membership_reason": "active_reviewed_symbol_addition",
-                        "in_dollar_volume_top300": "false",
-                        "in_market_cap_top300": "false",
-                        "dollar_volume_rank": "",
-                        "market_cap_rank": "",
-                        "source_refs": "reviewed_symbol_addition:fixture",
-                        "as_of_date": "2026-06-13",
-                    },
-                ],
-            )
-
-            rows, receipt = build_universe(source_pool_csv=pool, freeze_as_of_date="2026-06-13")
-
-        self.assertNotIn("SPCX", {row.symbol for row in rows})
-        self.assertEqual(receipt["skipped_reviewed_symbol_addition_count"], 1)
 
 
 def _write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> None:

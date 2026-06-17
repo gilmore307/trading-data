@@ -1,0 +1,12 @@
+[Unit]
+Description=Periodic Trading Economics release fetch queue runner
+Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=60s
+AccuracySec=10s
+Unit=trading-data-te-release-fetch.service
+
+[Install]
+WantedBy=timers.target

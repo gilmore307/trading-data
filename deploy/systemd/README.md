@@ -12,10 +12,15 @@ source maintenance:
 
 - Trading Economics recent/future macro calendar preview discovery once per day,
   with source buckets written only for new or changed TE facts;
-- one-shot Trading Economics release jobs scheduled at known future release
-  times; each job polls TE every 5 seconds for up to 60 seconds, then writes
-  provisional web-search fallback evidence only if no formal TE actual appears;
+- a shared Trading Economics release-fetch queue updated from known future
+  release times;
 - Nasdaq earnings schedule discovery into official calendar artifacts.
+
+`trading-data-te-release-fetch.service` and `.timer` are the single shared
+release-fetch worker. The timer wakes the worker once per minute. The worker
+loads the queue, processes due release windows, polls TE every 5 seconds for up
+to 60 seconds, and writes provisional web-search fallback evidence only if no
+formal TE actual appears.
 
 The service writes source rows/artifacts only. It must not persist Trading
 Economics website URLs or populate M06 SQL event rows.

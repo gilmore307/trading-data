@@ -7,7 +7,6 @@ import argparse
 import csv
 import json
 import os
-import subprocess
 import sys
 from datetime import UTC, date, datetime, timedelta
 from importlib import import_module
@@ -32,6 +31,7 @@ DEFAULT_TE_RELEASE_FETCH_DELAY_SECONDS = 0
 DEFAULT_TE_RELEASE_FETCH_MAX_COUNT = 48
 DEFAULT_TE_RELEASE_POLL_INTERVAL_SECONDS = 5
 DEFAULT_TE_RELEASE_POLL_TIMEOUT_SECONDS = 60
+DEFAULT_TE_RELEASE_FETCH_QUEUE_NAME = "release_fetch_queue.json"
 
 
 def _now_utc() -> datetime:
@@ -221,13 +221,56 @@ def _te_release_fetch_candidates(te_receipt: Mapping[str, Any]) -> list[dict[str
     return [dict(candidate) for candidate in candidates if isinstance(candidate, Mapping)]
 
 
-def _systemd_unit_token(value: str) -> str:
+def _release_fetch_job_token(value: str) -> str:
     token = "".join(char.lower() if char.isalnum() else "-" for char in value)
     token = "-".join(part for part in token.split("-") if part)
     return token[:96] or "unknown"
 
 
-def schedule_te_release_fetches(
+def release_fetch_queue_path(output_root: str | Path) -> Path:
+    return Path(output_root) / "_manifests" / DEFAULT_TE_RELEASE_FETCH_QUEUE_NAME
+
+
+def _load_release_fetch_queue(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "contract_type": "trading_economics_release_fetch_queue",
+            "schema_version": 1,
+            "updated_at_utc": None,
+            "items": [],
+        }
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"release fetch queue must be a JSON object: {path}")
+    items = payload.get("items")
+    if not isinstance(items, list):
+        payload["items"] = []
+    return payload
+
+
+def _write_release_fetch_queue(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def _fallback_queries_for_candidate(candidate: Mapping[str, Any], *, start_date: str) -> list[str]:
+    fallback_queries: list[str] = []
+    for event in candidate.get("events") or []:
+        if not isinstance(event, Mapping):
+            continue
+        event_name = str(event.get("event") or "").strip()
+        country = str(event.get("country") or "United States").strip() or "United States"
+        reference = str(event.get("reference") or "").strip()
+        if event_name:
+            fallback_queries.append(" ".join(part for part in [country, event_name, reference, "actual released"] if part))
+    if not fallback_queries:
+        fallback_queries.append(f"United States economic data release actual {start_date}")
+    return fallback_queries[:5]
+
+
+def queue_te_release_fetches(
     *,
     te_receipt: Mapping[str, Any],
     delay_seconds: int = DEFAULT_TE_RELEASE_FETCH_DELAY_SECONDS,
@@ -240,7 +283,8 @@ def schedule_te_release_fetches(
     now = datetime.now(UTC).replace(microsecond=0)
     task_key = te_receipt.get("task_key")
     output_root = task_key.get("output_root") if isinstance(task_key, Mapping) else None
-    scheduled: list[dict[str, Any]] = []
+    queue_path = release_fetch_queue_path(str(output_root or DEFAULT_TE_OUTPUT_ROOT))
+    queued: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     for candidate in candidates[: max(0, max_count)]:
         raw_fetch_after = str(candidate.get("fetch_after_utc") or "")
@@ -256,86 +300,63 @@ def schedule_te_release_fetches(
         if not start_date or not end_date:
             skipped.append({"candidate": candidate, "reason": "missing_fetch_window"})
             continue
-        unit_token = _systemd_unit_token(f"{start_date}-{raw_fetch_after}")
-        unit_name = f"trading-data-te-release-fetch-{unit_token}"
-        run_id = f"te_release_fetch_{unit_token.replace('-', '')}"
-        command = [
-            "systemd-run",
-            "--unit",
-            unit_name,
-            "--on-active",
-            f"{seconds}s",
-            "--collect",
-            sys.executable,
-            str(REPO_ROOT / "scripts" / "data" / "run_trading_economics_recent_calendar_refresh.py"),
-            "--run-id",
-            run_id,
-            "--start-date",
-            start_date,
-            "--end-date",
-            end_date,
-            "--output-root",
-            str(output_root or DEFAULT_TE_OUTPUT_ROOT),
-            "--execute-live-fetch",
-            "--release-poll-until-value",
-            "--release-poll-interval-seconds",
-            str(max(1, poll_interval_seconds)),
-            "--release-poll-timeout-seconds",
-            str(max(0, poll_timeout_seconds)),
-            "--fallback-web-search-after-timeout",
-        ]
-        fallback_queries: list[str] = []
-        for event in candidate.get("events") or []:
-            if not isinstance(event, Mapping):
-                continue
-            event_name = str(event.get("event") or "").strip()
-            country = str(event.get("country") or "United States").strip() or "United States"
-            reference = str(event.get("reference") or "").strip()
-            if event_name:
-                fallback_queries.append(" ".join(part for part in [country, event_name, reference, "actual released"] if part))
-        if not fallback_queries:
-            fallback_queries.append(f"United States economic data release actual {start_date}")
-        for query in fallback_queries[:5]:
-            command.extend(["--fallback-query", query])
+        job_token = _release_fetch_job_token(f"{start_date}-{raw_fetch_after}")
+        job_id = f"te_release_fetch_{job_token}"
+        run_id = f"te_release_fetch_{job_token.replace('-', '')}"
+        fallback_queries = _fallback_queries_for_candidate(candidate, start_date=start_date)
         row = {
-            "unit_name": unit_name,
+            "job_id": job_id,
             "run_id": run_id,
             "fetch_after_utc": fetch_after.isoformat().replace("+00:00", "Z"),
             "seconds_until_fetch": seconds,
             "start_date": start_date,
             "end_date": end_date,
             "event_count": int(candidate.get("event_count") or 0),
-            "fallback_queries": fallback_queries[:5],
+            "fallback_queries": fallback_queries,
+            "poll_interval_seconds": max(1, poll_interval_seconds),
+            "poll_timeout_seconds": max(0, poll_timeout_seconds),
+            "status": "pending" if execute else "planned",
+            "queued_at_utc": now.isoformat().replace("+00:00", "Z"),
         }
-        if execute:
-            completed = subprocess.run(command, capture_output=True, text=True)
-            row.update(
-                {
-                    "return_code": completed.returncode,
-                    "stdout": completed.stdout[-1000:],
-                    "stderr": completed.stderr[-1000:],
-                    "status": "scheduled" if completed.returncode == 0 else "failed",
-                }
-            )
-        else:
-            row.update({"command": command, "status": "planned"})
-        scheduled.append(row)
-    scheduled_count = len([row for row in scheduled if row.get("status") in {"scheduled", "planned"}])
+        queued.append(row)
+    queued_count = len([row for row in queued if row.get("status") in {"pending", "planned"}])
+    written_count = 0
+    if execute and queued:
+        payload = _load_release_fetch_queue(queue_path)
+        existing = {str(item.get("job_id")): dict(item) for item in payload.get("items", []) if isinstance(item, Mapping)}
+        for item in queued:
+            previous = existing.get(item["job_id"])
+            if previous and previous.get("status") in {"completed", "failed"}:
+                continue
+            existing[item["job_id"]] = item
+            written_count += 1
+        payload.update(
+            {
+                "contract_type": "trading_economics_release_fetch_queue",
+                "schema_version": 1,
+                "updated_at_utc": now.isoformat().replace("+00:00", "Z"),
+                "output_root": str(output_root or DEFAULT_TE_OUTPUT_ROOT),
+                "items": sorted(existing.values(), key=lambda item: (str(item.get("fetch_after_utc") or ""), str(item.get("job_id") or ""))),
+            }
+        )
+        _write_release_fetch_queue(queue_path, payload)
     if not candidates:
-        schedule_status = "not_requested"
-    elif scheduled_count:
-        schedule_status = "scheduled" if execute else "planned"
+        queue_status = "not_requested"
+    elif queued_count:
+        queue_status = "queued" if execute else "planned"
     else:
-        schedule_status = "skipped_no_future_candidates"
+        queue_status = "skipped_no_future_candidates"
     return {
-        "contract_type": "trading_economics_release_fetch_schedule",
-        "schedule_status": schedule_status,
+        "contract_type": "trading_economics_release_fetch_queue_update",
+        "queue_status": queue_status,
         "delay_seconds": max(0, delay_seconds),
         "poll_interval_seconds": max(1, poll_interval_seconds),
         "poll_timeout_seconds": max(0, poll_timeout_seconds),
         "candidate_count": len(candidates),
-        "scheduled_count": scheduled_count,
-        "scheduled": scheduled,
+        "queued_count": queued_count,
+        "written_count": written_count,
+        "queue_path": str(queue_path),
+        "queued": queued,
         "skipped": skipped,
     }
 
@@ -381,7 +402,7 @@ def run_calendar_maintenance(
     nasdaq_earnings_forward_days: int,
     official_output_root: str,
     symbols: list[str],
-    schedule_te_release_fetches_enabled: bool,
+    queue_te_release_fetches_enabled: bool,
     te_release_fetch_delay_seconds: int,
     te_release_fetch_max_count: int,
     te_release_poll_interval_seconds: int,
@@ -428,9 +449,9 @@ def run_calendar_maintenance(
             end_date_exclusive=_temporal_end_date_for(exchange_paths),
             official_exchange_calendar_paths=exchange_paths,
         )
-    te_release_fetch_schedule = None
-    if schedule_te_release_fetches_enabled:
-        te_release_fetch_schedule = schedule_te_release_fetches(
+    te_release_fetch_queue = None
+    if queue_te_release_fetches_enabled:
+        te_release_fetch_queue = queue_te_release_fetches(
             te_receipt=te,
             delay_seconds=te_release_fetch_delay_seconds,
             max_count=te_release_fetch_max_count,
@@ -456,7 +477,7 @@ def run_calendar_maintenance(
             "official_calendar_discovery": official,
             "official_exchange_calendar": exchange,
             "temporal_explorer_session_overlay": temporal_install,
-            "trading_economics_release_fetch_schedule": te_release_fetch_schedule,
+            "trading_economics_release_fetch_queue": te_release_fetch_queue,
         },
         "provider_calls_performed": int(te.get("provider_calls_performed") or 0) + int(official.get("provider_calls_performed") or 0) + int(exchange.get("provider_calls_performed") or 0),
         "storage_mutation_performed": bool(te.get("storage_mutation_performed") or official.get("storage_mutation_performed") or exchange.get("storage_mutation_performed") or temporal_install),
@@ -469,7 +490,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-id", default=None)
     parser.add_argument("--execute-live-fetch", action="store_true")
     parser.add_argument("--skip-trading-economics", action="store_true")
-    parser.add_argument("--schedule-te-release-fetches", action="store_true")
+    parser.add_argument("--queue-te-release-fetches", action="store_true")
     parser.add_argument("--te-release-fetch-delay-seconds", type=int, default=DEFAULT_TE_RELEASE_FETCH_DELAY_SECONDS)
     parser.add_argument("--te-release-fetch-max-count", type=int, default=DEFAULT_TE_RELEASE_FETCH_MAX_COUNT)
     parser.add_argument("--te-release-poll-interval-seconds", type=int, default=DEFAULT_TE_RELEASE_POLL_INTERVAL_SECONDS)
@@ -508,7 +529,7 @@ def main() -> int:
         nasdaq_earnings_forward_days=args.nasdaq_earnings_forward_days,
         official_output_root=args.official_output_root,
         symbols=symbols,
-        schedule_te_release_fetches_enabled=args.schedule_te_release_fetches,
+        queue_te_release_fetches_enabled=args.queue_te_release_fetches,
         te_release_fetch_delay_seconds=args.te_release_fetch_delay_seconds,
         te_release_fetch_max_count=args.te_release_fetch_max_count,
         te_release_poll_interval_seconds=args.te_release_poll_interval_seconds,

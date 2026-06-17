@@ -11,8 +11,8 @@ from pathlib import Path
 from scripts.data.run_calendar_maintenance_refresh import (
     build_nasdaq_earnings_task_key,
     build_official_exchange_calendar_task_key,
+    queue_te_release_fetches,
     run_calendar_maintenance,
-    schedule_te_release_fetches,
 )
 
 
@@ -55,7 +55,7 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             nasdaq_earnings_forward_days=1,
             official_output_root="/tmp/official",
             symbols=["AAPL"],
-            schedule_te_release_fetches_enabled=False,
+            queue_te_release_fetches_enabled=False,
             te_release_fetch_delay_seconds=0,
             te_release_fetch_max_count=48,
             te_release_poll_interval_seconds=5,
@@ -85,7 +85,7 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             nasdaq_earnings_forward_days=0,
             official_output_root="/tmp/official",
             symbols=["AAPL"],
-            schedule_te_release_fetches_enabled=False,
+            queue_te_release_fetches_enabled=False,
             te_release_fetch_delay_seconds=0,
             te_release_fetch_max_count=48,
             te_release_poll_interval_seconds=5,
@@ -98,7 +98,7 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         self.assertFalse(te["storage_mutation_performed"])
         self.assertEqual(receipt["refresh_status"], "planned_requires_execute_live_fetch")
 
-    def test_te_release_fetch_schedule_plans_one_shot_fetch(self) -> None:
+    def test_te_release_fetch_queue_plans_fetch(self) -> None:
         receipt = {
             "task_key": {"output_root": "/tmp/te-calendar"},
             "result": {
@@ -123,23 +123,48 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             },
         }
 
-        schedule = schedule_te_release_fetches(te_receipt=receipt, delay_seconds=0, max_count=48, poll_interval_seconds=5, poll_timeout_seconds=60, execute=False)
-        planned = schedule["scheduled"][0]
+        update = queue_te_release_fetches(te_receipt=receipt, delay_seconds=0, max_count=48, poll_interval_seconds=5, poll_timeout_seconds=60, execute=False)
+        planned = update["queued"][0]
 
-        self.assertEqual(schedule["schedule_status"], "planned")
-        self.assertEqual(schedule["delay_seconds"], 0)
-        self.assertEqual(schedule["poll_interval_seconds"], 5)
-        self.assertEqual(schedule["poll_timeout_seconds"], 60)
-        self.assertEqual(schedule["candidate_count"], 1)
+        self.assertEqual(update["queue_status"], "planned")
+        self.assertEqual(update["delay_seconds"], 0)
+        self.assertEqual(update["poll_interval_seconds"], 5)
+        self.assertEqual(update["poll_timeout_seconds"], 60)
+        self.assertEqual(update["candidate_count"], 1)
         self.assertEqual(planned["status"], "planned")
-        self.assertIn("systemd-run", planned["command"])
-        self.assertIn("--on-active", planned["command"])
-        self.assertIn("--execute-live-fetch", planned["command"])
-        self.assertIn("--release-poll-until-value", planned["command"])
-        self.assertIn("--fallback-web-search-after-timeout", planned["command"])
-        self.assertIn("2099-01-04", planned["command"])
-        self.assertIn("2099-01-05", planned["command"])
+        self.assertNotIn("command", planned)
+        self.assertEqual(planned["start_date"], "2099-01-04")
+        self.assertEqual(planned["end_date"], "2099-01-05")
         self.assertIn("United States Non Farm Payrolls Dec actual released", planned["fallback_queries"])
+
+    def test_te_release_fetch_queue_writes_pending_jobs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            receipt = {
+                "task_key": {"output_root": str(Path(tmp) / "te-calendar")},
+                "result": {
+                    "details": {
+                        "release_fetch_candidates": [
+                            {
+                                "fetch_after_utc": "2099-01-04T13:30:00Z",
+                                "start_date": "2099-01-04",
+                                "end_date": "2099-01-05",
+                                "event_count": 1,
+                                "events": [{"country": "United States", "event": "CPI", "reference": "Dec"}],
+                            }
+                        ]
+                    }
+                },
+            }
+
+            update = queue_te_release_fetches(te_receipt=receipt, delay_seconds=0, max_count=48, poll_interval_seconds=5, poll_timeout_seconds=60, execute=True)
+            queue_path = Path(update["queue_path"])
+            payload = json.loads(queue_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(update["queue_status"], "queued")
+        self.assertEqual(update["written_count"], 1)
+        self.assertEqual(payload["contract_type"], "trading_economics_release_fetch_queue")
+        self.assertEqual(payload["items"][0]["status"], "pending")
+        self.assertEqual(payload["items"][0]["fallback_queries"], ["United States CPI Dec actual released"])
 
     def test_cli_plan_is_side_effect_safe(self) -> None:
         completed = subprocess.run(

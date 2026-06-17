@@ -1,0 +1,22 @@
+[Unit]
+Description=Fetch due Trading Economics release values
+Documentation=file:/root/projects/trading-data/docs/20_data_feed.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/projects/trading-data
+Environment=PYTHONPATH=/root/projects/trading-data/src:/root/projects/trading-data
+Environment=TRADING_DATA_TE_OUTPUT_ROOT=/root/projects/trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web
+Environment=TRADING_DATA_TE_RELEASE_FETCH_MAX_DUE_JOBS=8
+EnvironmentFile=-/etc/default/trading-data-te-release-fetch
+ExecStart=/root/projects/trading-manager/.venv/bin/python /root/projects/trading-data/scripts/data/run_trading_economics_release_fetcher.py \
+  --output-root ${TRADING_DATA_TE_OUTPUT_ROOT} \
+  --max-due-jobs ${TRADING_DATA_TE_RELEASE_FETCH_MAX_DUE_JOBS} \
+  --execute-live-fetch
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

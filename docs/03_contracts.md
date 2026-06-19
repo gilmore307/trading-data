@@ -5,7 +5,7 @@ Date: 2026-05-08
 
 ## Acceptance scope
 
-`trading-data` has a complete accepted local feed/source/feature implementation surface for the current ten-layer model-input route.
+`trading-data` has a complete accepted local feed/source/feature implementation surface for the current retired serial model-input route.
 
 | Surface | Current owner path | Acceptance state |
 |---|---|---|
@@ -14,14 +14,14 @@ Date: 2026-05-08
 | OKX crypto market data | `src/data_feed/04_feed_okx_crypto_market_data/` | accepted feed/catalog surface |
 | GDELT / ETF holdings / Trading Economics / SEC feeds | `src/data_feed/05_*` through `08_*` | accepted feed surfaces for current source planning |
 | ThetaData option feeds | `src/data_feed/09_*` through `11_*` | accepted local terminal-oriented V1 feeds for option snapshot, primary tracking, and event timeline |
-| Layer 1 data | `trading_data.model_01_market_regime_data_acquisition`, `trading_data.model_01_market_regime_feature_generation` | accepted market-regime input/feature surfaces |
-| Layer 2 data | `trading_data.model_02_sector_context_feature_generation` | accepted broad sector-anchor context feature surface |
-| Layer 3 data | `trading_data.model_03_target_state_vector_data_acquisition`, `trading_data.option_chain_state_source`, `trading_data.model_03_target_state_vector_feature_generation` | accepted target-state observed-input and feature-block surfaces; consumes reviewed candidate symbols plus Layer 1/2 context refs and reduces shared ThetaData option-chain rows into anonymous target-level option state when available |
-| Layer 4 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; EventFailureRiskModel consumes reviewed model/governance evidence, not raw source acquisition |
-| Layer 5 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
-| Layer 6 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; dynamic risk policy belongs to `trading-model` / control-plane / execution replay state |
-| Layer 7 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
-| Layer 8 data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
+| M01 data | `trading_data.model_01_market_regime_data_acquisition`, `trading_data.model_01_market_regime_feature_generation` | accepted market-regime input/feature surfaces |
+| M02 data | `trading_data.model_02_sector_context_feature_generation` | accepted broad sector-anchor context feature surface |
+| M02 data | `trading_data.model_03_target_state_vector_data_acquisition`, `trading_data.option_chain_state_source`, `trading_data.model_03_target_state_vector_feature_generation` | accepted target-state observed-input and feature-block surfaces; consumes reviewed candidate symbols plus M01/M02 context refs and reduces shared ThetaData option-chain rows into anonymous target-level option state when available |
+| M03 event-state data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; EventFailureRiskModel consumes reviewed model/governance evidence, not raw source acquisition |
+| M04 decision data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; alpha confidence belongs to `trading-model` |
+| M04 risk data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; dynamic risk policy belongs to `trading-model` / control-plane / execution replay state |
+| M04 decision data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
+| M04 decision data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
 | M05 data | `trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, `trading_data.model_05_option_expression_data_acquisition_contract_path` | shared option-chain source/cache reuse, deterministic option-candidate feature generation, and selected-contract market-path boundaries |
 | M06 data | `trading_data.model_06_residual_event_governance_data_acquisition`, `trading_data.model_06_residual_event_governance_feature_generation` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
 

@@ -3,7 +3,7 @@
 <!-- ACTIVE_LAYER_REVISION -->
 Status: active architecture revision. M05 owns base trading guidance; `trading-data` owns option-expression features derived from the shared option-chain source plus selected-contract tracking used after expression selection.
 
-Current SQL/source names are `trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, and `trading_data.model_05_option_expression_data_acquisition_contract_path`. `option_chain_state_source` is acquired before Layer 3 only when the selected target is option-applicable, then shared by Layer 3 and M05. Targets marked as `crypto_spot` or confirmed no-listed-options have no M05 option-expression feature path.
+Current SQL/source names are `trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, and `trading_data.model_05_option_expression_data_acquisition_contract_path`. `option_chain_state_source` is acquired before M02 only when the selected target is option-applicable, then shared by M02 and M05. Targets marked as `crypto_spot` or confirmed no-listed-options have no M05 option-expression feature path.
 <!-- /ACTIVE_LAYER_REVISION -->
 
 
@@ -25,7 +25,7 @@ trading_data.model_05_option_expression_data_acquisition_contract_path
 
 M05 data covers visible option-chain evidence, deterministic option-candidate features, and selected-contract market paths.
 
-`option_chain_state_source` writes one row per visible contract at an explicit snapshot time. It captures quote, spread, IV, first-order Greeks, trade-summary fields, and contract identity where provider data is available. Layer 3 may reduce these rows into target-level option state but must not expose contract identity or executable option terms.
+`option_chain_state_source` writes one row per visible contract at an explicit snapshot time. It captures quote, spread, IV, first-order Greeks, trade-summary fields, and contract identity where provider data is available. M02 may reduce these rows into target-level option state but must not expose contract identity or executable option terms.
 
 `trading_data.model_05_option_expression_feature_generation` derives source-only per-contract candidate features directly from accepted shared snapshot rows: moneyness, spread/liquidity, IV, Greeks availability, and quality diagnostics. It prepares model inputs without ranking contracts or choosing an expression.
 

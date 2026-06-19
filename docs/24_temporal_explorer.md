@@ -10,7 +10,7 @@
 | `trading_data.calendar_market_session` | Venue session state for NYSE, NASDAQ, and `CRYPTO_24_7`. |
 | `trading_data.chart_ohlcv_cache` | Compact visualization OHLCV cache for dashboard charts. |
 
-## Calendar Observation Layer
+## Calendar Observation Surface
 
 `calendar_observation` is the source-shell artifact layer for scheduled calendar facts before M06 event-pool promotion. It is built from accepted calendar inputs such as rule-generated market sessions, deterministic option-expiry windows, Trading Economics macro calendar rows, and SQL-retained calendar-discovery rows.
 

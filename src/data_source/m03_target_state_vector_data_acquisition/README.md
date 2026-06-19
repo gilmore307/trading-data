@@ -1,6 +1,6 @@
 # m03_target_state_vector_data_acquisition
 
-Deterministic Layer 3 target-local observed-input source for `TargetStateVectorModel`.
+Deterministic M02 target-local observed-input source for `TargetStateVectorModel`.
 
 This package normalizes caller-supplied, point-in-time target-local bars plus optional aggregate liquidity/quote evidence into SQL rows for:
 

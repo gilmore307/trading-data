@@ -4,7 +4,7 @@
 
 - Install and use the Temporal Explorer substrate as the shared calendar/timewheel foundation for dashboard and replay inspection. The first accepted slice creates the SQL tables, deterministic day spine, rule-generated venue sessions, and chart-cache contract without pretending that unconnected early-close, event-result, news-body, or chart-bar sources are populated.
 
-The accepted local feed/source/feature route is structurally closed; see `docs/03_contracts.md`. Current data work should support historical evidence production for the first usable production-promotable model version, starting with Layer 1 `MarketRegimeModel` evidence/gate repair. Historical training may proceed through manager-planned request payloads, handoff validation, and autonomous historical provider acquisition under bounded manager controls. Realtime feed/source expansion is parked until a model has an approved/promotable version.
+The accepted local feed/source/feature route is structurally closed; see `docs/03_contracts.md`. Current data work should support historical evidence production for the first usable production-promotable model version, starting with M01 `MarketRegimeModel` evidence/gate repair. Historical training may proceed through manager-planned request payloads, handoff validation, and autonomous historical provider acquisition under bounded manager controls. Realtime feed/source expansion is parked until a model has an approved/promotable version.
 
 ## Historical-Training Readiness Status
 
@@ -28,15 +28,15 @@ These items are intentionally outside the current promote-first historical-train
 ## Current Accepted Details
 
 - Alpaca bars treats provider `bars: null` no-data responses as empty successful acquisitions with headers/schema/manifests rather than failed component receipts. This supports historical months where current-universe symbols did not yet have bars.
-- Repository data-stack acceptance: current feed/source/feature surfaces cover the accepted local Layers 1-9 model-input route.
+- Repository data-stack acceptance: current feed/source/feature surfaces cover the accepted local M01-M05 model-input route.
 - Production hardening policy: provider-call guardrails, retry/rate-limit rules, checkpoint/resume evidence, manifests, artifact refs, and ready signals are documented in `docs/40_production_hardening.md`.
 - Storage-owned V1 handoff contracts are the production handoff vocabulary; file artifacts and runtime evidence belong under `trading-storage/storage/01_source_data/`.
 - ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.
-- `m02_sector_context_data_acquisition` is retired from the current ordinary candidate route. ETF holdings may remain standalone source evidence, but they do not define the realtime total pool, Layer 2 feature generation, or historical replay candidates.
+- `m02_sector_context_data_acquisition` is retired from the current ordinary candidate route. ETF holdings may remain standalone source evidence, but they do not define the realtime total pool, M02 feature generation, or historical replay candidates.
 - `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative` with `conservative_fixture_default_not_production_calibrated` until reviewed calibration exists.
 - `price_action` is accepted as a M06 event-risk category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
 - `trading_data.model_03_target_state_vector_data_acquisition` and `trading_data.model_03_target_state_vector_feature_generation` implement deterministic target-local observed-input and feature-block surfaces.
-- Layer 2 / candidate / Layer 3 boundaries are aligned: Layer 2 emits sector/context features only; Layer 3 consumes target-local candidate evidence and accepted target-context mappings without relying on ETF holdings acquisition.
+- M02 / candidate / M02 boundaries are aligned: M02 emits sector/context features only; M02 consumes target-local candidate evidence and accepted target-context mappings without relying on ETF holdings acquisition.
 - Event overlay sources are accepted through `model_06_residual_event_governance_data_acquisition`, including equity abnormal activity evidence.
 - Option-expression inputs are accepted through shared `trading_data.option_chain_state_source` plus `trading_data.model_05_option_expression_feature_generation`; selected-contract tracking remains `trading_data.model_05_option_expression_data_acquisition_contract_path`.
 - Final non-TE feed outputs are SQL rows plus concise receipts/schema evidence; no JSONL/CSV mirror is written by default. Trading Economics calendar source rows remain the protected source-data exception.

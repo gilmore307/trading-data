@@ -46,16 +46,16 @@ def _intraday_bar(symbol: str, timestamp: datetime, close: float) -> dict[str, s
 class MarketRegimeGeneratorTests(unittest.TestCase):
     def _inputs(self):
         universe = [
-            {"symbol": "SPY", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
-            {"symbol": "QQQ", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
-            {"symbol": "XLK", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
-            {"symbol": "XLP", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
+            {"symbol": "SPY", "universe_type": "market_state_etf", "model_layer": "model_01_market_context"},
+            {"symbol": "QQQ", "universe_type": "market_state_etf", "model_layer": "model_01_market_context"},
+            {"symbol": "XLK", "universe_type": "sector_observation_etf", "model_layer": "model_01_sector_context"},
+            {"symbol": "XLP", "universe_type": "sector_observation_etf", "model_layer": "model_01_sector_context"},
         ]
         combinations = [
             {
                 "combination_id": "qqq_spy",
                 "combination_type": "primary",
-                "model_layer": "layer_01_market_regime",
+                "model_layer": "model_01_market_context",
                 "numerator_symbol": "QQQ",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "1m",
@@ -63,7 +63,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
             {
                 "combination_id": "xlk_spy",
                 "combination_type": "sector_rotation",
-                "model_layer": "layer_02_sector_context",
+                "model_layer": "model_01_sector_context",
                 "numerator_symbol": "XLK",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "1m",
@@ -100,7 +100,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertEqual(row["snapshot_time"], snapshot.isoformat())
         self.assertEqual(row["input_frame"], "1h")
         self.assertEqual(row["prediction_horizon"], "1D")
-        self.assertEqual(row["market_universe_ref"], "layer_01_02_market_context_etf_universe")
+        self.assertEqual(row["market_universe_ref"], "model_01_background_context_etf_universe")
         self.assertAlmostEqual(row["spy_return_30m"], math.log(370.0 / 369.0))
         self.assertAlmostEqual(row["qqq_spy_1m"], math.log((525.0 / 370.0) / (520.0 / 369.0)))
         self.assertIn("spy_realized_vol_20d", row)
@@ -155,7 +155,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
                 "snapshot_time": "2026-01-02T16:00:00-05:00",
                 "input_frame": "1h",
                 "prediction_horizon": "1D",
-                "market_universe_ref": "layer_01_02_market_context_etf_universe",
+                "market_universe_ref": "model_01_background_context_etf_universe",
                 "spy_return_30m": 0.01,
                 "qqq_spy_return_corr_20d": None,
             }
@@ -179,7 +179,7 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertEqual(insert_params[0], "2026-01-02T16:00:00-05:00")
         self.assertEqual(insert_params[1], "1h")
         self.assertEqual(insert_params[2], "1D")
-        self.assertEqual(insert_params[3], "layer_01_02_market_context_etf_universe")
+        self.assertEqual(insert_params[3], "model_01_background_context_etf_universe")
         self.assertIn('"spy_return_30m": 0.01', insert_params[4])
 
     def test_inferred_snapshots_use_one_hour_decision_surface(self) -> None:
@@ -278,22 +278,22 @@ class MarketRegimeGeneratorTests(unittest.TestCase):
         self.assertEqual(writer.calls[0][3], ("symbol", "timeframe", "timestamp"))
 
     @unittest.skipUnless(
-        runtime_config.shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv").exists()
-        and runtime_config.shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv").exists(),
+        runtime_config.shared_path("main", "shared", "model_01_background_context_etf_universe.csv").exists()
+        and runtime_config.shared_path("main", "shared", "model_01_background_context_relative_strength_combinations.csv").exists(),
         "shared market-regime CSVs are unavailable",
     )
     def test_current_shared_contract_generates_expected_width(self) -> None:
         inputs = generator.build_inputs(
             bar_rows=[],
-            universe_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")),
-            combination_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv")),
+            universe_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "model_01_background_context_etf_universe.csv")),
+            combination_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "model_01_background_context_relative_strength_combinations.csv")),
         )
 
         row = generator.generate_row(inputs, datetime(2026, 1, 2, 16, 0, tzinfo=ET))
 
         self.assertEqual(inputs.market_state_symbols, sorted(inputs.market_state_symbols))
         self.assertNotIn("XLK", inputs.market_state_symbols)
-        self.assertTrue(all(combo.model_layer == "layer_01_market_regime" for combo in generator._market_regime_combinations(inputs)))
+        self.assertTrue(all(combo.model_layer == "model_01_market_context" for combo in generator._market_regime_combinations(inputs)))
         self.assertEqual(len(row), 748)
         self.assertFalse(any(key.startswith("ibit_") for key in row))
         self.assertFalse(any(key.startswith("etha_") for key in row))

@@ -1,4 +1,4 @@
-"""Materialize Layer 1 feed artifacts and generate market-regime features.
+"""Materialize M01 feed artifacts and generate market-regime features.
 
 This command is intentionally offline: it reads already-acquired Alpaca bar
 completion receipts from the local trading-data storage tree, confirms that

@@ -2,7 +2,7 @@
 
 Derived event detector inside the `m06_residual_event_governance_data_acquisition` M06 EventRiskGovernor surface. This is not a standalone manager-facing numbered data source.
 
-It converts SQL-retained equity/ETF bars, optional reference bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the M06 event-risk evidence surface. Layer 4 may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
+It converts SQL-retained equity/ETF bars, optional reference bars, and optional liquidity rows into compact `equity_abnormal_activity_event` evidence rows inside the M06 event-risk evidence surface. M03 event-state may consume only reviewed/promoted evidence packets, not raw abnormal-activity rows.
 
 ## Inputs
 

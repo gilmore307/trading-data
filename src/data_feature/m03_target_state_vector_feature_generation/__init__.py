@@ -1,1 +1,1 @@
-"""Layer 3 target state-vector feature production package."""
+"""M02 target state-vector feature production package."""

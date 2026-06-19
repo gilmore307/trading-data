@@ -46,17 +46,17 @@ def _intraday_bar(symbol: str, timestamp: datetime, close: float) -> dict[str, s
 class SectorContextFeatureGeneratorTests(unittest.TestCase):
     def _inputs(self):
         universe = [
-            {"symbol": "SPY", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
-            {"symbol": "QQQ", "universe_type": "market_state_etf", "model_layer": "layer_01_market_regime"},
-            {"symbol": "XLK", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
-            {"symbol": "XLP", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
-            {"symbol": "XLE", "universe_type": "sector_observation_etf", "model_layer": "layer_02_sector_context"},
+            {"symbol": "SPY", "universe_type": "market_state_etf", "model_layer": "model_01_market_context"},
+            {"symbol": "QQQ", "universe_type": "market_state_etf", "model_layer": "model_01_market_context"},
+            {"symbol": "XLK", "universe_type": "sector_observation_etf", "model_layer": "model_01_sector_context"},
+            {"symbol": "XLP", "universe_type": "sector_observation_etf", "model_layer": "model_01_sector_context"},
+            {"symbol": "XLE", "universe_type": "sector_observation_etf", "model_layer": "model_01_sector_context"},
         ]
         combinations = [
             {
                 "combination_id": "qqq_spy",
                 "combination_type": "primary",
-                "model_layer": "layer_01_market_regime",
+                "model_layer": "model_01_market_context",
                 "numerator_symbol": "QQQ",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "1m",
@@ -64,7 +64,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             {
                 "combination_id": "xlk_spy",
                 "combination_type": "sector_rotation",
-                "model_layer": "layer_02_sector_context",
+                "model_layer": "model_01_sector_context",
                 "numerator_symbol": "XLK",
                 "denominator_symbol": "SPY",
                 "feature_bar_grain": "1m",
@@ -72,7 +72,7 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
             {
                 "combination_id": "xle_xlp",
                 "combination_type": "sector_rotation",
-                "model_layer": "layer_02_sector_context",
+                "model_layer": "model_01_sector_context",
                 "numerator_symbol": "XLE",
                 "denominator_symbol": "XLP",
                 "feature_bar_grain": "1m",
@@ -268,20 +268,20 @@ class SectorContextFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(calls[0]["target_table"], "model_02_sector_context_feature_generation")
 
     @unittest.skipUnless(
-        runtime_config.shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv").exists()
-        and runtime_config.shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv").exists(),
+        runtime_config.shared_path("main", "shared", "model_01_background_context_etf_universe.csv").exists()
+        and runtime_config.shared_path("main", "shared", "model_01_background_context_relative_strength_combinations.csv").exists(),
         "shared market-regime CSVs are unavailable",
     )
     def test_current_shared_contract_generates_expected_rotation_rows(self) -> None:
         inputs = generator.build_inputs(
             bar_rows=[],
-            universe_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")),
-            combination_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv")),
+            universe_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "model_01_background_context_etf_universe.csv")),
+            combination_rows=generator.read_csv_rows(runtime_config.shared_path("main", "shared", "model_01_background_context_relative_strength_combinations.csv")),
         )
 
         rows = generator.generate_rows(inputs, [datetime(2026, 1, 2, 16, 0, tzinfo=ET)])
 
-        self.assertTrue(all(combo.model_layer == "layer_02_sector_context" for combo in generator.rotation_combinations(inputs)))
+        self.assertTrue(all(combo.model_layer == "model_01_sector_context" for combo in generator.rotation_combinations(inputs)))
         self.assertEqual(len(rows), 19)
         self.assertEqual({row["rotation_pair_type"] for row in rows}, {"sector_rotation_summary", "sector_rotation"})
         self.assertIn("sector_observation_breadth", {row["rotation_pair_id"] for row in rows})

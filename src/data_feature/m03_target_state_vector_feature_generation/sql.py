@@ -1,7 +1,7 @@
 """SQL wrapper for m03_target_state_vector_feature_generation production.
 
-Reads accepted ``m03_target_state_vector_data_acquisition`` rows plus optional point-in-time Layer 1
-and Layer 2 context rows, runs the deterministic feature generator, and writes
+Reads accepted ``m03_target_state_vector_data_acquisition`` rows plus optional point-in-time M01
+and M02 context rows, runs the deterministic feature generator, and writes
 ``trading_data.model_03_target_state_vector_feature_generation`` with inspectable JSONB blocks.
 """
 from __future__ import annotations
@@ -43,7 +43,7 @@ KEY_COLUMNS = ("target_candidate_id", "available_time", "target_context_state_ve
 INSERT_BATCH_SIZE = 1000
 SOURCE_LOOKBACK_ROWS = 10080
 OPTION_CHAIN_LOOKBACK_DAYS = 35
-DEFAULT_TARGET_CONTEXT_MAPPING_PATH = Path("/root/projects/trading-storage/main/shared/layer_02_target_context_mapping.csv")
+DEFAULT_TARGET_CONTEXT_MAPPING_PATH = Path("/root/projects/trading-storage/main/shared/model_02_target_context_mapping.csv")
 DEFAULT_OPTION_CHAIN_SOURCE_TABLE = "option_chain_state_source"
 MAPPING_METHOD_RANK = {
     "crypto_business_context": 10,
@@ -748,7 +748,7 @@ def main(argv: list[str] | None = None) -> int:
         "--target-context-state-version",
         dest="target_context_state_version",
         default="target_context_state",
-        help="Layer 3 target context state contract version.",
+        help="M02 target context state contract version.",
     )
     args = parser.parse_args(argv)
     row_count = generate_sql(

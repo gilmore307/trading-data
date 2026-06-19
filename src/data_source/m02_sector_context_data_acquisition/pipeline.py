@@ -1,10 +1,10 @@
 """Standalone ETF holdings evidence source.
 
 ``m02_sector_context_data_acquisition`` is the accepted source/table identifier,
-but holdings are not a core Layer 2 behavior-model input. They support the
+but holdings are not a core M02 behavior-model input. They support the
 separate historical holdings-evidence surface only when a reviewed exposure
 contract explicitly asks for them. They do not define the realtime total pool,
-Layer 2 features, Layer 3 ordinary candidates, or historical replay candidates.
+M02 features, M02 ordinary candidates, or historical replay candidates.
 """
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ SQL_FIELDS = [
     "sector_type",
 ]
 KEY_COLUMNS = ["etf_symbol", "as_of_date", "holding_symbol"]
-MARKET_REGIME_ETF_UNIVERSE_PATH = shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")
+MARKET_REGIME_ETF_UNIVERSE_PATH = shared_path("main", "shared", "model_01_background_context_etf_universe.csv")
 HOLDINGS_UNIVERSE_TYPE = "sector_observation_etf"
 EXCLUDED_ASSET_PATTERNS = re.compile(r"\b(cash|money market|treasury|bond|fixed income|future|futures|swap|option|warrant|fund|etf|preferred)\b", re.I)
 NON_US_MARKER = re.compile(r"\b(adr|gdr|foreign|depositary|ltd|plc|s\.a\.|ag|nv|oyj|asa|spa|se|kk|co ltd|limited)\b", re.I)
@@ -107,9 +107,9 @@ def _read_universe(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         rows = [{str(k): str(v or "").strip() for k, v in row.items()} for row in csv.DictReader(handle)]
     rows = [row for row in rows if row.get("symbol") and row.get("issuer_name")]
-    rows = [row for row in rows if row.get("model_layer") == "layer_02_sector_context"]
+    rows = [row for row in rows if row.get("model_layer") == "model_01_sector_context"]
     if not rows:
-        raise TargetCandidateHoldingsInputsError(f"market regime ETF universe produced zero layer_02_sector_context rows: {path}")
+        raise TargetCandidateHoldingsInputsError(f"market regime ETF universe produced zero model_01_sector_context rows: {path}")
     return rows
 
 
@@ -152,7 +152,7 @@ def fetch(context: SourceContext) -> tuple[StepResult, SourcePayload]:
         "start": start,
         "end": end,
         "market_regime_etf_universe_path": str(universe_path),
-        "model_layer_filter": "layer_02_sector_context",
+        "model_layer_filter": "model_01_sector_context",
         "universe_type_filter": HOLDINGS_UNIVERSE_TYPE,
         "symbols": sorted(selected),
         "holding_feeds": evidence,

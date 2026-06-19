@@ -2,9 +2,9 @@
 
 Retired manager-facing ETF holdings evidence source.
 
-This source reads the reviewed ETF universe, keeps only `model_layer = layer_02_sector_context` rows, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table when explicitly run. Stable defaults live in pipeline code; there is no source-local `config.json`.
+This source reads the reviewed ETF universe, keeps only `model_layer = model_01_sector_context` rows, collects issuer holdings snapshots for those selected ETF symbols, filters holdings down to US-listed equity constituents, and writes the source-backed SQL table when explicitly run. Stable defaults live in pipeline code; there is no source-local `config.json`.
 
-Boundary note: ETF holdings are not a core Layer 2 `SectorContextModel` behavior input. They do not define the realtime total-symbol pool, ordinary target candidates, or historical replay candidates. The current Layer 2 feature stage does not materialize this source. If ETF holdings evidence is revived for target-specific exposure analysis, it needs a separate reviewed proxy/theme or exposure-evidence contract.
+Boundary note: ETF holdings are not a core M02 `SectorContextModel` behavior input. They do not define the realtime total-symbol pool, ordinary target candidates, or historical replay candidates. The current M02 feature stage does not materialize this source. If ETF holdings evidence is revived for target-specific exposure analysis, it needs a separate reviewed proxy/theme or exposure-evidence contract.
 
 ## Input parameters
 
@@ -21,14 +21,14 @@ Optional task key fields:
 - `params.symbols`: comma string or list selecting a reviewed ETF subset from the universe
 - `params.continue_on_error`: when true, one ETF issuer failure is recorded in the run manifest and does not prevent other issuer rows from being written.
 - `params.available_time`: explicit model-availability timestamp for all output rows. If omitted, the source derives a conservative session-open timestamp from `as_of_date`.
-- `params.market_regime_etf_universe_path`: reviewed universe override. Normal runs use `TRADING_STORAGE_REPO_ROOT/main/shared/layer_01_02_market_context_etf_universe.csv`, defaulting to the sibling `trading-storage` repository.
+- `params.market_regime_etf_universe_path`: reviewed universe override. Normal runs use `TRADING_STORAGE_REPO_ROOT/main/shared/model_01_background_context_etf_universe.csv`, defaulting to the sibling `trading-storage` repository.
 - `output_root`: local receipt/request-manifest root
 
-The universe CSV supplies `symbol`, `issuer_name`, `model_layer`, `universe_type`, and `exposure_type`. Only `model_layer = layer_02_sector_context` rows require holdings analysis; `layer_01_market_regime` rows are Layer 1 regime/bar instruments and are intentionally skipped here. The holdings source supplies constituent rows.
+The universe CSV supplies `symbol`, `issuer_name`, `model_layer`, `universe_type`, and `exposure_type`. Only `model_layer = model_01_sector_context` rows require holdings analysis; `model_01_market_context` rows are M01 regime/bar instruments and are intentionally skipped here. The holdings source supplies constituent rows.
 
 ## Filtering rule
 
-Keep only ETF holdings that represent US-listed stock constituents accepted by the model universe. These rows are candidate-construction evidence, not Layer 2 sector behavior features.
+Keep only ETF holdings that represent US-listed stock constituents accepted by the model universe. These rows are candidate-construction evidence, not M02 sector behavior features.
 
 Exclude:
 

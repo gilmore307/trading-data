@@ -13,10 +13,10 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
-DEFAULT_UNIVERSE_CSV = Path("/root/projects/trading-storage/main/shared/layer_01_02_market_context_etf_universe.csv")
+DEFAULT_UNIVERSE_CSV = Path("/root/projects/trading-storage/main/shared/model_01_background_context_etf_universe.csv")
 DEFAULT_OUTPUT_ROOT = Path("/root/projects/trading-storage/storage/01_source_data/realtime/etf_universe_holdings")
 DEFAULT_RECEIPT_ROOT = Path("/root/projects/trading-storage/storage/02_control_plane/runtime/equity_total_symbol_pool")
-DEFAULT_MODEL_LAYER = "layer_02_sector_context"
+DEFAULT_MODEL_LAYER = "model_01_sector_context"
 
 _ETF_HOLDINGS_MODULE = import_module("data_feed.06_feed_etf_holdings.pipeline")
 _build_feed_context = _ETF_HOLDINGS_MODULE.build_context
@@ -185,7 +185,7 @@ def collect_holdings(
         "selected_holding_row_count": len(rows),
         "allow_partial": allow_partial,
         "etf_results": results,
-        "boundary_note": "Official issuer ETF holdings are collected as standalone evidence only. They do not define the realtime total pool, Layer 2 features, Layer 3 ordinary candidates, or historical replay candidates; this performs no broker/account/model activation.",
+        "boundary_note": "Official issuer ETF holdings are collected as standalone evidence only. They do not define the realtime total pool, M02 features, M02 ordinary candidates, or historical replay candidates; this performs no broker/account/model activation.",
     }
     return rows, receipt
 

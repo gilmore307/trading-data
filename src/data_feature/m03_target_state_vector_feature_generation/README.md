@@ -1,6 +1,6 @@
 # m03_target_state_vector_feature_generation
 
-Deterministic Layer 3 target state-vector feature production.
+Deterministic M02 target state-vector feature production.
 
 This package builds point-in-time feature rows for `TargetStateVectorModel`; it must not simulate downstream action variants or make model promotion decisions.
 
@@ -33,7 +33,7 @@ V1 sparse synchronized state windows:
 
 These are state observation windows, not downstream action variants. They are synchronized across market, sector, target, and cross-state blocks.
 
-Each block also exposes a `multi_frame_state` map keyed by the same windows. The map is the canonical feature route for Layer 3 state fitting:
+Each block also exposes a `multi_frame_state` map keyed by the same windows. The map is the canonical feature route for M02 state fitting:
 
 - market/sector frames project point-in-time context return, direction, volatility, trend quality, and liquidity/tradability values when supplied by upstream rows;
 - target frames derive completed-bar return, volatility/range, volume, trend quality, path stability, persistence, and late-trend risk from target-local source rows;
@@ -41,7 +41,7 @@ Each block also exposes a `multi_frame_state` map keyed by the same windows. The
 
 ## Option Contract Selector
 
-Layer 3 consumes `option_chain_state_source` through a deterministic role selector, not through broad-chain aggregation and not through full-chain match targets.
+M02 consumes `option_chain_state_source` through a deterministic role selector, not through broad-chain aggregation and not through full-chain match targets.
 
 The accepted selector has three semantic surfaces:
 

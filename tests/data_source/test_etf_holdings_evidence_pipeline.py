@@ -56,11 +56,11 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
 
     def test_etf_holdings_evidence_source_writes_filtered_us_equity_holdings(self):
         with tempfile.TemporaryDirectory() as tmp:
-            universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
+            universe = Path(tmp) / "model_01_background_context_etf_universe.csv"
             universe.write_text(
                 "symbol,universe_type,model_layer,exposure_type,feature_grain,fund_name,issuer_name\n"
-                "SPY,market_state_etf,layer_01_market_regime,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"
-                "XLK,sector_observation_etf,layer_02_sector_context,sp500_sector,1d,Technology Select Sector SPDR Fund,State Street / SPDR\n",
+                "SPY,market_state_etf,model_01_market_context,us_equity_core,1d,SPDR S&P 500 ETF,State Street\n"
+                "XLK,sector_observation_etf,model_01_sector_context,sp500_sector,1d,Technology Select Sector SPDR Fund,State Street / SPDR\n",
                 encoding="utf-8",
             )
             holdings = Path(tmp) / "xlk_holdings.csv"
@@ -90,7 +90,7 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "succeeded")
             self.assertEqual(result.row_counts["model_02_sector_context_data_acquisition"], 1)
             manifest = json.loads((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").read_text(encoding="utf-8"))
-            self.assertEqual(manifest["model_layer_filter"], "layer_02_sector_context")
+            self.assertEqual(manifest["model_layer_filter"], "model_01_sector_context")
             self.assertEqual(manifest["universe_type_filter"], "sector_observation_etf")
             self.assertEqual(manifest["symbols"], ["XLK"])
             self.assertEqual(len(sql_writer.calls), 1)
@@ -116,10 +116,10 @@ class EtfHoldingsEvidencePipelineTests(unittest.TestCase):
 
     def test_missing_payload_can_use_feed_default_source_url(self):
         with tempfile.TemporaryDirectory() as tmp:
-            universe = Path(tmp) / "layer_01_02_market_context_etf_universe.csv"
+            universe = Path(tmp) / "model_01_background_context_etf_universe.csv"
             universe.write_text(
                 "symbol,universe_type,model_layer,exposure_type,feature_grain,fund_name,issuer_name\n"
-                "XLK,sector_observation_etf,layer_02_sector_context,sp500_sector,1d,Technology Select Sector SPDR Fund,State Street / SPDR\n",
+                "XLK,sector_observation_etf,model_01_sector_context,sp500_sector,1d,Technology Select Sector SPDR Fund,State Street / SPDR\n",
                 encoding="utf-8",
             )
             task_key = {

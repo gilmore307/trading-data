@@ -227,8 +227,8 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
                 universe,
                 ["symbol", "issuer_name", "model_layer", "universe_type"],
                 [
-                    {"symbol": "XLK", "issuer_name": "State Street / SPDR", "model_layer": "layer_02_sector_context", "universe_type": "sector_observation_etf"},
-                    {"symbol": "SPY", "issuer_name": "State Street / SPDR", "model_layer": "layer_01_market_regime", "universe_type": "market_state_etf"},
+                    {"symbol": "XLK", "issuer_name": "State Street / SPDR", "model_layer": "model_01_sector_context", "universe_type": "sector_observation_etf"},
+                    {"symbol": "SPY", "issuer_name": "State Street / SPDR", "model_layer": "model_01_market_context", "universe_type": "market_state_etf"},
                 ],
             )
 
@@ -238,7 +238,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
                     universe_csv=universe,
                     output_root=root / "out",
                     as_of_date="2026-06-04",
-                    model_layers={"layer_02_sector_context"},
+                    model_layers={"model_01_sector_context"},
                     allow_partial=True,
                 )
             finally:

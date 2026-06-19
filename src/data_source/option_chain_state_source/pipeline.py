@@ -1,7 +1,7 @@
 """Shared ThetaData option-chain source/cache acquisition.
 
 The source writes one contract-level SQL row per visible option contract. It is
-not model-facing output; Layer 3 and M05 derive their own accepted surfaces
+not model-facing output; M02 and M05 derive their own accepted surfaces
 from these rows.
 """
 from __future__ import annotations
@@ -29,7 +29,7 @@ OUTPUT_TABLE = SOURCE
 INPUT_FEED = "09_feed_thetadata_option_selection_snapshot"
 DEFAULT_MAX_DTE = 180
 DEFAULT_STRIKE_RANGE = 5
-DEFAULT_OPTION_BUCKET_POLICY_REF = "LAYER_03_OPTION_CHAIN_ROLE_SELECTOR_POLICY"
+DEFAULT_OPTION_BUCKET_POLICY_REF = "M02_OPTION_CHAIN_ROLE_SELECTOR_POLICY"
 DEFAULT_PROVIDER_RETRY_ATTEMPTS = 3
 DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS = 1.0
 

@@ -1,4 +1,4 @@
-"""Materialize Layer 2 feed artifacts and generate sector-context features.
+"""Materialize M02 feed artifacts and generate sector-context features.
 
 This command is intentionally offline: it reads already-acquired Alpaca bar
 completion receipts from the local trading-data storage tree, confirms bars are
@@ -54,7 +54,7 @@ def run_from_feed_artifacts(
     materialize_only: bool = False,
     dry_run: bool = False,
 ) -> SectorFeedArtifactMaterializationSummary:
-    """Materialize existing Alpaca artifacts and optionally generate Layer 2 features."""
+    """Materialize existing Alpaca artifacts and optionally generate M02 features."""
 
     artifacts = discover_feed_artifacts(storage_root=storage_root, month=month, symbols=symbols)
     source_rows_found = read_equity_bar_row_count(artifacts)

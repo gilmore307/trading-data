@@ -1,10 +1,10 @@
 """Point-in-time sector/industry behavior evidence for SectorContextModel.
 
-This module owns Model 2 rotation/leadership evidence. It consumes the same
-cleaned market-regime bar source and reviewed ETF combination CSVs as the Layer
-1 feature generator, but emits candidate-comparison rows keyed by snapshot time,
+This module owns Model 1 sector-context rotation/leadership evidence. It consumes
+the same cleaned market-regime bar source and reviewed ETF combination CSVs as
+the M01 market-context feature generator, but emits candidate-comparison rows keyed by snapshot time,
 candidate ETF, comparison ETF, and reviewed rotation pair id. Holdings and
-stock-exposure evidence are intentionally downstream of Layer 2.
+stock-exposure evidence are intentionally downstream of M02.
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ Combination = market_features.Combination
 def rotation_combinations(inputs: MarketRegimeInputs) -> list[Combination]:
     """Return reviewed sector/industry rotation combinations for Model 2."""
 
-    return [combo for combo in inputs.combinations if combo.model_layer == market_features.LAYER_02_SECTOR_CONTEXT]
+    return [combo for combo in inputs.combinations if combo.model_layer == market_features.MODEL_01_SECTOR_CONTEXT]
 
 
 def generate_rows(inputs: MarketRegimeInputs, snapshot_times: Sequence[str | datetime] | None = None) -> list[dict[str, Any]]:

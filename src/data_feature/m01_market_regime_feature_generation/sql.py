@@ -15,8 +15,8 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
 
-DEFAULT_UNIVERSE_CSV = shared_path("main", "shared", "layer_01_02_market_context_etf_universe.csv")
-DEFAULT_COMBINATIONS_CSV = shared_path("main", "shared", "layer_01_02_market_context_relative_strength_combinations.csv")
+DEFAULT_UNIVERSE_CSV = shared_path("main", "shared", "model_01_background_context_etf_universe.csv")
+DEFAULT_COMBINATIONS_CSV = shared_path("main", "shared", "model_01_background_context_relative_strength_combinations.csv")
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
@@ -136,7 +136,7 @@ def write_feature_rows_sql(
     )
     cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"input_frame\" TEXT NOT NULL DEFAULT '1h'")
     cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"prediction_horizon\" TEXT NOT NULL DEFAULT '1D'")
-    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"market_universe_ref\" TEXT NOT NULL DEFAULT 'layer_01_02_market_context_etf_universe'")
+    cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"market_universe_ref\" TEXT NOT NULL DEFAULT 'model_01_background_context_etf_universe'")
     cursor.execute(f"ALTER TABLE {qualified_table} ADD COLUMN IF NOT EXISTS \"feature_payload_json\" JSONB NOT NULL DEFAULT '{{}}'::jsonb")
     cursor.execute(
         f"""
@@ -283,7 +283,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--snapshot-time", action="append", help="Optional ISO snapshot time. Repeat for multiple snapshots. Defaults to SPY one-hour source-bar timestamps.")
     parser.add_argument("--snapshot-start", help="Optional lower timestamp bound for inferred snapshot rows. Use with a wider source-start lookback.")
     parser.add_argument("--snapshot-end", help="Optional upper timestamp bound for inferred snapshot rows. The bound is half-open.")
-    parser.add_argument("--input-frame", action="append", choices=["1min", "10min", "1h", "1D"], help="Layer 1 input frame to generate. Repeat for multiple frames. Defaults to 1h.")
+    parser.add_argument("--input-frame", action="append", choices=["1min", "10min", "1h", "1D"], help="M01 input frame to generate. Repeat for multiple frames. Defaults to 1h.")
     args = parser.parse_args(argv)
 
     row_count = generate_sql(

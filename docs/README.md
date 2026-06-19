@@ -11,14 +11,9 @@ This directory contains the current documentation spine for `trading-data`.
 - `04_task.md` — Tasks.
 - `05_decision.md` — Decisions.
 - `06_memory.md` — Memory.
-- `10_layer_01_market_regime.md` — Layer 01 - Market Regime Data.
-- `11_layer_02_sector_context.md` — Layer 02 - Sector Context Data.
-- `12_layer_03_target_state_vector.md` — Layer 03 - Target State Vector Data.
-- `13_layer_04_event_failure_risk.md` — Layer 04 — Event Failure Risk Data Boundary.
-- `14_layer_05_alpha_confidence.md` — Layer 05 — Alpha Confidence Data Boundary.
-- `15_layer_06_dynamic_risk_policy.md` — Layer 06 — Dynamic Risk Policy Data Boundary.
-- `16_layer_07_position_projection.md` — Layer 07 — Position Projection Data Boundary.
-- `17_layer_08_underlying_action.md` — Layer 08 — Underlying Action Data Boundary.
+- `10_model_01_background_context_data.md` — M01 Background Context Data.
+- `11_model_01_sector_context_data.md` — M01 Sector Context Data.
+- `12_model_02_target_state_data.md` — M02 Target State Data.
 - `18_model_05_option_expression.md` — M05 — Trading Guidance / Option Expression Data Boundary.
 - `19_model_06_residual_event_governance.md` — M06 — Event Risk Governor Data Boundary.
 - `20_data_feed.md` — Data Feed.

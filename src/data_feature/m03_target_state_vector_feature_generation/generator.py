@@ -1,7 +1,7 @@
-"""Deterministic Layer 3 target state-vector feature generator.
+"""Deterministic M02 target state-vector feature generator.
 
 The generator consumes already-cleaned target-local bars, anonymous target
-candidate rows, and optional point-in-time Layer 1/2 context rows. It performs no
+candidate rows, and optional point-in-time M01/M02 context rows. It performs no
 provider calls and no database writes. SQL/request wrappers should own runtime
 reads and writes once the storage contract is accepted.
 """

@@ -1,8 +1,8 @@
-# Layer 03 - Target State Vector Data
+# M02 Target State Data
 
-`trading-data` owns the deterministic data-production side of Layer 3 target state-vector construction. The source/feature surface is implemented; promotion remains gated by model-side real-data evidence.
+`trading-data` owns the deterministic data-production side of M02 target state-vector construction. The source/feature surface is implemented; promotion remains gated by model-side real-data evidence.
 
-Layer 3 is target state-vector production. Action/variant simulation code is not part of the active Layer 3 contract.
+M02 is target state-vector production. Action/variant simulation code is not part of the active M02 contract.
 
 ## Boundary
 
@@ -20,7 +20,7 @@ trading-manager request
   -> trading-model TargetStateVectorModel training/evaluation/review
 ```
 
-Active contracts use target-state names. Layer 3 consumes reviewed candidate-symbol evidence plus Layer 1/2 context references:
+Active contracts use target-state names. M02 consumes reviewed candidate-symbol evidence plus M01/M02 context references:
 
 ```text
 trading_data.model_03_target_state_vector_data_acquisition
@@ -29,10 +29,10 @@ trading_data.model_03_target_state_vector_feature_generation
 
 Current implementation:
 
-- Live Layer 3 receives candidate symbols from the reviewed realtime total-symbol pool and target metadata; historical replay receives them from the fixed historical candidate-universe table seeded from the current realtime pool plus BTC, ETH, and SOL. ETF holdings do not define the ordinary candidate universe.
+- Live M02 receives candidate symbols from the reviewed realtime total-symbol pool and target metadata; historical replay receives them from the fixed historical candidate-universe table seeded from the current realtime pool plus BTC, ETH, and SOL. ETF holdings do not define the ordinary candidate universe.
 - `src/data_source/m03_target_state_vector_data_acquisition/` normalizes caller-supplied point-in-time target-local bars and liquidity/quote evidence into `trading_data.model_03_target_state_vector_data_acquisition` rows keyed by `target_candidate_id + timeframe + timestamp`.
 - `src/data_feature/m03_target_state_vector_feature_generation/generator.py` builds deterministic market/sector/target/cross-state feature blocks.
-- `src/data_feature/m03_target_state_vector_feature_generation/sql.py` reads `trading_data.model_03_target_state_vector_data_acquisition` plus optional Layer 1/2 context rows, carries accepted target asset-class and optionability metadata into candidate rows, and writes `trading_data.model_03_target_state_vector_feature_generation` with JSONB blocks.
+- `src/data_feature/m03_target_state_vector_feature_generation/sql.py` reads `trading_data.model_03_target_state_vector_data_acquisition` plus optional M01/M02 context rows, carries accepted target asset-class and optionability metadata into candidate rows, and writes `trading_data.model_03_target_state_vector_feature_generation` with JSONB blocks.
 - Targets marked as `crypto_spot` or `confirmed_no_listed_options` do not emit `target_option_chain_state` or target option-chain diagnostics. Option overlay fields are present only when the candidate metadata leaves listed options applicable.
 - CLI entrypoints are registered for `trading-data-m03-target-state-vector-data-acquisition` and `trading-data-m03-target-state-vector-feature-generation`.
 
@@ -40,12 +40,12 @@ Current implementation:
 
 Expected inputs are point-in-time artifacts, not future-aware labels:
 
-- manager-issued request parameters: `start`, `end`, candidate universe reference, Layer 1/2 state references, output target, and run metadata;
+- manager-issued request parameters: `start`, `end`, candidate universe reference, M01/M02 state references, output target, and run metadata;
 - reviewed live realtime-pool candidate rows or fixed historical replay candidate rows, plus target metadata;
 - target-local 1-minute bars;
 - target liquidity, quote/trade, spread, and dollar-volume evidence when available;
-- `market_context_state` reference from Layer 1;
-- `sector_context_state` reference from Layer 2;
+- `market_context_state` reference from M01;
+- `sector_context_state` reference from M02;
 - optional accepted event/risk availability flags when they are point-in-time.
 
 ## Output surface

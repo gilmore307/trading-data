@@ -85,17 +85,17 @@ ThetaData runtime lives outside Git under `/root/tools/thetadata-terminal/` and 
 
 `trading-data` does not choose contracts inside these feeds.
 
-## D014 — Layer 1 and Layer 2 data boundaries
+## D014 — M01 and M02 data boundaries
 
-Layer 1 market-regime data is broad-market/ETF bar evidence and must not use sector leadership, selected securities, strategy labels, option outcomes, portfolio PnL, or future-return labels.
+M01 market-regime data is broad-market/ETF bar evidence and must not use sector leadership, selected securities, strategy labels, option outcomes, portfolio PnL, or future-return labels.
 
-Layer 2 sector-context features derive deterministic broad sector-anchor ETF behavior evidence from accepted Layer 1 source outputs and reviewed relative-strength combinations. These features support per-sector-anchor `context_etf_state` construction and global/group `cross_etf_summary`; per-ETF cross-section calculations are construction evidence, not a separate downstream output when embedded in the ETF state.
+M02 sector-context features derive deterministic broad sector-anchor ETF behavior evidence from accepted M01 source outputs and reviewed relative-strength combinations. These features support per-sector-anchor `context_etf_state` construction and global/group `cross_etf_summary`; per-ETF cross-section calculations are construction evidence, not a separate downstream output when embedded in the ETF state.
 
-ETF holdings are not Layer 2 core behavior input and do not define the ordinary equity candidate universe. Ordinary candidate symbols come from the reviewed total-symbol pool and target metadata; Layer 2 supplies broad sector-anchor context attached to those candidates.
+ETF holdings are not M02 core behavior input and do not define the ordinary equity candidate universe. Ordinary candidate symbols come from the reviewed total-symbol pool and target metadata; M02 supplies broad sector-anchor context attached to those candidates.
 
-## D015 — Target candidate and Layer 3 boundaries
+## D015 — Target candidate and M02 boundaries
 
-Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than Layer 2 ETF holdings. Live routing uses the realtime total-symbol pool. Historical replay uses a fixed candidate-universe table seeded from the current realtime pool plus BTC, ETH, and SOL; this is stable replay scope, not point-in-time historical market-wide ranking evidence, and replay must not read the mutable realtime pool directly. The fixed table preserves TradingView's raw sector classification and maps equity rows to the accepted Layer 2 SPDR sector anchors; crypto rows map to `BKCH`.
+M02 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than M02 ETF holdings. Live routing uses the realtime total-symbol pool. Historical replay uses a fixed candidate-universe table seeded from the current realtime pool plus BTC, ETH, and SOL; this is stable replay scope, not point-in-time historical market-wide ranking evidence, and replay must not read the mutable realtime pool directly. The fixed table preserves TradingView's raw sector classification and maps equity rows to the accepted M02 SPDR sector anchors; crypto rows map to `BKCH`.
 
 `trading_data.model_03_target_state_vector_data_acquisition` provides target-local observed bars/liquidity. `trading_data.model_03_target_state_vector_feature_generation` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 
@@ -107,7 +107,7 @@ Layer 3 candidate preparation uses reviewed candidate-symbol evidence and target
 
 ## D017 — Option-expression data boundary
 
-`trading_data.option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. Layer 3 reduces those rows into target-level option-chain state; M05 derives `trading_data.model_05_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
+`trading_data.option_chain_state_source` writes the shared contract-level ThetaData option-chain source/cache. M02 reduces those rows into target-level option-chain state; M05 derives `trading_data.model_05_option_expression_feature_generation` rows directly from the same source for `OptionExpressionModel`.
 
 `trading_data.model_05_option_expression_data_acquisition_contract_path` tracks selected-contract option market data for replay/evaluation. It is not a separate execution model and must not emit order instructions, position sizing, PnL labels, or broker/account mutations.
 
@@ -146,7 +146,7 @@ All browser-scraped feed parsers must filter outputs to the requested time/windo
 
 Accepted: 2026-05-15
 
-The active ten-layer stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into Layer 4 EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the M06 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for Layer 5 AlphaConfidenceModel.
+The active retired serial stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into M03 event-state EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the M06 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for M04 decision AlphaConfidenceModel.
 
 M05 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, and `trading_data.model_05_option_expression_data_acquisition_contract_path`). M06 event-risk data uses the current event SQL surfaces (`trading_data.model_06_residual_event_governance_data_acquisition`, `trading_data.model_06_residual_event_governance_feature_generation`, and event-feed artifacts).
 
@@ -240,11 +240,11 @@ Accepted: 2026-05-15
 
 Missing upstream evidence must be recorded as missing or partial evidence. The feed must not fabricate OI, skew, term-structure, sweep/block, or direction confidence coverage merely to produce bullish/bearish labels.
 
-## D034 — Layer 1 market-regime data preserves frame identity
+## D034 — M01 market-regime data preserves frame identity
 
 Accepted: 2026-05-22
 
-Layer 1 market-regime source and feature construction must preserve the input frame used by `MarketRegimeModel`. The accepted frame/horizon families are:
+M01 market-regime source and feature construction must preserve the input frame used by `MarketRegimeModel`. The accepted frame/horizon families are:
 
 ```text
 1min  -> 10min

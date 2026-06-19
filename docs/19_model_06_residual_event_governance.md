@@ -36,7 +36,7 @@ M06 data is an event index plus deterministic event-overview features, not the f
 
 `trading-model` builds `event_risk_intervention / event_context_vector` from the feature rows plus referenced artifacts and upstream context states.
 
-M06's post-failure attribution route adds one data requirement: event rows and referenced artifacts must remain joinable to model failure/residual windows by point-in-time clocks. `trading-data` preserves event availability, source refs, activity windows, and compact detector evidence; `trading-model` decides whether those events explain a failure, computes `realized_impact_scope_label`, builds attribution labels, and proposes Layer 4 promotion packets.
+M06's post-failure attribution route adds one data requirement: event rows and referenced artifacts must remain joinable to model failure/residual windows by point-in-time clocks. `trading-data` preserves event availability, source refs, activity windows, and compact detector evidence; `trading-model` decides whether those events explain a failure, computes `realized_impact_scope_label`, builds attribution labels, and proposes M03 event-state promotion packets.
 
 M06 is the qualitative event-impact and attribution layer, but qualitative decisions belong to `trading-model` and review. `trading-data` supports that route by preserving the evidence needed to test attribution, including co-event grouping and confounder controls when available.
 
@@ -109,10 +109,10 @@ raw source artifact
 -> point-in-time source evidence row / artifact ref
 -> event_interpretation artifact
 -> standardized event observation row
--> model-side event_context_vector or Layer 4 candidate training route
+-> model-side event_context_vector or M03 event-state candidate training route
 ```
 
-`trading-data` owns the raw source artifact, evidence row, artifact refs, clocks, source priority, dedup/canonical metadata, and source-specific parsed fields. It does not own semantic direction, final risk scoring, event attribution, or production Layer 4 acceptance.
+`trading-data` owns the raw source artifact, evidence row, artifact refs, clocks, source priority, dedup/canonical metadata, and source-specific parsed fields. It does not own semantic direction, final risk scoring, event attribution, or production M03 event-state acceptance.
 
 For calendar/market-structure families, data rows should preserve source-backed facts such as next market open, non-trading interval minutes, closure type, closure-length bucket, holiday name, early-close flag, pre-holiday-session flag, expiry/rebalance/triple-witching flags, index-event family, and certainty/source refs.
 
@@ -129,11 +129,11 @@ co_event_relation_type
 source_scope_hint
 ```
 
-These fields or refs are evidence only. `trading-data` does not decide whether a candidate event is dominant, spurious, incrementally explanatory, or eligible for Layer 4 supervision.
+These fields or refs are evidence only. `trading-data` does not decide whether a candidate event is dominant, spurious, incrementally explanatory, or eligible for M03 event-state supervision.
 
-Trading-calendar and market-structure windows are attribution evidence when failures occur around non-trading intervals, expiry, or rebalance windows. `trading-data` should preserve calendar facts such as closure type, non-trading interval length, next market open, holiday name, early close, pre-holiday session flags, triple-witching/option-expiry flags, and index rebalance flags when available. `trading-model` decides whether the date has enough incremental explanatory value to supervise future Layer 4 risk conditioning.
+Trading-calendar and market-structure windows are attribution evidence when failures occur around non-trading intervals, expiry, or rebalance windows. `trading-data` should preserve calendar facts such as closure type, non-trading interval length, next market open, holiday name, early close, pre-holiday session flags, triple-witching/option-expiry flags, and index rebalance flags when available. `trading-model` decides whether the date has enough incremental explanatory value to supervise future M03 event-state risk conditioning.
 
-Calendar and market-structure rows live first in the global event observation pool. The row's job is to make the date, lifecycle clocks, and source/provenance knowable; it must not assert that the date caused a failure. When M06 later identifies a plausible relationship after attribution, the family/mechanism enters the focused/watched event pool for systematic acquisition, offline Layer 4 candidate training, and Layer 5 validation. Only after validation and M06/review disposition does it become an accepted production Layer 4 event family.
+Calendar and market-structure rows live first in the global event observation pool. The row's job is to make the date, lifecycle clocks, and source/provenance knowable; it must not assert that the date caused a failure. When M06 later identifies a plausible relationship after attribution, the family/mechanism enters the focused/watched event pool for systematic acquisition, offline M03 event-state candidate training, and M04 decision validation. Only after validation and M06/review disposition does it become an accepted production M03 event-state event family.
 
 Persistent event-regime rows also live first in the global event observation pool. Their job is to preserve point-in-time interval evidence: regime start, optional end, active/shadow/decay status, last material update, affected scopes, decay/staleness rule, and source refs. They may remain active or shadow-active without same-day news, but `trading-data` must not assert causal impact or keep stale pressure alive without a reviewed status/decay rule.
 
@@ -193,7 +193,7 @@ trading-manager event/source request
   -> model_06_residual_event_governance_feature_generation
   -> trading-model M06 event-failure attribution or reviewed-pool governance
   -> evaluation/promotion review outside trading-data
-  -> accepted future Layer 4 event_strategy_failure_gate / event-observation scope rules
+  -> accepted future M03 event-state event_strategy_failure_gate / event-observation scope rules
 ```
 
 ## Non-ownership
@@ -205,7 +205,7 @@ trading-manager event/source request
 - event-failure attribution decisions;
 - `realized_impact_scope_label` evaluation labels;
 - co-event/confounder attribution decisions;
-- Layer 4 event-family promotion packets;
+- M03 event-state event-family promotion packets;
 - alpha labels;
 - buy/sell/hold decisions;
 - position sizing;

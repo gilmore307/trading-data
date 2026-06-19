@@ -2,7 +2,7 @@
 
 Manager-facing selected-option-contract market-path tracking source.
 
-This source supports M05 OptionExpressionModel replay/evaluation by collecting the market path of contracts selected by an upstream offline option-expression plan. It is not broker execution, not Layer 6 `DynamicRiskPolicyModel`, not a model-output layer, and does not emit execution instructions. The source accepts multiple selected contracts and writes option contract time-series rows from each contract's entry time through one hour after its exit time.
+This source supports M05 OptionExpressionModel replay/evaluation by collecting the market path of contracts selected by an upstream offline option-expression plan. It is not broker execution, not M04 risk `DynamicRiskPolicyModel`, not a model-output layer, and does not emit execution instructions. The source accepts multiple selected contracts and writes option contract time-series rows from each contract's entry time through one hour after its exit time.
 
 Stable defaults live in pipeline code; there is no source-local `config.json`.
 

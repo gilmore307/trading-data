@@ -1,1 +1,1 @@
-"""Layer 1 MarketRegimeModel deterministic feature generator."""
+"""M01 MarketRegimeModel deterministic feature generator."""

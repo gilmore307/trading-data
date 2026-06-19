@@ -19,9 +19,9 @@ from zoneinfo import ZoneInfo
 ET = ZoneInfo("America/New_York")
 MARKET_STATE_TYPE = "market_state_etf"
 SECTOR_OBSERVATION_TYPE = "sector_observation_etf"
-LAYER_01_MARKET_REGIME = "layer_01_market_regime"
-LAYER_02_SECTOR_CONTEXT = "layer_02_sector_context"
-DEFAULT_MARKET_UNIVERSE_REF = "layer_01_02_market_context_etf_universe"
+MODEL_01_MARKET_CONTEXT = "model_01_market_context"
+MODEL_01_SECTOR_CONTEXT = "model_01_sector_context"
+DEFAULT_MARKET_UNIVERSE_REF = "model_01_background_context_etf_universe"
 INPUT_FRAME_HORIZONS: dict[str, tuple[str, ...]] = {
     "1min": ("10min",),
     "10min": ("1h",),
@@ -133,11 +133,11 @@ def normalize_input_frame(value: Any) -> str:
     }
     normalized = aliases.get(text)
     if normalized is None:
-        raise ValueError(f"unsupported Layer 1 input frame: {value!r}")
+        raise ValueError(f"unsupported M01 input frame: {value!r}")
     if normalized in {"5min", "30min"}:
         return {"5min": "10min", "30min": "1h"}[normalized]
     if normalized not in INPUT_FRAME_HORIZONS:
-        raise ValueError(f"unsupported Layer 1 input frame: {value!r}")
+        raise ValueError(f"unsupported M01 input frame: {value!r}")
     return normalized
 
 
@@ -213,9 +213,9 @@ def build_inputs(
         model_layer = str(row.get("model_layer") or "").strip().lower()
         if not symbol:
             continue
-        if model_layer == LAYER_01_MARKET_REGIME:
+        if model_layer == MODEL_01_MARKET_CONTEXT:
             market_state_symbols.append(symbol)
-        elif model_layer == LAYER_02_SECTOR_CONTEXT:
+        elif model_layer == MODEL_01_SECTOR_CONTEXT:
             sector_observation_symbols.append(symbol)
 
     combinations: list[Combination] = []
@@ -296,7 +296,7 @@ def _is_snapshot_time_for_input_frame(value: datetime, input_frame: str) -> bool
         return et_value.minute % 10 == 0
     if input_frame == "1h":
         return et_value.minute == 0
-    raise ValueError(f"unsupported Layer 1 input frame: {input_frame!r}")
+    raise ValueError(f"unsupported M01 input frame: {input_frame!r}")
 
 
 def generate_rows(
@@ -535,7 +535,7 @@ def _add_return_features(row: dict[str, Any], subject: str, close_at: Any, symbo
 
 
 def _market_regime_combinations(inputs: MarketRegimeInputs) -> list[Combination]:
-    return [combo for combo in inputs.combinations if combo.model_layer == LAYER_01_MARKET_REGIME]
+    return [combo for combo in inputs.combinations if combo.model_layer == MODEL_01_MARKET_CONTEXT]
 
 
 def _add_relative_strength_features(row: dict[str, Any], inputs: MarketRegimeInputs, close_at: Any, daily: Any, snapshot_time: datetime) -> None:

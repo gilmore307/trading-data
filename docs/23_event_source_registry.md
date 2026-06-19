@@ -1,6 +1,6 @@
 # Event Source Registry
 
-Status: accepted source-acquisition boundary for the global event observation pool. This document defines how `trading-data` should acquire historical and realtime/future event observations before M06 attribution and any future Layer 4 supervision.
+Status: accepted source-acquisition boundary for the global event observation pool. This document defines how `trading-data` should acquire historical and realtime/future event observations before M06 attribution and any future M03 event-state supervision.
 
 ## Core Rule
 
@@ -9,9 +9,9 @@ Event acquisition has two separate jobs:
 1. historical replay: reconstruct what was knowable at each historical `available_time`;
 2. realtime maintenance: keep the forward-looking global event observation pool current without making causal claims.
 
-Rows produced from this registry are observation evidence only. They do not imply production Layer 4 eligibility, strategy failure attribution, alpha, trade direction, position size, or execution permission. M06 may separately place an event family in the focused/watched event pool, which lets `trading-data` systematically acquire and standardize candidate observations for offline Layer 4 training and Layer 5 validation.
+Rows produced from this registry are observation evidence only. They do not imply production M03 event-state eligibility, strategy failure attribution, alpha, trade direction, position size, or execution permission. M06 may separately place an event family in the focused/watched event pool, which lets `trading-data` systematically acquire and standardize candidate observations for offline M03 event-state training and M04 decision validation.
 
-Raw source rows are not model-ready semantics. The required route is source acquisition -> point-in-time evidence row/artifact ref -> `event_interpretation` artifact -> standardized event observation row. `trading-data` owns acquisition, clocks, source priority, dedup/canonical metadata, source-specific parsed fields, and artifact refs. `trading-model` owns semantic interpretation, event-context vector scoring, failure attribution, and Layer 4/Layer 5 validation.
+Raw source rows are not model-ready semantics. The required route is source acquisition -> point-in-time evidence row/artifact ref -> `event_interpretation` artifact -> standardized event observation row. `trading-data` owns acquisition, clocks, source priority, dedup/canonical metadata, source-specific parsed fields, and artifact refs. `trading-model` owns semantic interpretation, event-context vector scoring, failure attribution, and M03 event-state/M04 decision validation.
 
 ## Required Clocks
 
@@ -64,7 +64,7 @@ estimated
 inferred_rule
 ```
 
-Future events may enter the global event observation pool when `available_time <= decision_time`. They remain observation-only until M06 identifies a plausible failure relationship and places the family in the focused/watched event pool for candidate training and validation. Production Layer 4 use still requires later acceptance.
+Future events may enter the global event observation pool when `available_time <= decision_time`. They remain observation-only until M06 identifies a plausible failure relationship and places the family in the focused/watched event pool for candidate training and validation. Production M03 event-state use still requires later acceptance.
 
 ## Source Families
 
@@ -168,7 +168,7 @@ staleness_review_time
 regime_review_ref
 ```
 
-These fields are standardization evidence. M06 and review decide whether they become focused-pool candidates or accepted Layer 4 production conditioning.
+These fields are standardization evidence. M06 and review decide whether they become focused-pool candidates or accepted M03 event-state production conditioning.
 
 ## Macro TE Route
 
@@ -180,7 +180,7 @@ Official macro agency sources are reserved for:
 - one-off audit of critical macro event handling;
 - future replacement only after a separate reviewed route decision.
 
-This means macro rows can be promoted into the global event observation pool from TE storage alone, provided their `available_time`, retrieval evidence, row fields, and retained storage artifact path are preserved. TE source artifacts are keep-forever append-only evidence under the canonical monthly storage root; SQL stores the normalized event envelope and points back to those artifacts. TE rows still do not become production Layer 4 conditioning samples unless M06/review later accepts the event family/mechanism. They may support focused-pool candidate training after M06 identifies a plausible failure relationship.
+This means macro rows can be promoted into the global event observation pool from TE storage alone, provided their `available_time`, retrieval evidence, row fields, and retained storage artifact path are preserved. TE source artifacts are keep-forever append-only evidence under the canonical monthly storage root; SQL stores the normalized event envelope and points back to those artifacts. TE rows still do not become production M03 event-state conditioning samples unless M06/review later accepts the event family/mechanism. They may support focused-pool candidate training after M06 identifies a plausible failure relationship.
 
 ## Persistent-Regime Source Rules
 
@@ -195,8 +195,8 @@ high_frequency_news_topic
 -> persistent_event_regime
 -> M06 attribution
 -> focused/watched event pool for systematic acquisition and candidate training
--> Layer 4 candidate training
--> Layer 5 validation
+-> M03 event-state candidate training
+-> M04 decision validation
 -> M06 disposition
 -> accepted_layer4_event_family only if later accepted for production supervision
 ```
@@ -218,7 +218,7 @@ affected_scope_hint
 representative_evidence_refs
 ```
 
-Agent review uses the `regime-promotion-review` skill to decide whether the topic is a real regime, a short-lived news cluster, duplicate coverage of another regime, or noise. The accepted review packet should define `regime_family`, inclusion/exclusion rules, start status, affected scopes, material update rules, decay/staleness rules, and evidence-quality thresholds. Approval can authorize focused-pool candidate acquisition and Layer 4 candidate training/evaluation; it does not authorize production Layer 4 conditioning.
+Agent review uses the `regime-promotion-review` skill to decide whether the topic is a real regime, a short-lived news cluster, duplicate coverage of another regime, or noise. The accepted review packet should define `regime_family`, inclusion/exclusion rules, start status, affected scopes, material update rules, decay/staleness rules, and evidence-quality thresholds. Approval can authorize focused-pool candidate acquisition and M03 event-state candidate training/evaluation; it does not authorize production M03 event-state conditioning.
 
 Accepted source classes include:
 
@@ -249,7 +249,7 @@ evidence_refs
 
 - Do not backfill future-known results as historical pre-event facts.
 - Do not treat vendor/news calendars as higher priority than official issuer/agency/exchange sources.
-- Do not turn a global event-pool row into production Layer 4 conditioning without M06/review acceptance.
+- Do not turn a global event-pool row into production M03 event-state conditioning without M06/review acceptance.
 - Do not skip the focused-pool candidate stage when M06 has only identified a plausible failure relationship.
 - Do not keep a persistent regime active forever without decay/staleness evidence.
 - Do not bypass WAF, captcha, login, or provider terms to obtain source data.

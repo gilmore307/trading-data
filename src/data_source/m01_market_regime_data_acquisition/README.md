@@ -1,8 +1,8 @@
 # m01_market_regime_data_acquisition
 
-Market-context ETF bar source for Layer 1 market regime and Layer 2 sector context.
+Market-context ETF bar source for M01 market regime and M02 sector context.
 
-This source fetches the reviewed market/sector/cross-asset ETF universe over a manager-supplied time range and writes one normalized SQL long table. Stable defaults live in the pipeline code; there is no source-local `config.json` for this contract. Layer ownership is not inferred from the source table name; downstream feature generators must honor the shared CSV `model_layer` discriminator.
+This source fetches the reviewed market/sector/cross-asset ETF universe over a manager-supplied time range and writes one normalized SQL long table. Stable defaults live in the pipeline code; there is no source-local `config.json` for this contract. Model ownership is not inferred from the source table name; downstream feature generators must honor the shared CSV `model_layer` discriminator.
 
 ## Input parameters
 
@@ -11,7 +11,7 @@ The manager supplies these values in `task_key.params`:
 - `start` — required. Inclusive provider request start timestamp/date.
 - `end` — required. Exclusive/provider request end timestamp/date.
 - `symbols` — optional debug/review subset. String comma list or JSON list of symbols from the reviewed universe.
-- `market_regime_etf_universe_path` — optional reviewed override. Normal runs use `TRADING_STORAGE_REPO_ROOT/main/shared/layer_01_02_market_context_etf_universe.csv`, defaulting to the sibling `trading-storage` repository.
+- `market_regime_etf_universe_path` — optional reviewed override. Normal runs use `TRADING_STORAGE_REPO_ROOT/main/shared/model_01_background_context_etf_universe.csv`, defaulting to the sibling `trading-storage` repository.
 - `limit`, `max_pages`, `adjustment`, `feed`, `timeout_seconds`, `secret_alias` — optional request/runtime overrides.
 
 The task key also carries orchestration fields outside `params`, including `task_id`, `source = "m01_market_regime_data_acquisition"`, and optional `output_root` for receipts/manifests.
@@ -22,8 +22,8 @@ The universe CSV owns ETF scope and grain choices:
 
 - `symbol` — ETF symbol to fetch.
 - `universe_type` / `exposure_type` — why the ETF belongs in the universe.
-- `model_layer` — authoritative scope discriminator; `layer_01_market_regime` rows feed Layer 1 feature construction and `layer_02_sector_context` rows feed Layer 2 sector/industry/theme observation.
-- `feature_grain` — reviewed downstream observation/feature grain cue for that ETF. Current shared Layer 1/2 ETF rows use `1m`; longer-horizon diagnostics are derived downstream from the canonical 1-minute source rows.
+- `model_layer` — authoritative scope discriminator; `model_01_market_context` rows feed M01 feature construction and `model_01_sector_context` rows feed M02 sector/industry/theme observation.
+- `feature_grain` — reviewed downstream observation/feature grain cue for that ETF. Current shared M01/M02 ETF rows use `1m`; longer-horizon diagnostics are derived downstream from the canonical 1-minute source rows.
 - `fund_name`, `issuer_name` — human-readable metadata.
 
 `m01_market_regime_data_acquisition` downloads one canonical raw bar stream: `1Min`. Multi-frame market and sector evidence is derived during feature generation from those 1-minute source rows. The source stage rejects non-`1Min` task-key timeframes so the table does not mix provider-native 1-minute, 30-minute, and daily bars.

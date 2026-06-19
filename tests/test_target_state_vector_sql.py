@@ -191,7 +191,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
 
     def test_candidate_rows_use_accepted_target_context_mapping(self) -> None:
         with TemporaryDirectory() as tmp:
-            mapping_path = Path(tmp) / "layer_02_target_context_mapping.csv"
+            mapping_path = Path(tmp) / "model_02_target_context_mapping.csv"
             mapping_path.write_text(
                 "target_symbol,target_asset_class,spot_ref,layer2_context_symbol,layer2_mapping_method_type,"
                 "listed_proxy_symbol,optionable_proxy_symbol,optionable_proxy_status,proxy_role_type,proxy_use,"

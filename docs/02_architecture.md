@@ -10,20 +10,20 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 
 | Docs band | Implementation surface | Purpose |
 |---|---|---|
-| `10_*` | `src/data_source/source_*`, `src/data_feature/feature_*`, `src/data_layers/` | Layer-specific data boundaries for Layers 1-9. |
+| `10_*` | `src/data_source/source_*`, `src/data_feature/feature_*`, `src/data_models/` | Model-specific data boundaries for M01-M05. |
 | `20_*` | `src/data_feed/`, `src/feed_interfaces/`, `src/feed_availability/`, `trading-storage/main/templates/` | Provider feeds, feed availability, and API/data-kind templates. |
 | `30_*` | model-input bundle interfaces | Data-output to model-input handoff rules. |
 | `40_*` | repository-wide hardening surfaces | Production hardening and non-production safety policy. |
 | Runtime substrate | `src/data_runtime/temporal_explorer.py` | Shared calendar/timewheel tables for day/session/event/result/news-index/chart-cache alignment. |
 
-## Layers
+## Repository Surfaces
 
-| Layer | Owns | Examples |
+| Surface | Owns | Examples |
 |---|---|---|
 | Data feeds | Smallest-unit provider/API/web/file access and feed-level normalization. | Alpaca bars/news/liquidity, ThetaData option endpoints, SEC EDGAR, ETF issuer files, official calendar pages. |
 | Data sources | Manager-facing orchestration for accepted model-input or acquisition routes. | SQL outputs use `model_01_market_regime_data_acquisition`, `model_03_target_state_vector_data_acquisition`, `model_06_residual_event_governance_data_acquisition`, and `model_05_option_expression_data_acquisition_contract_path` where materialized; `option_chain_state_source` is the shared option-chain source/cache. Retired standalone evidence packages such as `m02_sector_context_data_acquisition` do not define the current candidate route. |
-| Data features | Deterministic layer-ready feature blocks from accepted source outputs. | SQL outputs use `model_01_market_regime_feature_generation`, `model_02_sector_context_feature_generation`, `model_03_target_state_vector_feature_generation`, `model_06_residual_event_governance_feature_generation`, and `model_05_option_expression_feature_generation`. |
-| Layer catalog | Maintained Layer 1-9 ownership map for docs/src/CLI/tests. | `src/data_layers/catalog.py`. |
+| Data features | Deterministic model-ready feature blocks from accepted source outputs. | SQL outputs use `model_01_market_regime_feature_generation`, `model_02_sector_context_feature_generation`, `model_03_target_state_vector_feature_generation`, `model_06_residual_event_governance_feature_generation`, and `model_05_option_expression_feature_generation`. |
+| Model catalog | Maintained M01-M06 ownership map for docs/src/CLI/tests. | `src/data_models/catalog.py`. |
 | Storage helpers | Low-level persistence helpers for reviewed outputs. | SQL writers and receipt-safe metadata helpers. |
 | Temporal substrate | Calendar/day/session/chart-cache SQL contracts for dashboard, replay, and model-context alignment. | `calendar_day`, `calendar_market_session`, `chart_ohlcv_cache`. |
 | Downstream consumers | Use accepted outputs without depending on provider internals. | `trading-model`, then strategy/execution/dashboard surfaces after their own contracts. |
@@ -31,15 +31,15 @@ data_feed -> data_source -> data_feature -> SQL/artifact handoff
 ## Rules
 
 - Start from the accepted manager request/source contract, not from a broad domain label.
-- Treat `source_NN_*` as source-contract identifiers, not model-layer numbers.
+- Treat `source_NN_*` as source-contract identifiers, not model-model numbers.
 - Keep provider details in `data_feed`; keep model-input orchestration in `data_source`.
 - Prefer accepted SQL outputs for numbered model-input sources.
 - Persist only final cleaned artifacts or reviewed SQL rows by default; bulky raw provider payloads stay transient unless an incident/debug artifact is explicitly approved.
 - The Temporal Explorer substrate is an index and visualization substrate. It does not materialize M06 macro/news events until an accepted event-risk route explicitly promotes them. `chart_ohlcv_cache` is a compact visualization cache and is not a training truth source.
-- `option_chain_state_source` is the single contract-level ThetaData option-chain source/cache. Layer 3 consumes it only through target-level option-chain reduction; M05 derives option-expression rows from the same source before candidate feature generation.
+- `option_chain_state_source` is the single contract-level ThetaData option-chain source/cache. M02 consumes it only through target-level option-chain reduction; M05 derives option-expression rows from the same source before candidate feature generation.
 - Register reusable feed, source, field, status, table, parameter, and artifact names through `trading-manager` before other repositories depend on them.
 - Do not use strategy returns, model labels, profitability, or execution outcomes as upstream data-production inputs.
-- Keep `src/data_layers/catalog.py` current when adding, removing, or intentionally omitting a layer surface.
+- Keep `src/data_models/catalog.py` current when adding, removing, or intentionally omitting a model data surface.
 
 ## Historical Labels
 

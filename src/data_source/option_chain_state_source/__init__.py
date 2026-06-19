@@ -1,2 +1,2 @@
-"""Shared ThetaData option-chain source rows for Layer 3 and M05."""
+"""Shared ThetaData option-chain source rows for M02 and M05."""
 

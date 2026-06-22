@@ -95,7 +95,7 @@ ETF holdings are not M02 core behavior input and do not define the ordinary equi
 
 ## D015 — Target candidate and M02 boundaries
 
-M02 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than M02 ETF holdings. Live routing uses the realtime total-symbol pool. Historical replay uses a fixed candidate-universe table seeded from the current realtime pool plus BTC, ETH, and SOL; this is stable replay scope, not point-in-time historical market-wide ranking evidence, and replay must not read the mutable realtime pool directly. The fixed table preserves TradingView's raw sector classification and maps equity rows to the accepted M02 SPDR sector anchors; crypto rows map to `BKCH`.
+M02 candidate preparation uses reviewed candidate-symbol evidence and target metadata rather than M02 ETF holdings. Live routing uses the realtime total-symbol pool. Historical replay uses a fixed candidate-universe table seeded from the current realtime equity pool plus the reviewed BTC/ETH/SOL crypto spot candidate pool; this is stable replay scope, not point-in-time historical market-wide ranking evidence, and replay must not read the mutable realtime pool directly. The fixed table preserves TradingView's raw sector classification and maps equity rows to the accepted M02 SPDR sector anchors; crypto rows map to `BKCH` and carry structural no-listed-options capability.
 
 `trading_data.model_03_target_state_vector_data_acquisition` provides target-local observed bars/liquidity. `trading_data.model_03_target_state_vector_feature_generation` builds deterministic feature blocks for `TargetStateVectorModel`. Labels, evaluation, and promotion belong to `trading-model`.
 

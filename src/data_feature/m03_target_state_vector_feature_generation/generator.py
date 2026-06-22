@@ -332,8 +332,16 @@ def iter_candidate_rows(
         sector_context = sector_context_lookup.latest_at(bar.available_time)
         option_state: dict[str, Any] | None = None
         option_diagnostics: dict[str, Any] | None = None
+        option_capability_state = _target_option_capability_state(
+            option_overlay_enabled=option_overlay_enabled,
+            option_chain_has_snapshot=False,
+        )
         if option_overlay_enabled:
             option_snapshot = option_context_lookup.latest_at(bar.available_time)
+            option_capability_state = _target_option_capability_state(
+                option_overlay_enabled=True,
+                option_chain_has_snapshot=option_snapshot is not None,
+            )
             if option_snapshot is None:
                 option_state, option_diagnostics = _target_option_chain_state(None)
             else:
@@ -353,6 +361,7 @@ def iter_candidate_rows(
             dollar_volumes,
             feature_cache=feature_cache,
             option_chain_state=option_state,
+            option_capability_state=option_capability_state,
             include_option_chain_state=option_overlay_enabled,
         )
         market_state = _market_state_features(market_context)
@@ -377,6 +386,7 @@ def iter_candidate_rows(
                 market_context,
                 sector_context,
                 option_diagnostics,
+                option_capability_state,
                 include_option_chain_diagnostics=option_overlay_enabled,
             ),
         }
@@ -1007,6 +1017,35 @@ def _target_option_chain_state(snapshot: _OptionSnapshot | None) -> tuple[dict[s
     return state, diagnostics
 
 
+def _target_option_capability_state(*, option_overlay_enabled: bool, option_chain_has_snapshot: bool) -> dict[str, Any]:
+    if not option_overlay_enabled:
+        return {
+            "listed_options_available": False,
+            "option_chain_valid": False,
+            "option_expression_allowed": False,
+            "option_availability_status": "structurally_unavailable",
+            "option_unavailability_reason": "target_has_no_listed_options",
+            "missingness_policy": "structural_no_option_is_capability_state_not_zero_option_signal",
+        }
+    if not option_chain_has_snapshot:
+        return {
+            "listed_options_available": True,
+            "option_chain_valid": False,
+            "option_expression_allowed": False,
+            "option_availability_status": "temporarily_unavailable",
+            "option_unavailability_reason": "option_chain_snapshot_missing",
+            "missingness_policy": "missing_option_chain_must_not_be_imputed_as_zero_signal",
+        }
+    return {
+        "listed_options_available": True,
+        "option_chain_valid": True,
+        "option_expression_allowed": True,
+        "option_availability_status": "available",
+        "option_unavailability_reason": None,
+        "missingness_policy": "option_features_point_in_time_available",
+    }
+
+
 def _option_row_key(row: OptionChainRow) -> tuple[str, str, float | None]:
     return (row.expiration, row.option_right_type.upper(), row.strike)
 
@@ -1365,6 +1404,7 @@ def _target_state_features(
     dollar_volumes: Sequence[float | None],
     feature_cache: _TargetRollingFeatures | None = None,
     option_chain_state: Mapping[str, Any] | None = None,
+    option_capability_state: Mapping[str, Any] | None = None,
     include_option_chain_state: bool = True,
 ) -> dict[str, Any]:
     close = closes[index]
@@ -1390,6 +1430,8 @@ def _target_state_features(
     }
     if include_option_chain_state:
         state["target_option_chain_state"] = {}
+    if option_capability_state:
+        state["target_option_capability_state"] = dict(option_capability_state)
     state["target_price_state"]["bar_close"] = close
     state["target_price_state"]["bar_high"] = highs[index]
     state["target_price_state"]["bar_low"] = lows[index]
@@ -1542,6 +1584,7 @@ def _feature_quality(
     market_context: ContextRow | None,
     sector_context: ContextRow | None,
     option_diagnostics: Mapping[str, Any] | None = None,
+    option_capability_state: Mapping[str, Any] | None = None,
     include_option_chain_diagnostics: bool = True,
 ) -> dict[str, Any]:
     diagnostics = {
@@ -1554,6 +1597,8 @@ def _feature_quality(
     }
     if include_option_chain_diagnostics:
         diagnostics["target_option_chain_diagnostics"] = dict(option_diagnostics or {"has_option_chain_source": False})
+    if option_capability_state:
+        diagnostics["target_option_capability_diagnostics"] = dict(option_capability_state)
     return diagnostics
 
 

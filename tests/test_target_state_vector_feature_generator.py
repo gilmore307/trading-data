@@ -334,7 +334,7 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         self.assertEqual(diagnostics["option_short_overlay_selected_contract_row_count"], 2)
         self.assertEqual(diagnostics["option_stable_core_selected_contract_row_count"], 2)
 
-    def test_non_optionable_candidate_omits_option_overlay_fields(self) -> None:
+    def test_non_optionable_candidate_emits_structural_no_option_capability_without_overlay(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)
         inputs = generator.build_inputs(
             bar_rows=[_bar("BTC", start + timedelta(minutes=index), 100 + index * 0.1) for index in range(20)],
@@ -364,11 +364,17 @@ class TargetStateVectorFeatureTests(unittest.TestCase):
         rows = generator.generate_rows(inputs)
         target_state = rows[-1]["target_state_features"]
         diagnostics = rows[-1]["feature_quality_diagnostics"]
+        capability = target_state["target_option_capability_state"]
 
         self.assertNotIn("target_option_chain_state", target_state)
         self.assertNotIn("target_option_chain_diagnostics", diagnostics)
-        self.assertFalse(any("option" in key for key in _keys_recursive(target_state)))
-        self.assertFalse(any("option" in key for key in _keys_recursive(diagnostics)))
+        self.assertEqual(capability["option_availability_status"], "structurally_unavailable")
+        self.assertFalse(capability["listed_options_available"])
+        self.assertFalse(capability["option_expression_allowed"])
+        self.assertEqual(
+            diagnostics["target_option_capability_diagnostics"]["missingness_policy"],
+            "structural_no_option_is_capability_state_not_zero_option_signal",
+        )
 
     def test_rejects_unmapped_bars_instead_of_emitting_identity_features(self) -> None:
         start = datetime(2026, 1, 2, 9, 30, tzinfo=ET)

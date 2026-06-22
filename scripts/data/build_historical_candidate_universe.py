@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Freeze a static historical replay candidate universe from the current equity pool."""
+"""Freeze a static historical replay candidate universe from reviewed candidate pools."""
 
 from __future__ import annotations
 
@@ -17,6 +17,11 @@ DEFAULT_OUTPUT_CSV = Path("/root/projects/trading-storage/main/shared/historical
 DEFAULT_SYMBOLS_TXT = Path("/root/projects/trading-storage/main/shared/historical_candidate_universe.symbols.txt")
 DEFAULT_RECEIPT = Path("/root/projects/trading-storage/storage/02_control_plane/runtime/equity_total_symbol_pool/historical_candidate_universe_build_receipt.json")
 DEFAULT_UNIVERSE_POLICY_REF = "fixed_current_realtime_pool_snapshot_for_historical_replay"
+DEFAULT_CRYPTO_SPOT_CANDIDATES = (
+    ("BTC", "Bitcoin", "BKCH"),
+    ("ETH", "Ethereum", "BKCH"),
+    ("SOL", "Solana", "BKCH"),
+)
 TRADINGVIEW_SECTOR_TO_LAYER2_CONTEXT = {
     "Communication Services": "XLC",
     "Commercial Services": "XLI",
@@ -157,6 +162,35 @@ def _equity_rows(*, source_pool_csv: Path, freeze_as_of_date: str, universe_poli
     return rows, len(source_rows)
 
 
+def _crypto_rows(*, freeze_as_of_date: str, universe_policy_ref: str) -> list[HistoricalCandidateRow]:
+    rows: list[HistoricalCandidateRow] = []
+    for symbol, name, context_symbol in DEFAULT_CRYPTO_SPOT_CANDIDATES:
+        rows.append(
+            HistoricalCandidateRow(
+                symbol=symbol,
+                target_ref=symbol,
+                asset_class="crypto_spot",
+                instrument_type="spot_crypto_underlying",
+                name=name,
+                tradingview_sector="Crypto",
+                layer2_context_symbol=context_symbol,
+                layer2_context_method="reviewed_crypto_context_anchor",
+                optionable_underlying_status="not_applicable",
+                replay_candidate_status="active",
+                replay_candidate_reason="active_fixed_crypto_spot_candidate_pool",
+                source_pool_as_of_date="reviewed_crypto_spot_candidate_pool",
+                in_dollar_volume_top300="false",
+                in_market_cap_top300="false",
+                dollar_volume_rank="",
+                market_cap_rank="",
+                source_refs="crypto_spot_candidate_pool_policy",
+                freeze_as_of_date=freeze_as_of_date,
+                universe_policy_ref=universe_policy_ref,
+            )
+        )
+    return rows
+
+
 def build_universe(
     *,
     source_pool_csv: Path,
@@ -168,6 +202,7 @@ def build_universe(
         freeze_as_of_date=freeze_as_of_date,
         universe_policy_ref=universe_policy_ref,
     )
+    rows.extend(_crypto_rows(freeze_as_of_date=freeze_as_of_date, universe_policy_ref=universe_policy_ref))
     rows.sort(
         key=lambda row: (
             0 if row.asset_class == "us_equity" else 1,
@@ -188,7 +223,7 @@ def build_universe(
             "crypto_spot": sum(1 for row in rows if row.asset_class == "crypto_spot"),
         },
         "layer2_context_symbols": sorted({row.layer2_context_symbol for row in rows}),
-        "boundary_note": "This is a fixed historical replay candidate universe seeded from provider-derived active realtime equity pool rows. This artifact is stable replay scope, not point-in-time historical market-wide ranking evidence.",
+        "boundary_note": "This is a fixed historical replay candidate universe seeded from provider-derived active realtime equity pool rows plus the reviewed crypto spot candidate pool. This artifact is stable replay scope, not point-in-time historical market-wide ranking evidence. Crypto spot rows carry structurally no-listed-options capability and must not trigger option-chain acquisition.",
     }
     return rows, receipt
 

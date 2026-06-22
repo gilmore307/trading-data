@@ -277,7 +277,7 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
         self.assertEqual(receipt["input_symbol_count"], 2)
         self.assertEqual(receipt["rank_limit"], 1)
 
-    def test_build_historical_candidate_universe_freezes_current_active_pool_and_crypto(self) -> None:
+    def test_build_historical_candidate_universe_freezes_current_active_equity_pool(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             pool = root / "equity_total_symbol_pool.csv"
@@ -307,17 +307,15 @@ class EquityTotalSymbolPoolTests(unittest.TestCase):
             rows, receipt = build_universe(source_pool_csv=pool, freeze_as_of_date="2026-06-04")
 
         by_symbol = {row.symbol: row for row in rows}
-        self.assertEqual(set(by_symbol), {"BTC", "ETH", "FDXF", "NVDA", "SOL"})
+        self.assertEqual(set(by_symbol), {"FDXF", "NVDA"})
         self.assertEqual(by_symbol["NVDA"].replay_candidate_status, "active")
         self.assertEqual(by_symbol["NVDA"].source_pool_as_of_date, "2026-06-04")
         self.assertEqual(by_symbol["NVDA"].asset_class, "us_equity")
         self.assertEqual(by_symbol["NVDA"].layer2_context_symbol, "XLK")
         self.assertEqual(by_symbol["FDXF"].layer2_context_symbol, "XLI")
         self.assertEqual(by_symbol["FDXF"].layer2_context_method, "transportation_equity_context_override")
-        self.assertEqual(by_symbol["BTC"].asset_class, "crypto_spot")
-        self.assertEqual(by_symbol["BTC"].layer2_context_symbol, "BKCH")
-        self.assertEqual(receipt["active_candidate_count"], 5)
-        self.assertEqual(receipt["asset_class_counts"], {"us_equity": 2, "crypto_spot": 3})
+        self.assertEqual(receipt["active_candidate_count"], 2)
+        self.assertEqual(receipt["asset_class_counts"], {"us_equity": 2, "crypto_spot": 0})
         self.assertIn("not point-in-time historical", receipt["boundary_note"])
 
 

@@ -39,6 +39,7 @@ DEFAULT_PROVIDER_RETRY_ATTEMPTS = 3
 DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS = 1.0
 DEFAULT_OPTION_PREFILTER_MIN_MID = 0.01
 DEFAULT_SELECTED_CONTRACT_HARD_CAP = 36
+DEFAULT_TERMINAL_REST_EXACT_WORKERS = 1
 
 
 @dataclass(frozen=True)
@@ -381,6 +382,13 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     )
 
 
+def _response_is_no_data_found(result: HttpResult) -> bool:
+    if result.status not in {404, 472}:
+        return False
+    text = result.text()
+    return "No data found" in text or "no data found" in text.lower()
+
+
 def _fetch_endpoint(
     client: HttpClient,
     base_url: str,
@@ -398,6 +406,44 @@ def _fetch_endpoint(
         "retry_policy": result.retry_policy,
         "attempts": result.attempts,
         "row_count": len(rows),
+    }
+
+
+def _fetch_endpoint_missing_ok(
+    client: HttpClient,
+    base_url: str,
+    endpoint: str,
+    params: Mapping[str, str],
+    name: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    started = time.perf_counter()
+    result = client.get(f"{base_url}{endpoint}", params=dict(params), headers={"Accept": "application/json"})
+    elapsed = round(time.perf_counter() - started, 3)
+    if _response_is_no_data_found(result):
+        return [], {
+            "endpoint": sanitize_url(result.url),
+            "transport": "terminal_rest",
+            "http_status": result.status,
+            "attempt_count": result.attempt_count,
+            "retry_policy": result.retry_policy,
+            "attempts": result.attempts,
+            "row_count": 0,
+            "data_row_count": 0,
+            "elapsed_seconds": elapsed,
+            "skipped": "no_data_found",
+        }
+    payload = _json_response(result)
+    rows = _response_rows(payload, name)
+    return rows, {
+        "endpoint": sanitize_url(result.url),
+        "transport": "terminal_rest",
+        "http_status": result.status,
+        "attempt_count": result.attempt_count,
+        "retry_policy": result.retry_policy,
+        "attempts": result.attempts,
+        "row_count": len(rows),
+        "data_row_count": sum(len(_data_points(row)) for row in rows),
+        "elapsed_seconds": elapsed,
     }
 
 
@@ -773,9 +819,12 @@ def _filter_response_rows_for_plan(rows: Sequence[Mapping[str, Any]], plan: Sequ
 
 
 def _aggregate_exact_evidence(name: str, evidences: Sequence[Mapping[str, Any]], *, selected_contract_count: int) -> dict[str, Any]:
+    transports = {str(item.get("transport") or "python_library") for item in evidences}
+    transport = "terminal_rest" if transports == {"terminal_rest"} else "python_library"
+    endpoint_prefix = "terminal_rest:/v3/option/history" if transport == "terminal_rest" else "thetadata_python_library"
     return {
-        "endpoint": f"thetadata_python_library:{name}:selected_contracts",
-        "transport": "python_library",
+        "endpoint": f"{endpoint_prefix}:{name}:selected_contracts",
+        "transport": transport,
         "row_count": sum(int(item.get("row_count") or 0) for item in evidences),
         "data_row_count": sum(int(item.get("data_row_count") or 0) for item in evidences),
         "elapsed_seconds": round(sum(float(item.get("elapsed_seconds") or 0.0) for item in evidences), 3),
@@ -848,6 +897,141 @@ def _fetch_exact_history_rows(
         ohlc_rows,
         _aggregate_exact_evidence("option_history_ohlc", ohlc_evidences, selected_contract_count=len(plan)),
     )
+
+
+def _fetch_exact_history_rows_terminal_rest(
+    client: HttpClient,
+    base_url: str,
+    *,
+    underlying: str,
+    window_start: datetime,
+    window_end: datetime,
+    plan: Sequence[PlannedOptionContract],
+    params: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
+    start_time, end_time = _history_time_params(window_start, window_end)
+    interval = str(params.get("interval") or "1m")
+    quote_rows: list[dict[str, Any]] = []
+    quote_evidences: list[dict[str, Any]] = []
+    ohlc_rows: list[dict[str, Any]] = []
+    ohlc_evidences: list[dict[str, Any]] = []
+
+    def fetch_contract(contract: PlannedOptionContract) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
+        common = {
+            "symbol": underlying,
+            "expiration": contract.expiration,
+            "strike": _strike_request_value(contract.strike),
+            "right": _right_request_value(contract.right),
+            "date": window_start.date().isoformat(),
+            "interval": interval,
+            "start_time": start_time,
+            "end_time": end_time,
+            "format": "json",
+        }
+        q_rows, q_evidence = _fetch_endpoint_missing_ok(
+            client,
+            base_url,
+            "/v3/option/history/quote",
+            common,
+            "historical exact quote selected contract",
+        )
+        o_rows, o_evidence = _fetch_endpoint_missing_ok(
+            client,
+            base_url,
+            "/v3/option/history/ohlc",
+            common,
+            "historical exact OHLC selected contract",
+        )
+        return q_rows, q_evidence, o_rows, o_evidence
+
+    worker_count = max(1, int(params.get("terminal_rest_exact_max_workers") or DEFAULT_TERMINAL_REST_EXACT_WORKERS))
+    if worker_count == 1:
+        results = [fetch_contract(contract) for contract in plan]
+    else:
+        with ThreadPoolExecutor(max_workers=min(worker_count, max(1, len(plan)))) as executor:
+            futures = {executor.submit(fetch_contract, contract): index for index, contract in enumerate(plan)}
+            by_index: dict[int, tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]], dict[str, Any]]] = {}
+            for future in as_completed(futures):
+                by_index[futures[future]] = future.result()
+        results = [by_index[index] for index in range(len(plan))]
+
+    for q_rows, q_evidence, o_rows, o_evidence in results:
+        quote_rows.extend(q_rows)
+        quote_evidences.append(q_evidence)
+        ohlc_rows.extend(o_rows)
+        ohlc_evidences.append(o_evidence)
+    return (
+        quote_rows,
+        _aggregate_exact_evidence("option_history_quote", quote_evidences, selected_contract_count=len(plan)),
+        ohlc_rows,
+        _aggregate_exact_evidence("option_history_ohlc", ohlc_evidences, selected_contract_count=len(plan)),
+    )
+
+
+def _fetch_selected_contract_history_rows_terminal_rest(
+    client: HttpClient,
+    base_url: str,
+    *,
+    underlying: str,
+    window_start: datetime,
+    window_end: datetime,
+    params: Mapping[str, Any],
+    max_dte: int,
+    strike_range: int,
+) -> tuple[
+    list[dict[str, Any]],
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any],
+    list[dict[str, Any]],
+    dict[str, Any],
+]:
+    greeks_params = {
+        "symbol": underlying,
+        "expiration": "*",
+        "format": "json",
+        "start_date": window_start.date().isoformat(),
+        "end_date": window_start.date().isoformat(),
+        "max_dte": str(max_dte),
+        "strike_range": str(strike_range),
+    }
+    greeks_rows, greeks_evidence = _fetch_endpoint_missing_ok(
+        client,
+        base_url,
+        "/v3/option/history/greeks/eod",
+        greeks_params,
+        "historical EOD Greeks selected-contract discovery",
+    )
+    plan = _select_planned_contracts(
+        _planned_contracts_from_greeks_rows(greeks_rows, snapshot_date=window_start.date()),
+        hard_cap=int(params.get("selected_contract_hard_cap") or DEFAULT_SELECTED_CONTRACT_HARD_CAP),
+    )
+    selected_greeks_rows = _filter_response_rows_for_plan(greeks_rows, plan)
+    quote_rows, quote_evidence, trade_rows, trade_evidence = _fetch_exact_history_rows_terminal_rest(
+        client,
+        base_url,
+        underlying=underlying,
+        window_start=window_start,
+        window_end=window_end,
+        plan=plan,
+        params=params,
+    )
+    greeks_evidence = {
+        **greeks_evidence,
+        "name": "historical EOD Greeks discovery",
+        "acquisition_mode": "selected_contract_plan",
+        "selected_contract_count": len(plan),
+        "selected_roles": {
+            f"{contract.expiration}:{contract.right}:{contract.strike:g}": list(contract.roles)
+            for contract in plan
+        },
+        "selected_row_count": len(selected_greeks_rows),
+    }
+    iv_rows = selected_greeks_rows
+    iv_evidence = {**greeks_evidence, "name": "historical EOD implied-volatility selected-contract discovery"}
+    return quote_rows, quote_evidence, iv_rows, iv_evidence, selected_greeks_rows, greeks_evidence, trade_rows, trade_evidence
 
 
 def _fetch_with_python_library(
@@ -962,11 +1146,16 @@ def _fetch_with_python_library(
 
 def _terminal_rest_requested(params: Mapping[str, Any], *, client: HttpClient | None, client_is_fixture: bool) -> bool:
     transport = str(params.get("thetadata_transport") or "").strip().lower()
-    if transport in {"terminal_rest", "rest", "http"}:
+    if transport in {"terminal_rest", "terminal_rest_selected_contracts", "terminal_rest_exact", "rest", "http"}:
         return True
     if client is not None or client_is_fixture:
         return True
     return False
+
+
+def _terminal_rest_selected_contracts_requested(params: Mapping[str, Any]) -> bool:
+    transport = str(params.get("thetadata_transport") or "").strip().lower()
+    return transport in {"terminal_rest_selected_contracts", "terminal_rest_exact", "rest_exact"}
 
 
 def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_client: Any | None = None, client_is_fixture: bool = False) -> tuple[StepResult, FetchedSnapshot]:
@@ -979,9 +1168,11 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_clien
     retry_backoff_seconds = float(params.get("retry_backoff_seconds") or DEFAULT_PROVIDER_RETRY_BACKOFF_SECONDS)
     window_start, window_end = _window_from_params(params, snapshot_time)
     historical_mode = bool(params.get("historical_mode", True)) and snapshot_time.date() < datetime.now(ET).date()
-    transport = "terminal_rest" if _terminal_rest_requested(params, client=client, client_is_fixture=client_is_fixture) else "python_library"
+    requested_transport = str(params.get("thetadata_transport") or "").strip().lower()
+    transport = requested_transport if _terminal_rest_selected_contracts_requested(params) else "terminal_rest" if _terminal_rest_requested(params, client=client, client_is_fixture=client_is_fixture) else "python_library"
     selected_contract_hard_cap = int(params.get("selected_contract_hard_cap") or DEFAULT_SELECTED_CONTRACT_HARD_CAP)
-    requested_requests = 1 + 2 * max(0, selected_contract_hard_cap) if historical_mode and transport == "python_library" else 4
+    selected_contract_route = historical_mode and transport in {"python_library", "terminal_rest_selected_contracts", "terminal_rest_exact", "rest_exact"}
+    requested_requests = 1 + 2 * max(0, selected_contract_hard_cap) if selected_contract_route else 4
     if not client_is_fixture:
         require_provider_execution_allowed(
             context.task_key,
@@ -1030,6 +1221,34 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_clien
             max_dte=max_dte_int,
             strike_range=strike_range_int,
         )
+    elif historical_mode and _terminal_rest_selected_contracts_requested(params):
+        client = client or HttpClient(
+            timeout_seconds=timeout,
+            retry_policy=RetryPolicy(
+                max_attempts=retry_attempts,
+                backoff_seconds=retry_backoff_seconds,
+            ),
+        )
+        (
+            quote_rows,
+            quote_evidence,
+            iv_rows,
+            iv_evidence,
+            greeks_rows,
+            greeks_evidence,
+            trade_rows,
+            trade_evidence,
+        ) = _fetch_selected_contract_history_rows_terminal_rest(
+            client,
+            base_url,
+            underlying=underlying,
+            window_start=window_start,
+            window_end=window_end,
+            params=params,
+            max_dte=max_dte_int,
+            strike_range=strike_range_int,
+        )
+        transport = "terminal_rest_selected_contracts"
     elif historical_mode:
         client = client or HttpClient(
             timeout_seconds=timeout,
@@ -1130,8 +1349,9 @@ def fetch(context: FeedContext, *, client: HttpClient | None = None, theta_clien
                         "strike_range": strike_range,
                         "option_bucket_policy_ref": option_bucket_policy_ref,
                         "thetadata_transport": transport,
-                        "acquisition_mode": "selected_contract_plan_exact_quote_ohlc" if historical_mode and transport == "python_library" else "bounded_chain_snapshot",
+                        "acquisition_mode": "selected_contract_plan_exact_quote_ohlc" if historical_mode and transport in {"python_library", "terminal_rest_selected_contracts"} else "bounded_chain_snapshot",
                         "selected_contract_hard_cap": selected_contract_hard_cap,
+                        "terminal_rest_exact_max_workers": int(params.get("terminal_rest_exact_max_workers") or DEFAULT_TERMINAL_REST_EXACT_WORKERS),
                         "retry_attempts": retry_attempts,
                         "retry_backoff_seconds": retry_backoff_seconds,
                     }

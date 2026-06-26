@@ -178,6 +178,127 @@ class FakeHistoricalThetaDataClient:
         return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
 
 
+class FakeExactTerminalRestClient:
+    def __init__(self):
+        self.calls = []
+
+    def get(self, url, *, params=None, headers=None):
+        params = params or {}
+        self.calls.append((url, dict(params)))
+        right = str(params.get("right") or "").upper()
+        if url.endswith("/history/greeks/eod"):
+            payload = {
+                "response": [
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": "2016-01-15",
+                            "right": "CALL",
+                            "strike": 100.0,
+                        },
+                        "data": [
+                            {
+                                "timestamp": "2016-01-05T16:00:00",
+                                "implied_vol": 0.32,
+                                "iv_error": 0.0,
+                                "delta": 0.51,
+                                "theta": -0.03,
+                                "vega": 0.11,
+                                "rho": 0.02,
+                                "epsilon": -0.1,
+                                "lambda": 4.0,
+                                "underlying_price": 101.0,
+                                "underlying_timestamp": "2016-01-05T21:00:00",
+                            }
+                        ],
+                    },
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": "2016-01-15",
+                            "right": "PUT",
+                            "strike": 100.0,
+                        },
+                        "data": [
+                            {
+                                "timestamp": "2016-01-05T16:00:00",
+                                "implied_vol": 0.34,
+                                "iv_error": 0.0,
+                                "delta": -0.49,
+                                "theta": -0.04,
+                                "vega": 0.12,
+                                "rho": -0.02,
+                                "epsilon": -0.1,
+                                "lambda": -4.0,
+                                "underlying_price": 101.0,
+                                "underlying_timestamp": "2016-01-05T21:00:00",
+                            }
+                        ],
+                    },
+                ]
+            }
+            return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+        if url.endswith("/history/quote"):
+            payload = {
+                "response": [
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": "2016-01-15",
+                            "right": "CALL" if right == "C" else "PUT",
+                            "strike": 100.0,
+                        },
+                        "data": [
+                            {
+                                "timestamp": "2016-01-05T09:30:00",
+                                "bid": 1.0 if right == "C" else 0.9,
+                                "ask": 1.2 if right == "C" else 1.1,
+                                "bid_size": 10,
+                                "ask_size": 11,
+                            }
+                        ],
+                    }
+                ]
+            }
+            return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+        if url.endswith("/history/ohlc") and right == "P":
+            return HttpResult(
+                url=url,
+                status=472,
+                headers={},
+                body=b'{"error":"No data found for: option_history_ohlc(AAPL)"}',
+                error_type="HTTPError",
+                error_message="HTTP Error 472",
+            )
+        if url.endswith("/history/ohlc"):
+            payload = {
+                "response": [
+                    {
+                        "contract": {
+                            "symbol": "AAPL",
+                            "expiration": "2016-01-15",
+                            "right": "CALL",
+                            "strike": 100.0,
+                        },
+                        "data": [
+                            {
+                                "timestamp": "2016-01-05T09:30:00",
+                                "open": 1.1,
+                                "high": 1.2,
+                                "low": 1.0,
+                                "close": 1.15,
+                                "volume": 5,
+                                "count": 2,
+                                "vwap": 1.16,
+                            }
+                        ],
+                    }
+                ]
+            }
+            return HttpResult(url=url, status=200, headers={}, body=json.dumps(payload).encode())
+        return HttpResult(url=url, status=200, headers={}, body=b'{"response":[]}')
+
+
 class CapturingThetaDataClient(FakeThetaDataClient):
     instances = []
 
@@ -521,6 +642,54 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             self.assertEqual(manifest["params"]["thetadata_transport"], "python_library")
             self.assertEqual(manifest["params"]["acquisition_mode"], "selected_contract_plan_exact_quote_ohlc")
             self.assertTrue(all(request.get("transport") == "python_library" for request in manifest["requests"][:3]))
+
+    def test_historical_terminal_rest_selected_contracts_uses_exact_quote_ohlc(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAPL",
+                    "snapshot_time": "2016-01-05T09:30:00-05:00",
+                    "window_start": "2016-01-05T09:30:00-05:00",
+                    "window_end": "2016-01-05T09:31:59.999000-05:00",
+                    "historical_mode": True,
+                    "thetadata_transport": "terminal_rest_selected_contracts",
+                    "terminal_rest_exact_max_workers": 2,
+                },
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["thetadata"],
+                    "allowed_endpoint_families": ["option_selection_snapshot"],
+                    "max_requests": 80,
+                    "max_symbols": 1,
+                    "max_time_window": "1d",
+                },
+                "output_root": str(output_root),
+            }
+            writer = FakeSqlWriter()
+            client = FakeExactTerminalRestClient()
+
+            result = run(task_key, run_id="run_terminal_rest_selected_contracts", client=client, client_is_fixture=True, sql_writer=writer)
+
+            self.assertEqual(result.status, "succeeded")
+            called_paths = [url.rsplit("/v3", 1)[-1] for url, _params in client.calls]
+            self.assertEqual(called_paths.count("/option/history/greeks/eod"), 1)
+            self.assertEqual(called_paths.count("/option/history/quote"), 2)
+            self.assertEqual(called_paths.count("/option/history/ohlc"), 2)
+            snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
+            contracts = json.loads(snapshot["contracts"])
+            self.assertEqual(snapshot["contract_count"], 2)
+            self.assertEqual({contract["option_right_type"] for contract in contracts}, {"CALL", "PUT"})
+            self.assertEqual(contracts[0]["trade_summary"]["bar_volume"], 5)
+            manifest = json.loads((output_root / "runs" / "run_terminal_rest_selected_contracts" / "request_manifest.json").read_text())
+            self.assertEqual(manifest["params"]["thetadata_transport"], "terminal_rest_selected_contracts")
+            self.assertEqual(manifest["params"]["acquisition_mode"], "selected_contract_plan_exact_quote_ohlc")
+            self.assertEqual(manifest["requests"][0]["request_count"], 2)
+            self.assertEqual(manifest["requests"][3]["skipped_count"], 1)
+            self.assertTrue(all(request.get("transport") == "terminal_rest" for request in manifest["requests"]))
 
     def test_historical_python_client_allows_missing_trade_rows(self):
         with tempfile.TemporaryDirectory() as tmp:

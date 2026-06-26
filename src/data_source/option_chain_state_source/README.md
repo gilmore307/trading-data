@@ -14,7 +14,7 @@ Boundary:
 - M02 must only consume this table through target-level chain-state reduction and must not expose contract identity or executable option terms in model-facing state.
 - M05 derives option-expression contract candidates from the same rows instead of downloading independent 30-minute option-chain snapshots.
 
-Historical manager requests may use a day-level ET window where practical. The provider fetch uses the ThetaData Python library, plans a point-in-time selected-contract universe from a bounded EOD Greeks discovery envelope, then fetches exact quote and OHLC activity-summary rows only for selected contracts. Downstream M02 and M05 reducers recover the precise modeling windows from SQL `snapshot_time` ranges.
+Historical manager requests may use a day-level ET window where practical. The current provider fetch plans a point-in-time selected-contract universe from a bounded EOD Greeks discovery envelope, then fetches exact quote and OHLC activity-summary rows only for selected contracts. Manager replay requests default to the local ThetaData Terminal REST selected-contract route so provider workers can run concurrently without sharing the ThetaData Python-library session. The Python-library selected-contract route remains an explicit fallback for single-worker diagnostics. Downstream M02 and M05 reducers recover the precise modeling windows from SQL `snapshot_time` ranges.
 
 Default source-side discovery bounds are `max_dte=180` and `strike_range=5`. These bounds apply to the lightweight EOD Greeks discovery envelope, not to broad quote/trade measurement. The measured source rows are selected exact contracts under the accepted M02 role contract.
 

@@ -176,7 +176,7 @@ def insert_feature_rows_from_source_sql(
               'underlying_price', underlying_price,
               'moneyness',
                 CASE
-                  WHEN strike IS NULL OR strike = 0 OR underlying_price IS NULL THEN NULL
+                  WHEN strike IS NULL OR strike = 0 OR underlying_price IS NULL OR underlying_price = 0 THEN NULL
                   WHEN lower(COALESCE(option_right_type, '')) = 'put' THEN (strike / underlying_price) - 1.0
                   ELSE (underlying_price / strike) - 1.0
                 END,
@@ -184,13 +184,13 @@ def insert_feature_rows_from_source_sql(
               'ask', ask,
               'mid', feature_mid,
               'spread', feature_spread,
-              'spread_pct_mid', COALESCE(spread_pct, CASE WHEN feature_spread IS NOT NULL AND feature_mid IS NOT NULL AND feature_mid <> 0 THEN feature_spread / feature_mid ELSE NULL END),
+              'spread_pct_mid', COALESCE(spread_pct, CASE WHEN feature_spread IS NOT NULL AND feature_mid IS NOT NULL THEN feature_spread / NULLIF(feature_mid, 0) ELSE NULL END),
               'bid_size', bid_size,
               'ask_size', ask_size,
               'quote_size_balance',
                 CASE
-                  WHEN bid_size IS NULL OR ask_size IS NULL OR (bid_size + ask_size) = 0 THEN NULL
-                  ELSE (bid_size - ask_size) / (bid_size + ask_size)
+                  WHEN bid_size IS NULL OR ask_size IS NULL THEN NULL
+                  ELSE (bid_size - ask_size) / NULLIF(bid_size + ask_size, 0)
                 END,
               'implied_vol', implied_vol,
               'delta', delta,

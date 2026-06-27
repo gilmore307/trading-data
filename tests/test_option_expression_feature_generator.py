@@ -53,6 +53,26 @@ class OptionExpressionFeatureGeneratorTests(unittest.TestCase):
         ])
         self.assertEqual(rows, [])
 
+    def test_zero_underlying_price_has_null_moneyness(self) -> None:
+        rows = generate_rows(
+            [
+                {
+                    "underlying": "AAOI",
+                    "snapshot_time": "2022-09-14T16:00:00Z",
+                    "snapshot_type": "source_cache",
+                    "option_symbol": "AAOI220916P00005000",
+                    "expiration": "2022-09-16",
+                    "option_right_type": "put",
+                    "strike": 5,
+                    "underlying_price": 0,
+                }
+            ],
+            run_id="unit_run",
+        )
+
+        self.assertEqual(len(rows), 1)
+        self.assertIsNone(rows[0]["feature_payload_json"]["moneyness"])
+
 
 if __name__ == "__main__":
     unittest.main()

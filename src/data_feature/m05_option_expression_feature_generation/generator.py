@@ -41,7 +41,7 @@ def _spread(row: Mapping[str, Any], mid: float | None) -> tuple[float | None, fl
 def _moneyness(row: Mapping[str, Any]) -> float | None:
     strike = _float(row.get("strike"))
     underlying_price = _float(row.get("underlying_price"))
-    if strike in (None, 0) or underlying_price is None:
+    if strike in (None, 0) or underlying_price in (None, 0):
         return None
     right = str(row.get("option_right_type") or "").lower()
     if right == "put":

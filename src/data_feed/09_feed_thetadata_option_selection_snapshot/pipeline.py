@@ -383,8 +383,10 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
 
 
 def _response_is_no_data_found(result: HttpResult) -> bool:
-    if result.status not in {404, 472}:
+    if result.status not in {404, 472, 478}:
         return False
+    if result.status == 478:
+        return True
     text = result.text()
     return "No data found" in text or "no data found" in text.lower()
 
@@ -822,7 +824,9 @@ def _aggregate_exact_evidence(name: str, evidences: Sequence[Mapping[str, Any]],
     transports = {str(item.get("transport") or "python_library") for item in evidences}
     transport = "terminal_rest" if transports == {"terminal_rest"} else "python_library"
     endpoint_prefix = "terminal_rest:/v3/option/history" if transport == "terminal_rest" else "thetadata_python_library"
-    return {
+    skipped_values = {str(item.get("skipped")) for item in evidences if item.get("skipped")}
+    http_statuses = {int(item["http_status"]) for item in evidences if item.get("http_status") is not None}
+    evidence = {
         "endpoint": f"{endpoint_prefix}:{name}:selected_contracts",
         "transport": transport,
         "row_count": sum(int(item.get("row_count") or 0) for item in evidences),
@@ -831,6 +835,13 @@ def _aggregate_exact_evidence(name: str, evidences: Sequence[Mapping[str, Any]],
         "request_count": len(evidences),
         "selected_contract_count": selected_contract_count,
         "skipped_count": sum(1 for item in evidences if item.get("skipped")),
+    }
+    if len(skipped_values) == 1 and evidence["skipped_count"] == len(evidences):
+        evidence["skipped"] = skipped_values.pop()
+    if len(http_statuses) == 1:
+        evidence["http_status"] = http_statuses.pop()
+    return {
+        **evidence,
     }
 
 

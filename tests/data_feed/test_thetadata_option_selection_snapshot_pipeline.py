@@ -299,6 +299,19 @@ class FakeExactTerminalRestClient:
         return HttpResult(url=url, status=200, headers={}, body=b'{"response":[]}')
 
 
+class NoData478TerminalRestClient(FakeExactTerminalRestClient):
+    def get(self, url, *, params=None, headers=None):
+        self.calls.append((url, dict(params or {})))
+        return HttpResult(
+            url=url,
+            status=478,
+            headers={},
+            body=b"",
+            error_type="HTTPError",
+            error_message="HTTP Error 478: 478",
+        )
+
+
 class CapturingThetaDataClient(FakeThetaDataClient):
     instances = []
 
@@ -764,6 +777,51 @@ class ThetaDataOptionSelectionSnapshotPipelineTests(unittest.TestCase):
             self.assertEqual(json.loads(snapshot["contracts"]), [])
             manifest = json.loads((output_root / "runs" / "run_python_library_no_greeks" / "request_manifest.json").read_text())
             discovery_request = [request for request in manifest["requests"] if "option_history_greeks_eod" in request["endpoint"]][0]
+            self.assertEqual(discovery_request["skipped"], "no_data_found")
+            self.assertEqual(discovery_request["selected_contract_count"], 0)
+
+    def test_historical_terminal_rest_allows_478_no_data_response(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output_root = Path(tmp) / "09_feed_thetadata_option_selection_snapshot_task_test"
+            task_key = {
+                "task_id": "09_feed_thetadata_option_selection_snapshot_task_test",
+                "feed": "09_feed_thetadata_option_selection_snapshot",
+                "params": {
+                    "underlying": "AAOI",
+                    "snapshot_time": "2016-01-05T09:30:00-05:00",
+                    "window_start": "2016-01-05T09:30:00-05:00",
+                    "window_end": "2016-01-05T09:31:59.999000-05:00",
+                    "historical_mode": True,
+                    "thetadata_transport": "terminal_rest_selected_contracts",
+                },
+                "manager_controls": {
+                    "allow_live_provider_calls": True,
+                    "autonomous_historical_provider_acquisition": True,
+                    "allowed_providers": ["thetadata"],
+                    "allowed_endpoint_families": ["option_selection_snapshot"],
+                    "max_requests": 80,
+                    "max_symbols": 1,
+                    "max_time_window": "1d",
+                },
+                "output_root": str(output_root),
+            }
+            writer = FakeSqlWriter()
+
+            result = run(
+                task_key,
+                run_id="run_terminal_rest_478_no_data",
+                client=NoData478TerminalRestClient(),
+                client_is_fixture=True,
+                sql_writer=writer,
+            )
+
+            self.assertEqual(result.status, "succeeded")
+            snapshot = writer.rows_for("feed_09_option_chain_snapshot")[0]
+            self.assertEqual(snapshot["contract_count"], 0)
+            self.assertEqual(json.loads(snapshot["contracts"]), [])
+            manifest = json.loads((output_root / "runs" / "run_terminal_rest_478_no_data" / "request_manifest.json").read_text())
+            discovery_request = [request for request in manifest["requests"] if "history/greeks/eod" in request["endpoint"]][0]
+            self.assertEqual(discovery_request["http_status"], 478)
             self.assertEqual(discovery_request["skipped"], "no_data_found")
             self.assertEqual(discovery_request["selected_contract_count"], 0)
 

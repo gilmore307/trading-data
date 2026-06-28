@@ -25,7 +25,11 @@ Current implemented interface groups:
 - OKX: `crypto_bar`, `crypto_trade`, `crypto_quote`, `crypto_order_book`.
 - ThetaData: option data-kind endpoint families through local v3 terminal on `127.0.0.1:25503`; STANDARD entitlement confirmed for core option history/snapshot data, while professional-only Greeks/trade-Greeks are marked as entitlement-blocked.
 - SEC EDGAR: `sec_submission`, `sec_company_fact`, `sec_company_concept`, `sec_xbrl_frame`.
-- Calendar/ETF placeholders: official FOMC page is directly probeable; ETF holdings and official release calendars require feed-specific adapters.
+- Calendar/source interfaces: FOMC is directly probeable; Trading Economics
+  calendar events, official exchange calendars, Nasdaq earnings-calendar shells,
+  official index announcements, and unified `calendar_observation` rows have
+  concrete interfaces. ETF holdings use issuer-specific adapters and are not a
+  universal calendar/event interface.
 
 ## ThetaData local runtime
 

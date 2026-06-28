@@ -125,7 +125,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             self.assertIn("event_phase=scheduled_shell", row["summary"])
             self.assertIn("result_fields=not_available_from_calendar_shell", row["summary"])
 
-    def test_trading_economics_calendar_artifact_is_not_layer_ten_input(self) -> None:
+    def test_extracts_trading_economics_calendar_artifact_as_macro_data(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             tmp = Path(raw_tmp)
             te = tmp / "trading_economics_calendar_event.csv"
@@ -134,8 +134,14 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writeheader()
                 writer.writerow({"event_time": "2026-05-28T08:30:00-04:00", "country": "United States", "event": "GDP Growth Rate QoQ", "consensus": "2.0%", "importance": "3"})
 
-            with self.assertRaisesRegex(Exception, "unsupported event feed artifact shape"):
-                extract_events_from_artifact_paths([te])
+            rows = extract_events_from_artifact_paths([te])
+            self.assertEqual(len(rows), 1)
+            row = rows[0]
+            self.assertEqual(row["event_category_type"], "macro_data")
+            self.assertEqual(row["scope_type"], "macro")
+            self.assertEqual(row["source_name"], "07_feed_trading_economics_calendar_web")
+            self.assertEqual(row["source_priority"], "official_data_release")
+            self.assertIn("event_phase=release_result", row["summary"])
 
     def test_source_pipeline_accepts_event_artifact_paths(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:

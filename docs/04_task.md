@@ -43,7 +43,7 @@ These items are intentionally outside the current promote-first historical-train
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.
 - ThetaData option feeds are implemented for selection snapshot, specified-contract primary tracking, and event timeline.
 - `feed_availability` and `feed_interfaces` provide bounded provider/data-kind inventory and smoke support.
-- `macro_data` is not active. Macro source evidence is canonical Trading Economics storage data; shared calendar maintenance may append recent/future TE calendar source rows and Nasdaq earnings schedule artifacts but must not persist TE website URLs or populate M06 SQL rows.
+- `macro_data` is active only through M06 materialization from reviewed Trading Economics storage artifacts. Shared calendar maintenance may append recent/future TE calendar source rows and Nasdaq earnings schedule artifacts but must not persist TE website URLs or directly populate M06 SQL rows.
 - Current task key / receipt fields are registered through `trading-manager`; new shared fields need registry review.
 
 ## Closed Design Notes

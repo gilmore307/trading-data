@@ -293,6 +293,59 @@ def _release_calendar_events(path: Path | str, rows: Sequence[Mapping[str, str]]
     return events
 
 
+def _trading_economics_calendar_events(path: Path | str, rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for row in rows:
+        event_time = _first(row, "event_time")
+        event_name = _first(row, "event", "event_name", "title")
+        if not event_time or not event_name:
+            continue
+        values = {
+            "actual": _first(row, "actual"),
+            "previous": _first(row, "previous"),
+            "consensus": _first(row, "consensus"),
+            "te_forecast": _first(row, "te_forecast"),
+            "revised": _first(row, "revised"),
+        }
+        has_value_fields = any(values.values())
+        summary_parts = [
+            "event_phase=release_result" if has_value_fields else "event_phase=scheduled_release",
+            "lifecycle_class=scheduled_recurring_data_release",
+            "result_fields=calendar_value_fields_present" if has_value_fields else "result_fields=calendar_schedule_only",
+        ]
+        country = _first(row, "country")
+        source_event_type = _first(row, "source_event_type")
+        importance = _first(row, "importance")
+        if country:
+            summary_parts.append(f"country={country}")
+        if source_event_type:
+            summary_parts.append(f"source_event_type={source_event_type}")
+        if importance:
+            summary_parts.append(f"importance={importance}")
+        for key, value in values.items():
+            if value:
+                summary_parts.append(f"{key}={value}")
+        events.append(
+            _base_event(
+                artifact_path=path,
+                event_time=event_time,
+                available_time=event_time,
+                information_role_type="lagging_evidence" if has_value_fields else "prior_signal",
+                event_category_type="macro_data",
+                scope_type="macro",
+                symbol=None,
+                title=event_name,
+                summary="; ".join(summary_parts),
+                source_name="07_feed_trading_economics_calendar_web",
+                reference_type="source_reference",
+                reference=_reference(path, row, "reference"),
+                source_priority="official_data_release",
+                coverage_reason="canonical_macro_release_from_trading_economics_calendar_web",
+            )
+        )
+    return events
+
+
 def _sec_group_key(path: Path | str, row: Mapping[str, str]) -> tuple[str, str, str, str]:
     accession = _first(row, "accession_number")
     if accession:
@@ -379,6 +432,8 @@ def _detect_artifact_kind(path: Path, rows: Sequence[Mapping[str, str]]) -> str:
         return "gdelt_news"
     if "release_calendar" in name or {"calendar_source", "event_name", "release_time"}.issubset(columns):
         return "release_calendar"
+    if "trading_economics_calendar_event" in name or {"event_time", "country", "event"}.issubset(columns):
+        return "trading_economics_calendar_web"
     if name.startswith("sec_") or "accession_number" in columns or {"cik", "taxonomy", "tag"}.issubset(columns):
         return "sec_company_financials"
     raise FeedEventExtractionError(f"unsupported event feed artifact shape: {path}")
@@ -395,6 +450,8 @@ def _events_for_kind(kind: str, reference: Path | str, rows: Sequence[Mapping[st
         return _gdelt_news_events(reference, rows)
     if kind == "release_calendar":
         return _release_calendar_events(reference, rows)
+    if kind == "trading_economics_calendar_web":
+        return _trading_economics_calendar_events(reference, rows)
     if kind == "sec_company_financials":
         return _sec_events(reference, rows)
     raise FeedEventExtractionError(f"unsupported event SQL input kind: {kind}")

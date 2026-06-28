@@ -151,7 +151,7 @@ INTERFACES: dict[str, DataKindInterface] = {
     "trading_economics_calendar_event": DataKindInterface(
         "trading_economics_calendar_event", "trading_economics", "07_feed_trading_economics_calendar_web", "bounded recent/future calendar refresh into canonical storage source rows",
         None, "web/storage-source", {"country": "United States", "importance": "3"},
-        ("Trading Economics rows are source evidence only; website URLs are not persisted and M06 SQL admission requires a later reviewed route.",),
+        ("Trading Economics rows are source evidence only; website URLs are not persisted; M06 materialization derives macro_data event overview rows from reviewed storage artifacts.",),
     ),
     "calendar_observation": DataKindInterface(
         "calendar_observation", "calendar_source_shells", "data_runtime.calendar_observation", "local source-shell builder from accepted calendar artifacts",

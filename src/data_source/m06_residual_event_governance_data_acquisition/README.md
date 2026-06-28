@@ -23,8 +23,7 @@ Optional task key fields:
 - `params.focus_sectors`: focused sectors/themes
 - `params.symbols`: focused symbols
 - `params.event_sql_inputs` / `params.feed_sql_inputs`: SQL feed rows to normalize into event overview rows. Supported current inputs are `feed_03_alpaca_news` (`symbol_news`), `feed_05_gdelt_article` (`macro_news` / `sector_news` / `symbol_news` by scope hints), `feed_12_release_calendar` (`earnings_guidance` scheduled shells for `nasdaq_earnings_calendar`), and `feed_08_sec_company_fact` (`earnings_guidance` result artifacts for 10-Q/10-K or earnings-related 8-K rows; otherwise `sec_filing`). Each entry may provide `table`, `kind`, `columns`, `where_equals`, `where_in`, `time_column`, `start`, `end`, and `order_by`.
-- `params.event_artifact_paths` / `params.feed_artifact_paths`: compatibility/reviewed local artifact input. Use this for TE-exception or explicitly reviewed local evidence only, not for current non-TE feed outputs.
-- Trading Economics macro rows stay in canonical storage and are not valid M06 input until a later accepted route explicitly promotes them.
+- `params.event_artifact_paths` / `params.feed_artifact_paths`: reviewed local artifact input. Use this for Trading Economics canonical storage artifacts and other explicitly reviewed local evidence only, not for current non-TE feed outputs.
 - `output_root`: local receipt/request-manifest root
 
 Each event row requires:
@@ -93,9 +92,9 @@ Feed-artifact extraction is local and offline only. It reads already-saved artif
 
 Trading Economics calendar artifacts have one accepted source role:
 
-- canonical storage artifacts provide macro calendar/value evidence for reviewed historical windows.
+- canonical storage artifacts provide required M06 macro calendar/value evidence for reviewed historical windows.
 
-TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later. SQL rows are derived materializations, not the TE source of truth, and should stay empty for TE macro rows until M06 explicitly promotes macro events into the accepted event-risk/attention pool. The Trading Economics subscription is expired, so website URLs are not source references and no logged-out visible-page route is an accepted normal recovery path. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
+TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later. M06 may normalize reviewed TE storage artifacts into `macro_data` overview rows for attribution, but those SQL rows are derived materializations, not the TE source of truth. The Trading Economics subscription is expired, so website URLs are not source references and no logged-out visible-page route is an accepted normal recovery path. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

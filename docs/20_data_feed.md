@@ -42,7 +42,7 @@ Provider credentials must never be committed. Secret material stays outside Git 
 | OKX | Crypto market data; private surfaces only when separately approved. | `OKX_SECRET_ALIAS` -> `okx` | Public market data may not need private credentials. |
 | SEC EDGAR | Company submissions, facts, concepts, frames, filing metadata. | no key | Requires fair-access behavior and identifying User-Agent. |
 | ETF issuers | Holdings rows, weights, fund metadata. | issuer-specific/no key | Preserve source URL, as-of date, retrieval time, and file/page format. |
-| Trading Economics calendar web | Recent/future macro calendar rows plus retained monthly source snapshots. | bounded TE calendar-page fetch into canonical `trading-storage` source data | Accepted macro source evidence is storage-owned TE rows. Source artifacts must not carry TE website URLs and must not populate M06 SQL rows without a later reviewed route. |
+| Trading Economics calendar web | Recent/future macro calendar rows plus retained monthly source snapshots. | bounded TE calendar-page fetch into canonical `trading-storage` source data | Accepted macro source evidence is storage-owned TE rows. Source artifacts must not carry TE website URLs; M06 materialization derives event overview rows from reviewed storage artifacts. |
 | FRED/Census/BEA/BLS/Treasury | Optional official macro/economic research surfaces. | aliases where registered | Not active manager macro routes; use only for incident review, audit, or a separately accepted replacement route. |
 | FOMC/official release pages | Official calendar events. | no key | Not an active macro runtime route while TE is accepted; preserve as manual fallback/audit source. |
 
@@ -85,7 +85,7 @@ Trading Economics recent/future calendar acquisition is active as a bounded cale
 storage/01_source_data/monthly_backfill/trading_economics_calendar_web
 ```
 
-The feed package may fetch the bounded recent/future calendar window or parse reviewed HTML inputs. It must not write website URLs into source artifacts, call TE API/download/export endpoints, or materialize M06 SQL event rows.
+The feed package may fetch the bounded recent/future calendar window or parse reviewed HTML inputs. It must not write website URLs into source artifacts, call TE API/download/export endpoints, or directly materialize M06 SQL event rows.
 
 ## Trading Economics Recent Refresh
 

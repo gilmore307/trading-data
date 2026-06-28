@@ -672,6 +672,7 @@ def generate_sql(
             total_rows = 0
             history_start = source_start or slices[0][0]
             history_floor = _parse_datetime(history_start)
+            sample_targets = candidate_symbols[:6]
             for index, (window_start, window_end) in enumerate(slices, start=1):
                 _write_task_progress(
                     processed_count=index - 1,
@@ -682,6 +683,8 @@ def generate_sql(
                         "window_start": window_start,
                         "window_end": window_end,
                         "rows_written": total_rows,
+                        "candidate_symbol_count": len(candidate_symbols),
+                        "sample_targets": sample_targets,
                     },
                 )
                 source_rows = fetch_source_rows_with_lookback(
@@ -721,6 +724,8 @@ def generate_sql(
                         "window_end": window_end,
                         "window_row_count": window_rows,
                         "rows_written": total_rows,
+                        "candidate_symbol_count": len(candidate_symbols),
+                        "sample_targets": sample_targets,
                     },
                 )
                 gc.collect()

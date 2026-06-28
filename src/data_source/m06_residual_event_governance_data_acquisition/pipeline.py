@@ -28,6 +28,7 @@ EVENT_CATEGORIES = {
     "symbol_news",
     "sec_filing",
     "earnings_guidance",
+    "market_structure",
     "option_abnormal_activity",
     "equity_abnormal_activity",
     "price_action",

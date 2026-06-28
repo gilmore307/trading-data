@@ -188,6 +188,40 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_artifact_path"], "sql://trading_data/feed_03_alpaca_news")
 
+    def test_source_pipeline_accepts_market_structure_events(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_tmp:
+            tmp = Path(raw_tmp)
+            task_key = {
+                "task_id": "m06_residual_event_governance_data_acquisition_market_session_task",
+                "source": "m06_residual_event_governance_data_acquisition",
+                "params": {
+                    "start": "2024-01-01T00:00:00-05:00",
+                    "end": "2024-02-01T00:00:00-05:00",
+                    "events": [
+                        {
+                            "event_time": "2024-01-15T00:00:00-05:00",
+                            "available_time": "2024-01-15T00:00:00-05:00",
+                            "information_role_type": "prior_signal",
+                            "event_category_type": "market_structure",
+                            "scope_type": "macro",
+                            "title": "US equity market holiday: Martin Luther King Jr. Day",
+                            "summary": "market_structure_type=market_holiday; session_status=closed; holiday_name=Martin Luther King Jr. Day",
+                            "source_name": "manager_market_session_calendar",
+                            "reference_type": "source_reference",
+                            "reference": "generated_us_equity_market_session:2024-01-15",
+                            "source_priority": "approved_calendar",
+                        }
+                    ],
+                },
+                "output_root": str(tmp / "task"),
+            }
+            writer = FakeSqlWriter()
+            result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
+            self.assertEqual(result.status, "succeeded")
+            row = writer.calls[0]["rows"][0]
+            self.assertEqual(row["event_category_type"], "market_structure")
+            self.assertEqual(row["source_name"], "manager_market_session_calendar")
+
     def test_source_pipeline_preserves_same_time_news_events(self) -> None:
         with tempfile.TemporaryDirectory() as raw_tmp:
             tmp = Path(raw_tmp)

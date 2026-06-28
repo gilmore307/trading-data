@@ -32,7 +32,7 @@ Each event row requires:
 - `event_time`
 - `available_time` or defaults to `event_time`
 - `information_role_type`: `lagging_evidence` or `prior_signal`
-- `event_category_type`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `earnings_guidance`, `option_abnormal_activity`, `equity_abnormal_activity`, or `price_action`. Here `macro_data` is an event category label, not an active executable feed. `earnings_guidance` rows must distinguish calendar-only scheduled shells from official result/guidance artifacts in `summary` / `coverage_reason`.
+- `event_category_type`: `macro_data`, `macro_news`, `sector_news`, `symbol_news`, `sec_filing`, `earnings_guidance`, `market_structure`, `option_abnormal_activity`, `equity_abnormal_activity`, or `price_action`. Here `macro_data` is an event category label, not an active executable feed. `market_structure` covers scheduler-provided market-session calendar context such as holidays, weekends, early closes, and long non-trading intervals. `earnings_guidance` rows must distinguish calendar-only scheduled shells from official result/guidance artifacts in `summary` / `coverage_reason`.
 - `scope_type`: `macro`, `sector`, or `symbol`
 - `title` or `headline`
 - `source_name`
@@ -93,6 +93,8 @@ Feed-artifact extraction is local and offline only. It reads already-saved artif
 Trading Economics calendar artifacts have one accepted source role:
 
 - canonical storage artifacts provide required M06 macro calendar/value evidence for reviewed historical windows.
+
+Market-session calendar context is a required M06 input produced by the manager from reviewed local calendar rules and, where available, official exchange-calendar artifacts. It may enter M06 overview rows as `market_structure` evidence for holidays, weekends, early closes, and long non-trading intervals; it is separate from Trading Economics macro releases and from Nasdaq/company earnings calendar shells.
 
 TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later. M06 may normalize reviewed TE storage artifacts into `macro_data` overview rows for attribution, but those SQL rows are derived materializations, not the TE source of truth. The Trading Economics subscription is expired, so website URLs are not source references and no logged-out visible-page route is an accepted normal recovery path. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
 

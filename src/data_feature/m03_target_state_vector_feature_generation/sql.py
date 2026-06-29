@@ -148,12 +148,10 @@ def _write_task_progress(
 
     progress_path = Path(progress_path_text)
     progress_path.parent.mkdir(parents=True, exist_ok=True)
-    progress_log_path = _worker_progress_log_path(progress_path.parent, worker_id)
     now = _utc_now_iso()
     progress_extra = {"progress_basis": "feature partitions required by the 12+3+3 walk-forward fold"}
     if extra:
         progress_extra.update(dict(extra))
-    log_refs = [str(progress_log_path)]
     payload = {
         "contract_type": "manager_worker_task_progress",
         "worker_id": worker_id,
@@ -169,7 +167,6 @@ def _write_task_progress(
         "progress_source": "active_progress_file",
         "progress_basis": progress_extra["progress_basis"],
         "extra": progress_extra,
-        "log_refs": log_refs,
         "nodes": [
             {
                 "node_id": node_id,
@@ -183,16 +180,6 @@ def _write_task_progress(
             }
         ],
     }
-    _append_task_progress_log(
-        progress_log_path,
-        timestamp=now,
-        stage_id=stage_id,
-        unit_label="feature months",
-        processed_count=processed_count,
-        expected_count=expected_count,
-        node_label=node_label,
-        extra=progress_extra,
-    )
     tmp = progress_path.with_name(f".{progress_path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
     try:
         tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -202,41 +189,6 @@ def _write_task_progress(
             tmp.unlink()
         except FileNotFoundError:
             pass
-
-
-def _worker_progress_log_path(progress_root: Path, worker_id: str) -> Path:
-    safe_worker_id = "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in worker_id)
-    return progress_root / "logs" / f"{safe_worker_id or 'worker'}.log"
-
-
-def _append_task_progress_log(
-    path: Path,
-    *,
-    timestamp: str,
-    stage_id: str,
-    unit_label: str,
-    processed_count: int | None,
-    expected_count: int | None,
-    node_label: str,
-    extra: Mapping[str, Any],
-) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    parts = [timestamp, stage_id, node_label]
-    if processed_count is not None and expected_count is not None:
-        parts.append(f"{processed_count}/{expected_count} {unit_label}")
-    window_start = extra.get("window_start")
-    window_end = extra.get("window_end")
-    if window_start or window_end:
-        parts.append(f"window {window_start or '?'} to {window_end or '?'}")
-    sample_targets = extra.get("sample_targets")
-    if isinstance(sample_targets, list) and sample_targets:
-        parts.append("examples " + ", ".join(str(item) for item in sample_targets[:4]))
-    for key, label in (("window_row_count", "window rows"), ("rows_written", "rows written"), ("candidate_symbol_count", "candidate symbols")):
-        value = extra.get(key)
-        if value not in (None, ""):
-            parts.append(f"{label} {value}")
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(" | ".join(str(part) for part in parts if str(part).strip()) + "\n")
 
 
 def _quote_identifier(identifier: str) -> str:
@@ -722,18 +674,26 @@ def generate_sql(
             history_floor = _parse_datetime(history_start)
             sample_targets = candidate_symbols[:6]
             for index, (window_start, window_end) in enumerate(slices, start=1):
+                window_extra = {
+                    "window_start": window_start,
+                    "window_end": window_end,
+                    "rows_written": total_rows,
+                    "candidate_symbol_count": len(candidate_symbols),
+                    "sample_targets": sample_targets,
+                }
                 _write_task_progress(
                     processed_count=index - 1,
                     expected_count=len(slices),
                     node_id="feature_generation_window_started",
                     node_label=f"Generating feature window {index} of {len(slices)}",
-                    extra={
-                        "window_start": window_start,
-                        "window_end": window_end,
-                        "rows_written": total_rows,
-                        "candidate_symbol_count": len(candidate_symbols),
-                        "sample_targets": sample_targets,
-                    },
+                    extra=window_extra,
+                )
+                _write_task_progress(
+                    processed_count=index - 1,
+                    expected_count=len(slices),
+                    node_id="feature_generation_source_rows_loading",
+                    node_label=f"Loading source bars for feature window {index} of {len(slices)}",
+                    extra=window_extra,
                 )
                 source_rows = fetch_source_rows_with_lookback(
                     cursor,
@@ -744,6 +704,17 @@ def generate_sql(
                     output_end=window_end,
                 )
                 option_start = _iso(max(history_floor, _parse_datetime(window_start) - timedelta(days=OPTION_CHAIN_LOOKBACK_DAYS)))
+                _write_task_progress(
+                    processed_count=index - 1,
+                    expected_count=len(slices),
+                    node_id="feature_generation_option_chain_loading",
+                    node_label=f"Loading option-chain context for feature window {index} of {len(slices)}",
+                    extra={
+                        **window_extra,
+                        "source_row_count": len(source_rows),
+                        "option_start": option_start,
+                    },
+                )
                 option_chain_rows = fetch_option_chain_rows(
                     cursor,
                     source_schema=option_chain_source_schema,
@@ -752,6 +723,17 @@ def generate_sql(
                     source_end=window_end,
                     underlyings=candidate_symbols,
                 )
+                _write_task_progress(
+                    processed_count=index - 1,
+                    expected_count=len(slices),
+                    node_id="feature_generation_rows_building",
+                    node_label=f"Building feature rows for feature window {index} of {len(slices)}",
+                    extra={
+                        **window_extra,
+                        "source_row_count": len(source_rows),
+                        "option_chain_row_count": len(option_chain_rows),
+                    },
+                )
                 inputs = generator.build_inputs(bar_rows=source_rows, candidate_rows=candidate_rows, market_context_rows=market_rows, sector_context_rows=sector_rows, option_chain_rows=option_chain_rows)
                 rows = generator.iter_rows(
                     inputs,
@@ -759,6 +741,17 @@ def generate_sql(
                     target_context_state_version=target_context_state_version,
                     emit_start_time=_parse_datetime(window_start),
                     emit_end_time=_parse_datetime(window_end),
+                )
+                _write_task_progress(
+                    processed_count=index - 1,
+                    expected_count=len(slices),
+                    node_id="feature_generation_rows_writing",
+                    node_label=f"Writing feature rows for feature window {index} of {len(slices)}",
+                    extra={
+                        **window_extra,
+                        "source_row_count": len(source_rows),
+                        "option_chain_row_count": len(option_chain_rows),
+                    },
                 )
                 window_rows = write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
                 total_rows += window_rows

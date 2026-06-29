@@ -354,7 +354,7 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         completed = [call for call in progress_calls if call["node_id"] == "feature_generation_window_completed"]
         self.assertEqual([call["processed_count"] for call in completed], [1, 2])
 
-    def test_task_progress_writer_preserves_live_log_ref(self) -> None:
+    def test_task_progress_writer_updates_live_json_without_duplicate_log_stream(self) -> None:
         with TemporaryDirectory() as raw_tmp:
             progress_path = Path(raw_tmp) / "task_progress" / "model_worker_1.json"
             env = {
@@ -378,16 +378,13 @@ class TargetStateVectorSqlTests(unittest.TestCase):
                 )
 
             payload = json.loads(progress_path.read_text(encoding="utf-8"))
-            log_ref = Path(payload["log_refs"][0])
-            log_text = log_ref.read_text(encoding="utf-8")
 
         self.assertEqual(payload["processed_count"], 15)
         self.assertEqual(payload["expected_count"], 79)
         self.assertEqual(payload["unit_label"], "feature months")
-        self.assertEqual(log_ref.name, "model_worker_1.log")
-        self.assertIn("Generating feature window 16 of 79", log_text)
-        self.assertIn("15/79 feature months", log_text)
-        self.assertIn("rows written 259337", log_text)
+        self.assertNotIn("log_refs", payload)
+        self.assertEqual(payload["nodes"][0]["node_label"], "Generating feature window 16 of 79")
+        self.assertEqual(payload["extra"]["rows_written"], 259337)
 
 
 if __name__ == "__main__":

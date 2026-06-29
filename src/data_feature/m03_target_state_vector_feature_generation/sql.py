@@ -699,7 +699,7 @@ def generate_sql(
 
             history_start = source_start or slices[0][0]
             history_floor = _parse_datetime(history_start)
-            sample_targets = candidate_symbols[:6]
+            sample_targets = candidate_symbols
             existing_window_counts = [
                 count_existing_feature_rows_sql(
                     cursor,

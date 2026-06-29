@@ -544,6 +544,34 @@ def write_feature_rows_sql(
     return row_count
 
 
+def count_existing_feature_rows_sql(
+    cursor: Any,
+    *,
+    target_schema: str,
+    target_table: str,
+    target_context_state_version: str,
+    window_start: str,
+    window_end: str,
+) -> int:
+    qualified_name = f"{target_schema}.{target_table}"
+    cursor.execute("SELECT to_regclass(%s) IS NOT NULL AS exists", [qualified_name])
+    exists_row = cursor.fetchone()
+    if not exists_row or not bool(exists_row.get("exists")):
+        return 0
+    cursor.execute(
+        f"""
+        SELECT COUNT(*) AS row_count
+        FROM {_qualified(target_schema, target_table)}
+        WHERE "target_context_state_version" = %s
+          AND "available_time" >= %s
+          AND "available_time" < %s
+        """,
+        [target_context_state_version, window_start, window_end],
+    )
+    row = cursor.fetchone()
+    return int((row or {}).get("row_count") or 0)
+
+
 def _parse_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value)
 
@@ -669,11 +697,24 @@ def generate_sql(
                 )
                 return row_count
 
-            total_rows = 0
             history_start = source_start or slices[0][0]
             history_floor = _parse_datetime(history_start)
             sample_targets = candidate_symbols[:6]
+            existing_window_counts = [
+                count_existing_feature_rows_sql(
+                    cursor,
+                    target_schema=target_schema,
+                    target_table=target_table,
+                    target_context_state_version=target_context_state_version,
+                    window_start=window_start,
+                    window_end=window_end,
+                )
+                for window_start, window_end in slices
+            ]
+            completed_windows = 0
+            total_rows = 0
             for index, (window_start, window_end) in enumerate(slices, start=1):
+                existing_window_rows = existing_window_counts[index - 1]
                 window_extra = {
                     "window_start": window_start,
                     "window_end": window_end,
@@ -681,15 +722,34 @@ def generate_sql(
                     "candidate_symbol_count": len(candidate_symbols),
                     "sample_targets": sample_targets,
                 }
+                if existing_window_rows > 0:
+                    completed_windows += 1
+                    total_rows += existing_window_rows
+                    _write_task_progress(
+                        processed_count=completed_windows,
+                        expected_count=len(slices),
+                        node_id="feature_generation_window_reused",
+                        node_label=f"Reused existing feature window {index} of {len(slices)}",
+                        extra={
+                            "window_start": window_start,
+                            "window_end": window_end,
+                            "window_row_count": existing_window_rows,
+                            "rows_written": total_rows,
+                            "candidate_symbol_count": len(candidate_symbols),
+                            "sample_targets": sample_targets,
+                            "existing_rows_reused": True,
+                        },
+                    )
+                    continue
                 _write_task_progress(
-                    processed_count=index - 1,
+                    processed_count=completed_windows,
                     expected_count=len(slices),
                     node_id="feature_generation_window_started",
                     node_label=f"Generating feature window {index} of {len(slices)}",
                     extra=window_extra,
                 )
                 _write_task_progress(
-                    processed_count=index - 1,
+                    processed_count=completed_windows,
                     expected_count=len(slices),
                     node_id="feature_generation_source_rows_loading",
                     node_label=f"Loading source bars for feature window {index} of {len(slices)}",
@@ -705,7 +765,7 @@ def generate_sql(
                 )
                 option_start = _iso(max(history_floor, _parse_datetime(window_start) - timedelta(days=OPTION_CHAIN_LOOKBACK_DAYS)))
                 _write_task_progress(
-                    processed_count=index - 1,
+                    processed_count=completed_windows,
                     expected_count=len(slices),
                     node_id="feature_generation_option_chain_loading",
                     node_label=f"Loading option-chain context for feature window {index} of {len(slices)}",
@@ -724,7 +784,7 @@ def generate_sql(
                     underlyings=candidate_symbols,
                 )
                 _write_task_progress(
-                    processed_count=index - 1,
+                    processed_count=completed_windows,
                     expected_count=len(slices),
                     node_id="feature_generation_rows_building",
                     node_label=f"Building feature rows for feature window {index} of {len(slices)}",
@@ -743,7 +803,7 @@ def generate_sql(
                     emit_end_time=_parse_datetime(window_end),
                 )
                 _write_task_progress(
-                    processed_count=index - 1,
+                    processed_count=completed_windows,
                     expected_count=len(slices),
                     node_id="feature_generation_rows_writing",
                     node_label=f"Writing feature rows for feature window {index} of {len(slices)}",
@@ -755,8 +815,9 @@ def generate_sql(
                 )
                 window_rows = write_feature_rows_sql(cursor, rows, target_schema=target_schema, target_table=target_table)
                 total_rows += window_rows
+                completed_windows += 1
                 _write_task_progress(
-                    processed_count=index,
+                    processed_count=completed_windows,
                     expected_count=len(slices),
                     node_id="feature_generation_window_completed",
                     node_label=f"Completed feature window {index} of {len(slices)}",

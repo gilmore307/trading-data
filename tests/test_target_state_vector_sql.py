@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib
+import json
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -351,6 +353,41 @@ class TargetStateVectorSqlTests(unittest.TestCase):
         self.assertEqual(progress_calls[0]["expected_count"], 2)
         completed = [call for call in progress_calls if call["node_id"] == "feature_generation_window_completed"]
         self.assertEqual([call["processed_count"] for call in completed], [1, 2])
+
+    def test_task_progress_writer_preserves_live_log_ref(self) -> None:
+        with TemporaryDirectory() as raw_tmp:
+            progress_path = Path(raw_tmp) / "task_progress" / "model_worker_1.json"
+            env = {
+                "TRADING_MANAGER_TASK_PROGRESS_PATH": str(progress_path),
+                "TRADING_MANAGER_TASK_PROGRESS_WORKER_ID": "model_worker_1",
+                "TRADING_MANAGER_TASK_PROGRESS_TASK_UID": "2016-01..2017-06:model_02_target_state.feature_generation",
+                "TRADING_MANAGER_TASK_PROGRESS_STAGE_ID": "model_02_target_state.feature_generation",
+            }
+            with patch.dict(os.environ, env, clear=False):
+                sql._write_task_progress(
+                    processed_count=15,
+                    expected_count=79,
+                    node_id="feature_generation_window_started",
+                    node_label="Generating feature window 16 of 79",
+                    extra={
+                        "window_start": "2016-04-15T00:00:00-05:00",
+                        "window_end": "2016-04-22T00:00:00-05:00",
+                        "rows_written": 259337,
+                        "sample_targets": ["AAOI", "AAPL"],
+                    },
+                )
+
+            payload = json.loads(progress_path.read_text(encoding="utf-8"))
+            log_ref = Path(payload["log_refs"][0])
+            log_text = log_ref.read_text(encoding="utf-8")
+
+        self.assertEqual(payload["processed_count"], 15)
+        self.assertEqual(payload["expected_count"], 79)
+        self.assertEqual(payload["unit_label"], "feature months")
+        self.assertEqual(log_ref.name, "model_worker_1.log")
+        self.assertIn("Generating feature window 16 of 79", log_text)
+        self.assertIn("15/79 feature months", log_text)
+        self.assertIn("rows written 259337", log_text)
 
 
 if __name__ == "__main__":

@@ -148,10 +148,12 @@ def _write_task_progress(
 
     progress_path = Path(progress_path_text)
     progress_path.parent.mkdir(parents=True, exist_ok=True)
+    progress_log_path = _worker_progress_log_path(progress_path.parent, worker_id)
     now = _utc_now_iso()
     progress_extra = {"progress_basis": "feature partitions required by the 12+3+3 walk-forward fold"}
     if extra:
         progress_extra.update(dict(extra))
+    log_refs = [str(progress_log_path)]
     payload = {
         "contract_type": "manager_worker_task_progress",
         "worker_id": worker_id,
@@ -167,6 +169,7 @@ def _write_task_progress(
         "progress_source": "active_progress_file",
         "progress_basis": progress_extra["progress_basis"],
         "extra": progress_extra,
+        "log_refs": log_refs,
         "nodes": [
             {
                 "node_id": node_id,
@@ -180,6 +183,16 @@ def _write_task_progress(
             }
         ],
     }
+    _append_task_progress_log(
+        progress_log_path,
+        timestamp=now,
+        stage_id=stage_id,
+        unit_label="feature months",
+        processed_count=processed_count,
+        expected_count=expected_count,
+        node_label=node_label,
+        extra=progress_extra,
+    )
     tmp = progress_path.with_name(f".{progress_path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
     try:
         tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -189,6 +202,41 @@ def _write_task_progress(
             tmp.unlink()
         except FileNotFoundError:
             pass
+
+
+def _worker_progress_log_path(progress_root: Path, worker_id: str) -> Path:
+    safe_worker_id = "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in worker_id)
+    return progress_root / "logs" / f"{safe_worker_id or 'worker'}.log"
+
+
+def _append_task_progress_log(
+    path: Path,
+    *,
+    timestamp: str,
+    stage_id: str,
+    unit_label: str,
+    processed_count: int | None,
+    expected_count: int | None,
+    node_label: str,
+    extra: Mapping[str, Any],
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    parts = [timestamp, stage_id, node_label]
+    if processed_count is not None and expected_count is not None:
+        parts.append(f"{processed_count}/{expected_count} {unit_label}")
+    window_start = extra.get("window_start")
+    window_end = extra.get("window_end")
+    if window_start or window_end:
+        parts.append(f"window {window_start or '?'} to {window_end or '?'}")
+    sample_targets = extra.get("sample_targets")
+    if isinstance(sample_targets, list) and sample_targets:
+        parts.append("examples " + ", ".join(str(item) for item in sample_targets[:4]))
+    for key, label in (("window_row_count", "window rows"), ("rows_written", "rows written"), ("candidate_symbol_count", "candidate symbols")):
+        value = extra.get(key)
+        if value not in (None, ""):
+            parts.append(f"{label} {value}")
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(" | ".join(str(part) for part in parts if str(part).strip()) + "\n")
 
 
 def _quote_identifier(identifier: str) -> str:

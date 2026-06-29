@@ -149,7 +149,7 @@ def _write_task_progress(
     progress_path = Path(progress_path_text)
     progress_path.parent.mkdir(parents=True, exist_ok=True)
     now = _utc_now_iso()
-    progress_extra = {"progress_basis": "feature partitions required by the six-month fold"}
+    progress_extra = {"progress_basis": "feature partitions required by the 12+3+3 walk-forward fold"}
     if extra:
         progress_extra.update(dict(extra))
     payload = {

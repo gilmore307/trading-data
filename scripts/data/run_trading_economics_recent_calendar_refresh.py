@@ -42,7 +42,6 @@ def build_recent_calendar_task_key(
     output_root: str = DEFAULT_OUTPUT_ROOT,
     allow_live_fetch: bool = False,
     use_authenticated_cookies: bool = False,
-    persist_failure_diagnostics: bool = True,
 ) -> dict[str, Any]:
     """Build a bounded recent/future-calendar task key with provider controls."""
 
@@ -65,7 +64,6 @@ def build_recent_calendar_task_key(
             "date_range_mode": "recent",
             "use_authenticated_cookies": bool(use_authenticated_cookies),
             "allow_live_fetch": bool(allow_live_fetch),
-            "persist_failure_diagnostics": bool(persist_failure_diagnostics),
             "monthly_backfill_bucketed_output": True,
             "source_materialization_role": "append_to_trading_economics_monthly_backfill",
         },
@@ -84,31 +82,16 @@ def build_recent_calendar_task_key(
     }
 
 
-def build_plan_receipt(*, task_key: dict[str, Any], run_id: str) -> dict[str, Any]:
+def build_plan_status(*, task_key: dict[str, Any], run_id: str) -> dict[str, Any]:
     return {
-        "contract_type": "trading_economics_recent_calendar_refresh_receipt",
+        "contract_type": "trading_economics_recent_calendar_refresh_status",
         "refresh_status": "planned_requires_execute_live_fetch",
         "run_id": run_id,
         "task_key": task_key,
         "provider_calls_performed": 0,
         "storage_mutation_performed": False,
-        "boundary_note": "Plan-only receipt. Add --execute-live-fetch to perform the bounded calendar-page fetch; source URLs are not persisted.",
+        "boundary_note": "Plan-only status. Add --execute-live-fetch to perform the bounded calendar-page fetch; source URLs and TE side products are not persisted.",
     }
-
-
-def _json_default(value: Any) -> Any:
-    if is_dataclass(value):
-        return asdict(value)
-    if isinstance(value, Path):
-        return str(value)
-    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
-
-
-def _atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(path.name + ".tmp")
-    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True, default=_json_default) + "\n", encoding="utf-8")
-    tmp.replace(path)
 
 
 def _rows_from_reference(path: Path) -> list[dict[str, str]]:
@@ -132,8 +115,8 @@ def _rows_from_reference(path: Path) -> list[dict[str, str]]:
     return []
 
 
-def _receipt_has_released_value(receipt: Mapping[str, Any]) -> bool:
-    result = receipt.get("result")
+def _refresh_status_has_released_value(status: Mapping[str, Any]) -> bool:
+    result = status.get("result")
     if not isinstance(result, Mapping):
         return False
     for reference in result.get("references") or []:
@@ -164,9 +147,6 @@ def run_web_search_fallback(
     search_fn: Callable[..., list[Any]] | None = None,
 ) -> dict[str, Any]:
     queries = _web_search_fallback_queries(task_key, fallback_queries)
-    output_root = Path(str(task_key.get("output_root") or DEFAULT_OUTPUT_ROOT))
-    output_path = output_root / "_manifests" / "release_fetch_fallbacks" / run_id / "provisional_macro_release_web_search.json"
-    retrieval_time_utc = _today_utc().isoformat().replace("+00:00", "Z")
     search_status = "succeeded"
     query_results: list[dict[str, Any]] = []
     error: dict[str, str] | None = None
@@ -186,23 +166,9 @@ def run_web_search_fallback(
     except Exception as exc:
         search_status = "failed"
         error = {"type": type(exc).__name__, "message": str(exc)}
-    payload = {
-        "contract_type": "provisional_macro_release_web_search",
-        "run_id": run_id,
-        "retrieval_time_utc": retrieval_time_utc,
-        "search_status": search_status,
-        "queries": queries,
-        "query_results": query_results,
-        "source_role": "provisional_realtime_decision_fallback",
-        "replacement_policy": "Use only until formal Trading Economics release rows are captured; do not merge into TE-origin source rows.",
-        "task_key": task_key,
-        "error": error,
-    }
-    _atomic_write_json(output_path, payload)
     return {
-        "contract_type": "provisional_macro_release_web_search_receipt",
+        "contract_type": "provisional_macro_release_web_search_status",
         "fallback_status": search_status,
-        "reference": str(output_path),
         "query_count": len(queries),
         "result_count": sum(len(row.get("results") or []) for row in query_results),
         "error": error,
@@ -211,19 +177,19 @@ def run_web_search_fallback(
 
 def run_refresh(*, task_key: dict[str, Any], run_id: str, execute_live_fetch: bool) -> dict[str, Any]:
     if not execute_live_fetch:
-        return build_plan_receipt(task_key=task_key, run_id=run_id)
+        return build_plan_status(task_key=task_key, run_id=run_id)
     pipeline = import_module("data_feed.07_feed_trading_economics_calendar_web.pipeline")
     result = pipeline.run(task_key, run_id=run_id)
     storage_mutation = result.status == "succeeded" and bool(result.details.get("storage_mutation_performed", True))
     return {
-        "contract_type": "trading_economics_recent_calendar_refresh_receipt",
+        "contract_type": "trading_economics_recent_calendar_refresh_status",
         "refresh_status": result.status,
         "run_id": run_id,
         "task_key": task_key,
         "result": result.__dict__,
         "provider_calls_performed": 1 if result.status in {"succeeded", "skipped_no_new_or_changed_rows"} else 0,
         "storage_mutation_performed": storage_mutation,
-        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only when new or changed release-preview facts are observed; it does not persist source URLs or populate M06 event-governance SQL rows.",
+        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only when new or changed release-preview facts are observed; it does not persist TE receipts, manifests, diagnostics, source URLs, or M06 event-governance SQL rows.",
     }
 
 
@@ -238,15 +204,15 @@ def run_release_poll(
     fallback_queries: list[str],
 ) -> dict[str, Any]:
     if not execute_live_fetch:
-        receipt = build_plan_receipt(task_key=task_key, run_id=run_id)
-        receipt["release_poll"] = {
+        status = build_plan_status(task_key=task_key, run_id=run_id)
+        status["release_poll"] = {
             "poll_status": "planned_requires_execute_live_fetch",
             "poll_interval_seconds": max(1, poll_interval_seconds),
             "poll_timeout_seconds": max(0, poll_timeout_seconds),
             "fallback_web_search_after_timeout": bool(fallback_web_search_after_timeout),
             "fallback_queries": _web_search_fallback_queries(task_key, fallback_queries),
         }
-        return receipt
+        return status
     deadline = time.monotonic() + max(0, poll_timeout_seconds)
     interval = max(1, poll_interval_seconds)
     attempts: list[dict[str, Any]] = []
@@ -256,7 +222,7 @@ def run_release_poll(
         attempt_index += 1
         attempt_run_id = run_id if attempt_index == 1 else f"{run_id}_retry{attempt_index:02d}"
         latest = run_refresh(task_key=task_key, run_id=attempt_run_id, execute_live_fetch=True)
-        has_released_value = _receipt_has_released_value(latest)
+        has_released_value = _refresh_status_has_released_value(latest)
         attempts.append(
             {
                 "attempt": attempt_index,
@@ -291,21 +257,21 @@ def run_release_poll(
     }
     if fallback:
         latest["provider_calls_performed"] = len(attempts) + int(fallback["query_count"])
-        latest["storage_mutation_performed"] = True
+        latest["storage_mutation_performed"] = False
     else:
         latest["provider_calls_performed"] = len(attempts)
     return latest
 
 
-def receipt_exit_success(receipt: Mapping[str, Any]) -> bool:
-    release_poll = receipt.get("release_poll")
+def status_exit_success(status: Mapping[str, Any]) -> bool:
+    release_poll = status.get("release_poll")
     if isinstance(release_poll, Mapping):
         poll_status = release_poll.get("poll_status")
         if poll_status in {"te_released_value_available", "planned_requires_execute_live_fetch"}:
             return True
         fallback = release_poll.get("fallback_web_search")
         return isinstance(fallback, Mapping) and fallback.get("fallback_status") == "succeeded"
-    return receipt.get("refresh_status") in {"succeeded", "skipped_no_new_or_changed_rows", "planned_requires_execute_live_fetch"}
+    return status.get("refresh_status") in {"succeeded", "skipped_no_new_or_changed_rows", "planned_requires_execute_live_fetch"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -322,7 +288,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--release-poll-timeout-seconds", type=int, default=DEFAULT_RELEASE_POLL_TIMEOUT_SECONDS)
     parser.add_argument("--fallback-web-search-after-timeout", action="store_true")
     parser.add_argument("--fallback-query", action="append", default=[])
-    parser.add_argument("--no-failure-diagnostics", action="store_true")
     parser.add_argument("--write-task-key", type=Path, default=None)
     return parser.parse_args()
 
@@ -337,13 +302,12 @@ def main() -> int:
         forward_days=args.forward_days,
         output_root=args.output_root,
         allow_live_fetch=args.execute_live_fetch,
-        persist_failure_diagnostics=not args.no_failure_diagnostics,
     )
     if args.write_task_key is not None:
         args.write_task_key.parent.mkdir(parents=True, exist_ok=True)
         args.write_task_key.write_text(json.dumps(task_key, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.release_poll_until_value:
-        receipt = run_release_poll(
+        status = run_release_poll(
             task_key=task_key,
             run_id=run_id,
             execute_live_fetch=args.execute_live_fetch,
@@ -353,9 +317,9 @@ def main() -> int:
             fallback_queries=args.fallback_query,
         )
     else:
-        receipt = run_refresh(task_key=task_key, run_id=run_id, execute_live_fetch=args.execute_live_fetch)
-    print(json.dumps(receipt, indent=2, sort_keys=True))
-    return 0 if receipt_exit_success(receipt) else 1
+        status = run_refresh(task_key=task_key, run_id=run_id, execute_live_fetch=args.execute_live_fetch)
+    print(json.dumps(status, indent=2, sort_keys=True))
+    return 0 if status_exit_success(status) else 1
 
 
 if __name__ == "__main__":

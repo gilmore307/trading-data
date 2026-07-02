@@ -18,6 +18,7 @@ class TradingEconomicsAuthenticatedHistoricalBackfillTests(unittest.TestCase):
         self.assertEqual(task_key["params"]["end_date"], "2016-02-01")
         self.assertEqual(task_key["params"]["date_range_mode"], "custom")
         self.assertTrue(task_key["params"]["use_authenticated_cookies"])
+        self.assertNotIn("persist_failure_diagnostics", task_key["params"])
         self.assertFalse(task_key["params"]["write_only_changed_monthly_buckets"])
         self.assertTrue(task_key["manager_controls"]["allow_live_provider_calls"])
         self.assertTrue(task_key["manager_controls"]["autonomous_historical_provider_acquisition"])
@@ -44,6 +45,7 @@ class TradingEconomicsAuthenticatedHistoricalBackfillTests(unittest.TestCase):
                 output_root=tmp,
             )
 
+        self.assertEqual(summary["contract_type"], "trading_economics_authenticated_historical_calendar_backfill_status")
         self.assertEqual(summary["completed_month_count"], 1)
         self.assertEqual(summary["failed_month_count"], 0)
         self.assertEqual(summary["field_totals"]["rows"], 2)

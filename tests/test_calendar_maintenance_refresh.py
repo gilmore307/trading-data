@@ -140,7 +140,7 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         self.assertEqual(planned["end_date"], "2099-01-05")
         self.assertIn("United States Non Farm Payrolls Dec actual released", planned["fallback_queries"])
 
-    def test_te_release_fetch_queue_writes_pending_jobs(self) -> None:
+    def test_te_release_fetch_queue_returns_pending_jobs_without_side_product(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             receipt = {
                 "task_key": {"output_root": str(Path(tmp) / "te-calendar")},
@@ -160,14 +160,15 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
             }
 
             update = queue_te_release_fetches(te_receipt=receipt, delay_seconds=0, max_count=48, poll_interval_seconds=5, poll_timeout_seconds=60, execute=True)
-            queue_path = Path(update["queue_path"])
-            payload = json.loads(queue_path.read_text(encoding="utf-8"))
+            te_root = Path(tmp) / "te-calendar"
 
-        self.assertEqual(update["queue_status"], "queued")
-        self.assertEqual(update["written_count"], 1)
-        self.assertEqual(payload["contract_type"], "trading_economics_release_fetch_queue")
-        self.assertEqual(payload["items"][0]["status"], "pending")
-        self.assertEqual(payload["items"][0]["fallback_queries"], ["United States CPI Dec actual released"])
+            self.assertFalse((te_root / "_manifests").exists())
+
+        self.assertEqual(update["queue_status"], "queued_in_memory")
+        self.assertEqual(update["written_count"], 0)
+        self.assertNotIn("queue_path", update)
+        self.assertEqual(update["queued"][0]["status"], "pending")
+        self.assertEqual(update["queued"][0]["fallback_queries"], ["United States CPI Dec actual released"])
 
     def test_cli_plan_is_side_effect_safe(self) -> None:
         completed = subprocess.run(

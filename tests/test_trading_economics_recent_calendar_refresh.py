@@ -79,7 +79,7 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
 
             def fake_refresh(*, task_key, run_id, execute_live_fetch):
                 return {
-                    "contract_type": "trading_economics_recent_calendar_refresh_receipt",
+                    "contract_type": "trading_economics_recent_calendar_refresh_status",
                     "refresh_status": "skipped_no_new_or_changed_rows",
                     "run_id": run_id,
                     "task_key": task_key,
@@ -94,9 +94,8 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
             with patch("scripts.data.run_trading_economics_recent_calendar_refresh.run_refresh", fake_refresh):
                 with patch("scripts.data.run_trading_economics_recent_calendar_refresh.run_web_search_fallback") as fallback:
                     fallback.side_effect = lambda **kwargs: {
-                        "contract_type": "provisional_macro_release_web_search_receipt",
+                        "contract_type": "provisional_macro_release_web_search_status",
                         "fallback_status": "succeeded",
-                        "reference": str(Path(tmp) / "te" / "_manifests" / "release_fetch_fallbacks" / "poll" / "provisional_macro_release_web_search.json"),
                         "query_count": 1,
                         "result_count": len(fake_search("query")),
                         "error": None,
@@ -115,7 +114,7 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
         self.assertEqual(receipt["release_poll"]["attempts"][0]["released_value_available"], False)
         self.assertEqual(receipt["release_poll"]["fallback_web_search"]["fallback_status"], "succeeded")
 
-    def test_web_search_fallback_writes_provisional_evidence(self) -> None:
+    def test_web_search_fallback_returns_status_without_side_product(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             task_key = build_recent_calendar_task_key(
                 start_date="2099-01-04",
@@ -124,19 +123,19 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
                 allow_live_fetch=True,
             )
 
-            receipt = run_web_search_fallback(
+            status = run_web_search_fallback(
                 task_key=task_key,
                 run_id="fallback",
                 fallback_queries=["United States Non Farm Payrolls actual released"],
                 search_fn=lambda query, **kwargs: [{"title": "NFP actual 150K", "url": "https://example.test/release", "description": query}],
             )
-            payload = json.loads(Path(receipt["reference"]).read_text(encoding="utf-8"))
 
-        self.assertEqual(receipt["fallback_status"], "succeeded")
-        self.assertEqual(payload["contract_type"], "provisional_macro_release_web_search")
-        self.assertEqual(payload["source_role"], "provisional_realtime_decision_fallback")
-        self.assertEqual(payload["query_results"][0]["results"][0]["title"], "NFP actual 150K")
-        self.assertIn("formal Trading Economics", payload["replacement_policy"])
+            self.assertFalse((Path(tmp) / "te" / "_manifests").exists())
+
+        self.assertEqual(status["contract_type"], "provisional_macro_release_web_search_status")
+        self.assertEqual(status["fallback_status"], "succeeded")
+        self.assertNotIn("reference", status)
+        self.assertEqual(status["result_count"], 1)
 
 
 if __name__ == "__main__":

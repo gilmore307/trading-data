@@ -55,8 +55,8 @@ class TradingEconomicsReleaseFetcherTests(unittest.TestCase):
         self.assertEqual(receipt["processed_count"], 1)
         self.assertFalse(poll_task_key["params"]["use_authenticated_cookies"])
         self.assertNotIn("authenticated_provider_session_required", poll_task_key["manager_controls"])
-        self.assertEqual(payload["items"][0]["status"], "completed")
-        self.assertEqual(payload["items"][0]["last_result"]["refresh_status"], "succeeded")
+        self.assertEqual(payload["items"][0]["status"], "pending")
+        self.assertNotIn("last_result", payload["items"][0])
 
     def test_fetcher_ignores_future_pending_job(self) -> None:
         now = datetime(2099, 1, 4, 13, 29, tzinfo=UTC)

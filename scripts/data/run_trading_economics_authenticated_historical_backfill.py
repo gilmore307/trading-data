@@ -25,8 +25,6 @@ for path in (REPO_ROOT, MANAGER_SRC):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from data_runtime.io import atomic_write_json  # noqa: E402
-
 FEED = "07_feed_trading_economics_calendar_web"
 DEFAULT_OUTPUT_ROOT = "/root/projects/trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web"
 
@@ -91,7 +89,6 @@ def _task_key(*, month: str, output_root: str, write_only_changed: bool) -> dict
             "date_range_mode": "custom",
             "use_authenticated_cookies": True,
             "allow_live_fetch": True,
-            "persist_failure_diagnostics": True,
             "monthly_backfill_bucketed_output": True,
             "write_only_changed_monthly_buckets": bool(write_only_changed),
             "source_materialization_role": "append_to_trading_economics_monthly_backfill",
@@ -203,7 +200,7 @@ def _run_month(
 def _summary_payload(*, run_group_id: str, months: list[str], results: list[MonthBackfillResult], output_root: str) -> dict[str, Any]:
     failures = [result for result in results if result.status == "failed"]
     return {
-        "contract_type": "trading_economics_authenticated_historical_calendar_backfill_receipt",
+        "contract_type": "trading_economics_authenticated_historical_calendar_backfill_status",
         "run_group_id": run_group_id,
         "source_name": "trading_economics_calendar_web",
         "start_month": months[0] if months else None,
@@ -269,9 +266,7 @@ def main(argv: list[str] | None = None) -> int:
         if index < len(months):
             time.sleep(max(0.0, args.delay_seconds))
     summary = _summary_payload(run_group_id=run_group_id, months=months, results=results, output_root=args.output_root)
-    summary_path = Path(args.output_root) / "_manifests" / "authenticated_historical_backfill_runs" / run_group_id / "summary.json"
-    atomic_write_json(summary_path, summary)
-    print(json.dumps({"summary_path": str(summary_path), **summary}, indent=2, sort_keys=True))
+    print(json.dumps(summary, indent=2, sort_keys=True))
     if summary["failed_month_count"] and not args.allow_partial:
         return 1
     return 0

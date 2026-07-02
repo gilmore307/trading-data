@@ -321,29 +321,10 @@ def queue_te_release_fetches(
         queued.append(row)
     queued_count = len([row for row in queued if row.get("status") in {"pending", "planned"}])
     written_count = 0
-    if execute and queued:
-        payload = _load_release_fetch_queue(queue_path)
-        existing = {str(item.get("job_id")): dict(item) for item in payload.get("items", []) if isinstance(item, Mapping)}
-        for item in queued:
-            previous = existing.get(item["job_id"])
-            if previous and previous.get("status") in {"completed", "failed"}:
-                continue
-            existing[item["job_id"]] = item
-            written_count += 1
-        payload.update(
-            {
-                "contract_type": "trading_economics_release_fetch_queue",
-                "schema_version": 1,
-                "updated_at_utc": now.isoformat().replace("+00:00", "Z"),
-                "output_root": str(output_root or DEFAULT_TE_OUTPUT_ROOT),
-                "items": sorted(existing.values(), key=lambda item: (str(item.get("fetch_after_utc") or ""), str(item.get("job_id") or ""))),
-            }
-        )
-        _write_release_fetch_queue(queue_path, payload)
     if not candidates:
         queue_status = "not_requested"
     elif queued_count:
-        queue_status = "queued" if execute else "planned"
+        queue_status = "queued_in_memory" if execute else "planned"
     else:
         queue_status = "skipped_no_future_candidates"
     return {
@@ -355,7 +336,6 @@ def queue_te_release_fetches(
         "candidate_count": len(candidates),
         "queued_count": queued_count,
         "written_count": written_count,
-        "queue_path": str(queue_path),
         "queued": queued,
         "skipped": skipped,
     }
@@ -410,7 +390,7 @@ def run_calendar_maintenance(
 ) -> dict[str, Any]:
     if skip_trading_economics:
         te = {
-            "contract_type": "trading_economics_recent_calendar_refresh_receipt",
+            "contract_type": "trading_economics_recent_calendar_refresh_status",
             "refresh_status": "skipped",
             "run_id": f"{run_id}_te",
             "provider_calls_performed": 0,
@@ -425,7 +405,6 @@ def run_calendar_maintenance(
             forward_days=te_forward_days,
             output_root=te_output_root,
             allow_live_fetch=execute_live_fetch,
-            persist_failure_diagnostics=True,
         )
         te = run_te_refresh(task_key=te_task_key, run_id=f"{run_id}_te", execute_live_fetch=execute_live_fetch)
     official = run_nasdaq_earnings_refresh(

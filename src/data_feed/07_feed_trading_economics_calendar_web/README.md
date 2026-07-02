@@ -12,8 +12,9 @@ Boundary:
 - Do not persist website URLs as source evidence.
 - Do not directly populate M06 SQL event rows from this feed; M06 materialization consumes reviewed storage artifacts.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
-- Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported in receipt warnings/details.
+- Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported only in the in-memory run status.
 - Request the visible calendar page with the `America/New_York` timezone offset; saved `event_time` values are New York local macro-release times with explicit offsets.
+- Do not persist TE receipts, request manifests, schemas, diagnostics, fallback web-search files, or other side products in source storage.
 
 Run:
 
@@ -31,12 +32,8 @@ Params:
 - `date_range_mode` — optional parser compatibility field; `custom` by default for bounded historical windows, or `recent` for recent/future refreshes.
 - `allow_live_fetch` — optional; required for the bounded TE calendar-page request. Plan-only task keys leave this false.
 - `use_authenticated_cookies` — optional; defaults to false. Set true only for a reviewed manual recovery route that explicitly needs an exported local cookie jar.
-- `persist_failure_diagnostics` — optional; when true and parsing finds zero in-window rows, writes sanitized structural diagnostics under the run directory. It does not persist request headers, cookies, or raw page HTML.
 
 Outputs:
 
-- `request_manifest.json`
 - `cleaned/trading_economics_calendar_event.jsonl`
 - `saved/trading_economics_calendar_event.csv`
-- `completion_receipt.json`
-- `diagnostics/te_calendar_failure_diagnostic.json` — optional failure-only sanitized structure/excerpt report when `persist_failure_diagnostics=true`

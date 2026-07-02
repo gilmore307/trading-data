@@ -15,7 +15,7 @@ import re
 import shutil
 import urllib.parse
 from io import StringIO
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from pathlib import Path
@@ -25,7 +25,7 @@ from feed_availability.http import HttpClient
 from feed_availability.sanitize import sanitize_value
 from data_runtime.provider_policy import require_provider_execution_allowed
 from data_runtime.config import resolve_output_root, trading_economics_cookie_jar
-from data_runtime.io import atomic_write_json, atomic_write_text, write_receipt_bundle
+from data_runtime.io import atomic_write_text
 
 FEED = "07_feed_trading_economics_calendar_web"
 REQUEST_URL = "https://tradingeconomics.com/united-states/calendar"
@@ -52,7 +52,6 @@ class FeedContext:
     run_dir: Path
     cleaned_dir: Path
     saved_dir: Path
-    receipt_path: Path
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -86,12 +85,10 @@ def build_context(task_key: dict[str, Any], run_id: str) -> FeedContext:
     output_root = resolve_output_root(task_key, default_task_id=f"{FEED}_task")
     params = dict(task_key.get("params") or {})
     if params.get("monthly_backfill_bucketed_output"):
-        run_dir = output_root / "_manifests" / "recent_refresh_runs" / run_id
-        receipt_path = output_root / "_manifests" / "recent_refresh_completion_receipt.json"
+        run_dir = output_root / "_transient" / run_id
     else:
         run_dir = output_root / "runs" / run_id
-        receipt_path = output_root / "completion_receipt.json"
-    return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", receipt_path, {"run_id": run_id, "started_at": _now_utc(), "output_root": str(output_root)})
+    return FeedContext(task_key, run_dir, run_dir / "cleaned", run_dir / "saved", {"run_id": run_id, "started_at": _now_utc(), "output_root": str(output_root)})
 
 
 def _date_param(params: Mapping[str, Any], key: str, default: date) -> date:
@@ -194,21 +191,7 @@ def fetch(context: FeedContext) -> tuple[StepResult, FetchedPage]:
         fetched = FetchedPage(result.text(), "trading_economics_calendar_web", _now_utc())
     else:
         raise TradingEconomicsCalendarError("provide params.html_path/html, or set allow_live_fetch=true for a bounded visible-page fetch")
-    context.run_dir.mkdir(parents=True, exist_ok=True)
-    manifest = {
-        "feed": "07_feed_trading_economics_calendar_web",
-        "source_name": "trading_economics_calendar_web",
-        "country": str(params.get("country") or "United States"),
-        "importance": str(params.get("importance") or "3"),
-        "fetched_at_utc": fetched.fetched_at_utc,
-        "persistence": "final CSV only; raw page not persisted by default",
-        "boundary": "bounded visible calendar-page acquisition or provided HTML only; no API/download/export endpoint and no persisted website URL evidence",
-        "date_range_mode": _range_mode(params),
-        "use_authenticated_cookies": _use_authenticated_cookies(params),
-    }
-    path = context.run_dir / "request_manifest.json"
-    atomic_write_json(path, sanitize_value(manifest))
-    return StepResult("succeeded", [str(path)], {"html_pages": 1}, details={"source_name": fetched.source_reference}), fetched
+    return StepResult("succeeded", [], {"html_pages": 1}, details={"source_name": fetched.source_reference}), fetched
 
 
 def _clean_cell(text: str) -> str:
@@ -457,66 +440,6 @@ def _release_fetch_candidates(rows: list[Mapping[str, Any]], *, now: datetime | 
     return [grouped[key] for key in sorted(grouped)]
 
 
-def _diagnostic_excerpt(html_text: str, *, max_chars: int = 4000) -> str:
-    text = re.sub(r"<script\b[^>]*>.*?</script>", " ", html_text, flags=re.I | re.S)
-    text = re.sub(r"<style\b[^>]*>.*?</style>", " ", text, flags=re.I | re.S)
-    text = _clean_cell(text)
-    text = re.sub(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", "[redacted-email]", text, flags=re.I)
-    text = re.sub(r"(?i)(token|secret|password|authorization|cookie)=([^\s&;]+)", r"\1=[redacted]", text)
-    return text[:max_chars] + ("...[truncated]" if len(text) > max_chars else "")
-
-
-def _write_failure_diagnostics(
-    context: FeedContext,
-    fetched: FetchedPage,
-    *,
-    parsed_rows: list[dict[str, str]],
-    start: date,
-    end: date,
-    out_of_window_count: int,
-) -> None:
-    params = dict(context.task_key.get("params") or {})
-    if not params.get("persist_failure_diagnostics"):
-        return
-    html_text = fetched.html_text
-    diagnostics_dir = context.run_dir / "diagnostics"
-    date_markers = [_clean_cell(match.group(1)) for match in re.finditer(r"<th\b[^>]*colspan=['\"]3['\"][^>]*>(.*?)</th>", html_text, flags=re.I | re.S)]
-    payload = {
-        "contract_type": "trading_economics_calendar_web_failure_diagnostic",
-        "feed": FEED,
-        "reason": "zero_parseable_in_window_calendar_rows",
-        "source_name": "trading_economics_calendar_web",
-        "window": {"start_date": start.isoformat(), "end_date_exclusive": end.isoformat()},
-        "html_length": len(html_text),
-        "parsed_rows_count": len(parsed_rows),
-        "in_window_rows_count": 0,
-        "out_of_window_rows_skipped": out_of_window_count,
-        "structural_counts": {
-            "table_tags": len(re.findall(r"<table\b", html_text, flags=re.I)),
-            "tr_tags": len(re.findall(r"<tr\b", html_text, flags=re.I)),
-            "data_url_rows": len(re.findall(r"<tr\b[^>]*\bdata-url=", html_text, flags=re.I | re.S)),
-            "calendar_event_class": len(re.findall(r"calendar-event", html_text, flags=re.I)),
-            "actual_cells": len(re.findall(r"id=['\"]actual['\"]", html_text, flags=re.I)),
-            "previous_cells": len(re.findall(r"id=['\"]previous['\"]", html_text, flags=re.I)),
-            "consensus_cells": len(re.findall(r"id=['\"]consensus['\"]", html_text, flags=re.I)),
-            "forecast_cells": len(re.findall(r"id=['\"]forecast['\"]", html_text, flags=re.I)),
-            "date_markers": len(date_markers),
-            "requested_start_year_mentions": html_text.count(start.strftime("%Y")),
-        },
-        "page_markers": {
-            "mentions_login": bool(re.search(r"login|sign in", html_text, flags=re.I)),
-            "mentions_captcha": bool(re.search(r"captcha|cloudflare|verify you are human", html_text, flags=re.I)),
-            "mentions_calendar": bool(re.search(r"calendar", html_text, flags=re.I)),
-            "mentions_united_states": bool(re.search(r"united states", html_text, flags=re.I)),
-        },
-        "date_marker_samples": sanitize_value(date_markers[:8]),
-        "parsed_row_samples": sanitize_value(parsed_rows[:5]),
-        "html_text_excerpt": _diagnostic_excerpt(html_text),
-        "persistence": "sanitized diagnostic excerpt and structural counters only; cookies/request headers/raw page are not persisted",
-    }
-    atomic_write_json(diagnostics_dir / "te_calendar_failure_diagnostic.json", payload)
-
-
 def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
     params = dict(context.task_key.get("params") or {})
     start, end = _window(params)
@@ -524,15 +447,12 @@ def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
     rows = [row for row in parsed_rows if _row_in_window(row, start=start, end=end)]
     out_of_window_count = len(parsed_rows) - len(rows)
     if not rows:
-        _write_failure_diagnostics(context, fetched, parsed_rows=parsed_rows, start=start, end=end, out_of_window_count=out_of_window_count)
         raise TradingEconomicsCalendarError("Trading Economics page produced zero parseable in-window calendar rows")
     context.cleaned_dir.mkdir(parents=True, exist_ok=True)
     path = context.cleaned_dir / "trading_economics_calendar_event.jsonl"
     atomic_write_text(path, "".join(json.dumps(sanitize_value(row), sort_keys=True) + "\n" for row in rows))
-    schema = context.cleaned_dir / "schema.json"
-    atomic_write_json(schema, {"trading_economics_calendar_event": FIELDS, "row_count": len(rows)})
     warnings = [f"out_of_window_calendar_rows_skipped={out_of_window_count}"] if out_of_window_count else []
-    return StepResult("succeeded", [str(path), str(schema)], {"trading_economics_calendar_event": len(rows)}, warnings=warnings, details={"columns": FIELDS, "out_of_window_calendar_rows_skipped": out_of_window_count})
+    return StepResult("succeeded", [str(path)], {"trading_economics_calendar_event": len(rows)}, warnings=warnings, details={"columns": FIELDS, "out_of_window_calendar_rows_skipped": out_of_window_count})
 
 
 def save(context: FeedContext, clean_result: StepResult) -> StepResult:
@@ -558,18 +478,7 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
             month_run_dir = output_root / month / "runs" / str(context.metadata["run_id"])
             cleaned_dir = month_run_dir / "cleaned"
             saved_dir = month_run_dir / "saved"
-            atomic_write_json(
-                month_run_dir / "request_manifest.json",
-                {
-                    "feed": FEED,
-                    "source_request_manifest": str((context.run_dir / "request_manifest.json").resolve()),
-                    "month": month,
-                    "row_count": len(month_rows),
-                    "persistence": "monthly bucket copied from one bounded recent Trading Economics refresh",
-                },
-            )
             atomic_write_text(cleaned_dir / "trading_economics_calendar_event.jsonl", "".join(json.dumps(sanitize_value(row), sort_keys=True) + "\n" for row in month_rows))
-            atomic_write_json(cleaned_dir / "schema.json", {"trading_economics_calendar_event": FIELDS, "row_count": len(month_rows)})
             buffer = StringIO()
             writer = csv.DictWriter(buffer, fieldnames=FIELDS, extrasaction="ignore")
             writer.writeheader()
@@ -619,36 +528,29 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
 
 
-def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:
-    context.receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    existing: dict[str, Any] = {"task_id": context.task_key.get("task_id"), "feed": FEED, "runs": []}
-    if context.receipt_path.exists():
-        try:
-            existing = json.loads(context.receipt_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            pass
+def _run_result(
+    context: FeedContext,
+    *,
+    status: str,
+    fetch_result: StepResult | None = None,
+    clean_result: StepResult | None = None,
+    save_result: StepResult | None = None,
+    error: Exception | None = None,
+) -> StepResult:
     row_counts = save_result.row_counts if save_result else clean_result.row_counts if clean_result else fetch_result.row_counts if fetch_result else {}
     outputs = save_result.references if save_result else []
-    entry = {"run_id": str(context.metadata["run_id"]), "status": status, "started_at": context.metadata.get("started_at"), "completed_at": _now_utc(), "output_dir": str(context.run_dir), "outputs": outputs, "row_counts": row_counts, "steps": {"fetch": asdict(fetch_result) if fetch_result else None, "clean": asdict(clean_result) if clean_result else None, "save": asdict(save_result) if save_result else None}, "error": None if error is None else {"type": type(error).__name__, "message": str(error)}}
-    existing["runs"] = [run for run in existing.get("runs", []) if run.get("run_id") != entry["run_id"]] + [entry]
-    existing.update({"task_id": context.task_key.get("task_id"), "feed": FEED})
-    write_receipt_bundle(context.receipt_path, context.run_dir, existing)
-    if save_result is not None:
-        for bucket_run_dir in save_result.details.get("monthly_bucket_run_dirs", []):
-            bucket_run_path = Path(str(bucket_run_dir))
-            write_receipt_bundle(bucket_run_path.parents[1] / "completion_receipt.json", bucket_run_path, existing)
     warnings = []
     for step in (fetch_result, clean_result, save_result):
         if step:
             warnings.extend(step.warnings)
     return StepResult(
         status,
-        [str(context.receipt_path), *outputs],
+        outputs,
         row_counts,
         warnings=warnings,
         details={
-            "run_id": entry["run_id"],
-            "error": entry["error"],
+            "run_id": str(context.metadata["run_id"]),
+            "error": None if error is None else {"type": type(error).__name__, "message": str(error)},
             "fetch": fetch_result.details if fetch_result else None,
             "clean": clean_result.details if clean_result else None,
             "save": save_result.details if save_result else None,
@@ -658,6 +560,15 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
     )
 
 
+def _cleanup_transient_context(context: FeedContext) -> None:
+    if dict(context.task_key.get("params") or {}).get("monthly_backfill_bucketed_output"):
+        shutil.rmtree(context.run_dir, ignore_errors=True)
+        try:
+            context.run_dir.parent.rmdir()
+        except OSError:
+            pass
+
+
 def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:
     context = build_context(task_key, run_id)
     fetch_result = clean_result = save_result = None
@@ -665,13 +576,10 @@ def run(task_key: dict[str, Any], *, run_id: str) -> StepResult:
         fetch_result, fetched = fetch(context)
         clean_result = clean(context, fetched)
         save_result = save(context, clean_result)
+        _cleanup_transient_context(context)
         if save_result.status == "skipped_no_new_or_changed_rows":
-            shutil.rmtree(context.run_dir, ignore_errors=True)
-            try:
-                context.run_dir.parent.rmdir()
-            except OSError:
-                pass
             return save_result
-        return write_receipt(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
+        return _run_result(context, status="succeeded", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result)
     except Exception as exc:
-        return write_receipt(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)
+        _cleanup_transient_context(context)
+        return _run_result(context, status="failed", fetch_result=fetch_result, clean_result=clean_result, save_result=save_result, error=exc)

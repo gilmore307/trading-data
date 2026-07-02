@@ -34,8 +34,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(row["event"], "Non Farm Payrolls")
             self.assertEqual(row["actual"], "228K")
             self.assertEqual(row["consensus"], "135K")
-            receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
-            self.assertEqual(receipt["runs"][0]["status"], "succeeded")
+            self.assertFalse((Path(task_key["output_root"]) / "completion_receipt.json").exists())
 
     def test_parse_visible_calendar_page_rows(self):
         html = """
@@ -143,8 +142,8 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
                 self.assertEqual([row["event"] for row in csv.DictReader(handle)], ["PCE Price Index"])
             with june_saved.open(newline="", encoding="utf-8") as handle:
                 self.assertEqual([row["event"] for row in csv.DictReader(handle)], ["Non Farm Payrolls"])
-            self.assertTrue((output_root / "2026-05" / "completion_receipt.json").exists())
-            self.assertTrue((output_root / "_manifests" / "recent_refresh_completion_receipt.json").exists())
+            self.assertFalse((output_root / "2026-05" / "completion_receipt.json").exists())
+            self.assertFalse((output_root / "_manifests").exists())
 
     def test_recent_monthly_backfill_skips_when_rows_are_unchanged(self):
         html = """
@@ -259,7 +258,7 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(result.status, "failed")
             self.assertEqual(result.details["error"]["type"], "TradingEconomicsCalendarError")
 
-    def test_failure_diagnostics_capture_structure_without_raw_request_state(self):
+    def test_failed_parse_does_not_write_te_side_products(self):
         html = """
         <html><body>
           <table id="calendar">
@@ -281,19 +280,15 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
                     "start_date": "2016-02-01",
                     "end_date": "2016-03-01",
                     "importance": "3",
-                    "persist_failure_diagnostics": True,
                 },
                 "output_root": str(Path(tmp) / "task"),
             }
             result = run(task_key, run_id="run")
             self.assertEqual(result.status, "failed")
             diagnostic_path = Path(task_key["output_root"]) / "runs" / "run" / "diagnostics" / "te_calendar_failure_diagnostic.json"
-            diagnostic = json.loads(diagnostic_path.read_text())
-            self.assertEqual(diagnostic["contract_type"], "trading_economics_calendar_web_failure_diagnostic")
-            self.assertEqual(diagnostic["parsed_rows_count"], 1)
-            self.assertEqual(diagnostic["in_window_rows_count"], 0)
-            self.assertEqual(diagnostic["structural_counts"]["data_url_rows"], 1)
-            self.assertNotIn("Cookie", json.dumps(diagnostic))
+            self.assertFalse(diagnostic_path.exists())
+            self.assertFalse((Path(task_key["output_root"]) / "runs" / "run" / "request_manifest.json").exists())
+            self.assertFalse((Path(task_key["output_root"]) / "completion_receipt.json").exists())
 
 
 if __name__ == "__main__":

@@ -44,7 +44,6 @@ FIELDS = [
     "importance",
     "symbol",
 ]
-FIELD_COVERAGE_FIELDS = ("actual", "previous", "consensus", "te_forecast")
 
 
 @dataclass(frozen=True)
@@ -458,25 +457,6 @@ def _release_fetch_candidates(rows: list[Mapping[str, Any]], *, now: datetime | 
     return [grouped[key] for key in sorted(grouped)]
 
 
-def _field_coverage(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
-    counts = {
-        field: sum(1 for row in rows if str(row.get(field) or "").strip())
-        for field in FIELD_COVERAGE_FIELDS
-    }
-    return {
-        "row_count": len(rows),
-        "actual_count": counts["actual"],
-        "previous_count": counts["previous"],
-        "consensus_count": counts["consensus"],
-        "forecast_count": counts["te_forecast"],
-        "complete_actual_previous_consensus_forecast_count": sum(
-            1
-            for row in rows
-            if all(str(row.get(field) or "").strip() for field in FIELD_COVERAGE_FIELDS)
-        ),
-    }
-
-
 def _diagnostic_excerpt(html_text: str, *, max_chars: int = 4000) -> str:
     text = re.sub(r"<script\b[^>]*>.*?</script>", " ", html_text, flags=re.I | re.S)
     text = re.sub(r"<style\b[^>]*>.*?</style>", " ", text, flags=re.I | re.S)
@@ -557,7 +537,6 @@ def clean(context: FeedContext, fetched: FetchedPage) -> StepResult:
 
 def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     rows = [json.loads(line) for line in (context.cleaned_dir / "trading_economics_calendar_event.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
-    field_coverage = _field_coverage(rows)
     params = dict(context.task_key.get("params") or {})
     if params.get("monthly_backfill_bucketed_output"):
         output_root = Path(str(context.metadata["output_root"]))
@@ -610,8 +589,6 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
                     "monthly_backfill_bucketed_output": True,
                     "write_only_changed_monthly_buckets": write_only_changed,
                     "skipped_unchanged_monthly_bucket_row_counts": skipped_months,
-                    "field_coverage": field_coverage,
-                    "changed_field_coverage": _field_coverage([]),
                     "release_fetch_candidates": [],
                     "storage_mutation_performed": False,
                 },
@@ -628,8 +605,6 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
                 "monthly_bucket_run_dirs": bucket_run_dirs,
                 "monthly_bucket_row_counts": bucket_counts,
                 "skipped_unchanged_monthly_bucket_row_counts": skipped_months,
-                "field_coverage": field_coverage,
-                "changed_field_coverage": _field_coverage(changed_rows_for_schedule),
                 "release_fetch_candidates": _release_fetch_candidates(changed_rows_for_schedule),
                 "storage_mutation_performed": True,
             },
@@ -641,7 +616,7 @@ def save(context: FeedContext, clean_result: StepResult) -> StepResult:
     writer.writeheader()
     writer.writerows(rows)
     atomic_write_text(path, buffer.getvalue())
-    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS, "field_coverage": field_coverage})
+    return StepResult("succeeded", [str(path)], dict(clean_result.row_counts), details={"format": "csv", "columns": FIELDS})
 
 
 def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult | None = None, clean_result: StepResult | None = None, save_result: StepResult | None = None, error: Exception | None = None) -> StepResult:

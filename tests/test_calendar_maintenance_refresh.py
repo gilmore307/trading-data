@@ -71,8 +71,8 @@ class CalendarMaintenanceRefreshTests(unittest.TestCase):
         self.assertEqual(exchange["task_key"]["params"]["data_kind"], "official_exchange_calendar")
         self.assertIsNone(receipt["components"]["temporal_explorer_session_overlay"])
         te = receipt["components"]["trading_economics_recent_calendar"]
-        self.assertTrue(te["task_key"]["params"]["use_authenticated_cookies"])
-        self.assertTrue(te["task_key"]["manager_controls"]["authenticated_provider_session_required"])
+        self.assertFalse(te["task_key"]["params"]["use_authenticated_cookies"])
+        self.assertNotIn("authenticated_provider_session_required", te["task_key"]["manager_controls"])
 
     def test_calendar_maintenance_can_skip_trading_economics(self) -> None:
         receipt = run_calendar_maintenance(

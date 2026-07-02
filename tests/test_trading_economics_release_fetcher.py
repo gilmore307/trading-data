@@ -53,8 +53,8 @@ class TradingEconomicsReleaseFetcherTests(unittest.TestCase):
 
         self.assertEqual(receipt["run_status"], "processed_due_jobs")
         self.assertEqual(receipt["processed_count"], 1)
-        self.assertTrue(poll_task_key["params"]["use_authenticated_cookies"])
-        self.assertTrue(poll_task_key["manager_controls"]["authenticated_provider_session_required"])
+        self.assertFalse(poll_task_key["params"]["use_authenticated_cookies"])
+        self.assertNotIn("authenticated_provider_session_required", poll_task_key["manager_controls"])
         self.assertEqual(payload["items"][0]["status"], "completed")
         self.assertEqual(payload["items"][0]["last_result"]["refresh_status"], "succeeded")
 

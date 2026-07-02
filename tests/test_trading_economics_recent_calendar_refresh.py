@@ -17,10 +17,10 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
         self.assertEqual(task_key["output_root"], "/root/projects/trading-storage/storage/01_source_data/monthly_backfill/trading_economics_calendar_web")
         self.assertEqual(task_key["params"]["date_range_mode"], "recent")
         self.assertTrue(task_key["params"]["monthly_backfill_bucketed_output"])
-        self.assertTrue(task_key["params"]["use_authenticated_cookies"])
+        self.assertFalse(task_key["params"]["use_authenticated_cookies"])
         self.assertFalse(task_key["manager_controls"]["allow_live_provider_calls"])
         self.assertFalse(task_key["params"]["allow_live_fetch"])
-        self.assertTrue(task_key["manager_controls"]["authenticated_provider_session_required"])
+        self.assertNotIn("authenticated_provider_session_required", task_key["manager_controls"])
         self.assertEqual(task_key["manager_controls"]["allowed_providers"], ["trading_economics"])
         self.assertEqual(task_key["manager_controls"]["max_requests"], 1)
 
@@ -52,21 +52,21 @@ class TradingEconomicsRecentCalendarRefreshTests(unittest.TestCase):
         )
 
         self.assertTrue(task_key["params"]["allow_live_fetch"])
-        self.assertTrue(task_key["params"]["use_authenticated_cookies"])
+        self.assertFalse(task_key["params"]["use_authenticated_cookies"])
         self.assertTrue(task_key["manager_controls"]["allow_live_provider_calls"])
-        self.assertTrue(task_key["manager_controls"]["authenticated_provider_session_required"])
+        self.assertNotIn("authenticated_provider_session_required", task_key["manager_controls"])
         self.assertEqual(task_key["manager_controls"]["allowed_endpoint_families"], ["calendar_web"])
         self.assertNotIn("source" + "_url", json.dumps(task_key))
 
-    def test_task_key_can_explicitly_disable_authenticated_cookies(self) -> None:
+    def test_task_key_can_explicitly_enable_authenticated_cookies(self) -> None:
         task_key = build_recent_calendar_task_key(
             start_date="2026-05-18",
             end_date="2026-06-12",
-            use_authenticated_cookies=False,
+            use_authenticated_cookies=True,
         )
 
-        self.assertFalse(task_key["params"]["use_authenticated_cookies"])
-        self.assertFalse(task_key["manager_controls"]["authenticated_provider_session_required"])
+        self.assertTrue(task_key["params"]["use_authenticated_cookies"])
+        self.assertNotIn("authenticated_provider_session_required", task_key["manager_controls"])
 
     def test_release_poll_falls_back_to_web_search_after_timeout(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -265,6 +265,12 @@ def _first_text(pattern: str, text: str) -> str:
     return _clean_cell(match.group(match.lastindex or 1)) if match else ""
 
 
+def _first_id_text(element_id: str, text: str) -> str:
+    pattern = rf"<(?P<tag>[a-z0-9]+)\b[^>]*\bid=(['\"]){re.escape(element_id)}\2[^>]*>(?P<body>.*?)</(?P=tag)>"
+    match = re.search(pattern, text, flags=re.I | re.S)
+    return _clean_cell(match.group("body")) if match else ""
+
+
 def _event_time_from_row(row_html: str, fallback_date: str) -> str:
     date_match = re.search(r"<td\b[^>]*class=(['\"])[^'\"]*(\d{4}-\d{2}-\d{2})[^'\"]*\1", row_html, flags=re.I | re.S)
     date_text = date_match.group(2) if date_match else ""
@@ -300,11 +306,11 @@ def _parse_calendar_data_rows(html_text: str, *, default_country: str, default_i
             "event": event,
             "source_event_type": _clean_cell(_attr(tag, "data-category")),
             "reference": _first_text(r"<span\b[^>]*class=(['\"])[^'\"]*calendar-reference[^'\"]*\1[^>]*>(.*?)</span>", row_html),
-            "actual": _first_text(r"<span\b[^>]*id=['\"]actual['\"][^>]*>(.*?)</span>", row_html),
-            "previous": _first_text(r"<span\b[^>]*id=['\"]previous['\"][^>]*>(.*?)</span>", row_html),
-            "consensus": _first_text(r"<span\b[^>]*id=['\"]consensus['\"][^>]*>(.*?)</span>", row_html),
-            "te_forecast": _first_text(r"<span\b[^>]*id=['\"]forecast['\"][^>]*>(.*?)</span>", row_html),
-            "revised": _first_text(r"<span\b[^>]*id=['\"]revised['\"][^>]*>(.*?)</span>", row_html),
+            "actual": _first_id_text("actual", row_html),
+            "previous": _first_id_text("previous", row_html),
+            "consensus": _first_id_text("consensus", row_html),
+            "te_forecast": _first_id_text("forecast", row_html),
+            "revised": _first_id_text("revised", row_html),
             "importance": default_importance,
             "symbol": "",
         })

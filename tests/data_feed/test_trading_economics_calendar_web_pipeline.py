@@ -74,6 +74,37 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(row["consensus"], "200K")
             self.assertEqual(row["te_forecast"], "205K")
 
+    def test_parse_visible_calendar_anchor_metric_cells(self):
+        html = """
+        <table id="calendar">
+          <thead><tr><th colspan='3'>Friday January 12 2024</th><th>Actual</th><th>Previous</th><th>Consensus</th><th>Forecast</th></tr></thead>
+          <tr data-url="/united-states/producer-price-inflation-mom" data-id="123" data-country="united states" data-category="producer prices change" data-event="ppi mom">
+            <td class=' 2024-01-12'><span class="event-38 calendar-date-3">08:30 AM</span></td>
+            <td><a class='calendar-event' href='/united-states/producer-price-inflation-mom'>PPI MoM</a> <span class="calendar-reference">DEC</span></td>
+            <td><a href='/united-states/producer-price-inflation-mom'><span id='actual'>-0.1%</span></a></td>
+            <td><span id='previous'>-0.1%</span><span id='revised'>®</span></td>
+            <td><a id='consensus' aria-label='USAPPIM' href='/united-states/producer-price-inflation-mom'>0.1%</a></span></td>
+            <td><a id='forecast' href='/united-states/producer-price-inflation-mom'>0.2%</a></td>
+          </tr>
+        </table>
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            task_key = {
+                "task_id": "te_calendar_anchor_metric_cells_test",
+                "feed": "07_feed_trading_economics_calendar_web",
+                "params": {"html": html, "start_date": "2024-01-01", "end_date": "2024-02-01", "importance": "3"},
+                "output_root": str(Path(tmp) / "task"),
+            }
+            result = run(task_key, run_id="run")
+            self.assertEqual(result.status, "succeeded")
+            saved = Path(task_key["output_root"]) / "runs" / "run" / "saved" / "trading_economics_calendar_event.csv"
+            with saved.open(newline="") as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual(row["actual"], "-0.1%")
+            self.assertEqual(row["previous"], "-0.1%")
+            self.assertEqual(row["consensus"], "0.1%")
+            self.assertEqual(row["te_forecast"], "0.2%")
+
     def test_recent_mode_uses_new_york_timezone_cookie_without_auth_cookie(self):
         params = {"date_range_mode": "recent", "use_authenticated_cookies": False, "start_date": "2026-05-18", "end_date": "2026-06-12"}
         cookie_header = te_pipeline._cookie_header(params, cookie_jar=Path("/tmp/no-such-te-cookie-file"))

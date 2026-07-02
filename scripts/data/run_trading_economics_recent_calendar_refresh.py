@@ -41,6 +41,7 @@ def build_recent_calendar_task_key(
     forward_days: int = 35,
     output_root: str = DEFAULT_OUTPUT_ROOT,
     allow_live_fetch: bool = False,
+    use_authenticated_cookies: bool = True,
     persist_failure_diagnostics: bool = True,
 ) -> dict[str, Any]:
     """Build a bounded recent/future-calendar task key with provider controls."""
@@ -62,7 +63,7 @@ def build_recent_calendar_task_key(
             "country": "United States",
             "importance": "3",
             "date_range_mode": "recent",
-            "use_authenticated_cookies": False,
+            "use_authenticated_cookies": bool(use_authenticated_cookies),
             "allow_live_fetch": bool(allow_live_fetch),
             "persist_failure_diagnostics": bool(persist_failure_diagnostics),
             "monthly_backfill_bucketed_output": True,
@@ -76,6 +77,7 @@ def build_recent_calendar_task_key(
             "max_requests": 1,
             "max_rows": 2000,
             "max_time_window": "P45D",
+            "authenticated_provider_session_required": bool(use_authenticated_cookies),
             "timeout_seconds": 30,
             "retry_policy_ref": "trading-data://provider-policy/recent-calendar-single-request",
             "rate_limit_policy_ref": "trading-data://provider-policy/trading-economics-recent-calendar",
@@ -220,6 +222,7 @@ def run_refresh(*, task_key: dict[str, Any], run_id: str, execute_live_fetch: bo
         "run_id": run_id,
         "task_key": task_key,
         "result": result.__dict__,
+        "field_coverage": ((result.details.get("save") or {}).get("field_coverage") if isinstance(result.details.get("save"), Mapping) else None),
         "provider_calls_performed": 1 if result.status in {"succeeded", "skipped_no_new_or_changed_rows"} else 0,
         "storage_mutation_performed": storage_mutation,
         "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only when new or changed release-preview facts are observed; it does not persist source URLs or populate M06 event-governance SQL rows.",

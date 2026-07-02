@@ -34,6 +34,13 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
             self.assertEqual(row["event"], "Non Farm Payrolls")
             self.assertEqual(row["actual"], "228K")
             self.assertEqual(row["consensus"], "135K")
+            coverage = result.details["save"]["field_coverage"]
+            self.assertEqual(coverage["row_count"], 1)
+            self.assertEqual(coverage["actual_count"], 1)
+            self.assertEqual(coverage["previous_count"], 1)
+            self.assertEqual(coverage["consensus_count"], 1)
+            self.assertEqual(coverage["forecast_count"], 1)
+            self.assertEqual(coverage["complete_actual_previous_consensus_forecast_count"], 1)
             receipt = json.loads((Path(task_key["output_root"]) / "completion_receipt.json").read_text())
             self.assertEqual(receipt["runs"][0]["status"], "succeeded")
 
@@ -143,6 +150,15 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
                 self.assertEqual([row["event"] for row in csv.DictReader(handle)], ["PCE Price Index"])
             with june_saved.open(newline="", encoding="utf-8") as handle:
                 self.assertEqual([row["event"] for row in csv.DictReader(handle)], ["Non Farm Payrolls"])
+            coverage = result.details["save"]["field_coverage"]
+            changed_coverage = result.details["save"]["changed_field_coverage"]
+            self.assertEqual(coverage["row_count"], 2)
+            self.assertEqual(coverage["actual_count"], 1)
+            self.assertEqual(coverage["previous_count"], 2)
+            self.assertEqual(coverage["consensus_count"], 2)
+            self.assertEqual(coverage["forecast_count"], 2)
+            self.assertEqual(coverage["complete_actual_previous_consensus_forecast_count"], 1)
+            self.assertEqual(changed_coverage, coverage)
             self.assertTrue((output_root / "2026-05" / "completion_receipt.json").exists())
             self.assertTrue((output_root / "_manifests" / "recent_refresh_completion_receipt.json").exists())
 
@@ -174,6 +190,8 @@ class TradingEconomicsCalendarWebPipelineTests(unittest.TestCase):
 
             self.assertEqual(first.status, "succeeded")
             self.assertEqual(second.status, "skipped_no_new_or_changed_rows")
+            self.assertEqual(second.details["field_coverage"]["row_count"], 1)
+            self.assertEqual(second.details["changed_field_coverage"]["row_count"], 0)
             self.assertFalse((output_root / "2026-06" / "runs" / "run2").exists())
             self.assertFalse((output_root / "_manifests" / "recent_refresh_runs" / "run2").exists())
 

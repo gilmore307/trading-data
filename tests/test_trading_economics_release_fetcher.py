@@ -49,9 +49,12 @@ class TradingEconomicsReleaseFetcherTests(unittest.TestCase):
                 }
                 receipt = run_release_fetch_queue(output_root=str(output_root), execute_live_fetch=True, max_due_jobs=8, now=now)
             payload = json.loads(queue_path.read_text(encoding="utf-8"))
+            poll_task_key = poll.call_args.kwargs["task_key"]
 
         self.assertEqual(receipt["run_status"], "processed_due_jobs")
         self.assertEqual(receipt["processed_count"], 1)
+        self.assertTrue(poll_task_key["params"]["use_authenticated_cookies"])
+        self.assertTrue(poll_task_key["manager_controls"]["authenticated_provider_session_required"])
         self.assertEqual(payload["items"][0]["status"], "completed")
         self.assertEqual(payload["items"][0]["last_result"]["refresh_status"], "succeeded")
 

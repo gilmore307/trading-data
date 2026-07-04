@@ -33,7 +33,13 @@ def atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
     atomic_write_text(path, json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
-def write_receipt_bundle(receipt_path: Path, run_dir: Path, payload: Mapping[str, Any]) -> Path:
+def write_receipt_bundle(
+    receipt_path: Path,
+    run_dir: Path,
+    payload: Mapping[str, Any],
+    *,
+    run_payload: Mapping[str, Any] | None = None,
+) -> Path:
     """Write latest and run-scoped receipt files atomically.
 
     `receipt_path` remains the component's latest task receipt for compatibility.
@@ -43,7 +49,7 @@ def write_receipt_bundle(receipt_path: Path, run_dir: Path, payload: Mapping[str
 
     receipt_path = Path(receipt_path)
     run_receipt_path = Path(run_dir) / "completion_receipt.json"
-    atomic_write_json(run_receipt_path, payload)
+    atomic_write_json(run_receipt_path, run_payload or payload)
     atomic_write_json(receipt_path, payload)
     return run_receipt_path
 

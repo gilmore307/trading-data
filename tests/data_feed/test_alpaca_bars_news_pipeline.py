@@ -36,7 +36,9 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 receipt=json.loads((Path(tk['output_root'])/'completion_receipt.json').read_text())
                 run=receipt['runs'][0]
                 self.assertEqual(run['outputs'],['trading_data.model_01_market_regime_data_acquisition'])
-                self.assertEqual(run['steps']['save']['details']['format'],'sql_table')
+                self.assertEqual(run['source_table'],'model_01_market_regime_data_acquisition')
+                run_receipt=json.loads((Path(tk['output_root'])/'runs/01_feed_alpaca_bars_run_test/completion_receipt.json').read_text())
+                self.assertEqual(run_receipt['runs'][0]['steps']['save']['details']['format'],'sql_table')
         finally: p.load_secret_alias=old
 
     def test_bars_live_client_requires_manager_controls(self):
@@ -69,12 +71,15 @@ class AlpacaBarsNewsPipelineTests(unittest.TestCase):
                 self.assertEqual(writer.calls,[])
                 receipt=json.loads((Path(tk['output_root'])/'completion_receipt.json').read_text())
                 run_receipt=json.loads((Path(tk['output_root'])/'runs/01_feed_alpaca_bars_empty_run_test/completion_receipt.json').read_text())
-                self.assertEqual(run_receipt, receipt)
+                self.assertNotEqual(run_receipt, receipt)
+                self.assertEqual(len(run_receipt['runs']),1)
+                self.assertEqual(run_receipt['contract_type'],'alpaca_bars_run_receipt')
+                self.assertEqual(receipt['contract_type'],'alpaca_bars_monthly_source_receipt')
                 run=receipt['runs'][0]
                 self.assertEqual(run['row_counts'],{'equity_bar':0})
                 self.assertEqual(run['outputs'],['model_01_market_regime_data_acquisition'])
-                self.assertTrue(run['steps']['fetch']['references'])
-                manifest=json.loads(Path(run['steps']['fetch']['references'][0]).read_text())
+                self.assertTrue(run['request_manifest_refs'])
+                manifest=json.loads(Path(run['request_manifest_refs'][0]).read_text())
                 self.assertEqual(manifest['raw_count'],0)
                 self.assertTrue(manifest['bar_pages'][0]['no_data_response'])
         finally: p.load_secret_alias=old

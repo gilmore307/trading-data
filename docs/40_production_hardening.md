@@ -35,7 +35,7 @@ Enforcement helper: `src/data_runtime/provider_policy.py` provides `require_prov
 
 ## Receipts and Atomic Writes
 
-Data feed/source receipts use `src/data_runtime/io.py` for same-directory atomic writes. Each run writes both the compatibility latest receipt at `<output_root>/completion_receipt.json` and the run-scoped copy at `<output_root>/runs/<run_id>/completion_receipt.json`. Downstream collection should prefer the run-scoped receipt when it needs immutable evidence for a specific run.
+Data feed/source receipts use `src/data_runtime/io.py` for same-directory atomic writes. Each run may write both the compatibility latest receipt at `<output_root>/completion_receipt.json` and the run-scoped copy at `<output_root>/runs/<run_id>/completion_receipt.json`. The two payloads may differ: high-volume SQL-only feeds should keep the latest receipt compact and the run-scoped receipt limited to that single run, never a duplicated cumulative history.
 
 Rules:
 

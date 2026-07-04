@@ -84,14 +84,37 @@ def save(context,clean_result,payload,*,sql_writer:SqlTableWriter|None=None):
         metadata={'table':OUTPUT_TABLE,'qualified_table':OUTPUT_TABLE,'rows_written':0,'driver':'postgresql','storage_target_id':'trading_data_postgres'}
     reference=str(metadata.get('qualified_table') or metadata.get('table') or OUTPUT_TABLE)
     return StepResult('succeeded',[reference],dict(clean_result.row_counts),details={'format':'sql_table','table':OUTPUT_TABLE,'columns':EQUITY_BAR_FIELDS,'storage':metadata,'file_payload_deleted':True})
+def _compact_receipt_run(entry:dict[str,Any])->dict[str,Any]:
+    steps=entry.get('steps') if isinstance(entry.get('steps'),dict) else {}
+    save_step=steps.get('save') if isinstance(steps.get('save'),dict) else {}
+    clean_step=steps.get('clean') if isinstance(steps.get('clean'),dict) else {}
+    fetch_step=steps.get('fetch') if isinstance(steps.get('fetch'),dict) else {}
+    return {
+        'run_id':entry.get('run_id'),
+        'status':entry.get('status'),
+        'started_at':entry.get('started_at'),
+        'completed_at':entry.get('completed_at'),
+        'output_dir':entry.get('output_dir'),
+        'outputs':[item for item in entry.get('outputs') or [] if isinstance(item,str)],
+        'row_counts':entry.get('row_counts') or {},
+        'source_table':OUTPUT_TABLE,
+        'retention':'sql_only_no_jsonl_or_csv_payload',
+        'request_manifest_refs':[item for item in fetch_step.get('references') or [] if isinstance(item,str)],
+        'schema_refs':[item for item in clean_step.get('references') or [] if isinstance(item,str)],
+        'save_refs':[item for item in save_step.get('references') or [] if isinstance(item,str)],
+        'error':entry.get('error'),
+    }
 def write_receipt(context,*,status,fetch_result=None,clean_result=None,save_result=None,error=None):
     context.receipt_path.parent.mkdir(parents=True,exist_ok=True); existing={'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars','runs':[]}
     if context.receipt_path.exists():
         try: existing=json.loads(context.receipt_path.read_text())
         except json.JSONDecodeError: pass
     entry={'run_id':context.metadata['run_id'],'status':status,'started_at':context.metadata.get('started_at'),'completed_at':_now_utc(),'output_dir':str(context.run_dir),'outputs':save_result.references if save_result else [],'row_counts':save_result.row_counts if save_result else clean_result.row_counts if clean_result else {},'steps':{'fetch':asdict(fetch_result) if fetch_result else None,'clean':asdict(clean_result) if clean_result else None,'save':asdict(save_result) if save_result else None},'error':None if error is None else {'type':type(error).__name__,'message':str(error)}}
-    existing['runs']=[r for r in existing.get('runs',[]) if r.get('run_id')!=context.metadata['run_id']]+[entry]; existing.update({'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars'})
-    write_receipt_bundle(context.receipt_path, context.run_dir, existing); return StepResult(status,[str(context.receipt_path),*entry['outputs']],entry['row_counts'],details={'run_id':context.metadata['run_id'],'error':entry['error']})
+    compact_entry=_compact_receipt_run(entry)
+    compact_runs=[_compact_receipt_run(r) for r in existing.get('runs',[]) if isinstance(r,dict) and r.get('run_id')!=context.metadata['run_id']]
+    existing['runs']=compact_runs+[compact_entry]; existing.update({'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars','contract_type':'alpaca_bars_monthly_source_receipt','retention':'sql_only_no_jsonl_or_csv_payload'})
+    run_payload={'task_id':context.task_key.get('task_id'),'feed':'01_feed_alpaca_bars','contract_type':'alpaca_bars_run_receipt','run':entry,'runs':[entry]}
+    write_receipt_bundle(context.receipt_path, context.run_dir, existing, run_payload=run_payload); return StepResult(status,[str(context.receipt_path),*entry['outputs']],entry['row_counts'],details={'run_id':context.metadata['run_id'],'error':entry['error']})
 def run(task_key,*,run_id,client=None,sql_writer:SqlTableWriter|None=None,client_is_fixture=False):
     c=build_context(task_key,run_id); fr=cr=sr=None
     try:

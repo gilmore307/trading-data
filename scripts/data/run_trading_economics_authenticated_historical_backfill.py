@@ -114,7 +114,7 @@ def _task_key(*, month: str, output_root: str, write_only_changed: bool) -> dict
             "append_to_storage_source_only",
             "no_website_url_persistence",
             "no_api_download_or_export_endpoint",
-            "no_m06_sql_materialization",
+            "no_event_model_sql_materialization",
             "no_model_activation",
             "no_broker_execution",
         ],

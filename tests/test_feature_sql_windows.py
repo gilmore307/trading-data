@@ -81,7 +81,7 @@ class FeatureSqlWindowTests(unittest.TestCase):
         self.assertNotIn("available_time <= %s", sql)
         self.assertEqual(params, ["2026-04-01T16:00:00Z"])
 
-    def test_event_risk_governor_source_end_is_half_open(self):
+    def test_event_state_source_end_is_half_open(self):
         module = importlib.import_module("data_feature.m03_event_state_feature_generation.sql")
         cursor = FakeCursor()
         module.fetch_source_rows(

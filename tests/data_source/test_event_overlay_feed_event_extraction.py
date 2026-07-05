@@ -8,12 +8,12 @@ from importlib import import_module
 
 
 extract_events_from_artifact_paths = import_module(
-    "data_source.m06_residual_event_governance_data_acquisition.feed_event_extraction"
+    "data_source.m03_event_state_data_acquisition.feed_event_extraction"
 ).extract_events_from_artifact_paths
 extract_events_from_sql_inputs = import_module(
-    "data_source.m06_residual_event_governance_data_acquisition.feed_event_extraction"
+    "data_source.m03_event_state_data_acquisition.feed_event_extraction"
 ).extract_events_from_sql_inputs
-source_pipeline = import_module("data_source.m06_residual_event_governance_data_acquisition.pipeline")
+source_pipeline = import_module("data_source.m03_event_state_data_acquisition.pipeline")
 
 
 class FakeSqlWriter:
@@ -152,15 +152,15 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writeheader()
                 writer.writerow({"id": "n1", "timeline_headline": "Apple files earnings story", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Article", "event_link_url": "https://example.com/aapl"})
             task_key = {
-                "task_id": "m06_residual_event_governance_data_acquisition_artifact_task",
-                "source": "m06_residual_event_governance_data_acquisition",
+                "task_id": "m03_event_state_data_acquisition_artifact_task",
+                "source": "m03_event_state_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(alpaca)]},
                 "output_root": str(tmp / "task"),
             }
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["model_03_event_state_data_acquisition"], 1)
             row = writer.calls[0]["rows"][0]
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_name"], "03_feed_alpaca_news")
@@ -170,8 +170,8 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw_tmp:
             tmp = Path(raw_tmp)
             task_key = {
-                "task_id": "m06_residual_event_governance_data_acquisition_sql_task",
-                "source": "m06_residual_event_governance_data_acquisition",
+                "task_id": "m03_event_state_data_acquisition_sql_task",
+                "source": "m03_event_state_data_acquisition",
                 "params": {
                     "start": "2024-01-01T00:00:00-05:00",
                     "end": "2024-02-01T00:00:00-05:00",
@@ -183,7 +183,7 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
             reader = FakeSqlReader({"feed_03_alpaca_news": [{"id": "n1", "timeline_headline": "Apple files earnings story", "created_at": "2024-01-09T14:46:19-05:00", "updated_at": "2024-01-09T14:47:00-05:00", "symbols": "AAPL", "summary": "Article", "event_link_url": "https://example.com/aapl"}]})
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer, sql_reader=reader)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["model_03_event_state_data_acquisition"], 1)
             row = writer.calls[0]["rows"][0]
             self.assertEqual(row["event_category_type"], "symbol_news")
             self.assertEqual(row["source_artifact_path"], "sql://trading_data/feed_03_alpaca_news")
@@ -192,8 +192,8 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw_tmp:
             tmp = Path(raw_tmp)
             task_key = {
-                "task_id": "m06_residual_event_governance_data_acquisition_market_session_task",
-                "source": "m06_residual_event_governance_data_acquisition",
+                "task_id": "m03_event_state_data_acquisition_market_session_task",
+                "source": "m03_event_state_data_acquisition",
                 "params": {
                     "start": "2024-01-01T00:00:00-05:00",
                     "end": "2024-02-01T00:00:00-05:00",
@@ -232,15 +232,15 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"article_id": "g1", "seen_at": "2024-01-20T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/1", "title": "Fed rate story", "source_theme_tags": "ECON", "organizations": "Federal Reserve", "tone": "-1", "impact_scope": "market"})
                 writer.writerow({"article_id": "g2", "seen_at": "2024-01-20T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/2", "title": "Inflation story", "source_theme_tags": "ECON", "organizations": "BLS", "tone": "-2", "impact_scope": "market"})
             task_key = {
-                "task_id": "m06_residual_event_governance_data_acquisition_same_time_macro_task",
-                "source": "m06_residual_event_governance_data_acquisition",
+                "task_id": "m03_event_state_data_acquisition_same_time_macro_task",
+                "source": "m03_event_state_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(gdelt)]},
                 "output_root": str(tmp / "task"),
             }
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 2)
+            self.assertEqual(result.row_counts["model_03_event_state_data_acquisition"], 2)
             rows = writer.calls[0]["rows"]
             self.assertEqual({row["title"] for row in rows}, {"Fed rate story", "Inflation story"})
             self.assertEqual(len({row["event_id"] for row in rows}), 2)
@@ -255,15 +255,15 @@ class EventOverlayFeedExtractionTests(unittest.TestCase):
                 writer.writerow({"article_id": "g1", "seen_at": "2026-05-14T08:30:00-04:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/out", "title": "Out of window", "source_theme_tags": "ECON", "organizations": "Fed", "tone": "-1", "impact_scope": "market"})
                 writer.writerow({"article_id": "g2", "seen_at": "2024-01-05T08:30:00-05:00", "source_domain": "reuters.com", "event_link_url": "https://example.com/in", "title": "In window", "source_theme_tags": "ECON", "organizations": "Fed", "tone": "-1", "impact_scope": "market"})
             task_key = {
-                "task_id": "m06_residual_event_governance_data_acquisition_artifact_task",
-                "source": "m06_residual_event_governance_data_acquisition",
+                "task_id": "m03_event_state_data_acquisition_artifact_task",
+                "source": "m03_event_state_data_acquisition",
                 "params": {"start": "2024-01-01T00:00:00-05:00", "end": "2024-02-01T00:00:00-05:00", "event_artifact_paths": [str(gdelt)]},
                 "output_root": str(tmp / "task"),
             }
             writer = FakeSqlWriter()
             result = source_pipeline.run(task_key, run_id="run", sql_writer=writer)
             self.assertEqual(result.status, "succeeded")
-            self.assertEqual(result.row_counts["model_06_residual_event_governance_data_acquisition"], 1)
+            self.assertEqual(result.row_counts["model_03_event_state_data_acquisition"], 1)
             self.assertIn("out_of_window_event_rows_skipped=1", result.warnings)
             self.assertEqual(writer.calls[0]["rows"][0]["event_category_type"], "macro_news")
 

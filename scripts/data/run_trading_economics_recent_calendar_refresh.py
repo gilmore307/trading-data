@@ -189,7 +189,7 @@ def run_refresh(*, task_key: dict[str, Any], run_id: str, execute_live_fetch: bo
         "result": result.__dict__,
         "provider_calls_performed": 1 if result.status in {"succeeded", "skipped_no_new_or_changed_rows"} else 0,
         "storage_mutation_performed": storage_mutation,
-        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only when new or changed release-preview facts are observed; it does not persist TE receipts, manifests, diagnostics, source URLs, or M06 event-governance SQL rows.",
+        "boundary_note": "Recent/future TE calendar acquisition writes canonical storage source rows only when new or changed release-preview facts are observed; it does not persist TE receipts, manifests, diagnostics, source URLs, or M03 event-governance SQL rows.",
     }
 
 

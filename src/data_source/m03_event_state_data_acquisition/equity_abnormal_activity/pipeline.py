@@ -1,7 +1,7 @@
 """Derived equity abnormal activity event detector.
 
-This EventRiskGovernor detector projects observable stock/ETF bars and optional liquidity bars into
-compact event-style rows for EventRiskGovernor. It does not acquire market data;
+This M03 event-state detector projects observable stock/ETF bars and optional liquidity bars into
+compact event-style rows for event evidence. It does not acquire market data;
 Alpaca data feeds own bar/liquidity acquisition.
 """
 
@@ -23,8 +23,8 @@ from data_runtime.config import resolve_output_root
 from data_runtime.io import write_receipt_bundle
 from storage.sql import PostgresSqlTableReader, SqlTableReader, SqlTableWriter
 
-SOURCE = "m06_residual_event_governance_data_acquisition.equity_abnormal_activity"
-OUTPUT_TABLE = "model_06_equity_abnormal_activity_event"
+SOURCE = "m03_event_state_data_acquisition.equity_abnormal_activity"
+OUTPUT_TABLE = "model_03_equity_abnormal_activity_event"
 BAR_SQL_SOURCE_TABLE = "model_01_market_regime_data_acquisition"
 BAR_SQL_SOURCE_COLUMNS = [
     "symbol",
@@ -89,7 +89,7 @@ class CleanedPayload:
 
 
 class EquityAbnormalActivityError(ValueError):
-    """Raised for invalid EventRiskGovernor equity abnormal activity detector tasks."""
+    """Raised for invalid M03 event-state equity abnormal activity detector tasks."""
 
 
 def _now_utc() -> str:

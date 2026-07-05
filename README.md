@@ -23,7 +23,7 @@ tests/       Fixture-safe tests for feeds, sources, features, storage, and probe
 - `data_feed` talks to one provider/API/web/file family and produces normalized feed-level evidence.
 - `data_source` accepts a manager-issued task/request, composes feed evidence, and writes reviewed model-input source outputs.
 - `data_feature` derives deterministic model-ready feature blocks from accepted source outputs.
-- `data_models` catalogs the M01-M06 `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
+- `data_models` catalogs the M01- `trading-data` ownership surface so docs/src/CLI/tests stay aligned.
 - `storage` provides low-level persistence helpers; durable layout and retention remain `trading-storage` responsibilities.
 
 Accepted SQL outputs are the preferred model-input boundary. File artifacts and runtime evidence default to `trading-storage/storage/01_source_data/`; component-local `storage/` directories are not part of the active repository shape. `source_NN_*` numbers identify accepted source contracts; they do not necessarily equal model model numbers.
@@ -35,7 +35,7 @@ Accepted SQL outputs are the preferred model-input boundary. File artifacts and 
 - `docs/20_data_feed.md` — provider and feed rules.
 - `docs/21_api_templates.md` — task/source design order.
 - `docs/22_feed_availability.md` — provider/data-kind availability inventory.
-- `docs/10_model_01_background_context_data.md`, `docs/11_model_01_sector_context_data.md`, `docs/12_model_02_target_state_data.md`, `docs/18_model_05_option_expression.md`, and `docs/19_model_06_residual_event_governance.md` — model data boundaries.
+- `docs/10_model_01_background_context_data.md`, `docs/11_model_01_sector_context_data.md`, `docs/12_model_02_target_state_data.md`, `docs/18_model_05_option_expression.md`, and `docs/13_model_03_event_state_data.md` — model data boundaries.
 - `docs/30_model_inputs.md` — mapping from data outputs to model inputs.
 - `docs/03_contracts.md` — accepted local data-stack acceptance.
 - `docs/40_production_hardening.md` — non-production hardening contracts.

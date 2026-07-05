@@ -1,4 +1,4 @@
-"""CLI runner for the EventRiskGovernor equity abnormal activity detector."""
+"""CLI runner for the M03 event-state equity abnormal activity detector."""
 from __future__ import annotations
 
 import argparse
@@ -9,14 +9,14 @@ from pathlib import Path
 
 def _run(task_key: dict, *, run_id: str):
     module = importlib.import_module(
-        "data_source.m06_residual_event_governance_data_acquisition.equity_abnormal_activity.pipeline"
+        "data_source.m03_event_state_data_acquisition.equity_abnormal_activity.pipeline"
     )
     return module.run(task_key, run_id=run_id)
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m data_source.m06_residual_event_governance_data_acquisition.equity_abnormal_activity"
+        prog="python -m data_source.m03_event_state_data_acquisition.equity_abnormal_activity"
     )
     parser.add_argument("task_key", type=Path, help="Path to an equity abnormal activity detector task key JSON file")
     parser.add_argument("--run-id", required=True)

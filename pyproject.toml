@@ -31,15 +31,15 @@ trading-data-m01-market-regime-data-acquisition = "data_source.m01_market_regime
 trading-data-m02-sector-context-data-acquisition = "data_source.m02_sector_context_data_acquisition.__main__:main"
 trading-data-m03-target-state-vector-data-acquisition = "data_source.m03_target_state_vector_data_acquisition.__main__:main"
 trading-data-m05-option-expression-contract-path = "data_source.m05_option_expression_data_acquisition_contract_path.__main__:main"
-trading-data-m06-residual-event-governance-data-acquisition = "data_source.m06_residual_event_governance_data_acquisition.__main__:main"
+trading-data-m03-event-state-data-acquisition = "data_source.m03_event_state_data_acquisition.__main__:main"
 trading-data-m01-market-regime-feature-generation = "data_feature.m01_market_regime_feature_generation.__main__:main"
 trading-data-m02-sector-context-feature-generation = "data_feature.m02_sector_context_feature_generation.__main__:main"
 trading-data-m03-target-state-vector-feature-generation = "data_feature.m03_target_state_vector_feature_generation.__main__:main"
 trading-data-m05-option-expression-feature-generation = "data_feature.m05_option_expression_feature_generation.__main__:main"
-trading-data-m06-residual-event-governance-feature-generation = "data_feature.m06_residual_event_governance_feature_generation.__main__:main"
+trading-data-m03-event-state-feature-generation = "data_feature.m03_event_state_feature_generation.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"data_source.m06_residual_event_governance_data_acquisition.equity_abnormal_activity" = ["config.json"]
+"data_source.m03_event_state_data_acquisition.equity_abnormal_activity" = ["config.json"]

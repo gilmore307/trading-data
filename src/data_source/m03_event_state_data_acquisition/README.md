@@ -1,10 +1,10 @@
-# m06_residual_event_governance_data_acquisition
+# m03_event_state_data_acquisition
 
-Manager-facing EventRiskGovernor data source.
+Manager-facing M03 event-state evidence source.
 
-M06 supplies bounded, point-in-time event overview rows for the event-risk governor model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
+ supplies bounded, point-in-time event overview rows for the event-risk governor model. The output is one SQL table and one row per observed event/evidence row, with explicit canonical-event and deduplication fields so duplicate coverage does not become duplicate alpha. Full news text, SEC filing detail, macro-calendar payloads, abnormal-activity or price-action detector payloads, browser/agent analysis, and revision-specific artifacts stay behind references such as web URLs, SEC file paths, source references, or internal artifact paths.
 
-This source is an event index, not the full `event_context_vector`. `EventRiskGovernor` combines these overview rows with point-in-time event artifacts, upstream `market_context_state` / `sector_context_state` / `target_context_state` references, and scope/sensitivity metadata inside `trading-model`.
+This source is an event index, not the full M03 event operator. `trading-model` combines these overview rows with point-in-time event artifacts, taxonomy/effect-model evidence, upstream context references, and scope/sensitivity metadata.
 
 Stable defaults live in pipeline code; there is no source-local `config.json`.
 
@@ -12,7 +12,7 @@ Stable defaults live in pipeline code; there is no source-local `config.json`.
 
 Required task key fields:
 
-- `source`: `m06_residual_event_governance_data_acquisition`
+- `source`: `m03_event_state_data_acquisition`
 - `task_id`: stable task identifier
 - `params.start`: event collection start timestamp/date
 - `params.end`: event collection end timestamp/date
@@ -55,7 +55,7 @@ Official SEC/exchange/company/regulatory disclosures outrank derivative news cov
 Final saved output is SQL-only:
 
 ```text
-model_06_residual_event_governance_data_acquisition
+model_03_event_state_data_acquisition
 ```
 
 Natural key:
@@ -92,11 +92,11 @@ Feed-artifact extraction is local and offline only. It reads already-saved artif
 
 Trading Economics calendar artifacts have one accepted source role:
 
-- canonical storage artifacts provide required M06 macro calendar/value evidence for reviewed historical windows.
+- canonical storage artifacts provide required  macro calendar/value evidence for reviewed historical windows.
 
-Market-session calendar context is a required M06 input produced by the manager from reviewed local calendar rules and, where available, official exchange-calendar artifacts. It may enter M06 overview rows as `market_structure` evidence for holidays, weekends, early closes, long non-trading intervals, option expirations, triple-witching windows, and ETF/index rebalance windows; it is separate from Trading Economics macro releases and from Nasdaq/company earnings calendar shells.
+Market-session calendar context is a required  input produced by the manager from reviewed local calendar rules and, where available, official exchange-calendar artifacts. It may enter  overview rows as `market_structure` evidence for holidays, weekends, early closes, long non-trading intervals, option expirations, triple-witching windows, and ETF/index rebalance windows; it is separate from Trading Economics macro releases and from Nasdaq/company earnings calendar shells.
 
-TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later. M06 may normalize reviewed TE storage artifacts into `macro_data` overview rows for attribution, but those SQL rows are derived materializations, not the TE source of truth. The Trading Economics subscription is expired, so website URLs are not source references and no logged-out visible-page route is an accepted normal recovery path. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
+TE original artifacts are retained as append-only source evidence in storage because they are not reliably recoverable later.  may normalize reviewed TE storage artifacts into `macro_data` overview rows for attribution, but those SQL rows are derived materializations, not the TE source of truth. The Trading Economics subscription is expired, so website URLs are not source references and no logged-out visible-page route is an accepted normal recovery path. Any non-TE fallback evidence must remain distinguishable by `source_name` / `coverage_reason` and must not be silently merged into TE-origin rows.
 
 `price_action` rows are source-detector rows for price-behavior events such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`. The overview row keeps only the event/category/reference envelope; detector details stay behind the referenced artifact or nested detector output.
 

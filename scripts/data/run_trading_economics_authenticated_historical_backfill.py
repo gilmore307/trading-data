@@ -3,7 +3,7 @@
 
 This is a bounded historical source-data recovery route. It reuses the
 Trading Economics calendar-web feed pipeline, writes only canonical storage
-source artifacts, and does not materialize M06 SQL rows or model outputs.
+source artifacts, and does not materialize M03 event-state SQL rows or model outputs.
 """
 
 from __future__ import annotations

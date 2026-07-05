@@ -15,7 +15,7 @@ This directory contains the current documentation spine for `trading-data`.
 - `11_model_01_sector_context_data.md` — M01 Sector Context Data.
 - `12_model_02_target_state_data.md` — M02 Target State Data.
 - `18_model_05_option_expression.md` — M05 — Trading Guidance / Option Expression Data Boundary.
-- `19_model_06_residual_event_governance.md` — M06 — Event Risk Governor Data Boundary.
+- `13_model_03_event_state_data.md` — M03 Event State Data Boundary.
 - `20_data_feed.md` — Data Feed.
 - `21_api_templates.md` — API Templates.
 - `22_feed_availability.md` — Source Availability.

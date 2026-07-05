@@ -269,8 +269,8 @@ def _table_ddl(
         return _source_05_option_expression_ddl(qualified_table)
     if table in {"source_06_position_execution", "m05_option_expression_data_acquisition_contract_path"}:
         return _source_06_position_execution_ddl(qualified_table)
-    if table == "model_06_residual_event_governance_data_acquisition":
-        return _source_06_residual_event_governance_ddl(qualified_table)
+    if table == "model_03_event_state_data_acquisition":
+        return _model_03_event_state_data_acquisition_ddl(qualified_table)
     if columns and key_columns:
         return _generic_feed_table_ddl(qualified_table, columns=columns, key_columns=key_columns)
     return None
@@ -481,7 +481,7 @@ def _source_06_position_execution_ddl(qualified_table: str) -> str:
     """
 
 
-def _source_06_residual_event_governance_ddl(qualified_table: str) -> str:
+def _model_03_event_state_data_acquisition_ddl(qualified_table: str) -> str:
     return f"""
     CREATE TABLE IF NOT EXISTS {qualified_table} (
         event_id TEXT NOT NULL,

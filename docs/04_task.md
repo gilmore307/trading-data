@@ -34,16 +34,16 @@ These items are intentionally outside the current promote-first historical-train
 - ThetaData Terminal is installed outside Git and a controlled live smoke succeeded through `10_feed_thetadata_option_primary_tracking`.
 - `m02_sector_context_data_acquisition` is retired from the current ordinary candidate route. ETF holdings may remain standalone source evidence, but they do not define the realtime total pool, M02 feature generation, or historical replay candidates.
 - `equity_abnormal_activity_event` uses `equity_abnormal_activity_conservative` with `conservative_fixture_default_not_production_calibrated` until reviewed calibration exists.
-- `price_action` is accepted as a M06 event-risk category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
+- `price_action` is accepted as a M03 event-state category for false breakout / failed breakdown / liquidity sweep / bull-trap / bear-trap evidence; it remains event-risk evidence, not a new model layer or trading action.
 - `trading_data.model_03_target_state_vector_data_acquisition` and `trading_data.model_03_target_state_vector_feature_generation` implement deterministic target-local observed-input and feature-block surfaces.
 - M02 / candidate / M02 boundaries are aligned: M02 emits sector/context features only; M02 consumes target-local candidate evidence and accepted target-context mappings without relying on ETF holdings acquisition.
-- Event overlay sources are accepted through `model_06_residual_event_governance_data_acquisition`, including equity abnormal activity evidence.
+- Event overlay sources are accepted through `model_03_event_state_data_acquisition`, including equity abnormal activity evidence.
 - Option-expression inputs are accepted through shared `trading_data.option_chain_state_source` plus `trading_data.model_05_option_expression_feature_generation`; selected-contract tracking remains `trading_data.model_05_option_expression_data_acquisition_contract_path`.
 - Final non-TE feed outputs are SQL rows plus concise receipts/schema evidence; no JSONL/CSV mirror is written by default. Trading Economics calendar source rows remain the protected source-data exception.
 - Alpaca bars, liquidity, and news feeds are implemented with bounded pagination, ET timestamp normalization, completion receipts, and no default bulky raw persistence.
 - ThetaData option feeds are implemented for selection snapshot, specified-contract primary tracking, and event timeline.
 - `feed_availability` and `feed_interfaces` provide bounded provider/data-kind inventory and smoke support.
-- `macro_data` is active only through M06 materialization from reviewed Trading Economics storage artifacts. Shared calendar maintenance may append recent/future TE calendar source rows and Nasdaq earnings schedule artifacts but must not persist TE website URLs or directly populate M06 SQL rows.
+- `macro_data` is active only through M03 event-state materialization from reviewed Trading Economics storage artifacts. Shared calendar maintenance may append recent/future TE calendar source rows and Nasdaq earnings schedule artifacts but must not persist TE website URLs or directly populate M03 event-state SQL rows.
 - Current task key / receipt fields are registered through `trading-manager`; new shared fields need registry review.
 
 ## Closed Design Notes

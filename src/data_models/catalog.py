@@ -1,4 +1,4 @@
-"""Authoritative M01-M06 data-surface catalog for trading-data."""
+"""Authoritative M01-M05 data-surface catalog for trading-data."""
 
 from __future__ import annotations
 
@@ -78,12 +78,18 @@ MODEL_CONTRACTS: tuple[ModelDataContract, ...] = (
         model=3,
         slug="event_state",
         model_name="EventStateModel",
-        doc_path="docs/19_model_06_residual_event_governance.md",
-        owns_dedicated_data_surface=False,
-        test_paths=("tests/test_model_structure_catalog.py",),
-        no_source_reason=(
-            "Consumes reviewed event observations, event-family evidence, and residual governance outputs; "
-            "trading-data must not create a raw-event symmetry package for M03."
+        doc_path="docs/13_model_03_event_state_data.md",
+        owns_dedicated_data_surface=True,
+        source_packages=("data_source.m03_event_state_data_acquisition",),
+        feature_packages=("data_feature.m03_event_state_feature_generation",),
+        cli_commands=(
+            "trading-data-m03-event-state-data-acquisition",
+            "trading-data-m03-event-state-feature-generation",
+        ),
+        test_paths=(
+            "tests/data_source/test_numbered_data_sources.py",
+            "tests/data_source/test_equity_abnormal_activity_pipeline.py",
+            "tests/test_event_overlay_feature_generator.py",
         ),
     ),
     ModelDataContract(
@@ -122,24 +128,6 @@ MODEL_CONTRACTS: tuple[ModelDataContract, ...] = (
             "tests/data_feed/test_thetadata_option_selection_snapshot_pipeline.py",
             "tests/data_feed/test_thetadata_option_primary_tracking_pipeline.py",
             "tests/data_feed/test_thetadata_option_event_timeline_pipeline.py",
-        ),
-    ),
-    ModelDataContract(
-        model=6,
-        slug="residual_event_governance",
-        model_name="ResidualEventGovernanceModel",
-        doc_path="docs/19_model_06_residual_event_governance.md",
-        owns_dedicated_data_surface=True,
-        source_packages=("data_source.m06_residual_event_governance_data_acquisition",),
-        feature_packages=("data_feature.m06_residual_event_governance_feature_generation",),
-        cli_commands=(
-            "trading-data-m06-residual-event-governance-data-acquisition",
-            "trading-data-m06-residual-event-governance-feature-generation",
-        ),
-        test_paths=(
-            "tests/data_source/test_numbered_data_sources.py",
-            "tests/data_source/test_equity_abnormal_activity_pipeline.py",
-            "tests/test_event_overlay_feature_generator.py",
         ),
     ),
 )

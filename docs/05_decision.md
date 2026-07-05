@@ -101,7 +101,7 @@ M02 candidate preparation uses reviewed candidate-symbol evidence and target met
 
 ## D016 — Event overlay boundary
 
-`model_06_residual_event_governance_data_acquisition` is a point-in-time event index with canonical-event and dedup fields. It stores overview rows and references to details; full articles, filings, detector payloads, browser/agent analysis, labels, impact scores, and alpha confidence stay outside the business table.
+`model_03_event_state_data_acquisition` is a point-in-time event index with canonical-event and dedup fields. It stores overview rows and references to details; full articles, filings, detector payloads, browser/agent analysis, labels, impact scores, and alpha confidence stay outside the business table.
 
 `equity_abnormal_activity_event` uses conservative fixture/default standards until reviewed historical calibration exists.
 
@@ -123,11 +123,11 @@ Live-call policy, retry/rate-limit rules, checkpoint/resume evidence, manifests,
 
 Reusable logic belongs in `src/`. Stable package CLIs remain the preferred shared executable surface, but a reviewed `scripts/` wrapper may exist when it builds a bounded operational task key or matches a deployed systemd command. Such wrappers must stay thin, import `src/`/package code, and keep provider execution behind manager controls.
 
-## D021 — Price-action events belong inside M06 event-risk overlay
+## D021 — Price-action events belong inside M03 event-state overlay
 
 Date: 2026-05-09
 
-`price_action` is an accepted `model_06_residual_event_governance_data_acquisition` event category for detector-visible board/tape behavior such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
+`price_action` is an accepted `model_03_event_state_data_acquisition` event category for detector-visible board/tape behavior such as `false_breakout`, `false_breakdown`, `liquidity_sweep_high`, `liquidity_sweep_low`, `bull_trap`, and `bear_trap`.
 
 These rows are source-detector event evidence. They do not create a ninth model layer, action signal, label, order instruction, or execution permission. Detector details remain behind references or compact nested detector artifacts; the overview table keeps only the event envelope, clocks, category, scope, and reference.
 
@@ -138,17 +138,17 @@ Status: Accepted
 
 For browser-scraped sources, normal acquisition uses logged-out visible pages when the accepted fields are available. Feed tasks use bounded HTTP page fetches plus task-specific date/filter cookies or query params, and must not repeatedly open/login browser pages or rely on a mutable long-lived tab. An exported local cookie jar is allowed only for a reviewed recovery route that explicitly needs it. If the provider requires captcha, MFA, WAF intervention, or permission handling, acquisition pauses for operator action rather than bypassing the control.
 
-Trading Economics is the exception: recent/future macro schedule maintenance may use the bounded TE calendar-page refresh, but its output is canonical storage source data only. It must not persist website URLs or call TE API/download/export endpoints. M06 materialization may derive `macro_data` SQL event overview rows from reviewed TE storage artifacts; the TE feed itself does not directly populate M06 SQL.
+Trading Economics is the exception: recent/future macro schedule maintenance may use the bounded TE calendar-page refresh, but its output is canonical storage source data only. It must not persist website URLs or call TE API/download/export endpoints. M03 event-state materialization may derive `macro_data` SQL event overview rows from reviewed TE storage artifacts; the TE feed itself does not directly populate M03 event-state SQL.
 
 All browser-scraped feed parsers must filter outputs to the requested time/window and report skipped out-of-window rows in receipt warnings/details.
 
-## D023 — Event evidence moves to M06 event-risk governor use
+## D023 — Event evidence moves to M03 event-state governor use
 
 Accepted: 2026-05-15
 
-The active retired serial stack keeps point-in-time event evidence out of the pre-alpha source path unless it is promoted into M03 event-state EventFailureRiskModel by reviewed evidence. `trading-data` still owns point-in-time event evidence indexes and deterministic event-overview features, but those artifacts now feed event interpretation and the M06 EventRiskGovernor / EventIntelligenceOverlay rather than acting as a hard prerequisite for M04 decision AlphaConfidenceModel.
+The active probability stack keeps point-in-time event evidence out of the target base source path unless it is promoted into the M03 event-state taxonomy/effect-model route by reviewed evidence. `trading-data` owns point-in-time event evidence indexes and deterministic event-overview features; those artifacts feed M03 event-state input preparation rather than acting as a hard prerequisite for the M04 thesis distribution.
 
-M05 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, and `trading_data.model_05_option_expression_data_acquisition_contract_path`). M06 event-risk data uses the current event SQL surfaces (`trading_data.model_06_residual_event_governance_data_acquisition`, `trading_data.model_06_residual_event_governance_feature_generation`, and event-feed artifacts).
+M05 trading guidance / option-expression data uses the current shared option-chain and option-expression inputs (`trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, and `trading_data.model_05_option_expression_data_acquisition_contract_path`). M03 event-state data uses the current event SQL surfaces (`trading_data.model_03_event_state_data_acquisition`, `trading_data.model_03_event_state_feature_generation`, and event-feed artifacts).
 
 Event evidence must preserve point-in-time availability, row coverage, canonical/dedup metadata, and evidence refs so an `event_interpretation` artifact and event-risk intervention can be audited. `trading-data` must not emit broker orders, account mutations, or final trading decisions.
 
@@ -156,7 +156,7 @@ Event evidence must preserve point-in-time availability, row coverage, canonical
 
 Accepted: 2026-05-15
 
-Event evidence must preserve enough timing information for downstream event interpretation to distinguish scheduled-known catalysts from unscheduled surprise events. `model_06_residual_event_governance_data_acquisition` remains a light overview/index surface, but referenced source artifacts must retain awareness/scheduled/published/available/interpretation/resolution clocks when the source provides or implies them.
+Event evidence must preserve enough timing information for downstream event interpretation to distinguish scheduled-known catalysts from unscheduled surprise events. `model_03_event_state_data_acquisition` remains a light overview/index surface, but referenced source artifacts must retain awareness/scheduled/published/available/interpretation/resolution clocks when the source provides or implies them.
 
 Accepted lifecycle classes for downstream interpretation are `scheduled_known_outcome_later`, `unscheduled_surprise`, `scheduled_recurring_data_release`, `multi_stage_developing_event`, and `unknown`.
 

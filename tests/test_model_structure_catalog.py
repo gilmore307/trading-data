@@ -12,9 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class ModelStructureCatalogTests(unittest.TestCase):
-    def test_catalog_covers_m01_through_m06(self) -> None:
-        self.assertEqual([contract.model for contract in MODEL_CONTRACTS], list(range(1, 7)))
-        self.assertEqual(len({contract.slug for contract in MODEL_CONTRACTS}), 6)
+    def test_catalog_covers_m01_through_m05(self) -> None:
+        self.assertEqual([contract.model for contract in MODEL_CONTRACTS], list(range(1, 6)))
+        self.assertEqual(len({contract.slug for contract in MODEL_CONTRACTS}), 5)
 
     def test_each_model_has_a_top_level_doc(self) -> None:
         for contract in MODEL_CONTRACTS:

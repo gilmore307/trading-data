@@ -2,7 +2,7 @@
 
 This feed handles the bounded recent/future calendar acquisition route and
 existing HTML fixtures. It must not call Trading Economics API or
-download/export endpoints, must not materialize M06 event rows, and must
+download/export endpoints, must not materialize M03 event rows, and must
 not persist website URLs as source evidence.
 """
 

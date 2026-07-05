@@ -10,7 +10,7 @@ Boundary:
 - Do not bypass WAF/captcha/permissions.
 - `html_path`/`html` are parser-test and reviewed manual-capture inputs.
 - Do not persist website URLs as source evidence.
-- Do not directly populate M06 SQL event rows from this feed; M06 materialization consumes reviewed storage artifacts.
+- Do not directly populate M03 event-state SQL event rows from this feed; M03 event-state materialization consumes reviewed storage artifacts.
 - Keep runs bounded; bulk backfills require reviewed source and storage parameters.
 - Saved rows are filtered to `[start_date, end_date)`; server-inclusive end-date rows are skipped and reported only in the in-memory run status.
 - Request the visible calendar page with the `America/New_York` timezone offset; saved `event_time` values are New York local macro-release times with explicit offsets.

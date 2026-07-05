@@ -1,6 +1,6 @@
 # data_models
 
-`data_models` is the structural catalog for the `trading-data` M01-M06
+`data_models` is the structural catalog for the `trading-data` M01-
 ownership surface.
 
 It answers one maintenance question: for each current model, what does this

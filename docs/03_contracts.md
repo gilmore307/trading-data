@@ -23,7 +23,7 @@ Date: 2026-05-08
 | M04 decision data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; position projection belongs to `trading-model` / control-plane state |
 | M04 decision data | no dedicated `trading-data` source or feature | accepted no-new-source/no-feature boundary; underlying action belongs outside `trading-data` |
 | M05 data | `trading_data.option_chain_state_source`, `trading_data.model_05_option_expression_feature_generation`, `trading_data.model_05_option_expression_data_acquisition_contract_path` | shared option-chain source/cache reuse, deterministic option-candidate feature generation, and selected-contract market-path boundaries |
-| M06 data | `trading_data.model_06_residual_event_governance_data_acquisition`, `trading_data.model_06_residual_event_governance_feature_generation` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
+| M03 event-state data | `trading_data.model_03_event_state_data_acquisition`, `trading_data.model_03_event_state_feature_generation` plus event sub-sources | accepted event evidence/index and deterministic event-feature boundary with canonical dedup fields for event-risk-governor use |
 
 This closes the current data-design/model-input phase. It does not approve unattended production data orchestration or final durable storage contracts.
 
@@ -46,7 +46,7 @@ These schemas define shared envelope fields only. Feed/source-specific payload f
 - `calendar_market_session`: venue-level session facts for NYSE, NASDAQ, and `CRYPTO_24_7`. Rule-generated NYSE/NASDAQ rows are marked `source_priority = inferred_rule`; official holiday/early-close sources may later override or enrich them.
 - `chart_ohlcv_cache`: compact OHLCV visualization cache by symbol/timeframe/bucket. It supports dashboard Timewheel charts but is not a model-training or replay truth source.
 
-The executable installer is `scripts/data/install_temporal_explorer_tables.py`. It may create tables and upsert deterministic day/session spine rows. It must not read `model_06_residual_event_governance_data_acquisition`, treat raw Trading Economics storage rows as accepted M06 events, call data providers, fabricate early closes, write raw news bodies, infer interpreted news refs, compute numeric surprises from string payloads, or infer chart bars without accepted source rows.
+The executable installer is `scripts/data/install_temporal_explorer_tables.py`. It may create tables and upsert deterministic day/session spine rows. It must not read `model_03_event_state_data_acquisition`, treat raw Trading Economics storage rows as accepted M03 events, call data providers, fabricate early closes, write raw news bodies, infer interpreted news refs, compute numeric surprises from string payloads, or infer chart bars without accepted source rows.
 
 ## Freshness and model-standard acceptance
 

@@ -1,4 +1,4 @@
-"""M01-M06 data contract catalog for trading-data."""
+"""M01-M03 event-state data contract catalog for trading-data."""
 
 from .catalog import MODEL_CONTRACTS, ModelDataContract, contracts_by_model
 

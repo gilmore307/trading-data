@@ -14,4 +14,4 @@ Boundary:
 
 Manager-facing composition belongs in `data_source`. Deterministic model-layer feature construction belongs in `data_feature`.
 
-Active feeds are numbered by source family. `12_feed_official_calendar_discovery` is the official calendar artifact producer for Nasdaq earnings calendar shells, Nasdaq/S&P DJI index announcements, and NYSE/Nasdaq exchange calendar rows. It writes artifacts for `calendar_observation`; it does not write M06 event-pool rows.
+Active feeds are numbered by source family. `12_feed_official_calendar_discovery` is the official calendar artifact producer for Nasdaq earnings calendar shells, Nasdaq/S&P DJI index announcements, and NYSE/Nasdaq exchange calendar rows. It writes artifacts for `calendar_observation`; it does not write M03 event-pool rows.

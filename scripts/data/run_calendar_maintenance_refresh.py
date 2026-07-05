@@ -170,7 +170,7 @@ def run_nasdaq_earnings_refresh(
         "provider_calls_performed": len(runs),
         "storage_mutation_performed": True,
         "runs": runs,
-        "boundary_note": "Official calendar discovery writes source artifacts for calendar_observation only; it does not admit M06 event-pool rows.",
+        "boundary_note": "Official calendar discovery writes source artifacts for calendar_observation only; it does not admit M03 event-pool rows.",
     }
 
 
@@ -460,7 +460,7 @@ def run_calendar_maintenance(
         },
         "provider_calls_performed": int(te.get("provider_calls_performed") or 0) + int(official.get("provider_calls_performed") or 0) + int(exchange.get("provider_calls_performed") or 0),
         "storage_mutation_performed": bool(te.get("storage_mutation_performed") or official.get("storage_mutation_performed") or exchange.get("storage_mutation_performed") or temporal_install),
-        "boundary_note": "Shared calendar maintenance service; source rows/artifacts only, no M06 event-pool admission.",
+        "boundary_note": "Shared calendar maintenance service; source rows/artifacts only, no M03 event-pool admission.",
     }
 
 

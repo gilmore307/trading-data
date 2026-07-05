@@ -2,7 +2,7 @@
 
 The feed produces reviewed calendar artifacts that the unified
 ``calendar_observation`` source-shell builder can consume. It does not promote
-events into M06.
+events into .
 """
 
 from __future__ import annotations
@@ -687,7 +687,7 @@ def write_receipt(context: FeedContext, *, status: str, fetch_result: StepResult
         "output_dir": str(context.run_dir),
         "outputs": outputs,
         "row_counts": row_counts,
-        "source_role": "calendar_discovery_artifacts_are_source_shell_inputs_not_m06_residual_event_governance_event_pool_rows",
+        "source_role": "calendar_discovery_artifacts_are_source_shell_inputs_not_m03_event_state_event_pool_rows",
         "steps": {"fetch": asdict(fetch_result) if fetch_result else None, "clean": asdict(clean_result) if clean_result else None, "save": asdict(save_result) if save_result else None},
         "error": None if error is None else {"type": type(error).__name__, "message": str(error)},
     }

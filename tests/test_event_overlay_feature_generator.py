@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from data_feature.m06_residual_event_governance_feature_generation.generator import generate_rows
+from data_feature.m03_event_state_feature_generation.generator import generate_rows
 
 
 class EventOverlayFeatureGeneratorTests(unittest.TestCase):
@@ -35,7 +35,7 @@ class EventOverlayFeatureGeneratorTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         row = rows[0]
         self.assertEqual(row["run_id"], "unit_run")
-        self.assertEqual(row["source_run_ref"], "model_06_residual_event_governance_data_acquisition")
+        self.assertEqual(row["source_run_ref"], "model_03_event_state_data_acquisition")
         self.assertEqual(row["event_id"], "evt_1")
         self.assertEqual(row["canonical_event_id"], "evt_1")
         self.assertEqual(row["feature_payload_json"]["source_priority_rank"], 1)

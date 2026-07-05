@@ -12,7 +12,7 @@
 
 ## Calendar Observation Surface
 
-`calendar_observation` is the source-shell artifact layer for scheduled calendar facts before M06 event-pool promotion. It is built from accepted calendar inputs such as rule-generated market sessions, deterministic option-expiry windows, Trading Economics macro calendar rows, and SQL-retained calendar-discovery rows.
+`calendar_observation` is the source-shell artifact layer for scheduled calendar facts before M03 event-pool promotion. It is built from accepted calendar inputs such as rule-generated market sessions, deterministic option-expiry windows, Trading Economics macro calendar rows, and SQL-retained calendar-discovery rows.
 
 Current implemented observation sources:
 
@@ -36,7 +36,7 @@ Current non-goals:
 - do not infer official early closes without an accepted official exchange source;
 - do not synthesize company-action rows, index rebalance result rows, or corporate-action rows without accepted source artifacts;
 - do not synthesize Dow Jones Industrial Average fixed reconstitution windows;
-- do not insert calendar observations directly into M06 event tables.
+- do not insert calendar observations directly into M03 event tables.
 
 ## Timewheel Contract
 
@@ -53,4 +53,4 @@ Market-state summary belongs on the dashboard Status page. The Timewheel only ne
 
 ## Current Limits
 
-The installer upserts `calendar_day`, rule-generated session rows, and accepted official exchange holiday/early-close overlays. Trading Economics monthly source rows and `calendar_observation` artifacts remain source data; M06 materialization may derive accepted `macro_data` event overview rows before those observations appear as event-risk or attention-pool detail. Interpreted news artifacts, model event markers, replay state bodies, and chart bars require accepted source-specific producers before they appear as populated detail.
+The installer upserts `calendar_day`, rule-generated session rows, and accepted official exchange holiday/early-close overlays. Trading Economics monthly source rows and `calendar_observation` artifacts remain source data; M03 event-state materialization may derive accepted `macro_data` event overview rows before those observations appear as event-risk or attention-pool detail. Interpreted news artifacts, model event markers, replay state bodies, and chart bars require accepted source-specific producers before they appear as populated detail.

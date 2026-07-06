@@ -23,7 +23,7 @@ to 60 seconds, and writes provisional web-search fallback evidence only if no
 formal TE actual appears.
 
 The service writes source rows/artifacts only. It must not persist Trading
-Economics website URLs or populate M06 SQL event rows.
+Economics website URLs or populate M03 event-state or event-effect SQL rows.
 
 Optional environment overrides belong in `/etc/default/trading-data-calendar-maintenance`.
 `TRADING_DATA_CALENDAR_SYMBOLS_FILE` may point to a comma- or newline-delimited
